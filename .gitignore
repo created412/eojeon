@@ -1,0 +1,6 @@
+node_modules/
+*.log
+tools/_contact.png
+.superpowers/
+assets/models/*.glb
+assets/models/opt/

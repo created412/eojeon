@@ -1,0 +1,7 @@
+{
+  "source": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_land.geojson",
+  "license": "Public domain",
+  "retrieved": "2026-09-11",
+  "processing": "Bounding-box clip, decimal rounding; modern coastline, not 19th-century shoreline",
+  "vertices": 281
+}

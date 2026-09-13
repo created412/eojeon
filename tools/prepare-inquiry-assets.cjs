@@ -1,0 +1,15 @@
+const fs=require('node:fs'),path=require('node:path');
+(async()=>{
+ fs.mkdirSync('assets/maps',{recursive:true});
+ const source='https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_land.geojson';
+ const cached='.superpowers/ne-land.json';let land;
+ if(fs.existsSync(cached))land=JSON.parse(fs.readFileSync(cached));else{const r=await fetch(source);if(!r.ok)throw Error(r.status);const s=await r.text();fs.writeFileSync(cached,s);land=JSON.parse(s)}
+ const box=[126.18,37.36,127.12,37.92],rings=[];
+ function clip(poly,axis,bound,sign){const out=[];for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],ia=sign*(a[axis]-bound)>=0,ib=sign*(b[axis]-bound)>=0;if(ia)out.push(a);if(ia!==ib){const t=(bound-a[axis])/(b[axis]-a[axis]);out.push(a.map((v,j)=>j===axis?bound:v+(b[j]-v)*t))}}return out}
+ for(const feature of land.features){const polys=feature.geometry.type==='Polygon'?[feature.geometry.coordinates]:feature.geometry.coordinates;for(const poly of polys){let ring=poly[0];const xs=ring.map(p=>p[0]),ys=ring.map(p=>p[1]);if(Math.max(...xs)<box[0]||Math.min(...xs)>box[2]||Math.max(...ys)<box[1]||Math.min(...ys)>box[3])continue;for(const [axis,bound,sign] of [[0,box[0],1],[0,box[2],-1],[1,box[1],1],[1,box[3],-1]]){ring=clip(ring,axis,bound,sign);if(!ring.length)break}if(ring.length>2)rings.push(ring.map(p=>p.map(v=>+v.toFixed(5))))}}
+ fs.writeFileSync('src/ui/ganghwa-coast-data.js','// Natural Earth 1:10m land; clipped to 경기만. Public domain. Modern coastline.\nexport const COAST_RINGS='+JSON.stringify(rings)+'\n');
+ fs.writeFileSync('assets/maps/provenance.json',JSON.stringify({source,license:'Public domain',retrieved:'2026-09-11',processing:'Bounding-box clip, decimal rounding; modern coastline, not 19th-century shoreline',vertices:rings.reduce((n,r)=>n+r.length,0)},null,2));
+ let pw;try{pw=require('playwright')}catch{pw=require(path.join(require('node:os').homedir(),'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'))}
+ const browser=await pw.chromium.launch({channel:'chrome',headless:true});
+ try{const page=await browser.newPage();const guides=await page.evaluate(()=>{const out={};for(const ch of new Set('洋夷侵犯非戰則和主和賣國日使來衛')){const c=document.createElement('canvas');c.width=c.height=96;const g=c.getContext('2d',{willReadFrequently:true});g.fillStyle='white';g.fillRect(0,0,96,96);g.fillStyle='black';g.font='79px Batang, SimSun, serif';g.textAlign='center';g.textBaseline='middle';g.fillText(ch,48,52);const data=g.getImageData(0,0,96,96).data,pts=[];for(let y=3;y<94;y+=2)for(let x=3;x<94;x+=2)if(data[(y*96+x)*4]<128)pts.push({x:x/96,y:y/96});out[ch]=pts}return out});fs.writeFileSync('src/ui/brush-guides-data.js','// Glyph outlines sampled once from Batang. No runtime font dependency.\nexport const BRUSH_GUIDES='+JSON.stringify(guides)+'\n');console.log({rings:rings.length,vertices:rings.reduce((n,r)=>n+r.length,0),glyphs:Object.keys(guides).length})}finally{await browser.close()}
+})().catch(e=>{console.error(e);process.exitCode=1});
