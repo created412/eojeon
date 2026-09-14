@@ -3,6 +3,7 @@ import { safePosition } from '../data/hall-geometry.js'
 import { makeTextures, buildPalace } from './palace.js'
 import { createFire } from './fire.js'
 import { buildPerson, disposePerson, updateSway, RANK_SPECS, modelsReady } from './glb-person.js'
+import { buildMother } from './mother-person.js'
 import { updatePalaceOcclusion } from './occlusion.js'
 import { turnToward } from './facing.js'
 import { buildProp } from './props.js'
@@ -171,11 +172,12 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
   function setKingAge(look) {
     if (!look) return
     const want = typeof look === 'string' ? { stage: look, height: null } : look
-    if (kingLook && want.stage === kingLook.stage && want.height === kingLook.height) return
+    const attire = want.attire ?? 'royal'
+    if (kingLook && want.stage === kingLook.stage && want.height === kingLook.height && attire === kingLook.attire) return
     if (king) { kingFacing.remove(king.pivot); disposePerson(king.pivot) }
-    king = buildPerson(THREE, { ...RANK_SPECS.king, ageStage: want.stage, height: want.height })
+    king = buildPerson(THREE, { ...RANK_SPECS.king, ageStage: want.stage, height: want.height, attire })
     kingFacing.add(king.pivot)
-    kingLook = { stage: want.stage, height: want.height }
+    kingLook = { stage: want.stage, height: want.height, attire }
   }
   setKingAge('child')
 
@@ -198,10 +200,11 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     }
     npcMeshes.clear()
     for (const n of list) {
+      if (n.voice) continue   // 목소리로만 나오는 인물(data/npcs.js voice) — 몸을 세우지 않는다
       // hatStyle 은 골격으로 사람을 쌓던 시절의 지정이다. 지금은 그림 자체에
       // 사모·익선관이 이미 그려져 있어 여기서 고를 것이 없다(npcs.js 의 값은 남겨 둔다).
       const spec = RANK_SPECS[n.rank] ?? RANK_SPECS.mid
-      const built = buildPerson(THREE, { ...spec, ageStage: 'adult' })
+      const built = n.id === 'mother' ? buildMother(THREE) : buildPerson(THREE, { ...spec, ageStage: 'adult' })
       const anchor = new THREE.Group()
       anchor.position.set(n.x, 1.9, n.z)
       anchor.add(built.pivot)

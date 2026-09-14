@@ -57,3 +57,14 @@ export function kingLookAt(year) {
   const age = ageAt(year)
   return { age, stage: stageForAge(age), height: heightForAge(age) }
 }
+
+// 나이가 같아도 즉위 전에는 곤룡포를 입지 않는다. 이어하기도 지난 궁 전환을 훑어
+// 판정하므로, 1막의 시작 궁이 운현궁이라는 이유로 즉위 뒤까지 사복이 남지 않는다.
+export function kingAttireAt(act, beatIndex, currentPalace = null) {
+  const beats = act?.beats ?? []
+  let palace = act?.palace
+  for (let i = 0; i <= beatIndex && i < beats.length; i++) palace = beats[i].palace ?? palace
+  const throne = beats.findIndex(b => b.id === 'throne')
+  const beforeThrone = act?.id === 'enthronement' && throne >= 0 && beatIndex < throne
+  return (currentPalace ?? palace) === 'unhyeon' || beforeThrone ? 'commoner' : 'royal'
+}

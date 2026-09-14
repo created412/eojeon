@@ -1,4 +1,5 @@
 import { PAPER } from './paper-data.js'
+import { RUMOR_NOTICE } from './grade-notice.js'
 import { noteMedia, mediaFigure, installHistoricalMedia, bindMedia } from './historical-media.js'
 
 const CSS = `
@@ -56,7 +57,7 @@ function ensureStyle() {
 // 텍스트일 뿐 학생이 쓴 글이 아니므로, 다른 카드 화면들과 같은 규칙으로 innerHTML 에
 // 그대로 넣는다. 'staged' 등급이면 재구성 고지를 붙인다 — 전역 규칙: staged 와
 // '우리말 옮김'은 서로 다른 고지이며 하나가 다른 하나를 대신하지 않는다.
-export function createNoteScreen(root) {
+export function createNoteScreen(root, { voice = null } = {}) {
   ensureStyle()
   installHistoricalMedia()
 
@@ -66,7 +67,8 @@ export function createNoteScreen(root) {
         const el = document.createElement('div')
         el.className = 'note'
         const staged = beat.grade === 'staged'
-          ? '<div class="staged">※ 이 대목은 기록에 남아 있지 않습니다. 게임이 지어내 채운 장면입니다. 이런 것을 「재구성」이라고 합니다.</div>' : ''
+          ? '<div class="staged">※ 이 대목은 기록에 남아 있지 않습니다. 게임이 지어내 채운 장면입니다. 이런 것을 「재구성」이라고 합니다.</div>'
+          : beat.grade === 'rumor' ? `<div class="staged rumor">${RUMOR_NOTICE}</div>` : ''
         // 글자 뜯어 보기 — 「속방(屬邦)」처럼 지우면 장면이 존재할 이유가 사라지는 낱말만.
         const g = beat.glyphGloss
         const gloss = g ? `
@@ -103,7 +105,8 @@ export function createNoteScreen(root) {
         bindMedia(el)
         const sheet = el.querySelector('.sheet')
         if (PAPER.hanji) sheet.style.backgroundImage = `url(${PAPER.hanji})`
-        el.querySelector('.note-next').addEventListener('click', () => { el.remove(); resolve() })
+        const narration = voice?.narrate([...(beat.lines ?? []), ...(beat.afterLines ?? [])].filter(Boolean))
+        el.querySelector('.note-next').addEventListener('click', () => { narration?.stop(); el.remove(); resolve() })
       })
     },
   }

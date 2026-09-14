@@ -1,8 +1,9 @@
 import { RICE_NOTE } from '../systems/prices.js'
+import { FEEDBACK_MEDIA } from './feedback-media-data.js'
 
 const CSS = `
 .ration{position:fixed;inset:0;z-index:56;background:#12100d;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:14px;padding:26px;text-align:center;overflow:auto}
+  align-items:center;justify-content:safe center;gap:14px;padding:26px;text-align:center;overflow:auto}
 .ration h2{margin:0;font-size:15px;color:#8f8a7c;letter-spacing:5px;font-weight:400}
 .ration p{margin:0;font-size:18px;color:#e8e2d4;line-height:1.8;max-width:620px}
 .ration .chart{width:100%;max-width:460px;display:flex;flex-direction:column;gap:7px;margin-top:4px}
@@ -17,11 +18,15 @@ const CSS = `
 .ration .staged{border:1px dashed #6a5230;color:#8f8a7c;font-size:12px;padding:8px 12px;
   border-radius:3px;max-width:520px;line-height:1.7}
 .ration .origin{font-size:12px;color:#6b6558}
-.ration .sack{width:172px;height:132px;border-radius:10px 10px 16px 16px;cursor:pointer;
-  background:linear-gradient(#c9b489,#9c8659);border:1px solid #6b5a3a;
-  display:flex;align-items:center;justify-content:center;color:#4a3d26;font-size:14px;letter-spacing:3px}
-.ration .grain{width:100%;max-width:460px;height:74px;border-radius:3px;
-  background:repeating-linear-gradient(115deg,#e6ddc4 0 6px,#cfc3a2 6px 9px,#8a7a55 9px 11px,#5c5138 11px 13px)}
+.ration .sack{display:block;padding:0;margin:0;width:min(620px,90vw);border:1px solid #806442;background:#241b12;cursor:pointer;overflow:hidden}
+.ration .sack img,.ration .grain img{display:block;width:100%;max-height:42vh;object-fit:contain}
+.ration .sack span{display:block;padding:12px;letter-spacing:2px}
+.ration .sack:focus-visible{outline:3px solid #e0a23a;outline-offset:4px}
+.ration .grain{width:min(680px,92vw);margin:0}
+.ration .grain figcaption{display:flex;justify-content:center;gap:24px;margin-top:12px;color:#e8e2d4;font-size:14px}
+.ration .grain figcaption span{display:block;font-size:12px;color:#b9b2a1;margin-top:4px}
+.ration .art-note{font-size:11px;color:#aaa08b;max-width:620px;line-height:1.6}
+@media(max-width:600px){.ration{padding:20px 14px;gap:10px}.ration p{font-size:16px}.ration .grain figcaption{gap:12px}}
 .ration button{margin-top:6px;padding:12px 30px;background:#3a2d20;border:1px solid #6a5230;
   color:#e0a23a;border-radius:3px;font-size:15px;cursor:pointer}
 `
@@ -81,23 +86,27 @@ export function createRation(root) {
           el.innerHTML = `
             <h2>${s.title}</h2>
             ${s.lines.map(l => `<p>${l}</p>`).join('')}
-            <div class="sack">${s.sackLabel}</div>
+            <button class="sack" aria-label="급료 가마 열기">${FEEDBACK_MEDIA.sack ? `<img src="${FEEDBACK_MEDIA.sack}" alt="거친 볏짚을 엮고 새끼줄로 묶은 급료 가마">` : ''}<span>${s.sackLabel} · 눌러서 열기</span></button>
+            <div class="art-note">급료 가마를 살펴보는 재구성 그림</div>
             <div class="origin">${s.origin}</div>
-            <button>${s.buttonLabel}</button>`
+            <button class="open-sack">${s.buttonLabel}</button>`
           const open = () => reveal()
+          el.querySelector('.sack img')?.addEventListener('error', event => { event.target.style.display = 'none' })
           el.querySelector('.sack').addEventListener('click', open)
-          el.querySelector('button').addEventListener('click', open)
+          el.querySelector('.open-sack').addEventListener('click', open)
         }
 
         function reveal() {
           const r = view.ration.reveal
           el.innerHTML = `
             <h2>${view.ration.title}</h2>
-            <div class="grain"></div>
+            <figure class="grain">${FEEDBACK_MEDIA.grain ? `<img src="${FEEDBACK_MEDIA.grain}" alt="흰 쌀알 사이에 누런 겨와 거친 모래가 섞인 급료의 재구성 그림">` : ''}<figcaption><div>쌀<span>희고 둥근 낟알</span></div><div>겨<span>누런 껍질과 가루</span></div><div>모래<span>거칠고 작은 알갱이</span></div></figcaption></figure>
+            <div class="art-note">교과서의 ‘겨와 모래’를 살펴보기 위한 재구성 그림 · 당시 섞인 비율을 나타낸 것은 아닙니다.</div>
             ${r.lines.map(l => `<p>${l}</p>`).join('')}
             <div class="staged">${r.soldierNote}</div>
             <div class="origin">${r.origin}</div>
             <button>돌아간다</button>`
+          el.querySelector('.grain img')?.addEventListener('error', event => { event.target.style.display = 'none' })
           el.querySelector('button').addEventListener('click', () => { el.remove(); resolve() })
         }
 

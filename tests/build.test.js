@@ -7,6 +7,8 @@ const OUT = 'dist/어전.html'
 
 describe('단일 HTML 빌드', () => {
   beforeAll(() => {
+    // 다른 작업자가 산출물을 만드는 동안에는 기존 HTML을 읽기만 한다.
+    if (process.env.EOJEON_TEST_EXISTING_BUILD === '1') return
     execFileSync('node', ['build.mjs'], { stdio: 'inherit' })
   }, 120000)
 
@@ -60,9 +62,13 @@ describe('단일 HTML 빌드', () => {
     expect(title).not.toMatch(/\d{4}/)
   })
 
-  it('8MB 이하다', async () => {
+  // 설계서(2026-09-03)의 목표는 8MB 였다. 2026-09-13 선생님 요청으로 인물 대사 음성 71줄(32kbps,
+  // 약 1.7MB)을 파일 안에 넣으면서 12MB 로 올렸다 — 게임은 여전히 파일 하나로 오프라인에서 돈다.
+  // 이 수를 또 올리기 전에 먼저 줄일 것(이미지·음성 압축)을 찾는다.
+  // 2026-09-14 BGM 두 곡(Lyria · 모노 Opus 32kbps, 약 670KB)을 더하며 13MB 로 올렸다.
+  it('13MB 이하다', async () => {
     const s = await stat(OUT)
-    expect(s.size).toBeLessThan(8 * 1024 * 1024)
+    expect(s.size).toBeLessThan(13 * 1024 * 1024)
   })
 })
 

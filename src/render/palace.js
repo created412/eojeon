@@ -638,7 +638,8 @@ export function buildPalace(THREE, tex, def) {
       sh.userData.roomId = r.id
       root.add(sh)
     }
-    if (r.id === def.councilRoom && !r.burnt) {
+    // 사가(私家 — 운현궁)에는 어좌가 없다. 알현이 열리는 방이어도 세우지 않는다.
+    if (r.id === def.councilRoom && !r.burnt && def.private !== true) {
       const th = buildThrone(THREE, tex, { w: r.w * ROOM_SHRINK, d: r.d * ROOM_SHRINK })
       th.position.set(r.x, 0, r.z)
       th.userData.roomId = r.id

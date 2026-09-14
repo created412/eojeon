@@ -13,7 +13,8 @@
 // 두 시험이 이 한 벌을 함께 쓴다 — 베껴 두면 반드시 갈린다.
 import { ACTS } from '../../src/data/acts.js'
 import { beatAt, isActOver, applyBeat, advance, enterAct, isBeatActive, applyGrant } from '../../src/systems/scenario.js'
-import { plunder, survive } from '../../src/systems/codex.js'
+import { plunder } from '../../src/systems/codex.js'
+import { recordPreservation } from '../../src/systems/preservation.js'
 import { recordLoss } from '../../src/systems/loss-log.js'
 import { relocate } from '../../src/systems/relocate.js'
 import { advancePrices } from '../../src/systems/prices.js'
@@ -51,9 +52,8 @@ export function firstChoiceDecider(beat, state, caught = true) {
       return recordLoss(plunder(state, taken), taken, 'plunder')
     }
     case 'salvage': {
-      const kept = state.sources.held.slice(0, 3)
-      const doomed = state.sources.held.filter(id => !kept.includes(id))
-      return recordLoss(survive(state, kept), doomed, 'fire')
+      const picked = (beat.treasures ?? []).slice(0, beat.pick ?? 2).map(t => t.id)
+      return recordPreservation(state, beat.id, { selected: picked, reason: '명령을 증명하는 도장이 먼저다.' }, (beat.treasures ?? []).map(t => t.id))
     }
     // 친필은 상태에 남기는 것이 없다 — 카드를 쥐여 주는 것은 종류와 무관하게
     // runAct 가 applyGrant() 로 한다(main.js 의 playBeat 이 그 자리에 있다).

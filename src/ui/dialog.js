@@ -4,6 +4,8 @@ import { lossLabel } from '../systems/loss-log.js'
 import { sourceMedia, mediaFigure, installHistoricalMedia, bindMedia } from './historical-media.js'
 import { INQUIRIES } from '../data/inquiries.js'
 import { inquiryHtml, bindInquiry, installInquiryStyle } from './source-inquiry.js'
+import { RUMOR_NOTICE } from './grade-notice.js'
+export { RUMOR_NOTICE }
 
 const CSS = `
 .veil{position:fixed;inset:0;background:#0f1113cc;z-index:40;display:flex;
@@ -41,6 +43,7 @@ const CSS = `
 // 'staged' 는 "기록이 없어 지어냈다", 'source'/'textbook' + 우리말 옮김은
 // "기록은 있으나 오늘날 말로 옮겼다". 같은 문구로 뭉뚱그리면 실재하는 기록마저 지어낸 것처럼 읽힌다.
 export function noticeFor(card) {
+  if (card.grade === 'rumor') return `<div class="staged rumor">${RUMOR_NOTICE}</div>`
   if (card.grade === 'staged') {
     return `<div class="staged">※ 이 대목은 기록에 남아 있지 않습니다. 게임이 지어내 채운 장면입니다. 이런 것을 「재구성」이라고 합니다.</div>`
   }

@@ -125,9 +125,11 @@ describe('beatEntered — 문서를 줍다 저장한 것과 막 도착해 저장
     // 1막에는 탐색 비트가 없다 — 알현(kind:'audience')이 그 자리를 대신한다.
     // 그래서 「탐색 비트를 가진 첫 막」을 찾아서 걷는다. 막 번호를 손으로 박아 두면
     // 다음에 또 한 막이 알현으로 바뀔 때 이 시험이 조용히 엉뚱한 것을 검사한다.
-    const actIndex = ACTS.findIndex(a => beatsOf(a).some(b => b.kind === 'explore'))
+    // free(문서 없는 낮 — 운현궁)는 쓸 낮이 없으므로 뺀다.
+    const isBudgetDay = b => b.kind === 'explore' && !b.free
+    const actIndex = ACTS.findIndex(a => beatsOf(a).some(isBudgetDay))
     const act = ACTS[actIndex]
-    const exploreBeat = beatsOf(act).find(b => b.kind === 'explore')
+    const exploreBeat = beatsOf(act).find(isBudgetDay)
     let state = enterAct({ ...createState(), palace: act.palace, control: act.control }, act, actIndex)
 
     // throne(note) 을 정상적으로 지나 explore 에 들어간다

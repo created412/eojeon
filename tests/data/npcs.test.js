@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { NPCS, npcsAt, npcNear, npcHandledCardIds, npcCardIds } from '../../src/data/npcs.js'
+import { NPCS, npcsAt, npcNear, npcHandledCardIds, npcCardIds, portraitKeyOf } from '../../src/data/npcs.js'
 import { PALACES, baseOf } from '../../src/data/palaces.js'
 import { SOURCES } from '../../src/data/sources.js'
 import { ACTS } from '../../src/data/acts.js'
@@ -62,8 +62,12 @@ describe('신하 데이터 정합성', () => {
   // 비트가 부를 때 어전으로 걸어 들어온다(systems/audience.js castOf).
   // 다만 「아무 데도 안 서고 아무 알현에도 안 나오는 사람」은 게임에 없는 사람이다 —
   // 그건 여전히 운다.
-  const AUDIENCE_CAST = new Set(
-    ACTS.flatMap(a => beatsOf(a)).filter(b => b.kind === 'audience').flatMap(castOf))
+  // castOf 는 무대에 세울 사람만 센다 — 목소리로만 나오는 사람(from:'voice')도 알현에 나온 것이다.
+  const AUDIENCE_BEATS = ACTS.flatMap(a => beatsOf(a)).filter(b => b.kind === 'audience')
+  const AUDIENCE_CAST = new Set([
+    ...AUDIENCE_BEATS.flatMap(castOf),
+    ...AUDIENCE_BEATS.flatMap(b => (b.visitors ?? []).map(v => v.npc)),
+  ])
 
   it('모든 신하가 어디에 나오는지 스스로 밝힌다 — 서는 막이든, 부르는 알현이든', () => {
     for (const n of NPCS) {
@@ -102,10 +106,19 @@ describe('신하 데이터 정합성', () => {
       gaehwapa: [4],        // 개화파 관원 — 정강 14개조(1884)
       gungyo: [1],          // 셔먼호 — 1866
       sujeong: [1],         // 신미양요 — 1871
-      yeokgwan: [2],        // 서계 문제
+      yeokgwan: [],         // 서계 — 1873 알현에서 건넨다(2026-09-13)
       choeikhyeon: [],      // 3막의 두 알현에만 나온다 — 1873 계유상소, 1876 도끼 상소
       sugun: [2],           // 운요호 — 1875
-      sinheon: [2],         // 강화도 조약 — 1876
+      sinheon: [],          // 강화도 조약 — 1876 훈령 뒤 알현에서 건넨다(2026-09-13)
+      jaemyeon: [0],        // 운현궁 — 1863년 즉위 전의 형
+      haein: [0],           // 운현궁 청지기
+      mother: [0],          // 운현궁 안채 — 목소리로만
+      kimjwageun: [],       // 운현궁에 모시러 온 영의정 — 알현·행렬에만
+      minchisang: [],       // 함께 온 도승지 — 알현·행렬에만
+      jodaebi: [],          // 대왕대비 — 발 뒤의 목소리(1·2막 알현)
+      wangbi: [],           // 왕비 민씨 — 목소리로만(2막)
+      gungin: [],           // 궁인 — 완화군 소식(2막)
+      kimokgyun: [],        // 김옥균 — 5막 정변 전 알현
     })
   })
 
@@ -122,7 +135,13 @@ describe('신하 데이터 정합성', () => {
   })
 
   it('1874년 창덕궁(3막)에도 그 넷이 없다 — 그때도 이미 여덟 해 지난 말이었다', () => {
-    expect(npcsAt(baseOf, 'changdeok', 2).map(n => n.id)).toEqual(['gaehwa'])
+    expect(npcsAt(baseOf, 'changdeok', 2)).toEqual([])
+  })
+
+  // 막 하나가 여러 해다 — 1873년 경복궁에 1875년의 사람이 서지 않는다(2026-09-13).
+  it('해를 넘기 전에는 서지 않는다 — 운요호·개항론은 1875년부터', () => {
+    expect(npcsAt(baseOf, 'gyeongbok', 2, 1873).map(n => n.id)).toEqual([])
+    expect(npcsAt(baseOf, 'gyeongbok', 2, 1875).map(n => n.id).sort()).toEqual(['gaehwa', 'sugun'])
   })
 
   it('경복궁도 막을 지나면 비운다 — 4막에는 아무도 없다', () => {
@@ -176,4 +195,8 @@ describe('신하 데이터 정합성', () => {
     expect(found?.npc.id).toBe(target.id)
     expect(npcNear(list, target.x + 999, target.z, 6)).toBeNull()
   })
+})
+
+it('목소리로만 나오는 인물은 얼굴이 없다 — 3D 몸도 초상도 남자 관복뿐이라 지어 붙이지 않는다', () => {
+  expect(portraitKeyOf({ voice: true, rank: 'mid' })).toBe(null)
 })

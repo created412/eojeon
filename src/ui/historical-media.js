@@ -1,5 +1,7 @@
 import { HISTORICAL_MEDIA } from './historical-media-data.js'
 import { PORTRAITS } from './portraits-data.js'
+import { FEEDBACK_MEDIA } from './feedback-media-data.js'
+import { MOTHER_CLIP } from '../render/mother-person.js'
 
 // The relation is part of the visible caption: a contextual image must never
 // masquerade as the manuscript quoted by the game.
@@ -55,6 +57,7 @@ export function noteMedia(beat) {
 }
 const NAMES={흥선대원군:'heungseon',최익현:'choeikhyeon',신헌:'sinheon',고종:'gojong',김옥균:'kimokgyun'}
 export function speakerMedia(view) {
+ if(view.npcId==='mother'||view.portrait==='mother')return {src:FEEDBACK_MEDIA.mother,kind:'reconstruction',caption:'여흥부대부인 민씨',relation:'고종의 어머니 · 실제 초상이 아닌 게임의 재구성',clip:MOTHER_CLIP}
  const id=NAMES[view.name] ?? (['heungseon','choeikhyeon','sinheon','gojong','kimokgyun'].includes(view.npcId)?view.npcId:null)
  if(id)return {...HISTORICAL_MEDIA[id],id,kind:'historical',relation:'전해지는 실제 사진·초상 · 당시 대화 장면을 촬영한 자료는 아닙니다.'}
  const src=PORTRAITS[view.portrait]
@@ -71,7 +74,7 @@ export function mediaFigure(media,{portrait=false}={}) {
  return `<figure class="historical-figure${portrait?' speaker-portrait':''}${media.kind==='reconstruction'?' reconstructed':''}">
   <div class="media-heading">${media.kind==='reconstruction'?'재구성 인물':portrait?'기록 속 인물':'기록을 보다'}</div>
   ${media.id?`<button type="button" class="media-zoom" data-media="${media.id}" aria-label="${escape(media.caption)} 크게 보기">`:''}
-  <img class="historical-image" src="${media.src}" alt="${escape(media.caption)}" decoding="async">
+  <img class="historical-image" src="${media.src}" alt="${escape(media.caption)}" decoding="async"${media.clip?` style="clip-path:${media.clip}"`:''}>
   ${media.id?'<span class="media-enlarge">크게 보기 ⤢</span></button>':''}
   <figcaption><strong>${escape(media.caption)}</strong><span class="media-relation">${escape(media.relation)}</span>
   ${media.credit?`<small>${escape(media.credit)}</small>`:''}<span class="media-links">${source}${rights}</span></figcaption>

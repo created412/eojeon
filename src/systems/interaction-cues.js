@@ -1,6 +1,7 @@
 const ACTION = Object.freeze({
   document: '읽기',
   person: '말하기',
+  voice: '듣기',
   door: '가기',
 })
 

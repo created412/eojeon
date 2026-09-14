@@ -201,13 +201,16 @@ describe('알현 비트 — 데이터', () => {
   })
 
   // 알현이 대신한 그 자리 — 1막에는 이제 걸어 다니는 낮이 없다.
-  it('1막에는 탐색 비트가 없다 — 열두 살 임금이 문서를 찾아 걸어 다니지 않는다', () => {
-    expect(beatsOf(ACTS[0]).some(b => b.kind === 'explore')).toBe(false)
+  // 즉위 전 운현궁의 하루(2026-09-13)만 걷는다 — 그때는 아직 임금이 아니다.
+  it('왕이 된 뒤 1막에는 탐색 비트가 없다 — 열두 살 임금이 문서를 찾아 걸어 다니지 않는다', () => {
+    const explores = beatsOf(ACTS[0]).filter(b => b.kind === 'explore')
+    expect(explores.map(b => b.id)).toEqual(['unhyeon-day'])
+    expect(explores.every(b => beatsOf(ACTS[0]).indexOf(b) < beatsOf(ACTS[0]).findIndex(x => x.id === 'throne'))).toBe(true)
     expect(beatsOf(ACTS[0]).some(b => b.kind === 'audience')).toBe(true)
   })
 
   it('1막의 알현에서 흥선대원군이 임금 곁에 선다 — 섭정이 곁에 있다', () => {
-    const a = beatsOf(ACTS[0]).find(b => b.kind === 'audience')
+    const a = beatsOf(ACTS[0]).find(b => b.id === 'audience')
     expect(besideIds(a)).toContain('heungseon')
     expect(NPCS.find(n => n.id === 'heungseon')?.name).toBe('흥선대원군')
   })

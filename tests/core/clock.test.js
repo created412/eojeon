@@ -58,7 +58,7 @@ describe('하루 — 몇 사람의 아룀을 들을 수 있는가', () => {
 })
 
 describe('낮마다의 예산은 데이터가 정한다', () => {
-  const days = ACTS.flatMap((a, i) => beatsOf(a).filter(b => b.kind === 'explore').map(b => ({ act: a, beat: b })))
+  const days = ACTS.flatMap((a, i) => beatsOf(a).filter(b => b.kind === 'explore' && !b.free).map(b => ({ act: a, beat: b })))
 
   it('탐색하는 낮은 모두 스스로 예산을 밝힌다', () => {
     expect(days.length).toBeGreaterThan(0)

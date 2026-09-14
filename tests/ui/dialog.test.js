@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { noticeFor } from '../../src/ui/dialog.js'
+import { noticeFor, RUMOR_NOTICE } from '../../src/ui/dialog.js'
 
 // noticeFor 가 정직 고지를 고르는 세 갈래. 지금은 'staged' 등급을 쓰는 카드가
 // 없어 이 분기가 죽은 코드처럼 보이지만, 2단계에서 재구성 카드가 다시 들어온다 —
@@ -31,4 +31,11 @@ describe('noticeFor — 사료 카드가 다는 정직 고지', () => {
     expect(noticeFor({ grade: 'textbook' })).toBe('')
     expect(noticeFor({ grade: 'source' })).toBe('')
   })
+})
+
+it('소문 등급은 확인된 기록이 아니라고 따로 밝힌다', () => {
+  const html = noticeFor({ grade: 'rumor' })
+  expect(html).toContain('rumor')
+  expect(html).toContain(RUMOR_NOTICE)
+  expect(RUMOR_NOTICE).toContain('소문')
 })

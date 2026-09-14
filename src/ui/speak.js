@@ -13,6 +13,7 @@
 // 그대로 보인다 — 그것이 이 게임이 「메타버스」인 이유다.
 import { speakerMedia, mediaFigure, installHistoricalMedia, bindMedia } from './historical-media.js'
 import { PAPER } from './paper-data.js'
+import { revealCount } from '../systems/voice.js'
 
 // 한 글자가 나오는 데 걸리는 시간. **프레임이 아니라 시간이다.**
 export const CHAR_MS = 26
@@ -62,7 +63,8 @@ const CSS = `
 
 let styled = false
 
-export function createSpeak(root) {
+// voice — systems/voice.js 의 createVoicePlayer(). 없으면 예전처럼 글자만 찍는다.
+export function createSpeak(root, { voice = null } = {}) {
   installHistoricalMedia()
   if (!styled) {
     const style = document.createElement('style')
@@ -77,6 +79,7 @@ export function createSpeak(root) {
 
   function close() {
     if (timer) { clearInterval(timer); timer = null }
+    voice?.stop()
     el?.remove()
     el = null
     advance = null
@@ -127,11 +130,30 @@ export function createSpeak(root) {
         dots.forEach((d, k) => d.classList.toggle('on', k <= i))
         nextEl.textContent = i === lines.length - 1 ? '▼ 닫기' : '▼'
         const text = lines[i]
-        const step = Math.max(8, Math.min(CHAR_MS, MAX_TYPE_MS / Math.max(1, text.length)))
-        let n = 0
+        voice?.stop()
+        if (timer) clearInterval(timer)
         typing = true
         paint(0)
-        if (timer) clearInterval(timer)
+        // 이 줄에 목소리가 있으면 소리의 시계를 따라 찍는다. 소리가 막히면(음소거·자동 재생 차단)
+        // 그 자리에서 아래의 글자 찍기로 넘어간다 — 대화가 멈추지 않는다.
+        const clip = voice?.clipFor(text.includes('「') ? view.npcId : 'gojong-narrator', text)
+        const handle = clip ? voice.play(clip) : null
+        if (handle) {
+          timer = setInterval(() => {
+            if (handle.failed) { clearInterval(timer); timer = null; typeByTime(text); return }
+            const n = Math.min(text.length, revealCount(clip.t, handle.currentMs()))
+            paint(n)
+            if (handle.ended || n >= text.length) { clearInterval(timer); timer = null; paint(text.length); typing = false }
+          }, 30)
+          return
+        }
+        typeByTime(text)
+      }
+
+      function typeByTime(text) {
+        const step = Math.max(8, Math.min(CHAR_MS, MAX_TYPE_MS / Math.max(1, text.length)))
+        let n = lineEl.textContent.length
+        typing = true
         timer = setInterval(() => {
           n += 1
           paint(n)
@@ -146,6 +168,7 @@ export function createSpeak(root) {
           paint(lines[i].length)
           return
         }
+        // 다음 줄로 넘기거나 닫으면 지금 말은 멈춘다. 글자만 다 보이게 한 첫 누름에서는 말을 끊지 않는다.
         if (i >= lines.length - 1) { close(); resolve(); return }
         startLine()
       }

@@ -32,7 +32,7 @@ import { ILSA_NOTE } from '../../src/systems/brush-trace.js'
 // 등급을 만들면 학생이 외울 낱말만 하나 늘고, 정작 무엇이 논쟁인지는 여전히
 // 문장으로 읽어야 한다. 문장이 그 일을 하게 둔다.
 
-const GRADE_WORD = { textbook: '교과서', source: '사료', staged: '재구성' }
+const GRADE_WORD = { textbook: '교과서', source: '사료', staged: '재구성', rumor: '소문' }
 
 // 데이터 나무를 통째로 훑어 문자열을 모은다 — 「어느 필드에 적혀 있었나」를 손으로
 // 세면 새 필드가 생기는 순간 검사가 그 자리를 조용히 놓친다.
@@ -128,7 +128,7 @@ describe('화면에 적힌 등급이 데이터의 등급과 같은 말을 한다
     expect(graded.length).toBeGreaterThan(20)
   })
 
-  it('모든 grade 값이 셋 중 하나다 — 네 번째 등급을 몰래 만들지 않는다', () => {
+  it('모든 grade 값이 넷 중 하나다 — 소문(rumor)은 드러내 놓고 더했다', () => {
     for (const { path, node } of graded) {
       expect(Object.keys(GRADE_WORD), path).toContain(node.grade)
     }

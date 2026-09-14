@@ -2,8 +2,9 @@ import { describe, it, expect } from 'vitest'
 import {
   kingSpot, besideSpot, visitorSpot, doorSpot, throneZ,
   walkAt, yawToward, castOf, besideIds, visitorsOf, rebukeOf, entersOf,
-  KING_FROM_THRONE, VISITOR_GAP, BESIDE_GAP,
+  KING_FROM_THRONE, VISITOR_GAP, BESIDE_GAP, VISITOR_SIDE, visitorSpotFor, audienceLeft,
 } from '../../src/systems/audience.js'
+import { PALACES } from '../../src/data/palaces.js'
 import { THRONE_DEPTH, THRONE_WIDTH, ROOM_SHRINK } from '../../src/render/palace.js'
 
 // 인정전과 같은 모양의 방 하나로 잰다 — 실제 데이터로 재는 검사는
@@ -134,5 +135,32 @@ describe('알현 — 비트가 부르는 사람', () => {
   it('꾸중은 곁에 선 사람의 입으로 나간다', () => {
     expect(rebukeOf(beat)).toEqual({ npcId: 'heungseon', line: beat.blockLine })
     expect(rebukeOf({ beside: 'x' })).toBe(null)   // 적어 두지 않았으면 아무 말도 안 한다
+  })
+})
+
+describe('알현 — 임금이 걸은 뒤', () => {
+  it('아뢰는 사람은 임금이 지금 선 자리 앞에 선다', () => {
+    const k = { x: -3, z: 13 }
+    const v = visitorSpotFor(ROOM, k)
+    expect(v.x).toBeCloseTo(k.x + VISITOR_SIDE, 5)
+    expect(v.z).toBeCloseTo(k.z + VISITOR_GAP, 5)
+  })
+  it('임금이 벽에 붙어 서도 아뢰는 자리는 방 안이다', () => {
+    const v = visitorSpotFor(ROOM, { x: 7.5, z: 18 })
+    expect(Math.abs(v.x - ROOM.x)).toBeLessThan((ROOM.w * ROOM_SHRINK) / 2)
+    expect(Math.abs(v.z - ROOM.z)).toBeLessThan((ROOM.d * ROOM_SHRINK) / 2)
+  })
+  it('audienceLeft — 방 안이면 false, 문밖 마당이면 true', () => {
+    const def = PALACES.changdeok
+    expect(audienceLeft(def, 'injeongjeon', 0, 14)).toBe(false)
+    expect(audienceLeft(def, 'injeongjeon', 0, 26)).toBe(true)
+  })
+})
+
+describe('알현 — 목소리로만 나오는 사람', () => {
+  it('무대에 세우지 않고, 걸어 들어오지도 않는다', () => {
+    const beat = { beside: 'heungseon', visitors: [{ npc: 'jodaebi', from: 'voice' }, { npc: 'hojo' }] }
+    expect(castOf(beat)).toEqual(['heungseon', 'hojo'])
+    expect(entersOf({ npc: 'jodaebi', from: 'voice' })).toBe(false)
   })
 })

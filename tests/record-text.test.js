@@ -4,6 +4,8 @@ import { ACTS } from '../src/data/acts.js'
 import { createState } from '../src/core/state.js'
 import { pickUp, markRead, plunder, survive } from '../src/systems/codex.js'
 import { recordLoss } from '../src/systems/loss-log.js'
+import { serialize, deserialize } from '../src/core/state.js'
+import { recordPreservation } from '../src/systems/preservation.js'
 
 function hold(state, ids) {
   return ids.reduce((s, id) => markRead(pickUp(s, id), id), state)
@@ -34,6 +36,21 @@ describe('describeDecision — 결정 하나를 질문·고른 문구로 되짚�
 })
 
 describe('buildRecordText — 「내 기록 복사」에 실제로 들어가는 글', () => {
+  it('일부만 채운 빈칸도 저장을 거쳐 복사할 때 원래 칸의 순서를 유지한다', () => {
+    const state = deserialize(serialize({ ...createState(), inquiries: {
+      'joseon-chaeryak': { blanks: { 3: '일본' }, text: '작성 중' },
+    } }))
+    expect(buildRecordText(state, ACTS)).toContain('채운 빈칸 — (빈칸) / (빈칸) / (빈칸) / 일본')
+  })
+
+  it('대화재 선택과 이유는 저장 뒤에도 물건 이름으로 복사된다', () => {
+    const state = deserialize(serialize(recordPreservation(createState(), 'great-fire', {
+      selected: ['daebo', 'busin'], reason: '임금의 명령이 진짜임을 증명한다.',
+    })))
+    const text=buildRecordText(state, ACTS)
+    expect(text).toContain('꺼내라 한 것 — 대보(大寶) / 부신(符信)')
+    expect(text).toContain('그 이유 — 임금의 명령이 진짜임을 증명한다.')
+  })
   it('사료의 근거·첫 해석·비교 뒤 보완을 함께 보존한다', () => {
     const state = { ...createState(), inquiries: { seogye: {
       selected: ['皇', '勅'], text: '교린의 격식과 충돌한다.', compared: true,

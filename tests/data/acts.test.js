@@ -48,11 +48,11 @@ describe('막 정의', () => {
     }
   })
 
-  it('1막 「즉위」는 창덕궁에서 조작권 C 로 시작하고 끝까지 C 다', () => {
+  it('1막 「즉위」는 운현궁에서 시작해 창덕궁으로 가고, 조작권은 끝까지 C 다', () => {
     const a = actById('enthronement')
-    expect(a.palace).toBe('changdeok')
+    expect(a.palace).toBe('unhyeon')
     expect(controlTimeline(a)).toEqual(['C'])
-    expect(palaceTimeline(a)).toEqual(['changdeok'])
+    expect(palaceTimeline(a)).toEqual(['unhyeon', 'changdeok'])
   })
 })
 
@@ -284,9 +284,14 @@ describe('3막 「친정」', () => {
     expect(all).not.toContain('들고 나')
   })
 
-  it('세 장만 남는 까닭이 화면에 적혀 있다 — 규칙의 결과만이 아니라 뜻이', () => {
+  // 2026-09-13 — 사료 카드를 태우는 가상 규칙 대신, 실록이 적은 실제 소실물로 묻는다.
+  it('대화재는 실록이 적은 실제 소실물로 묻고, 실제로 건진 것은 대보와 세자 옥인뿐이다', () => {
     const s = beatsOf(a).find(b => b.kind === 'salvage')
-    expect(s.footer).toContain('남은 기록만큼')
+    expect(s.treasures.map(t => t.id).sort()).toEqual(['busin', 'daebo', 'eopil', 'oksae', 'seja-in'])
+    expect(s.treasures.filter(t => t.saved).map(t => t.id).sort()).toEqual(['daebo', 'seja-in'])
+    expect(s.actual.origin).toContain('11월 4일')
+    expect(s.pick).toBe(2)
+    expect(s.footer).toContain('옥새와 부신')
   })
 
   it('「830여 칸」이 실록 원문 표현임을 밝히고 이견도 적는다', () => {
@@ -598,7 +603,8 @@ describe('5막 「갑신」', () => {
 
   it('우정총국 맵을 만들지 않았다 — 임금이 간 적 없는 곳에 카메라를 세우지 않는다', () => {
     expect(Object.keys(PALACES)).not.toContain('ujeongchongguk')
-    const first = beatsOf(a)[0]
+    // 첫 비트는 이제 정변 전 김옥균의 알현이다(2026-09-13) — 정변의 밤을 알리는 글 화면을 id 로 찾는다.
+    const first = beatsOf(a).find(b => b.id === 'gapsin-open')
     expect(first.lines.join(' ')).toContain('임금은 그 자리에 없었다')
   })
 
@@ -717,7 +723,9 @@ describe('5막 「갑신」', () => {
 
   it('막을 닫는 비트가 따로 있고, 거기서 이어 횟수를 세지 않는다 — 판정 R55', () => {
     const ids = beatsOf(a).map(b => b.id)
-    expect(ids.at(-2)).toBe('gapsin-after')
+    // 윤치호의 일기(gapsin-after) 뒤에 김옥균의 끝(kimokgyun-fate)이 한 장 붙었다(2026-09-13).
+    expect(ids.at(-3)).toBe('gapsin-after')
+    expect(ids.at(-2)).toBe('kimokgyun-fate')
     expect(ids.at(-1)).toBe('end')
     const text = JSON.stringify(beatsOf(a).at(-1))
     expect(text).not.toMatch(/여덟 번|아홉 번|열 번|[0-9]+\s*번 옮/)
@@ -887,5 +895,80 @@ describe('막 안에서 손으로 적은 햇수가 그 막의 해와 맞는다 (
   it('막을 닫는 비트는 여전히 햇수를 손으로 적지 않는다', () => {
     const last = beatsOf(ACTS.at(-1)).at(-1).lines.join(' ')
     expect(last).not.toMatch(/(열|스무|스물|서른)\S*\s*해/)
+  })
+})
+
+describe('1막 앞머리 — 운현궁의 명복', () => {
+  const beats = beatsOf(ACTS[0])
+  it('운현궁에서 시작해 인정전으로 간다', () => {
+    expect(ACTS[0].palace).toBe('unhyeon')
+    expect(beats.slice(0, 4).map(b => b.id)).toEqual(['unhyeon-note', 'unhyeon-day', 'unhyeon-summons', 'unhyeon-procession'])
+    expect(beats.find(b => b.id === 'throne').palace).toBe('changdeok')
+  })
+  it('운현궁에서 창덕궁으로 가는 길은 이어가 아니다 — 왕이 되기 전의 걸음이다', () => {
+    expect(beats.filter(b => b.kind === 'move')).toHaveLength(0)
+  })
+  it('모시러 온 사람은 실록대로 김좌근과 민치상이다', () => {
+    const s = beats.find(b => b.id === 'unhyeon-summons')
+    expect(s.visitors.map(v => v.npc)).toEqual(expect.arrayContaining(['kimjwageun', 'minchisang']))
+    expect(s.origin).toContain('철종실록')
+  })
+})
+
+it('1막 알현 — 발 뒤의 조 대비가 먼저 말하고, 김좌근이 물러간다', () => {
+  const a = beatsOf(ACTS[0]).find(b => b.id === 'audience')
+  expect(a.visitors[0]).toMatchObject({ npc: 'jodaebi', from: 'voice' })
+  expect(a.visitors.some(v => v.npc === 'kimjwageun')).toBe(true)
+})
+
+describe('2막 — 고종의 사사로운 삶', () => {
+  const beats = beatsOf(ACTS[1])
+  const ids = beats.map(b => b.id)
+  it('시간 순서로 끼운다 — 박해 → 철렴 → 가례 → 병인양요 → 완화군 → 경복궁 → 신미양요 → 척화비 → 원자', () => {
+    const order = ['byeongin-audience', 'cheolryeom', 'garye-note', 'garye-audience', 'day-changdeok',
+      'oegyujanggak-plunder', 'wanhwa', 'wanhwa-rumor', 'move-1868-out', 'move-1868',
+      'sinmi-dispatch', 'cheokhwabi-brush', 'wonja', 'wonja-rumor', 'end']
+    const at = order.map(id => ids.indexOf(id))
+    expect(at.every(i => i >= 0), JSON.stringify(at)).toBe(true)
+    expect([...at].sort((a, b) => a - b)).toEqual(at)
+  })
+  it('소문은 제 비트에 따로 선다', () => {
+    for (const id of ['wanhwa-rumor', 'wonja-rumor']) expect(beats.find(b => b.id === id).grade).toBe('rumor')
+  })
+  it('원자의 날짜는 실록대로다', () => {
+    const w = beats.find(b => b.id === 'wonja')
+    expect(w.origin).toContain('고종실록')
+    expect(w.lines.join(' ')).toContain('11월 4일')
+    expect(w.lines.join(' ')).toContain('11월 8일')
+  })
+})
+
+it('3막 — 아버지가 물러간 자리를 고종이 말하고, 원자(순종)가 산다', () => {
+  const beats = beatsOf(ACTS[2])
+  expect(beats.find(b => b.id === 'doors-open').lines.join(' ')).toContain('처음으로 아무도 곁에 서 있지 않다')
+  const s = beats.find(b => b.id === 'sunjong')
+  expect(s.lines.join(' ')).toContain('이번 아이는 살았다')
+  expect(beats.indexOf(s)).toBeGreaterThan(beats.findIndex(b => b.id === 'move-1873'))
+  expect(beats.indexOf(s)).toBeLessThan(beats.findIndex(b => b.id === 'move-1875'))
+})
+
+describe('4·5막 보강 — 난 전의 집안, 정변 전의 믿음', () => {
+  const imo = beatsOf(ACTS[3]).map(b => b.id), gap = beatsOf(ACTS[4]).map(b => b.id)
+  it('4막: 완화군의 죽음 → 이재선 → 세자 가례가 난보다 먼저, 아버지의 귀환이 대원군 집권 글 앞, 왕비 환궁이 제물포 뒤', () => {
+    const at = id => imo.indexOf(id)
+    expect(at('wanhwa-death')).toBeGreaterThan(at('imo-open'))
+    expect(at('wanhwa-death')).toBeLessThan(at('jaeseon'))
+    expect(at('jaeseon')).toBeLessThan(at('seja-garye'))
+    expect(at('seja-garye')).toBeLessThan(at('imo-rush'))
+    expect(at('imo-father-returns')).toBe(at('imo-daewongun') - 1)
+    expect(at('queen-return')).toBe(at('imo-jemulpo') + 1)
+  })
+  it('이재선 사사는 실록 날짜를 댄다', () => {
+    expect(beatsOf(ACTS[3]).find(b => b.id === 'jaeseon').origin).toContain('10월 27일')
+  })
+  it('5막: 김옥균의 알현으로 열고, 그의 끝을 닫기 전에 적는다 — 알현은 한쪽 회고라 재구성이다', () => {
+    expect(gap[0]).toBe('kimokgyun-audience')
+    expect(beatsOf(ACTS[4])[0].grade).toBe('staged')
+    expect(beatsOf(ACTS[4])[0].origin).toContain('갑신일록')
   })
 })

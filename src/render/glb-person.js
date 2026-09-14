@@ -48,6 +48,71 @@ function modelKey(spec) {
 // base64 라도 브라우저가 풀고 지오메트리를 세우는 데 시간이 든다. 다 되기 전에는
 // 아무것도 그리지 않는다 — 반쯤 선 사람이 번쩍이는 것보다 잠깐 없는 편이 낫다.
 const loaded = new Map()       // key -> { scene, clips }
+// 원본 왕복은 다음 장면에서도 쓴다. 사복용 복제본만 바꾸고, 다시 세울 때는 재사용한다.
+const commonerGeometries = new WeakMap()
+const commonerMaterials = new WeakMap()
+
+export function applyCommonerAttire(THREE, root) {
+  root.traverse(o => {
+    if (!o.isSkinnedMesh) return
+    const source = o.geometry
+    let geometry = commonerGeometries.get(source)
+    if (!geometry) {
+      geometry = source.clone()
+      const joints = source.getAttribute('skinIndex'), weights = source.getAttribute('skinWeight')
+      const protectedBones = new Set(o.skeleton.bones.flatMap((b, i) =>
+        /head|neck|hand/i.test(b.name) ? [i] : []))
+      const mask = new Float32Array(source.getAttribute('position').count).fill(1)
+      // 얼굴·손도 옷과 한 텍스처에 있다. 피부색 범위에 기대지 않고 해당 뼈가 영향을
+      // 주로 움직이는 면 전체를 제외해야 붉은 입술·손의 그늘까지 본래 색을 지킨다.
+      const protectedVertices = mask.map((_, i) => {
+        let weight = 0, headWeight = 0
+        for (let c = 0; c < 4; c++) {
+          const joint = joints.getComponent(i, c)
+          if (protectedBones.has(joint)) weight += weights.getComponent(i, c)
+          if (/head|neck/i.test(o.skeleton.bones[joint]?.name ?? '')) headWeight += weights.getComponent(i, c)
+        }
+        // 자동 뼈대에는 옷자락까지 손의 작은 가중치가 섞인다. 그것까지 피부로 보면
+        // 도포에 붉은 삼각형이 남으므로 머리·손이 주로 움직이는 면만 보호한다.
+        return headWeight >= 0.5 || weight >= 0.9 ? 1 : 0
+      })
+      const indices = source.index?.array ?? Array.from(mask.keys())
+      for (let i = 0; i < indices.length; i += 3) {
+        const triangle = [indices[i], indices[i + 1], indices[i + 2]]
+        if (triangle.some(v => protectedVertices[v])) for (const v of triangle) mask[v] = 0
+      }
+      geometry.setAttribute('attireMask', new THREE.BufferAttribute(mask, 1))
+      commonerGeometries.set(source, geometry)
+    }
+    o.geometry = geometry
+    const recolor = sourceMaterial => {
+      if (commonerMaterials.has(sourceMaterial)) return commonerMaterials.get(sourceMaterial)
+      const material = sourceMaterial.clone()
+      material.onBeforeCompile = shader => {
+        shader.vertexShader = shader.vertexShader
+          .replace('#include <common>', '#include <common>\nattribute float attireMask; varying float vAttireMask;')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvAttireMask = attireMask;')
+        shader.fragmentShader = shader.fragmentShader
+          .replace('#include <common>', '#include <common>\nvarying float vAttireMask;')
+          .replace('#include <map_fragment>', `#include <map_fragment>
+            if (vAttireMask > 0.999) {
+              vec3 c = diffuseColor.rgb;
+              bool red = c.r > c.g * 1.45 && c.r > c.b * 1.45;
+              bool gold = c.r > c.g * 1.05 && c.g > c.b * 1.35;
+              if ((red || gold) && c.r > 0.025) {
+                float shade = 0.85 + 0.15 * dot(c, vec3(0.2126, 0.7152, 0.0722));
+                diffuseColor.rgb = vec3(0.31, 0.53, 0.49) * shade;
+              }
+            }`)
+      }
+      // 왕복과 다른 셰이더로 캐시하고, 금색 보도 옷과 같은 명도로 눌러 문양을 흐린다.
+      material.customProgramCacheKey = () => 'commoner-attire-v1'
+      commonerMaterials.set(sourceMaterial, material)
+      return material
+    }
+    o.material = Array.isArray(o.material) ? o.material.map(recolor) : recolor(o.material)
+  })
+}
 let readyResolve = null
 const readyPromise = new Promise(res => { readyResolve = res })
 let loading = false
@@ -169,6 +234,7 @@ export function buildPerson(THREE, spec = {}) {
     const src = loaded.get(key)
     if (!src || state.model) return
     const obj = cloneSkinned(src.scene)
+    if (spec.model === 'king' && spec.attire === 'commoner') applyCommonerAttire(THREE, obj)
     fitToHeight(THREE, obj, figureH)
     feet.add(obj)
     state.model = obj
@@ -203,6 +269,7 @@ export function buildPerson(THREE, spec = {}) {
 // 안 버려야 한다는 것을 그때는 몰랐다. 사람을 화면에서 내리는 것은 부모에서 떼는
 // 것으로 충분하다 — 무거운 것은 모델 여섯 벌뿐이고 그것은 계속 쓴다.
 export function disposePerson(pivot) {
+  pivot.userData.disposeFigure?.()
   pivot.parent?.remove(pivot)
 }
 

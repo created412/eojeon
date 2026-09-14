@@ -1,4 +1,4 @@
-export const MAX_KEEP = 3
+export const MAX_KEEP = 2
 
 const CSS = `
 .salvage{position:fixed;inset:0;z-index:57;display:flex;flex-direction:column;align-items:center;
@@ -10,8 +10,8 @@ const CSS = `
 .salvage h2{margin:0;font-size:16px;color:#e08a3a;letter-spacing:5px;font-weight:400;z-index:1}
 .salvage p{margin:0;font-size:17px;color:#e8e2d4;line-height:1.8;max-width:620px;text-align:center;z-index:1}
 .salvage .grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
-  max-width:720px;max-height:46vh;overflow:auto;z-index:1;padding:2px}
-.salvage .doc{width:214px;text-align:left;padding:10px 12px;border-radius:3px;cursor:pointer;
+  max-width:720px;z-index:1;padding:2px}
+.salvage .doc{flex:0 0 auto;width:214px;text-align:left;padding:10px 12px;border-radius:3px;cursor:pointer;
   background:#e8e2d4;color:#23201a;border:2px solid #e8e2d4;font-size:13px;line-height:1.5}
 .salvage .doc small{display:block;color:#6b6558;font-size:11px;margin-top:4px}
 .salvage .doc[aria-pressed="true"]{border-color:#e0a23a;box-shadow:0 0 0 3px #e0a23a55}
@@ -28,16 +28,14 @@ const CSS = `
 `
 
 let styled = false
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
 
-// D2 화재 — 사초함에서 최대 세 장이 살아남는다.
+// D2 화재 — 실록이 적은 소실물 가운데 무엇을 먼저 꺼내라 할 것인가.
 //
-// **임금이 안고 뛰는 화면이 아니다.** 기록을 지고 나오는 것은 사관과 승정원 관원의
-// 일이고, 임금이 하는 일은 무엇을 먼저 꺼내라 이르는 것이다 — 이 게임에서 임금이
-// 내내 하는 그 일이다. 그래서 화면 위에 그 말을 청하는 사람(view.asker)이 서 있고,
-// 단추는 「들고 나간다」가 아니라 「이것부터 꺼내라 이르신다」다.
-// 여기에 시계는 없다(촉박은 C1·C2·C3
-// 뿐이다). 정확히 limit(가진 것이 셋보다 적으면 그 수)만큼 고르기 전까지 '들고 나간다'는
-// 눌리지 않는다. survive() 가 나머지를 전부 잃게 만든다 — 여기서는 무엇을 고를지만 묻는다.
+// 사관이 여쭙고, 임금은 두 가지를 고르고 이유를 적는다. 그 뒤 실제로 무엇이 남았는지(대보·세자 옥인)와
+// 견준다. 시계는 없다 — 촉박은 C1·C2·C3 뿐이다. 사초함의 사료는 건드리지 않는다.
+import { compareWithActual } from '../systems/preservation.js'
+
 export function createSalvage(root) {
   if (!styled) {
     const style = document.createElement('style')
@@ -49,8 +47,9 @@ export function createSalvage(root) {
   return {
     open(view) {
       return new Promise(resolve => {
-        const limit = Math.min(MAX_KEEP, view.cards.length)
-        const chosen = new Set()
+        const items = view.treasures ?? []
+        const limit = Math.min(view.pick ?? 2, items.length)
+        const chosen = new Set((view.initial?.selected ?? []).filter(id => items.some(t => t.id === id)).slice(0, limit))
 
         const el = document.createElement('div')
         el.className = 'salvage'
@@ -59,21 +58,32 @@ export function createSalvage(root) {
           ${view.lines.map(l => `<p>${l}</p>`).join('')}
           ${view.asker ? `<div class="asker"><b>${view.asker.name}</b>` +
             `${view.asker.lines.map(l => `<div>${l}</div>`).join('')}</div>` : ''}
-          <div class="grid">${view.cards.map(c => `
-            <button class="doc" data-id="${c.id}" aria-pressed="false">${c.title}
-              <small>${c.origin}</small></button>`).join('')}</div>
+          <div class="grid">${items.map(t => `
+            <button class="doc" data-id="${esc(t.id)}" aria-pressed="false"><b>${esc(t.name)}</b>
+              <small>${esc(t.gloss)}</small></button>`).join('')}</div>
           <div class="count"></div>
-          <div class="hint">${limit}장을 다 고르면 이 단추가 눌립니다.</div>
+          <label class="preservation-reason" style="z-index:1;width:min(620px,100%);color:#e8e2d4;font-size:14px;line-height:1.7">왜 이 두 가지를 먼저 꺼내라 하겠습니까?
+          <textarea class="reason" rows="3" maxlength="1600" style="display:block;width:100%;margin-top:8px;padding:10px;background:#eee5d0;color:#28221b;font:15px/1.6 system-ui" placeholder="이것이 없으면 나라 일에서 무엇이 멈추는지 적어 보세요."></textarea></label>
+          <div class="hint">${limit}가지를 고르고 이유를 한 문장 이상 적어 주세요.</div>
           <div class="origin">${view.origin}</div>
-          <button class="go" disabled>이것부터 꺼내라 이르신다</button>`
+          <button class="go" disabled>꺼내라 이른다</button>`
         root.appendChild(el)
 
         const go = el.querySelector('button.go')
         const count = el.querySelector('.count')
+        const reason = el.querySelector('.reason')
+        reason.value = view.initial?.reason ?? ''
+        reason.addEventListener('input', () => { refresh(); save() })
+
+        function save() {
+          if (view.onSave?.({ selected: [...chosen], reason: reason.value }) === false) {
+            el.querySelector('.hint').textContent = '기록을 기기에 저장하지 못했습니다. 작성한 내용을 복사해 두세요.'
+          }
+        }
 
         function refresh() {
-          count.textContent = `${chosen.size} / ${limit} 장`
-          go.disabled = chosen.size !== limit
+          count.textContent = `${chosen.size} / ${limit}`
+          go.disabled = chosen.size !== limit || reason.value.replace(/\s/g,'').length < 8
           el.querySelectorAll('.doc').forEach(b => {
             const on = chosen.has(b.dataset.id)
             b.setAttribute('aria-pressed', String(on))
@@ -87,10 +97,26 @@ export function createSalvage(root) {
             if (chosen.has(id)) chosen.delete(id)
             else if (chosen.size < limit) chosen.add(id)
             refresh()
+            save()
           })
         })
 
-        go.addEventListener('click', () => { el.remove(); resolve([...chosen]) })
+        go.addEventListener('click', () => {
+          if (go.disabled) return
+          const result = { selected: [...chosen], reason: reason.value.trim() }
+          const cmp = compareWithActual(items, result.selected)
+          const name = id => esc(items.find(t => t.id === id)?.name ?? id)
+          const mine = result.selected.map(id => `${name(id)} — ${cmp.savedChosen.includes(id) ? '실제로도 건졌다' : '실제로는 탔다'}`)
+          el.innerHTML = `<h2>실 제 로 는</h2>
+            <div class="asker"><b>내가 꺼내라 한 것</b>${mine.join('<br>')}</div>
+            ${(view.actual?.lines ?? []).map(l => `<p>${l}</p>`).join('')}
+            ${view.question ? `<div class="asker"><b>생각해 볼 물음</b>${esc(view.question)}</div>` : ''}
+            <div class="asker"><b>내가 남긴 이유</b>${esc(result.reason)}</div>
+            ${view.footer ? `<p>${view.footer}</p>` : ''}
+            <div class="origin">${view.actual?.origin ?? ''}</div>
+            <button class="go">불길을 피해 나간다</button>`
+          el.querySelector('.go').addEventListener('click', () => { el.remove(); resolve(result) })
+        })
         refresh()
       })
     },

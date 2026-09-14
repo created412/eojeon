@@ -4,17 +4,17 @@ import { createCinematicHud } from './ui/cinematic-hud.js'
 import { installCinematicStyle } from './ui/cinematic-style.js'
 import { stageEvent } from './systems/event-staging.js'
 import { createInput, isTyping } from './input/input.js'
-import { PALACES, pickupNear, roomLabel, baseOf } from './data/palaces.js'
+import { PALACES, pickupNear, roomLabel, roomAt, baseOf } from './data/palaces.js'
 import { npcsAt, npcNear, npcHandledCardIds, npcCardIds, npcById, portraitKeyOf } from './data/npcs.js'
 import {
   roomOf, kingSpot, besideSpot, visitorSpot, doorSpot, walkAt, yawToward,
-  besideIds, visitorsOf, castOf, rebukeOf, entersOf, departIds, propOf, propSpot,
-  escortOffsets, APPROACH_MS, DEPART_MS, REBUKE_MS, PROCESSION_MS,
+  besideIds, visitorsOf, castOf, rebukeOf, entersOf, departIds, propOf,
+  escortOffsets, APPROACH_MS, DEPART_MS, REBUKE_MS, PROCESSION_MS, visitorSpotFor, audienceLeft,
 } from './systems/audience.js'
 import { createState, serialize, deserialize, SAVE_KEY } from './core/state.js'
 import { spend, isDusk, costOf } from './core/clock.js'
 import { stopAt, stopHint, markStopPaid, markStopDone, isStopDone, pendingStopId, stopById } from './systems/outing.js'
-import { pickUp, markRead, plunder, survive, isLost } from './systems/codex.js'
+import { pickUp, markRead, plunder, isLost } from './systems/codex.js'
 import { recordLoss, LOSS_LABEL, everRead, lossReason } from './systems/loss-log.js'
 import { sourceById } from './data/sources.js'
 import { ACTS } from './data/acts.js'
@@ -22,11 +22,18 @@ import { createFlow } from './core/flow.js'
 import { remainingMs } from './core/countdown.js'
 import { step, axisToward } from './systems/movement.js'
 import { beatAt, beatsOf, isActOver, enterAct, applyBeat, advance, isBeatActive, applyGrant, visitorCardIds, yearAtBeat } from './systems/scenario.js'
-import { kingLookAt } from './systems/king-age.js'
+import { kingLookAt, kingAttireAt } from './systems/king-age.js'
 import { advancePrices, riceSeriesUpTo, riceLabel } from './systems/prices.js'
 import { createMinimap } from './ui/minimap.js'
 import { createDialog } from './ui/dialog.js'
 import { createSpeak } from './ui/speak.js'
+import { createVoicePlayer } from './systems/voice.js'
+import { VOICE } from './data/voice-data.js'
+import { NARRATION } from './data/narration-data.js'
+import { BGM } from './data/bgm-data.js'
+import { createBgm, bgmForBeat } from './systems/bgm.js'
+import { recordPreservation } from './systems/preservation.js'
+import { INQUIRIES, clozeBlanks } from './data/inquiries.js'
 import { installPaperVars } from './ui/paper-css.js'
 import { createCouncil } from './ui/council-ui.js'
 import { createSullyeom } from './ui/veil-screen.js'
@@ -312,10 +319,18 @@ export function buildRecordText(state, acts) {
     ...(blocks.length ? blocks : ['(아직 정한 것이 없다)']),
     ...Object.entries(state.inquiries ?? {}).flatMap(([id, record]) => [
       '', `[사료 탐구] ${sourceById(id)?.title ?? id}`,
-      `표시한 근거 — ${(record.selected ?? []).join(' / ') || '(없음)'}`,
+      // 빈칸 채우기(조선책략)는 표시한 근거 대신 채운 칸을 적는다.
+      INQUIRIES[id]?.kind === 'cloze'
+        ? `채운 빈칸 — ${clozeBlanks(INQUIRIES[id]).map((_, i) => record.blanks?.[i] || '(빈칸)').join(' / ')}`
+        : `표시한 근거 — ${(record.selected ?? []).join(' / ') || '(없음)'}`,
       `나의 해석 — ${record.text || '(작성 중)'}`,
       `해설과 비교 — ${record.compared ? '비교함' : '아직 비교하지 않음'}`,
       ...(record.revision ? [`보완한 생각 — ${record.revision}`] : []),
+    ]),
+    ...Object.values(state.preservation ?? {}).flatMap(record => [
+      '', '[경복궁 대화재] 무엇을 먼저 꺼내라 했는가',
+      `꺼내라 한 것 — ${record.selected.map(id => ACTS.flatMap(a => a.beats).flatMap(b => b.treasures ?? []).find(t => t.id === id)?.name ?? id).join(' / ')}`,
+      `그 이유 — ${record.reason}`,
     ]),
     '',
     `읽은 문서 ${readIds.length}장 — ${readTitles.length ? readTitles.join(', ') : '(없음)'}`,
@@ -487,7 +502,12 @@ export function boot(root) {
   const sullyeom = createSullyeom(root)
   const actEnd = createActEnd(root)
   const pause = createPause(root)
-  const noteScreen = createNoteScreen(root)
+  // 배경 음악(systems/bgm.js) — 대사·독백이 나오는 동안에는 줄인다.
+  const bgm = createBgm({ tracks: BGM, isMuted: () => audio.isMuted(), isReady: () => audio.isReady() })
+  bgm.set('main')
+  const voice = createVoicePlayer({ clips: { ...VOICE, ...NARRATION }, isMuted: () => audio.isMuted() || !audio.isReady(),
+    onStart: () => bgm.duck(true), onEnd: () => bgm.duck(false) })
+  const noteScreen = createNoteScreen(root, { voice })
   const moveScreen = createMoveScreen(root)
   const dispatchMap = createDispatchMap(root)
   const lossScreen = createLossScreen(root)
@@ -498,7 +518,9 @@ export function boot(root) {
   const edict = createEdict(root)
   const ration = createRation(root)
   installPaperVars()          // 한지·장계를 CSS 변수로 걸어 둔다(ui/paper-css.js)
-  const speak = createSpeak(root)
+  // 대사 음성 — 게임의 음소거를 그대로 따른다. 소리는 사용자 조작 뒤에만 틀 수 있으므로(자동 재생 규칙)
+  // 첫 대사가 뜰 때는 이미 「시작」 단추를 누른 뒤다.
+  const speak = createSpeak(root, { voice })
   const title = createTitle(root)
   const controlsHint = createControlsHint(root)
   const hold = createHold(root)
@@ -576,9 +598,12 @@ export function boot(root) {
   function peopleRemaining() {
     const act = flow.actIndex + 1
     return currentNpcs()
-      .filter(n => npcCardIds(n).some(id =>
+      .filter(n => n.voice || n.id === 'mother' || npcCardIds(n).some(id =>
         !flow.taken.has(id) && !isLost(flow.state, id) && !isFutureCard(id, act)))
-      .map(n => ({ x: n.x, z: n.z, label: n.name, kind: 'person' }))
+      // 몸이 없는 어머니도 찾아갈 문간은 보여야 한다. 문서가 없다고 표식까지 빼면
+      // 학생은 빈 안채 앞에 우연히 서기 전까지 대화할 곳이 있는지 알 수 없다.
+      .map(n => ({ x: n.x, z: n.z, label: n.voice ? `${n.name} · 문 너머 목소리` : n.name,
+        kind: n.voice ? 'voice' : 'person' }))
   }
 
   // 문서 지점 + 아직 안 다녀온 나들이 지점. 나들이는 방 한가운데에 표지를 세운다 —
@@ -597,7 +622,7 @@ export function boot(root) {
   // 근접 판정(pressEAction)·힌트(updateHint) 도 모두 이 한 함수를 부른다 — 목록이
   // 서로 다른 자리에서 어긋나지 않게 한다.
   function currentNpcs() {
-    return npcsAt(baseOf, flow.state.palace, flow.actIndex)
+    return npcsAt(baseOf, flow.state.palace, flow.actIndex, yearAtBeat(flow.act(), flow.state.beatIndex))
   }
 
   // 현재 비트가 'explore' 이고 exit 를 정해 두었으면 그것을 돌려준다.
@@ -889,11 +914,14 @@ export function boot(root) {
     // 같으면 아무것도 다시 짓지 않는다(render/scene.js).
     ctx.setNpcs(currentNpcs())
     // 임금은 해마다 자란다 — 「1막이면 아이, 아니면 어른」이 아니다(systems/king-age.js).
-    ctx.setKingAge(kingLookAt(yearAtBeat(flow.act(), flow.state.beatIndex)))
+    ctx.setKingAge({ ...kingLookAt(yearAtBeat(flow.act(), flow.state.beatIndex)),
+      attire: kingAttireAt(flow.act(), flow.state.beatIndex, flow.state.palace) })
     // syncPalace 는 궁이 바뀔 때만 다시 세운다 — 막이 바뀌어도 같은 궁에 머물 수 있으므로
     // (2·3막부터) 스폰 위치는 항상 여기서 따로 맞춘다
     const spawn = PALACES[flow.state.palace].spawn
     ctx.player.position.set(spawn.x, ctx.player.position.y, spawn.z)
+    // 걷기 입력이 없어도 HUD는 새 좌표의 방을 가리켜야 한다. 이전 궁의 방을 남기지 않는다.
+    flow.state = { ...flow.state, room: roomAt(PALACES[flow.state.palace], spawn.x, spawn.z)?.id ?? null, blocked: null }
     // 궁을 통째로 갈아 끼는 것도 「문을 지나는」 일이다 — 궁이 실제로 달라졌을 때만
     // 한 번 낸다. lastRoom 을 비워 두면 다음 프레임이 새 방 이름을 조용히 받아
     // 적는다(같은 문이 두 번 나지 않는다).
@@ -927,12 +955,16 @@ export function boot(root) {
   let procession = null        // 지금 걷고 있는 행렬 { t0, ms, from, to, escort, resolve }
   let resolveAudience = null   // 마지막 E 를 기다리는 콜백
   let lastRebukeAt = -Infinity
+  // 아룀이 다 끝나 문이 열렸는가. 열리기 전에는 전각 안만 걷고, 열린 뒤에는 문으로 걸어 나가면 끝난다.
+  let audienceExitOpen = false
 
   // 사람 하나를 from 에서 to 까지 걸린다. **프레임을 세지 않는다** — 아래 frame() 이
   // 시간으로 재고, 이 Promise 는 다 걸었을 때 풀린다.
-  function walkNpc(id, from, to, ms, lookAt = null) {
+  // followRoom — 임금 앞으로 걸어오는 걸음이면 그 방. 임금이 걷는 동안에도 목적지를 매 프레임
+  // 임금이 지금 선 자리 앞으로 고쳐 잡는다(알현 중 전각 안 걷기 — 2026-09-13).
+  function walkNpc(id, from, to, ms, lookAt = null, followRoom = null) {
     return new Promise(resolve => {
-      audienceWalk = { id, from, to, t0: performance.now(), ms, lookAt, resolve }
+      audienceWalk = { id, from, to, t0: performance.now(), ms, lookAt, followRoom, resolve }
     })
   }
 
@@ -1006,20 +1038,25 @@ export function boot(root) {
 
     // 걷는 동안 한 줄씩 뜬다. 화면을 덮는 판이 아니라 배너다 — 장면을 가리지 않는다.
     const lines = beat.lines ?? []
-    const timers = lines.map((text, i) =>
-      setTimeout(() => banner(root, text, 3000), 250 + i * (PROCESSION_MS / Math.max(1, lines.length))))
+    let caption = null
+    const narration = voice.narrate(lines, { onLine: (text, clip) => {
+      caption?.dispose()
+      caption = banner(root, text, (clip?.ms ?? Math.max(3000, text.length * 100)) + 500)
+    } })
+    const processionMs = Math.max(PROCESSION_MS, lines.reduce((sum, text) => sum + (voice.clipFor('gojong-narrator', text)?.ms ?? 3000) + 250, 0))
 
     audio.play('door', { gain: ROOM_DOOR_GAIN })
     await new Promise(resolve => {
-      procession = { t0: performance.now(), ms: PROCESSION_MS, from: start, to: end, escort, resolve }
+      procession = { t0: performance.now(), ms: processionMs, from: start, to: end, escort, resolve }
     })
-    for (const t of timers) clearTimeout(t)
 
     flow.state = { ...flow.state, room: to.id }
     hint.textContent = beat.exit?.label ?? 'E — 다음으로'
     hint.hidden = false
     await new Promise(res => { resolveAudience = res })
 
+    narration.stop()
+    caption?.dispose()
     resolveAudience = null
     audienceBeat = null
     procession = null
@@ -1059,25 +1096,34 @@ export function boot(root) {
     // **곁에 서 있는 사람(from:'beside')은 빼야 한다** — 이 줄이 그 사람까지
     // 문간으로 옮겨 버려, 임금 곁에 서 있어야 할 대원군이 문 앞에 가 있었다.
     const door = doorSpot(room)
-    const stand = visitorSpot(room)
+    audienceExitOpen = false
+    // 임금은 이제 전각 안을 걷는다(선생님 요청 2026-09-13) — 아뢰는 사람은 들어오는 그 순간
+    // 임금이 선 자리 앞으로 온다. 걷는 동안·말하는 동안에는 걸음이 멈추므로 그 사이에 자리가 어긋나지 않는다.
+    const kingNow = () => ({ x: ctx.player.position.x, z: ctx.player.position.z })
+    let stand = visitorSpot(room)
     for (const v of visitorsOf(beat)) {
       if (entersOf(v)) ctx.placeNpc(v.npc, { x: door.x, z: door.z, yaw: Math.PI })
     }
 
     const props = []
     ctx.setProps(props)
+    // 문이 열리기 전 한숨 — 임금이 전각 안을 둘러볼 틈이다. 곁에 선 사람만 말하는 알현이면 기다리지 않는다.
+    if (visitorsOf(beat).some(entersOf)) await new Promise(r => setTimeout(r, 1400))
     for (const v of visitorsOf(beat)) {
       const npc = npcById(v.npc)
       if (!npc) continue
       // 곁에 이미 서 있는 사람(대원군)은 걸어 들어오지 않는다 — 제자리에서 말한다.
       if (entersOf(v)) {
+        stand = visitorSpotFor(room, kingNow())
         audio.play('door', { gain: ROOM_DOOR_GAIN })
-        await walkNpc(v.npc, door, stand, APPROACH_MS, king)
+        await walkNpc(v.npc, door, stand, APPROACH_MS, kingNow(), room)
+        stand = visitorSpotFor(room, kingNow())
       }
       // 들고 온 것을 먼저 내려놓는다 — 말보다 물건이 먼저 눈에 들어와야 한다.
       const prop = propOf(v)
       if (prop) {
-        const at = propSpot(room)
+        const k = kingNow()
+        const at = { x: (k.x + stand.x) / 2, z: (k.z + stand.z) / 2 }
         props.push({ id: prop, x: at.x, z: at.z, yaw: Math.PI / 2 })
         ctx.setProps(props)
         audio.play('deny')   // 쇠가 마루에 닿는 소리를 대신한다
@@ -1097,13 +1143,19 @@ export function boot(root) {
 
     // 다 아뢰었다. 다음으로 넘어가는 것은 학생이 정한다 — 저절로 넘어가면
     // 방금 받은 문서를 다시 볼 틈도 없이 어전회의가 덮친다.
-    hint.textContent = beat.exit?.label ?? 'E — 다음으로'
+    hint.textContent = `${beat.exit?.label ?? 'E — 다음으로'} · 또는 문으로 걸어 나간다`
     hint.hidden = false
+    audienceExitOpen = true
     await new Promise(res => { resolveAudience = res })
 
+    audienceExitOpen = false
     resolveAudience = null
     audienceBeat = null
     audienceWalk = null
+    // 문으로 나가든 E로 끝내든, 마지막 탭과 막힘을 다음 낮으로 넘기지 않는다.
+    acc = 0
+    tapTarget = null
+    flow.state = { ...flow.state, blocked: null }
     hint.hidden = true
     dialog.close()
 
@@ -1221,49 +1273,31 @@ export function boot(root) {
     return flow.state
   }
 
-  // 소실 비트(D2) — 경복궁 대화재. 사초함에서 최대 세 장만 골라 들고 나간다.
-  // survive() 는 codex.js(잠금)의 함수를 그대로 쓴다 — 고르지 않은 것은 전부 잃는다.
-  // 무엇이 사라질지(doomed)는 survive() 를 부르기 전에 먼저 셈한다 — 그래야 recordLoss 에
-  // 사유를 적을 수 있다. 여기에 시계는 없다(촉박은 C1·C2·C3 뿐이다) — salvage.js 가
-  // 불빛만 보여주고 카운트다운은 그리지 않는다. 되돌아갈 길·다시 고를 길은 만들지 않는다.
+  // 1876 대화재 — 실록이 적은 소실물 가운데 무엇을 먼저 꺼내라 할지 고르고, 실제와 견준다(ui/salvage.js).
   async function playSalvage(beat) {
     flow.setPhase('beat')
     hint.hidden = true
-    const held = flow.state.sources.held
-    if (held.length === 0) {
-      await noteScreen.show({
-        title: beat.title,
-        lines: ['사초함이 비어 있다.', '사관이 지고 나갈 것이 없다.'],
-        origin: beat.origin,
-      })
-      return flow.state
-    }
-
-    const kept = await salvage.open({
+    const result = await salvage.open({
       title: beat.title,
       lines: beat.lines,
       asker: beat.asker ?? null,   // 무엇을 먼저 꺼낼지 여쭙는 사람(사관)
-      cards: held.map(id => sourceById(id)),
+      treasures: beat.treasures ?? [],
+      pick: beat.pick,
+      question: beat.question,
+      actual: beat.actual,
+      footer: beat.footer,
       origin: beat.origin,
+      initial: flow.state.preservation?.[beat.id],
+      onSave: record => {
+        const allowedIds = (beat.treasures ?? []).map(t => t.id)
+        flow.state = recordPreservation(flow.state, beat.id, record, allowedIds)
+        const checkpoint = loadGame()
+        return checkpoint ? saveGame({ ...checkpoint, preservation: flow.state.preservation }) : false
+      },
     })
 
-    const doomed = held.filter(id => !kept.includes(id))
-    let next = survive(flow.state, kept)
-    next = recordLoss(next, doomed, 'fire')
-    flow.state = next
-    // 여기서도 saveGame() 을 부르지 않는다(CRITICAL 1) — 이어하기가 이 저장을 받으면
-    // held 가 이미 세 장으로 줄어든 채 이 비트를 다시 열어, 셋이 전부인데 「세 장만
-    // 들고 나갈 수 있다」를 다시 묻는다. runBeats() 가 advance() 뒤에 한 번만 저장한다.
-    if (doomed.length) {
-      await lossScreen.show({
-        title: '불 탄 것',
-        lines: ['사관이 지고 나오지 못한 것은 여기서 끝났다.'],
-        tag: LOSS_LABEL.fire,
-        cards: doomed.map(id => ({ title: sourceById(id)?.title ?? id })),
-        origin: beat.origin,
-        footer: beat.footer,
-      })
-    }
+    flow.state = recordPreservation(flow.state, beat.id, result, (beat.treasures ?? []).map(t => t.id))
+    // 상태 저장은 기존과 같이 비트가 끝난 뒤 runBeats()에서 한다.
     return flow.state
   }
 
@@ -1410,6 +1444,12 @@ export function boot(root) {
 
   function playCouncil(beat) {
     return new Promise(resolve => {
+      // 문으로 알현을 마치면 임금은 마당에 있다. 회의는 이어하기 때도 어좌 앞에서 연다.
+      const def = PALACES[flow.state.palace]
+      const room = roomOf(def, beat.room ?? def.councilRoom)
+      const king = kingSpot(room)
+      ctx.player.position.set(king.x, ctx.player.position.y, king.z)
+      flow.state = { ...flow.state, room: room.id, blocked: null }
       flow.setPhase('council')
       dialog.close()
       // 수렴청정의 발은 어전회의 위에도 그대로 남을 수 있다 — beat.veil 이 이를 정한다
@@ -1485,15 +1525,22 @@ export function boot(root) {
 
   async function playBeatScreen(beat) {
     activeBeat = beat
+    // 직전 장면의 탭 목표로 새 장면이 저절로 걷기 시작하지 않게 한다.
+    acc = 0
+    tapTarget = null
+    input.tap()
+    flow.state = { ...flow.state, blocked: null }
     // 바닥 소리를 바꾸는 자리는 여기 하나다 — 비트(=화면) 하나에 한 번.
     // 매 프레임 부르면 0.6초 페이드가 겹쳐 잠깐 두 겹으로 들린다.
     audio.setAmbient(ambientForBeat(beat))
+    bgm.set(bgmForBeat(beat))
     ctx.setMood(moodForBeat(beat, flow.actIndex))
     // 발은 세계에 걸린 물건이다(render/palace.js). 화면 위 판이 아니라 인정전
     // 어좌 앞에 늘어뜨린 것이라, 임금이 걸어 나가면 뒤에 남는다.
     // 이 비트의 해로 임금을 다시 세운다. 한 막 안에서도 해가 넘어간다(이어 비트) —
     // 2막은 1866년에 시작해 1871년에 끝나고, 그 사이 임금은 열다섯에서 스물이 된다.
-    ctx.setKingAge(kingLookAt(yearAtBeat(flow.act(), flow.state.beatIndex)))
+    ctx.setKingAge({ ...kingLookAt(yearAtBeat(flow.act(), flow.state.beatIndex)),
+      attire: kingAttireAt(flow.act(), flow.state.beatIndex, flow.state.palace) })
     if (beat.veil === true) { ctx.setVeil(true); sullyeom.show() }
     if (beat.veil === false) { ctx.setVeil(false); sullyeom.hide() }
     switch (beat.kind) {
@@ -1703,6 +1750,12 @@ export function boot(root) {
     if (!running) return
     const dt = now - last
     last = now
+    bgm.tick(now)
+    // 말하는 도중에 소리를 끄면 그 말도 그 자리에서 멈춘다(대화판은 글자를 마저 찍는다).
+    if (voice.isPlaying() && audio.isMuted()) voice.silence()
+    // 도착 Promise는 이 프레임이 끝난 뒤 이어진다. 아래에서 audienceWalk를 비워도
+    // 그 마지막 프레임까지 멈춰야 신하의 실제 자리와 퇴장 출발점이 어긋나지 않는다.
+    const audienceWasWalking = audienceWalk !== null
 
     // 「?」는 궁을 걸어 다니는 동안에만 띄운다. 어전회의·촉박 같은 다른 화면 위에
     // 떠 있으면 누를 수 없는 자리에 있거나(전면 판 아래) 제한 시간을 흘려보낸다.
@@ -1733,6 +1786,11 @@ export function boot(root) {
     // 성능 좋은 기계에서만 신하가 빨리 걸으면 그 자체가 이 게임이 피하는 결함이다.
     if (audienceWalk) {
       const w = audienceWalk
+      if (w.followRoom) {
+        const k = { x: ctx.player.position.x, z: ctx.player.position.z }
+        w.to = visitorSpotFor(w.followRoom, k)
+        w.lookAt = k
+      }
       const u = (now - w.t0) / w.ms
       const p = walkAt(w.from, w.to, u)
       ctx.placeNpc(w.id, { x: p.x, z: p.z, yaw: yawToward(w.from, w.to), walking: u < 1 })
@@ -1753,6 +1811,7 @@ export function boot(root) {
       const p = walkAt(pr.from, pr.to, u)
       ctx.player.position.x = p.x
       ctx.player.position.z = p.z
+      flow.state = { ...flow.state, room: roomAt(PALACES[flow.state.palace], p.x, p.z)?.id ?? null }
       const yaw = yawToward(pr.from, pr.to)
       for (const e of pr.escort) {
         ctx.placeNpc(e.npc, { x: p.x + e.dx, z: p.z + e.dz, yaw, walking: u < 1 })
@@ -1767,12 +1826,52 @@ export function boot(root) {
     // 알현 중에 임금이 움직이려 하면 곁에 선 사람이 막는다. 걸음은 여기서 일어나지
     // 않는다(아래 블록이 'day'·'rush' 에서만 돈다) — 여기서는 「눌렀다」만 읽는다.
     // 태블릿의 짚기(tap)도 같이 읽는다: 안 읽으면 짚어도 아무 말이 없어 「고장」으로 읽힌다.
-    if (flow.phase === 'audience') {
+    // 행렬은 조종하지 않는다 — 누르면 데려가는 사람이 말린다(예전 그대로).
+    if (flow.phase === 'audience' && audienceBeat?.kind === 'procession') {
       const a = input.axis()
       const tapped = input.tap()
       if ((a.x !== 0 || a.z !== 0 || tapped) && now - lastRebukeAt >= REBUKE_MS) {
         lastRebukeAt = now
         rebuke()
+      }
+    }
+    // 알현은 전각 **안에서는** 걷는다(선생님 요청 2026-09-13). 문을 넘으려 하면 곁에 선 사람이
+    // 비트의 blockLine 으로 막고, 아룀이 다 끝나 문이 열리면 문으로 걸어 나가는 것으로 끝난다.
+    // 누가 걸어 들어오거나 말하는 동안에는 걸음을 멈춘다 — 대화판이 뜬 채로 임금이 돌아다니지 않게.
+    if (flow.phase === 'audience' && audienceBeat && audienceBeat.kind === 'audience') {
+      const tapped = input.tap()
+      // 멈추는 때: 대화판·사초·멈춤 화면이 떠 있을 때, 신하가 **물러나는** 걸음(따라오지 않는 걸음),
+      // 그리고 걸어오던 신하가 막 도착한 그 한 프레임(도착 자리와 다음 아룀의 자리가 갈리지 않게).
+      // 신하가 **걸어 들어오는 동안에는 걷는다** — 신하가 임금을 따라오고(followRoom), 이 틈이 있어야
+      // 아룀이 끝나기 전에 문밖으로 나가려다 막히는 순간이 생긴다(선생님 요청 2026-09-13).
+      const justArrived = audienceWasWalking && !audienceWalk
+      const busy = justArrived || (audienceWalk && !audienceWalk.followRoom) ||
+        speak.isOpen() || dialog.isOpen() || pause.isOpen()
+      if (busy) {
+        acc = 0
+        tapTarget = null
+        if (flow.state.blocked) flow.state = { ...flow.state, blocked: null }
+      } else {
+        if (tapped) {
+          const p = ctx.pickGround(tapped.x, tapped.y)
+          if (p) tapTarget = p
+        }
+        const def = PALACES[flow.state.palace]
+        const roomId = audienceBeat.room ?? def.councilRoom
+        acc = Math.min(acc + dt, FIXED_MS * MAX_STEPS)
+        let steps = 0
+        while (acc >= FIXED_MS && steps < MAX_STEPS) {
+          flow.state = step(ctx, inputForStep(), flow.state, FIXED_MS, { confineRoom: audienceExitOpen ? null : roomId })
+          acc -= FIXED_MS
+          steps++
+        }
+        if (String(flow.state.blocked ?? '').startsWith('confine:') && now - lastRebukeAt >= REBUKE_MS) {
+          lastRebukeAt = now
+          rebuke()
+        }
+        if (audienceExitOpen && audienceLeft(def, roomId, ctx.player.position.x, ctx.player.position.z)) {
+          resolveAudience?.()
+        }
       }
     }
 
@@ -1811,7 +1910,7 @@ export function boot(root) {
         updateHint()
         // 그날 들을 것을 다 들으면 낮이 끝난다. 아무 말 없이 화면이 넘어가면 학생은
         // 무엇 때문에 끝났는지 모른다 — 한 줄로 알린다.
-        if (isDusk(flow.state) && resolveExplore) {
+        if (!activeBeat?.free && isDusk(flow.state) && resolveExplore) {
           banner(root, '오늘 들을 수 있는 것을 다 들었다', 2600)
           resolveExplore()
         }
@@ -1864,7 +1963,8 @@ export function boot(root) {
       roomName: roomLabel(PALACES[flow.state.palace], flow.state.room),
       dateLabel,
       // 알현에서는 아뢸 것을 고를 수 없다 — 그 표시를 감춘다(ui/hud.js).
-      dayLeft: flow.phase === 'audience' ? null : flow.state.dayLeft,
+      // 문서 없는 낮(free — 운현궁)에도 감춘다: 쓸 일이 없는 여유를 띄우면 무엇을 아껴야 하나 헤맨다.
+      dayLeft: (flow.phase === 'audience' || beatAt(flow.act(), flow.state.beatIndex)?.free) ? null : flow.state.dayLeft,
       dayTotal: beatAt(flow.act(), flow.state.beatIndex)?.dayUnits ?? null,
       riceIndex: flow.state.riceIndex,
     })
@@ -1949,6 +2049,7 @@ export function boot(root) {
   const savedText = readSaveText()
   const saved = loadGame()
   ctx.setPalace(PALACES[act0.palace])
+  ctx.setKingAge({ ...kingLookAt(act0.year), attire: kingAttireAt(act0, 0) })
   ctx.setNpcs(npcsAt(baseOf, act0.palace, 0))
   ctx.setCinematic(cinematicDirective({ actId: act0.id, phase: 'day' }))
   ctx.setOpeningView(true)
@@ -1996,7 +2097,7 @@ export function boot(root) {
       running = false; session = null; rushFire = false
       holdSession?.dispose(); holdSession = null   // 막 전환·종료에 이 판이 남으면 다음 화면을 덮는다
       speak.dispose()
-      audio.setAmbient(null); flow.dispose()
+      audio.setAmbient(null); bgm.stop(); flow.dispose()
       ctx.dispose()
     },
   }

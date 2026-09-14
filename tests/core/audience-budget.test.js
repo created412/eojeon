@@ -41,7 +41,7 @@ function exploreDays() {
     let s = enterAct(createState(), act, i)
     for (const b of beatsOf(act)) {
       s = applyBeat(s, b)
-      if (b.kind !== 'explore') continue
+      if (b.kind !== 'explore' || b.free) continue   // free — 문서 없는 낮(운현궁)은 고를 것이 없는 게 내용이다
       out.push({
         key: `${act.id}/${b.id}`, act, actIndex: i, beat: b,
         budget: s.dayLeft,
@@ -87,7 +87,6 @@ describe('부족은 참이다 — 그날 다 들을 수는 없다', () => {
   // 들을 사람이 아예 없는 낮(불탄 궁을 빠져나가는 걸음 따위)은 고를 것이 없는 것이
   // 그 장면의 내용이다 — 그런 날은 이름을 적어 둔다.
   const NO_CHOICE_DAYS = {
-    'chinjeong/day-changdeok': 1,   // 1874~75 창덕궁 — 새로 들을 사람은 젊은 신하 하나뿐이다
     'chinjeong/walk-out': 0,        // 불탄 경복궁을 걸어 나가는 두 칸 — 들을 사람이 없다
     'gapsin/gapsin-day': 1,         // 경우궁 — 좁은 집에 개화파 관원 하나
   }
@@ -156,12 +155,18 @@ describe('어느 사료든 제 막 안에서 손에 들어온다', () => {
 
   // 신헌의 넉 장 — 한 번의 대화로 받는다. 예전에는 카드마다 값을 매겨 여덟 칸을
   // 불렀고, 하루 여섯 칸으로는 어떤 학생도 받을 수 없었다(판정 R102).
-  it('강화도 조약 넉 장은 한 번의 대화로 다 받는다', () => {
-    const sinheon = NPCS.find(n => n.id === 'sinheon')
-    expect(npcCardIds(sinheon).length).toBeGreaterThanOrEqual(4)
-    const day = DAYS.find(d => d.people.some(p => p.id === 'sinheon'))
-    expect(day, '신헌을 만날 수 있는 낮이 없다').toBeTruthy()
-    expect(day.budget, '한 번이면 족하다').toBeGreaterThanOrEqual(1)
+  // 2026-09-13 역사 순서 정리 — 조약문은 낮에 고르는 문서가 아니라, 훈령 뒤 신헌의 알현에서
+  // 모두가 받는다. 서계는 그보다 먼저(1873) 역관의 알현에서 받는다.
+  it('서계를 먼저, 조약문 세 장은 훈령 뒤 신헌의 알현에서 한꺼번에 받는다', () => {
+    const beats = beatsOf(ACTS[2])
+    const at = id => beats.findIndex(b => b.id === id)
+    const grants = id => beats[at(id)].visitors.flatMap(v => v.grantCards ?? [])
+    expect(grants('seogye-audience')).toEqual(['seogye'])
+    expect(grants('sinheon-returns').sort()).toEqual(['ganghwa1', 'ganghwa10', 'ganghwa7'])
+    expect(at('seogye-audience')).toBeLessThan(at('unyo-dispatch'))
+    expect(at('orders-sinheon')).toBeLessThan(at('sinheon-returns'))
+    expect(at('sinheon-returns')).toBeLessThan(at('council-treaty'))
+    expect(at('council-treaty')).toBeLessThan(at('joil-trade-note'))
   })
 })
 

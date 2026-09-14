@@ -14,6 +14,7 @@
 // 어느 쪽을 바라보는가. 화면·소리·대화는 main.js 가 이 값을 받아 그린다.
 // 그래야 3D 없이 Node 에서 통째로 검사할 수 있다.
 import { THRONE_FROM_BACK, THRONE_DEPTH, ROOM_SHRINK } from '../render/palace.js'
+import { roomAt } from '../data/palaces.js'
 
 // 어좌 앞면에서 임금이 서는 자리까지. 어좌에 올라앉히지 않는 까닭은 하나다 —
 // 카메라가 임금의 뒤 위쪽에 매여 있어(render/scene.js CAM_DIST·CAM_HEIGHT),
@@ -64,6 +65,21 @@ export function besideSpot(room, i = 0) {
 export function visitorSpot(room) {
   const k = kingSpot(room)
   return { x: k.x + VISITOR_SIDE, z: k.z + VISITOR_GAP }
+}
+
+// 임금이 방 안을 걸은 뒤의 아뢰는 자리 — 선생님 요청(2026-09-13): 알현 중에도 전각 안은
+// 걷는다. 그러면 아뢰는 사람은 어좌 앞 고정 자리가 아니라 **임금이 지금 선 자리** 앞에 서야
+// 한다. 벽을 넘지 않게 방 안으로 당긴다.
+export function visitorSpotFor(room, king) {
+  const halfW = (room.w * ROOM_SHRINK) / 2 - 1.2
+  const halfD = (room.d * ROOM_SHRINK) / 2 - 1.2
+  const clamp = (v, c, h) => Math.max(c - h, Math.min(c + h, v))
+  return { x: clamp(king.x + VISITOR_SIDE, room.x, halfW), z: clamp(king.z + VISITOR_GAP, room.z, halfD) }
+}
+
+// 알현 방을 벗어났는가 — 아룀이 다 끝난 뒤 문으로 걸어 나가면 다음 비트로 넘어간다.
+export function audienceLeft(def, roomId, x, z) {
+  return roomAt(def, x, z)?.id !== roomId
 }
 
 // 문에서 들어서는 자리. 문은 방의 +z 면이다(data/palaces.js doorOf).
@@ -117,10 +133,13 @@ export function escortOffsets(beat) {
 // 이 비트가 화면에 세워야 할 사람 전부. 곁에 선 사람이 먼저다.
 // **겹치면 한 번만 센다** — 곁에 선 사람이 스스로 말하는 자리(from:'beside')가 있어
 // 같은 id 가 두 목록에 다 있을 수 있다. 두 번 세우면 같은 사람이 둘 서게 된다.
+// from:'voice' 로만 나오는 사람(발 뒤의 대비, 문 너머의 왕비·궁인)은 무대에 세우지 않는다 —
+// 이 게임의 3D 몸은 남자 관복뿐이다. 여성 인물에게 남자 몸을 입히느니 목소리로만 둔다.
 export function castOf(beat) {
   const out = []
+  const voiced = new Set(visitorsOf(beat).filter(v => v.from === 'voice').map(v => v.npc))
   for (const id of [...besideIds(beat), ...escortIds(beat), ...visitorsOf(beat).map(v => v.npc)]) {
-    if (!out.includes(id)) out.push(id)
+    if (!voiced.has(id) && !out.includes(id)) out.push(id)
   }
   return out
 }
@@ -128,7 +147,7 @@ export function castOf(beat) {
 // 이 사람이 문으로 걸어 들어오는가. from:'beside' 는 이미 곁에 서 있는 사람이
 // 제 자리에서 말하는 것이다 — 대원군이 그렇다.
 export function entersOf(visitor) {
-  return visitor?.from !== 'beside'
+  return visitor?.from !== 'beside' && visitor?.from !== 'voice'
 }
 
 // 이 알현이 끝나며 자리를 뜨는 사람. 걸어 나가고 화면에서 사라진다 —

@@ -1,0 +1,177 @@
+import { beforeAll, afterAll, beforeEach, it, expect } from 'vitest'
+import { createRequire } from 'node:module'
+import { homedir } from 'node:os'
+import { join, resolve, dirname } from 'node:path'
+import { readFile } from 'node:fs/promises'
+import { build } from 'esbuild'
+
+const require = createRequire(import.meta.url)
+let playwright
+try { playwright = require('playwright') } catch {
+  playwright = require(join(homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright'))
+}
+let browser, page, script
+beforeAll(async () => {
+  const result = await build({ stdin: { resolveDir: process.cwd(), contents: `
+    import {createRation} from './src/ui/ration.js';
+    import {createSalvage} from './src/ui/salvage.js';
+    import {createDialog} from './src/ui/dialog.js';
+    import {createSpeak} from './src/ui/speak.js';
+    import {createNoteScreen} from './src/ui/note-screen.js';
+    import {createVoicePlayer} from './src/systems/voice.js';
+    import {voiceKey} from './src/data/voice-cast.js';
+    import {ACTS} from './src/data/acts.js';
+    import {SOURCES} from './src/data/sources.js';
+    import {serialize,deserialize,createState} from './src/core/state.js';
+    import {recordPreservation} from './src/systems/preservation.js';
+    import {FEEDBACK_MEDIA} from './src/ui/feedback-media-data.js';
+    window.fixture={createRation,createSalvage,createDialog,createSpeak,createNoteScreen,createVoicePlayer,voiceKey,
+      ACTS,SOURCES,serialize,deserialize,createState,recordPreservation,FEEDBACK_MEDIA};
+  ` }, bundle: true, write: false, format: 'iife', plugins: [{ name: 'workspace-files', setup(b) {
+    b.onResolve({filter:/^\./}, args=>({path:resolve(args.importer ? dirname(args.importer) : process.cwd(),args.path),namespace:'workspace'}))
+    b.onLoad({filter:/.*/,namespace:'workspace'}, async args=>({contents:await readFile(args.path,'utf8'),loader:'js'}))
+  } }] })
+  script = result.outputFiles[0].text
+  browser = await playwright.chromium.launch({ channel: 'chrome', headless: true })
+}, 60000)
+beforeEach(async () => {
+  await page?.close()
+  page = await browser.newPage({ viewport: { width: 390, height: 844 } })
+  await page.setContent('<style>*{box-sizing:border-box}body{margin:0}</style><div id="root"></div>')
+  await page.addScriptTag({ content: script })
+})
+afterAll(async () => { await browser?.close() })
+
+it('대화재에서 작성 중 새로 열어도 선택과 이유가 복원된다', async () => {
+  await page.evaluate(() => {
+    const f=fixture, root=document.querySelector('#root')
+    const beat=f.ACTS.flatMap(a=>a.beats).find(b=>b.id==='great-fire')
+    let saved=f.serialize(f.createState())
+    window.reopen=()=>{
+      root.replaceChildren()
+      f.createSalvage(root).open({...beat, initial:f.deserialize(saved).preservation?.[beat.id],
+        onSave:r=>{saved=f.serialize(f.recordPreservation(f.deserialize(saved),beat.id,r));return true}})
+    }
+    reopen()
+  })
+  await page.locator('[data-id="daebo"]').click()
+  await page.locator('[data-id="busin"]').click()
+  await page.locator('.reason').fill('명령이 진짜라는 것을 증명해야 한다.')
+  await page.evaluate(() => reopen())
+  expect(await page.locator('.doc[aria-pressed="true"]').evaluateAll(es=>es.map(e=>e.dataset.id))).toEqual(['daebo','busin'])
+  expect(await page.locator('.reason').inputValue()).toBe('명령이 진짜라는 것을 증명해야 한다.')
+})
+
+it('390px에서 가마·곡물 그림이 없거나 손상되어도 깨진 이미지를 숨기고 진행한다', async () => {
+  await page.evaluate(() => {
+    const beat=fixture.ACTS.flatMap(a=>a.beats).flatMap(b=>b.stops??[]).map(s=>s.beat).find(b=>b?.ration)
+    fixture.createRation(document.querySelector('#root')).open({market:{title:'쌀값',lines:[],series:[]},ration:beat.ration})
+  })
+  await page.getByRole('button',{name:'무위영으로 간다'}).click()
+  await page.locator('.sack img').evaluate(img=>{img.src='data:image/webp;base64,broken'})
+  await page.waitForFunction(()=>{const i=document.querySelector('.sack img');return i.complete&&!i.naturalWidth})
+  expect(await page.locator('.sack img').isVisible()).toBe(false)
+  await page.locator('.sack').click()
+  await page.locator('.grain img').evaluate(img=>{img.src='data:image/webp;base64,broken'})
+  await page.waitForFunction(()=>{const i=document.querySelector('.grain img');return i.complete&&!i.naturalWidth})
+  expect(await page.locator('.grain img').isVisible()).toBe(false)
+  expect(await page.locator('.grain figcaption').innerText()).toContain('모래')
+  const bounds=await page.locator('.grain').boundingBox()
+  expect(bounds.x).toBeGreaterThanOrEqual(0)
+  expect(bounds.x+bounds.width).toBeLessThanOrEqual(390)
+  await page.getByRole('button',{name:'돌아간다'}).click()
+  expect(await page.locator('.ration').count()).toBe(0)
+})
+
+it('대사 중 음소거할 때 이미 보인 자막을 지우지 않고 빠른 E 입력 뒤 오디오·타이머가 끝난다', async () => {
+  await page.clock.install()
+  await page.evaluate(() => {
+    const f=fixture, line='「명복아, 오늘은 옷을 단정히 하고 사랑채에 가 있거라.」'
+    window.muted=false;window.made=[]
+    window.voice=f.createVoicePlayer({isMuted:()=>muted,
+      clips:{[f.voiceKey('mother',line)]:{src:'test',ms:6000,t:Array.from(line,(_,i)=>i*100)}},
+      makeAudio:()=>{const a={currentTime:1,paused:false,play:()=>Promise.resolve(),pause(){this.paused=true},addEventListener(){}};made.push(a);return a}})
+    window.speak=f.createSpeak(document.querySelector('#root'),{voice})
+    speak.show({npcId:'mother',lines:[line,'다음 지문이다.']})
+  })
+  await page.clock.runFor(30)
+  const visible=await page.locator('.line').textContent()
+  expect(visible.length).toBeGreaterThan(5)
+  await page.evaluate(()=>{muted=true;voice.silence()})
+  await page.clock.runFor(60)
+  expect((await page.locator('.line').textContent()).startsWith(visible)).toBe(true)
+  await page.evaluate(()=>{for(let i=0;i<8;i++)speak.press()})
+  await page.clock.runFor(10000)
+  expect(await page.locator('.speak').count()).toBe(0)
+  expect(await page.evaluate(()=>({playing:voice.isPlaying(),paused:made.every(a=>a.paused)}))).toEqual({playing:false,paused:true})
+})
+
+it('저장한 조선책략 빈칸·해석을 사초함에서 다시 열고 수정할 수 있다', async () => {
+  await page.evaluate(() => {
+    const f=fixture
+    window.state={...f.createState(),sources:{held:['joseon-chaeryak'],read:['joseon-chaeryak'],lost:[]}}
+    window.openInquiry=()=>{
+      document.querySelector('#root').replaceChildren()
+      const dialog=f.createDialog(document.querySelector('#root'),{
+        getInquiry:id=>state.inquiries?.[id]??{},
+        onInquirySave:(id,record)=>{state=f.deserialize(f.serialize({...state,inquiries:{[id]:record}}));return true}})
+      dialog.showCodex(state)
+    }
+    openInquiry()
+  })
+  await page.getByRole('button',{name:'황준헌 『조선책략』'}).click()
+  const answers=['러시아','러시아','중국(청)','일본']
+  for(let i=0;i<4;i++)await page.locator(`[data-blank="${i}"]`).selectOption(answers[i])
+  await page.locator('.inquiry-answer').fill('청의 외교관은 러시아의 남하를 막으려 하였다.')
+  await page.locator('.inquiry-compare').click()
+  await page.locator('.inquiry-revision').fill('청의 이익도 함께 고려한다.')
+  await page.locator('.close').click()
+  await page.evaluate(()=>openInquiry())
+  await page.getByRole('button',{name:'황준헌 『조선책략』'}).click()
+  expect(await page.locator('.cloze-blank').evaluateAll(es=>es.map(e=>e.value))).toEqual(answers)
+  expect(await page.locator('.inquiry-answer').inputValue()).toContain('러시아의 남하')
+  expect(await page.locator('.inquiry-revision').inputValue()).toBe('청의 이익도 함께 고려한다.')
+  expect(await page.locator('.close').isEnabled()).toBe(true)
+  await page.locator('[data-blank="2"]').selectOption('일본')
+  expect(await page.locator('.close').isEnabled()).toBe(false)
+})
+
+it('글 화면을 넘기면 음소거 자막 타이머와 이전 음성이 다음 화면에 남지 않는다', async () => {
+  await page.clock.install()
+  const result=await page.evaluate(async () => {
+    const f=fixture, voice=f.createVoicePlayer({isMuted:()=>true})
+    const note=f.createNoteScreen(document.querySelector('#root'),{voice})
+    const done=note.show({lines:['첫 지문','두 번째 지문']})
+    document.querySelector('.note-next').click()
+    await done
+    return voice.isPlaying()
+  })
+  expect(result).toBe(false)
+  await page.clock.runFor(20000)
+  expect(await page.locator('.note').count()).toBe(0)
+})
+
+it.each([true,false])('390px에서 그림 유무(%s)와 무관하게 가마·곡물·대화재 선택 영역이 화면 안에 놓인다', async present => {
+  await page.evaluate(present=>{
+    const f=fixture
+    if(!present){f.FEEDBACK_MEDIA.sack='';f.FEEDBACK_MEDIA.grain=''}
+    const beat=f.ACTS.flatMap(a=>a.beats).flatMap(b=>b.stops??[]).map(s=>s.beat).find(b=>b?.ration)
+    f.createRation(document.querySelector('#root')).open({market:{title:'쌀값',lines:[],series:[]},ration:beat.ration})
+  },present)
+  const checkBounds=async selector=>{
+    const boxes=await page.locator(selector).evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right}}))
+    expect(boxes.length).toBeGreaterThan(0)
+    for(const box of boxes){expect(box.left).toBeGreaterThanOrEqual(0);expect(box.right).toBeLessThanOrEqual(390)}
+  }
+  await page.getByRole('button',{name:'무위영으로 간다'}).click()
+  expect(await page.locator('.sack img').count()).toBe(present?1:0)
+  if(present)await page.locator('.sack img').evaluate(i=>i.decode())
+  await checkBounds('.sack,.sack span,.open-sack')
+  await page.locator('.open-sack').click()
+  expect(await page.locator('.grain img').count()).toBe(present?1:0)
+  if(present)await page.locator('.grain img').evaluate(i=>i.decode())
+  await checkBounds('.grain,.grain figcaption div')
+  await page.getByRole('button',{name:'돌아간다'}).click()
+  await page.evaluate(()=>{fixture.createSalvage(document.querySelector('#root')).open(fixture.ACTS.flatMap(a=>a.beats).find(b=>b.id==='great-fire'))})
+  await checkBounds('.salvage .doc,.salvage .reason,.salvage .go')
+})

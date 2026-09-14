@@ -191,3 +191,26 @@ describe('step() — 태블릿 탭 이동', () => {
     expect(state.blocked).toBeTruthy()
   })
 })
+
+describe('step() — 알현 중에는 그 방 안에서만', () => {
+  // 인정전: x:0, z:12, w:22, d:18 — 문은 앞면(+z) 가운데다. 방 안 (0,14)에서 문 쪽으로 오래 민다.
+  it('confineRoom 이면 문밖으로 나가지 못하고 confine 으로 알린다', () => {
+    const ctx = { player: { position: { x: 0, y: 0, z: 14 } } }
+    let s = { ...createState(), control: 'C', room: 'injeongjeon' }
+    for (let i = 0; i < 40; i++) s = step(ctx, makeInput({ x: 0, z: 1 }), s, 100, { confineRoom: 'injeongjeon' })
+    expect(ctx.player.position.z).toBeLessThanOrEqual(21)
+    expect(s.blocked).toBe('confine:injeongjeon')
+  })
+  it('confineRoom 이어도 방 안에서는 움직인다', () => {
+    const ctx = { player: { position: { x: 0, y: 0, z: 14 } } }
+    const s = { ...createState(), control: 'C', room: 'injeongjeon' }
+    step(ctx, makeInput({ x: 1, z: 0 }), s, 100, { confineRoom: 'injeongjeon' })
+    expect(ctx.player.position.x).toBeGreaterThan(0)
+  })
+  it('confineRoom 이 없으면 문으로 나간다 — 아룀이 끝난 뒤', () => {
+    const ctx = { player: { position: { x: 0, y: 0, z: 14 } } }
+    let s = { ...createState(), control: 'C', room: 'injeongjeon' }
+    for (let i = 0; i < 40; i++) s = step(ctx, makeInput({ x: 0, z: 1 }), s, 100)
+    expect(ctx.player.position.z).toBeGreaterThan(21)
+  })
+})

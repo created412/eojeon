@@ -17,7 +17,9 @@ export function axisToward(px, pz, target) {
   return { x: dx / dist, z: dz / dist }
 }
 
-export function step(ctx, input, state, dtMs) {
+// confineRoom — 알현 중이면 그 방 id. 방 밖 좌표로 넘어가는 걸음은 벽처럼 막고 blocked 에
+// 'confine:<id>' 를 남긴다(누가 막는 말을 할지는 main.js 가 정한다). 아룀이 끝나면 넘기지 않는다.
+export function step(ctx, input, state, dtMs, { confineRoom = null } = {}) {
   // 조작권이 걸음을 막는 동안에도 앞 장면에서 남은 blocked 는 지운다. 안 지우면
   // 조작권 D 장면(눌러도 안 움직이는 화면) 내내 「임금이 갈 수 있는 곳은 정해져
   // 있다」 배너가 되풀이된다 — 「길이 정해져 있다」와 「아예 못 움직인다」가 섞여,
@@ -60,6 +62,7 @@ export function step(ctx, input, state, dtMs) {
   let nx=start.x,nz=start.z,wall=null
   const dx=cx-p.x,dz=cz-p.z,n=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.18))
   const blocksTo=(x,z)=>{
+    if(confineRoom&&roomAt(def,x,z)?.id!==confineRoom)return `confine:${confineRoom}`
     const from=roomAt(def,nx,nz),to=roomAt(def,x,z)
     if(to&&to.id!==from?.id&&(!isRoomOpen(state.control,to)||!isPassable(to)))return to.id
     return collides(def,{x,z})?.id??null
@@ -70,8 +73,9 @@ export function step(ctx, input, state, dtMs) {
     const wz=blocksTo(nx,nz+dz/n)
     if(!wz)nz+=dz/n;else wall=wall??wz
   }
+  const tagOf=w=>String(w).startsWith('confine:')?w:`wall:${w}`
   if (wall && Math.hypot(nx-p.x,nz-p.z)<.00001) {
-    const tag = `wall:${wall}`
+    const tag = tagOf(wall)
     return state.blocked === tag ? state : { ...state, blocked: tag }
   }
 
@@ -79,7 +83,7 @@ export function step(ctx, input, state, dtMs) {
   p.x = nx
   p.z = nz
   const nextRoom = roomAt(def, nx, nz)?.id ?? null
-  const blocked=wall&&barelyMoved?`wall:${wall}`:null
+  const blocked=wall&&barelyMoved?tagOf(wall):null
   if (state.room === nextRoom && state.blocked===blocked) return state
   return { ...state, room: nextRoom, blocked }
 }

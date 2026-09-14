@@ -72,7 +72,6 @@ export const PALACES = {
       { cardId: 'oegyujanggak',      placeId: 'gyujanggak',    x: -24, z:  13 },
       // 선정전 — 정전 옆 편전. 조정 안에서 오간 말이 여기 있다.
       // 당백전(21,6)도 같은 이유로 여기서 뺐다 — 같은 카드를 두 통로로 얻지 않는다.
-      { cardId: 'gaehang-chanseong', placeId: 'seonjeongjeon', x:  21, z:   6 },
       // 척화비는 여기서 줍는 문서가 아니다 — 2막 F1(brush 비트)에서 학생이 직접 써서
       // 사초함에 들어온다(grantCard). 줍기 지점을 같이 두면 같은 카드를 두 통로로 얻고,
       // 1866년 창덕궁 낮에 1871년에야 세워질 비석의 사료를 미리 줍는 시대착오도 생긴다.
@@ -142,17 +141,14 @@ export const PALACES = {
       // 수정전 — 중건 뒤 규장각이 있던 일곽. 기록이 모이는 곳이다.
       { cardId: 'junggeon',      placeId: 'sujeongjeon',   x: -38, z:  -4 },
       { cardId: 'sinmi-officer', placeId: 'sujeongjeon',   x: -30, z: -12 },
-      // 서계는 외교 문서다 — 기록 보관소가 아니라 편전(사정전)에서 아뢴다.
-      { cardId: 'seogye',        placeId: 'sajeongjeon',   x:  -6, z:  -6 },
+      // 서계(1873 알현)·조약문 세 장(1876 신헌의 알현)은 이제 사람이 알현에서 건넨다 — 바닥 자리를 지웠다
+      // (2026-09-13 역사 순서 정리).
       // 사정전 — 편전. 조약 문서가 여기 쌓인다
       // 최익현의 「왜양일체론」(-11,0)이 여기 있었다. 1876년의 글인데 1873년의 낮에
       // 걸어가 주우면 그대로 손에 들어왔다 — 세 해를 앞질렀다. 지금은 그 사람이
       // 도끼를 지고 들어와 직접 건넨다(3막 axe-sangso, data/acts.js).
       { cardId: 'unyo',          placeId: 'sajeongjeon',   x:   6, z:  -6 },
-      { cardId: 'ganghwa1',      placeId: 'sajeongjeon',   x: -11, z: -12 },
-      { cardId: 'ganghwa10',     placeId: 'sajeongjeon',   x:  11, z: -12 },
-      { cardId: 'ganghwa7',      placeId: 'sajeongjeon',   x: -11, z: -24 },
-      { cardId: 'joil-trade',    placeId: 'sajeongjeon',   x:  11, z: -24 },
+      { cardId: 'gaehang-chanseong', placeId: 'sujeongjeon', x: -40, z: -12 },
     ],
   },
 
@@ -181,6 +177,23 @@ export const PALACES = {
       // tests/data/throne.test.js 가 이 종류를 붙든다.
       { cardId: 'reform14', placeId: 'jeongdang', x: 0, z: -2.2 },
     ],
+  },
+  // 운현궁 — 흥선군의 사저. 1863년 겨울까지 명복(고종)이 자란 집이다(2026-09-13 앞부분 보강).
+  // ⚠ 방 배치는 복원이 아니라 재구성이다(경우궁과 같다). 노안당(사랑채)·노락당(안채)·대문 셋만 둔다.
+  //    궁이 아니라 집이라 좁다 — 창덕궁에서 가마로 닷새 뒤의 인정전이 얼마나 큰지가 그 대비로 보인다.
+  unhyeon: {
+    id: 'unhyeon',
+    name: '운현궁',
+    private: true,   // 사가 — 어좌·일월오봉도를 세우지 않는다(render/palace.js)
+    councilRoom: 'sarang',
+    ground: { w: 48, d: 48 },
+    spawn: { x: 0, z: 8 },
+    rooms: [
+      { id: 'sarang', name: '노안당', gloss: '사랑채', x: -9, z: -8, w: 18, d: 12, minControl: 'D' },
+      { id: 'anchae', name: '노락당', gloss: '안채',   x: 12, z: -10, w: 16, d: 12, minControl: 'D' },
+      { id: 'daemun', name: '대문',                    x: 0,  z: 19, w: 8,  d: 4,  minControl: 'D', gate: true },
+    ],
+    pickups: [],
   },
   // 계동궁 — 고종의 사촌 이재원의 집. 검증 B 6항: 조회한 모든 2차문헌이 일치하는 정설이다.
   gyedong: {

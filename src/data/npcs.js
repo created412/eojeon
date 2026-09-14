@@ -53,11 +53,14 @@ export const NPCS = [
   },
   {
     id: 'gaehwa',
-    actsVisible: [2],   // 개항 논의가 조정 안에서 오가던 때다 — 3막 창덕궁 국면(1874~75)
+    // 개항 논의가 조정 안에서 오가던 때 — 1875년 경복궁의 하루에 운요호 소식과 나란히 선다
+    // (2026-09-13 역사 순서 정리: 예전에는 1874년 창덕궁에 혼자 서 있어 고를 것이 없었다).
+    actsVisible: [2],
+    fromYear: 1875,
     name: '젊은 신하',
     title: '',
-    palace: 'changdeok',
-    x: 21, z: 6,
+    palace: 'gyeongbok',
+    x: -40, z: -12,
     rank: 'mid',
     hatStyle: 'samo',
     cardId: 'gaehang-chanseong',
@@ -217,14 +220,15 @@ export const NPCS = [
   },
   {
     id: 'yeokgwan',
-    actsVisible: [2],   // 서계 문제가 조약 협상으로 이어지는 3막
+    // 서계는 강화도 조약보다 먼저다 — 1873년 친정 직후의 알현(seogye-audience)에서 반드시 건넨다.
+    // 낮에 서서 「고를 수도 안 고를 수도 있는」 문서로 두면 조약문을 서계보다 먼저 읽는 학생이 생긴다.
+    actsVisible: [],
     name: '역관',
     title: '통역 관리',
     palace: 'gyeongbok',
     x: -6, z: -6,
     rank: 'mid',
     hatStyle: 'samo',
-    cardId: 'seogye',
     lines: ['「일본에서 온 문서인데, 글자가 마음에 걸립니다.」'],
   },
   {
@@ -245,6 +249,7 @@ export const NPCS = [
   {
     id: 'sugun',
     actsVisible: [2],   // 1875 운요호 사건
+    fromYear: 1875,
     name: '수군 관원',
     title: '',
     palace: 'gyeongbok',
@@ -256,7 +261,9 @@ export const NPCS = [
   },
   {
     id: 'sinheon',
-    actsVisible: [2],   // 1876 강화도 조약 협상
+    // 1876 강화도 조약 — 협상을 마치고 돌아와 알현(sinheon-returns)에서 조약문을 건넨다.
+    // 훈령(협상 전 지시문)보다 뒤다: 맺기 전의 조약 조항을 근거로 지시를 쓰지 않는다.
+    actsVisible: [],
     name: '신헌',
     title: '접견대관 · 협상 대표',
     palace: 'gyeongbok',
@@ -271,12 +278,85 @@ export const NPCS = [
     // cardIds(복수)는 npcs.js 의 다른 신하들과 다른 자리다 — 한 사람이 한 장이 아니라
     // 한 뭉치를 들고 온다. main.js 의 applyPickupPacket() 이 이 배열을 보고 한 번의
     // 대화로 넉 장을 모두 건넨다(자리를 옮겨 다니며 하나씩 줍지 않는다).
-    cardIds: ['ganghwa1', 'ganghwa7', 'ganghwa10', 'joil-trade'],
     lines: [
       '강화도에서 돌아온 신헌이 조약문 묶음을 건넨다.',
       '「전하, 강화도에서 맺은 조약의 조항들입니다. 하나하나 살펴보셔야 합니다.」',
     ],
   },
+
+  // ── 운현궁 · 1863 겨울 (2026-09-13 앞부분 보강) ─────────────────────────────
+  // 즉위 전의 집. 이 게임의 3D 몸은 남자 관복뿐이라, 여성 인물은 voice:true 로
+  // 몸도 얼굴도 없이 이름과 말만 뜬다(render/scene.js setNpcs · npcs.js portraitKeyOf).
+  {
+    // 이재면 — 흥선군의 맏아들, 명복의 형. 1863년에 열아홉이다.
+    id: 'jaemyeon',
+    name: '이재면',
+    title: '형',
+    palace: 'unhyeon',
+    x: -3, z: 3,
+    rank: 'mid',
+    hatStyle: 'samo',
+    actsVisible: [0],
+    lines: [
+      '「궁에서 사람들이 자꾸 드나든다. 임금께서 위중하시다는구나.」',
+      '「아버지께서 오늘은 너를 어디에도 보내지 말라 하셨다.」',
+    ],
+  },
+  {
+    id: 'haein',
+    name: '청지기',
+    title: '운현궁',
+    palace: 'unhyeon',
+    x: 5, z: 13,
+    rank: 'messenger',
+    hatStyle: 'samo',
+    actsVisible: [0],
+    lines: [
+      '「도련님, 오늘은 대문 밖이 유난히 소란스럽습니다.」',
+      '「대감마님께서 요 며칠 조 대비전에 몇 번이나 다녀오셨다고들 합니다.」',
+    ],
+  },
+  {
+    // 여흥부대부인 민씨 — 안채 앞에서 만나는 명복의 어머니. 모습은 게임의 재구성이다.
+    id: 'mother',
+    name: '여흥부대부인 민씨',
+    title: '어머니',
+    palace: 'unhyeon',
+    x: 12, z: -1,
+    rank: 'mother',
+    actsVisible: [0],
+    lines: [
+      '안채 앞에서 어머니가 나를 부르신다.',
+      '「명복아, 오늘은 옷을 단정히 하고 사랑채에 가 있거라.」',
+      '「무슨 일이 있어도 아버지 말씀을 따르거라.」',
+    ],
+  },
+  // 『철종실록』 14년 12월 8일 — 대왕대비가 영의정 김좌근과 도승지 민치상을 보내 사저에서 모셔 오게 했다.
+  // 알현·행렬에만 나온다(actsVisible 비어 있음).
+  { id: 'kimjwageun', name: '김좌근', title: '영의정', palace: 'unhyeon', x: 0, z: 13, rank: 'senior', hatStyle: 'samo', actsVisible: [], lines: ['「대왕대비전의 명을 받들어 모시러 왔습니다.」'] },
+  // 목소리로만 나오는 궁의 여성들 — 알현 방문자(from:'voice')로만 쓴다. 좌표는 쓰이지 않는다.
+  {
+    id: 'jodaebi', name: '대왕대비 조씨', title: '발 뒤에서', palace: 'changdeok', x: 0, z: 46,
+    rank: 'mid', voice: true, actsVisible: [],
+    lines: ['발 뒤에서 늙은 목소리가 들린다.'],
+  },
+  {
+    id: 'wangbi', name: '왕비 민씨', title: '', palace: 'changdeok', x: 0, z: 46,
+    rank: 'mid', voice: true, actsVisible: [],
+    lines: ['대조전 쪽에서 왕비의 전갈이 온다.'],
+  },
+  {
+    id: 'gungin', name: '궁인', title: '', palace: 'changdeok', x: 0, z: 46,
+    rank: 'mid', voice: true, actsVisible: [],
+    lines: ['문밖에서 궁인이 아뢴다.'],
+  },
+  // 김옥균 — 5막 정변 전 알현에만 나온다(2026-09-13 5막 보강).
+  {
+    id: 'kimokgyun', name: '김옥균', title: '개화파', palace: 'changdeok', x: 0, z: 46,
+    rank: 'mid', hatStyle: 'samo', actsVisible: [],
+    lines: ['「전하, 신들을 믿어 주십시오.」'],
+  },
+  { id: 'minchisang', name: '민치상', title: '도승지', palace: 'unhyeon', x: 0, z: 13, rank: 'senior', hatStyle: 'samo', actsVisible: [], lines: ['「가마를 대문 밖에 대 두었습니다.」'] },
 ]
 
 // 신하 한 명이 건네는 카드가 전부 「지금 막이나 그 이전 막」 것인지 본다 — SOURCES 의
@@ -294,11 +374,15 @@ function cardsReadyByAct(npc, actIndex) {
 // Normalize the shared data, so rendered bodies and conversation hit ranges agree.
 for (const npc of NPCS) Object.assign(npc, safePosition(PALACES[npc.palace], npc, .8))
 
-export function npcsAt(baseOf, palaceId, actIndex) {
+// year — 지금 비트의 해(모르면 가리지 않는다). 막 하나가 여러 해에 걸친다(3막은 1873~1877).
+// 막만 보면 1873년 경복궁에 1875년 운요호 소식을 든 사람이 선다 — fromYear 가 그 자리를 막는다
+// (2026-09-13 선생님: 「역사 순서에 맞게」).
+export function npcsAt(baseOf, palaceId, actIndex, year = null) {
   const base = baseOf(palaceId)
   return NPCS.filter(n =>
     n.palace === base &&
     (n.actsVisible ?? []).includes(actIndex) &&
+    (year == null || n.fromYear == null || year >= n.fromYear) &&
     cardsReadyByAct(n, actIndex))
 }
 
@@ -314,6 +398,7 @@ export function npcById(id) {
 // 임금만 나이로 갈린다.
 export function portraitKeyOf(npc, ageStage = 'adult') {
   if (!npc) return null
+  if (npc.voice) return null   // 목소리로만 나오는 인물 — 얼굴을 지어 붙이지 않는다
   if (npc.rank === 'king') return ageStage === 'child' ? 'king_child' : 'king_adult'
   return npc.rank ?? 'mid'
 }
