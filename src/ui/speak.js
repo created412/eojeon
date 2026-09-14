@@ -136,7 +136,8 @@ export function createSpeak(root, { voice = null } = {}) {
         paint(0)
         // 이 줄에 목소리가 있으면 소리의 시계를 따라 찍는다. 소리가 막히면(음소거·자동 재생 차단)
         // 그 자리에서 아래의 글자 찍기로 넘어간다 — 대화가 멈추지 않는다.
-        const clip = voice?.clipFor(text.includes('「') ? view.npcId : 'gojong-narrator', text)
+        // 목소리는 「」 대사에만 붙는다. 지문(누가 들어온다·손을 얹는다 같은 안내 문장)은 읽지 않는다(2026-09-14 선생님).
+        const clip = text.includes('「') ? voice?.clipFor(view.npcId, text) : null
         const handle = clip ? voice.play(clip) : null
         if (handle) {
           timer = setInterval(() => {

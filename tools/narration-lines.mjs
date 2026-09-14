@@ -9,15 +9,11 @@ function add(line) {
   const key = voiceKey('gojong-narrator', line)
   lines.set(key, { key, line, text: line.replace(/<[^>]+>/g, '').replace(/[「」『』─]/g, ' ').trim() })
 }
+// 고종의 1인칭 독백만 읽는다 — 행렬 장면의 줄(「그는 알고 왔을까」 따위).
+// 글 화면·대화 사이 지문 같은 안내 문장은 읽지 않는다(2026-09-14 선생님: 「안내문구의 음성은 모두 제거」).
 for (const act of ACTS) for (const beat of act.beats) {
-  if (['note', 'procession'].includes(beat.kind)) {
-    for (const line of [...(beat.lines ?? []), ...(beat.afterLines ?? [])]) add(line)
-  }
-  for (const visitor of beat.visitors ?? []) {
-    for (const line of visitor.lines ?? []) if (!spokenText(line)) add(line)
-  }
+  if (beat.kind === 'procession') for (const line of beat.lines ?? []) add(line)
 }
-for (const npc of NPCS) for (const line of npc.lines ?? []) if (!spokenText(line)) add(line)
 mkdirSync('tools/voice/narration', { recursive: true })
 writeFileSync('tools/voice/narration/lines.json', JSON.stringify([...lines.values()], null, 2))
 console.log(`${lines.size} narration lines`)

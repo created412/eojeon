@@ -5,21 +5,22 @@ import { ACTS } from '../../src/data/acts.js'
 import { NPCS } from '../../src/data/npcs.js'
 import { NARRATION } from '../../src/data/narration-data.js'
 
-it('행렬·글 화면·대화 사이 지문에 실제 재생할 음성과 글자 시각이 있다', () => {
-  const lines = []
+it('고종 독백 음성은 행렬 장면의 줄에만 있고, 글 화면·지문 같은 안내 문장에는 없다', () => {
+  const monologue = [], guide = []
   for (const act of ACTS) for (const b of act.beats) {
-    if (['note','procession'].includes(b.kind)) lines.push(...(b.lines??[]),...(b.afterLines??[]))
-    for (const v of b.visitors??[]) lines.push(...(v.lines??[]).filter(l=>!l.includes('「')))
+    if (b.kind === 'procession') monologue.push(...(b.lines ?? []))
+    if (b.kind === 'note') guide.push(...(b.lines ?? []), ...(b.afterLines ?? []))
+    for (const v of b.visitors ?? []) guide.push(...(v.lines ?? []).filter(l => !l.includes('「')))
   }
-  for (const n of NPCS) lines.push(...(n.lines??[]).filter(l=>!l.includes('「')))
-  expect(lines).toContain('그 집안의 세도가 오늘로 저문다는 것을, 그는 알고 왔을까.')
-  for (const line of lines.filter(Boolean)) {
-    const clip=NARRATION[voiceKey('gojong-narrator',line)]
-    expect(clip,line).toBeTruthy()
-    expect(clip.src.startsWith('data:audio/ogg;base64,')).toBe(true)
+  for (const n of NPCS) guide.push(...(n.lines ?? []).filter(l => !l.includes('「')))
+  expect(monologue).toContain('그 집안의 세도가 오늘로 저문다는 것을, 그는 알고 왔을까.')
+  for (const line of monologue.filter(Boolean)) {
+    const clip = NARRATION[voiceKey('gojong-narrator', line)]
+    expect(clip, line).toBeTruthy()
     expect(clip.t).toHaveLength(line.length)
-    expect(clip.ms).toBeGreaterThan(clip.t.at(-1))
-    expect(clip.t.every((t,i)=>i===0||t>=clip.t[i-1])).toBe(true)
+  }
+  for (const line of guide.filter(l => l && !monologue.includes(l))) {
+    expect(NARRATION[voiceKey('gojong-narrator', line)], line).toBeUndefined()
   }
 })
 

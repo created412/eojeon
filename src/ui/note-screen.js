@@ -105,8 +105,9 @@ export function createNoteScreen(root, { voice = null } = {}) {
         bindMedia(el)
         const sheet = el.querySelector('.sheet')
         if (PAPER.hanji) sheet.style.backgroundImage = `url(${PAPER.hanji})`
-        const narration = voice?.narrate([...(beat.lines ?? []), ...(beat.afterLines ?? [])].filter(Boolean))
-        el.querySelector('.note-next').addEventListener('click', () => { narration?.stop(); el.remove(); resolve() })
+        // 글 화면은 안내·설명 문장이라 소리 내어 읽지 않는다(2026-09-14 선생님: 「안내문구의 음성은 모두 제거」).
+        // 고종의 1인칭 독백 음성은 행렬 장면(main.js playProcession)에만 남는다.
+        el.querySelector('.note-next').addEventListener('click', () => { el.remove(); resolve() })
       })
     },
   }
