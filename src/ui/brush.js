@@ -92,7 +92,7 @@ export function writingHtml(view) {
   const origin = view.originWhileWriting ?? view.origin ?? ''
   return `
           <h2>${view.title ?? ''}</h2>
-          ${view.givenText ? `<div class="meaning">${view.givenText} (${view.givenGloss ?? ''})은 주어져 있습니다.<br>비전즉화·주화매국 여덟 글자를 이어 써 주세요.</div>` : ''}
+          ${view.givenText ? `<div class="meaning">${view.givenText} (${view.givenGloss ?? ''})은 주어져 있습니다.<br>이어지는 마지막 ${view.glyphs?.length ?? 0}글자 「${(view.glyphs ?? []).join('')}」를 써 주세요.</div>` : ''}
           <div class="line"></div>
           <canvas class="paper" width="${S}" height="${S}"></canvas>
           <div class="count"></div>
@@ -126,6 +126,22 @@ export function finishHtml(view) {
 // 자동으로 넘어가지 않아 완성한 글자를 충분히 살펴볼 수 있다.
 // 다 쓰고 나면 비문의 나머지(戒我萬年子孫·丙寅作 辛未立)를
 // 뜻풀이와 함께 보여준다 — 열두 자가 발췌라는 사실을 숨기지 않는다.
+// 태블릿: 획을 긋고 곧바로 단추를 누르면 브라우저가 앞 획과 이어진 두 번 탭으로 보고 click 을 만들지 않는 일이 있다
+// (2026-09-15 아이패드 흉내 점검). 손가락은 떼는 순간(pointerup)에 바로 누른 것으로 치고, 뒤따르는 click 은 한 번 거른다.
+function onTap(button, fn) {
+  if (!button) return
+  let touchedAt = -Infinity
+  button.addEventListener('pointerup', e => {
+    if (e.pointerType === 'mouse' || button.disabled) return
+    touchedAt = e.timeStamp
+    fn()
+  })
+  button.addEventListener('click', e => {
+    if (e.timeStamp - touchedAt < 700) return
+    fn()
+  })
+}
+
 export function createBrush(root) {
   ensureStyle()
 
@@ -226,12 +242,12 @@ export function createBrush(root) {
         canvas.addEventListener('pointercancel',()=>{drawing=false;pointer=null})
         canvas.addEventListener('lostpointercapture',()=>{drawing=false;pointer=null})
 
-        el.querySelector('.next').addEventListener('click', nextGlyph)
-        el.querySelector('.reset').addEventListener('click',loadGlyph)
+        onTap(el.querySelector('.next'), nextGlyph)
+        onTap(el.querySelector('.reset'), loadGlyph)
 
         function finish() {
           el.innerHTML = finishHtml(view)
-          el.querySelector('.go').addEventListener('click', () => { el.remove(); resolve() })
+          onTap(el.querySelector('.go'), () => { el.remove(); resolve() })
         }
 
         loadGlyph()

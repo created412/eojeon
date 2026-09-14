@@ -35,6 +35,9 @@ export const CAM_LOOK_Y = 2.6
 // 그 답을 갖고 있는데 씬까지 닿아 있지 않았다. 씬이 속도를 재서 짐작하게 두지 않는다:
 // 이동은 고정 스텝(16.7ms)으로 누적되어 한 프레임에 0 걸음일 때도 두 걸음일 때도 있어,
 // 속도로 짐작하면 달리기가 프레임마다 켜졌다 꺼졌다 한다. 없으면 늘 걷는 것으로 본다.
+// 행렬에서 곁을 걷는 사람이 한 프레임에 다가가는 최대 거리(m). 60fps 에서 초당 약 11m — 임금 걸음보다 넉넉히 빠르다.
+export const FOLLOW_STEP = 0.18
+
 export function createScene(canvas, { audio = null, running = null } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' })
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5))
@@ -127,9 +130,20 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
   function setOpeningView(enabled) { openingView = enabled; snapCamera = true }
   function rotateView(direction) { orbit += Math.sign(direction)*Math.PI/4 }
   function resetView() { orbit=0;zoom=1 }
-  const orbitDown = e => { if (e.button === 2) { dragging = true; lastPointerX = e.clientX; canvas.setPointerCapture(e.pointerId) } }
-  const orbitMove = e => { if (dragging) { orbit -= (e.clientX - lastPointerX) * .007; lastPointerX = e.clientX } }
-  const orbitUp = () => { dragging = false }
+  // 마우스는 오른쪽 끌기, 손가락은 한 손가락 끌기로 시점을 돌린다(2026-09-14 태블릿). 손가락은 조금 움직인 뒤에야
+  // 돌리기 시작한다 — 탭(걷기)과 섞이지 않게(input/input.js isTap 과 같은 14px).
+  let touchStart = null
+  const orbitDown = e => {
+    if (e.button === 2) { dragging = true; lastPointerX = e.clientX; canvas.setPointerCapture(e.pointerId); return }
+    if (e.pointerType === 'touch' && e.isPrimary) touchStart = { x: e.clientX, id: e.pointerId }
+  }
+  const orbitMove = e => {
+    if (touchStart && e.pointerId === touchStart.id && !dragging && Math.abs(e.clientX - touchStart.x) > 14) {
+      dragging = true; lastPointerX = e.clientX; try { canvas.setPointerCapture(e.pointerId) } catch { /* 이미 뗐다 */ }
+    }
+    if (dragging) { orbit -= (e.clientX - lastPointerX) * .007; lastPointerX = e.clientX }
+  }
+  const orbitUp = () => { dragging = false; touchStart = null }
   const noMenu = e => e.preventDefault()
   const onWheel = e => { e.preventDefault(); zoom = THREE.MathUtils.clamp(zoom + e.deltaY * .0006, .65, 1.5) }
   canvas.addEventListener('pointerdown', orbitDown)
@@ -239,13 +253,18 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
   // setNpcs() 를 다시 부르면 목록이 통째로 다시 지어져(모델 복제 포함) 걸음이
   // 끊긴다. 그래서 자리만 옮기는 길을 따로 둔다.
   //   yaw: null 이면 임금 쪽을 본다. 숫자면 그 각으로 고정한다.
-  function placeNpc(id, { x, z, yaw = null, walking = false, hidden = null } = {}) {
+  //   smooth: true 이면 한 번에 FOLLOW_STEP 만큼만 다가간다 — 행렬에서 곁을 걷는 사람이 순간이동하지 않게(2026-09-15).
+  function placeNpc(id, { x, z, yaw = null, walking = false, hidden = null, smooth = false } = {}) {
     const e = npcMeshes.get(id)
     if (!e) return false
     if (x != null || z != null) {
       const p={x:x??e.anchor.position.x,z:z??e.anchor.position.z}
       const at=activePalace?safePosition(activePalace,p,.8):p
-      e.anchor.position.x=at.x;e.anchor.position.z=at.z
+      if (smooth) {
+        const dx=at.x-e.anchor.position.x,dz=at.z-e.anchor.position.z,d=Math.hypot(dx,dz)
+        const k=d>FOLLOW_STEP?FOLLOW_STEP/d:1
+        e.anchor.position.x+=dx*k;e.anchor.position.z+=dz*k
+      } else { e.anchor.position.x=at.x;e.anchor.position.z=at.z }
     }
     if (hidden != null) e.anchor.visible = !hidden
     e.yaw = yaw

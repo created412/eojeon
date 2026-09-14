@@ -18,6 +18,11 @@ export function isTyping(e) {
   return tag === 'TEXTAREA' || tag === 'INPUT' || el.isContentEditable === true
 }
 
+// 손가락을 뗄 때 탭으로 볼 것인가 — 14px 안에서 0.6초 안에 뗐으면 탭이다.
+export const TAP_MOVE_PX = 14
+export const TAP_MS = 600
+export function isTap(movedPx, heldMs) { return movedPx <= TAP_MOVE_PX && heldMs <= TAP_MS }
+
 export function createInput(target) {
   const down = new Set()
   let shift = false
@@ -35,8 +40,21 @@ export function createInput(target) {
     down.delete(e.code)
   }
   const onBlur = () => { down.clear(); shift = false }
+  // 마우스는 누르는 순간이 곧 탭이다. 손가락(touch·pen)은 떼는 순간에 가른다 — 조금만 움직이고 곧 뗐으면
+  // 「그곳으로 걷기」, 끌었으면 시점 돌리기(render/scene.js)다. 대는 순간 걷기를 걸면 끌 때마다 임금이 걸어간다(2026-09-14).
+  let press = null
   const onPointer = (e) => {
     if (e.button !== 0) return
+    if (e.pointerType === 'touch' || e.pointerType === 'pen') { press = { x: e.clientX, y: e.clientY, t: e.timeStamp ?? performance.now() }; return }
+    const r = target.getBoundingClientRect()
+    pending = { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }
+  }
+  const onPointerUp = (e) => {
+    if (!press) return
+    const moved = Math.hypot(e.clientX - press.x, e.clientY - press.y)
+    const held = (e.timeStamp ?? performance.now()) - press.t
+    press = null
+    if (!isTap(moved, held)) return
     const r = target.getBoundingClientRect()
     pending = { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height }
   }
@@ -45,6 +63,8 @@ export function createInput(target) {
   addEventListener('keyup', onKeyUp)
   addEventListener('blur', onBlur)
   target.addEventListener('pointerdown', onPointer)
+  target.addEventListener('pointerup', onPointerUp)
+  target.addEventListener('pointercancel', () => { press = null })
 
   return {
     axis() {
@@ -60,6 +80,7 @@ export function createInput(target) {
       removeEventListener('keyup', onKeyUp)
       removeEventListener('blur', onBlur)
       target.removeEventListener('pointerdown', onPointer)
+      target.removeEventListener('pointerup', onPointerUp)
     },
   }
 }

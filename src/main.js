@@ -5,11 +5,12 @@ import { installCinematicStyle } from './ui/cinematic-style.js'
 import { stageEvent } from './systems/event-staging.js'
 import { createInput, isTyping } from './input/input.js'
 import { PALACES, pickupNear, roomLabel, roomAt, baseOf } from './data/palaces.js'
+import { objectiveRoute } from './systems/route.js'
 import { npcsAt, npcNear, npcHandledCardIds, npcCardIds, npcById, portraitKeyOf } from './data/npcs.js'
 import {
   roomOf, kingSpot, besideSpot, visitorSpot, doorSpot, walkAt, yawToward,
   besideIds, visitorsOf, castOf, rebukeOf, entersOf, departIds, propOf,
-  escortOffsets, APPROACH_MS, DEPART_MS, REBUKE_MS, PROCESSION_MS, visitorSpotFor, audienceLeft,
+  escortOffsets, escortSpot, APPROACH_MS, DEPART_MS, REBUKE_MS, PROCESSION_MS, visitorSpotFor, audienceLeft,
 } from './systems/audience.js'
 import { createState, serialize, deserialize, SAVE_KEY } from './core/state.js'
 import { spend, isDusk, costOf } from './core/clock.js'
@@ -465,6 +466,8 @@ export function canPause(phase, hold = false) {
 export function boot(root) {
   installCinematicStyle(root)
   const canvas = document.createElement('canvas')
+  // 손가락 끌기를 브라우저가 화면 이동·확대로 가로채지 않게 한다 — 끌기는 시점 돌리기, 탭은 걷기다.
+  canvas.style.touchAction = 'none'
   canvas.id = 'scene'
   root.appendChild(canvas)
 
@@ -481,7 +484,8 @@ export function boot(root) {
   const input = createInput(canvas)
   const hud = createCinematicHud(root, { onCodex: () => {
     if (flow.phase === 'day' && !pause.isOpen()) pressQ()
-  }, onRotate: direction => ctx.rotateView(direction), onResetView: () => ctx.resetView() })
+  }, onRotate: direction => ctx.rotateView(direction), onResetView: () => ctx.resetView(),
+  onObjective: () => walkToObjective() })
   // 문서·사초함이 닫히는 소리. 「어떻게 닫히든 정확히 한 번」을 dialog 가 이미
   // 보증한다 — 화면 안 「닫기」 단추로 닫아도 여기를 지난다. 태블릿 학생에게는
   // 그 단추가 유일한 길이다(.veil 은 z-index 40, 태블릿 E·Q 단추는 22 라 문서가
@@ -569,6 +573,9 @@ export function boot(root) {
   let holdSession = null
   let wasPressing = false   // 지난 프레임에 걷기 조작이 눌려 있었는가(누른 '순간'만 세려고)
   let tapTarget = null   // 태블릿 탭 이동 목표 — { x, z } | null
+  // 여정 판을 눌렀을 때 차례로 걸어갈 지점들(문 앞 → 전각 안). tapTarget 에 닿으면 다음 지점을 꺼낸다.
+  let tapRoute = []
+  let autoWalk = false   // 여정 판으로 걷는 중 — 기둥을 스쳐 돌아가며 막힘 안내가 뜨지 않게 한다
   // 문소리를 낼 때를 가리는 값 — 지난 프레임의 방. null 은 「다음에 잡히는 방을
   // 조용히 받아 적어라」는 뜻이다(궁을 통째로 갈아 낀 직후. 그때는 문소리를
   // bindPalaceAndSpawn() 이 이미 한 번 냈다).
@@ -1154,7 +1161,7 @@ export function boot(root) {
     audienceWalk = null
     // 문으로 나가든 E로 끝내든, 마지막 탭과 막힘을 다음 낮으로 넘기지 않는다.
     acc = 0
-    tapTarget = null
+    tapTarget = null; tapRoute = []; autoWalk = false
     flow.state = { ...flow.state, blocked: null }
     hint.hidden = true
     dialog.close()
@@ -1429,7 +1436,7 @@ export function boot(root) {
       flow.setPhase('rush')
       hint.hidden = true
       wasPressing = false
-      tapTarget = null   // 앞 장면에서 남은 탭 목표를 들고 들어오지 않는다
+      tapTarget = null; tapRoute = []; autoWalk = false   // 앞 장면에서 남은 탭 목표를 들고 들어오지 않는다
       holdSession = hold.open(beat.view, {
         onPress: () => audio.play('deny'),   // 「눌렀는데 안 된다」를 귀로도 알린다
         onOffer: () => audio.play('door'),   // 뒤에서 문이 닫힌다
@@ -1527,7 +1534,7 @@ export function boot(root) {
     activeBeat = beat
     // 직전 장면의 탭 목표로 새 장면이 저절로 걷기 시작하지 않게 한다.
     acc = 0
-    tapTarget = null
+    tapTarget = null; tapRoute = []; autoWalk = false
     input.tap()
     flow.state = { ...flow.state, blocked: null }
     // 바닥 소리를 바꾸는 자리는 여기 하나다 — 비트(=화면) 하나에 한 번.
@@ -1723,18 +1730,31 @@ export function boot(root) {
     await runBeats({ resumeMidBeat: flow.state.beatEntered === true })
   }
 
+  // 여정 판을 누르면 이 낮의 나가는 방으로 걸어간다 — 문 앞을 먼저 짚고 전각 안으로 들어간다.
+  // 방은 앞면(+z) 가운데로만 드나들어서(palaces.js doorsOf) 곧장 방 한가운데를 짚으면 뒷벽·옆벽에 막힌다.
+  function walkToObjective() {
+    if (flow.phase !== 'day' || pause.isOpen() || dialog.isOpen() || speak.isOpen()) return
+    const route = objectiveRoute(PALACES[flow.state.palace], currentExit()?.room,
+      { x: ctx.player.position.x, z: ctx.player.position.z }, flow.state.control)
+    if (!route.length) { banner(root, '이미 그곳에 있다 — E 를 누르세요', 1800); return }
+    tapTarget = route.shift()
+    tapRoute = route
+    autoWalk = true
+  }
+
   // 탭 목표를 향해 매 스텝 axisToward 로 계산한 축을 step() 에 그대로 먹인다 —
   // 두 번째 이동 경로를 만들지 않는다. 이동 키를 누르면 탭 목표는 즉시 지운다
   function inputForStep() {
     const kb = input.axis()
     if (kb.x !== 0 || kb.z !== 0) {
-      tapTarget = null
+      tapTarget = null; tapRoute = []; autoWalk = false
       return { axis: () => ctx.worldAxis(kb), running: () => input.running() }
     }
     if (tapTarget) {
       const a = axisToward(ctx.player.position.x, ctx.player.position.z, tapTarget)
       if (a.x === 0 && a.z === 0) {
-        tapTarget = null
+        tapTarget = tapRoute.shift() ?? null
+        if (!tapTarget) autoWalk = false
         return input
       }
       return { axis: () => a, running: () => false }
@@ -1813,8 +1833,10 @@ export function boot(root) {
       ctx.player.position.z = p.z
       flow.state = { ...flow.state, room: roomAt(PALACES[flow.state.palace], p.x, p.z)?.id ?? null }
       const yaw = yawToward(pr.from, pr.to)
+      const def = PALACES[flow.state.palace]
       for (const e of pr.escort) {
-        ctx.placeNpc(e.npc, { x: p.x + e.dx, z: p.z + e.dz, yaw, walking: u < 1 })
+        const at = escortSpot(def, p, e)
+        ctx.placeNpc(e.npc, { x: at.x, z: at.z, yaw, walking: u < 1, smooth: true })
       }
       if (u >= 1) {
         procession = null
@@ -1849,12 +1871,12 @@ export function boot(root) {
         speak.isOpen() || dialog.isOpen() || pause.isOpen()
       if (busy) {
         acc = 0
-        tapTarget = null
+        tapTarget = null; tapRoute = []; autoWalk = false
         if (flow.state.blocked) flow.state = { ...flow.state, blocked: null }
       } else {
         if (tapped) {
           const p = ctx.pickGround(tapped.x, tapped.y)
-          if (p) tapTarget = p
+          if (p) { tapTarget = p; tapRoute = []; autoWalk = false }
         }
         const def = PALACES[flow.state.palace]
         const roomId = audienceBeat.room ?? def.councilRoom
@@ -1885,7 +1907,7 @@ export function boot(root) {
       const tapped = input.tap()
       if (tapped) {
         const p = ctx.pickGround(tapped.x, tapped.y)
-        if (p) tapTarget = p
+        if (p) { tapTarget = p; tapRoute = []; autoWalk = false }
       }
 
       acc = Math.min(acc + dt, FIXED_MS * MAX_STEPS)
@@ -1902,7 +1924,7 @@ export function boot(root) {
         lastRoom = flow.state.room
         audio.play('door', { gain: ROOM_DOOR_GAIN })
       }
-      if (flow.state.blocked && now - lastBlockedBannerAt >= BLOCKED_BANNER_MS) {
+      if (flow.state.blocked && !autoWalk && now - lastBlockedBannerAt >= BLOCKED_BANNER_MS) {
         banner(root, '임금이 갈 수 있는 곳은 정해져 있다')
         lastBlockedBannerAt = now
       }
