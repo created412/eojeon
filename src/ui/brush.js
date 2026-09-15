@@ -92,7 +92,7 @@ export function writingHtml(view) {
   const origin = view.originWhileWriting ?? view.origin ?? ''
   return `
           <h2>${view.title ?? ''}</h2>
-          ${view.givenText ? `<div class="meaning">${view.givenText} (${view.givenGloss ?? ''})은 주어져 있습니다.<br>이어지는 마지막 ${view.glyphs?.length ?? 0}글자 「${(view.glyphs ?? []).join('')}」를 써 주세요.</div>` : ''}
+          ${view.givenText ? `<div class="meaning">척화비에 새길 비문을 쓰고 있습니다. ${view.givenText} (${view.givenGloss ?? ''})은 이미 새겨져 있습니다.<br>이어지는 마지막 ${view.glyphs?.length ?? 0}글자 「${(view.glyphs ?? []).join('')}」를 안내선을 따라 써 주세요.</div>` : ''}
           <div class="line"></div>
           <canvas class="paper" width="${S}" height="${S}"></canvas>
           <div class="count"></div>

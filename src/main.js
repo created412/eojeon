@@ -6,6 +6,8 @@ import { stageEvent } from './systems/event-staging.js'
 import { createInput, isTyping } from './input/input.js'
 import { PALACES, pickupNear, roomLabel, roomAt, baseOf } from './data/palaces.js'
 import { objectiveRoute } from './systems/route.js'
+import { guideForBeat, actGuideView } from './data/guide.js'
+import { createGuideStrip } from './ui/guide-strip.js'
 import { npcsAt, npcNear, npcHandledCardIds, npcCardIds, npcById, portraitKeyOf } from './data/npcs.js'
 import {
   roomOf, kingSpot, besideSpot, visitorSpot, doorSpot, walkAt, yawToward,
@@ -485,7 +487,7 @@ export function boot(root) {
   const hud = createCinematicHud(root, { onCodex: () => {
     if (flow.phase === 'day' && !pause.isOpen()) pressQ()
   }, onRotate: direction => ctx.rotateView(direction), onResetView: () => ctx.resetView(),
-  onObjective: () => walkToObjective() })
+  onObjective: () => walkToObjective(), onEscape: () => runToGoal() })
   // 문서·사초함이 닫히는 소리. 「어떻게 닫히든 정확히 한 번」을 dialog 가 이미
   // 보증한다 — 화면 안 「닫기」 단추로 닫아도 여기를 지난다. 태블릿 학생에게는
   // 그 단추가 유일한 길이다(.veil 은 z-index 40, 태블릿 E·Q 단추는 22 라 문서가
@@ -525,6 +527,7 @@ export function boot(root) {
   // 대사 음성 — 게임의 음소거를 그대로 따른다. 소리는 사용자 조작 뒤에만 틀 수 있으므로(자동 재생 규칙)
   // 첫 대사가 뜰 때는 이미 「시작」 단추를 누른 뒤다.
   const speak = createSpeak(root, { voice })
+  const guide = createGuideStrip(root)
   const title = createTitle(root)
   const controlsHint = createControlsHint(root)
   const hold = createHold(root)
@@ -1314,6 +1317,12 @@ export function boot(root) {
   async function playBrush(beat) {
     flow.setPhase('beat')
     hint.hidden = true
+    // 붓을 들기 전에 지금 무엇을 쓰는 상황인지 먼저 읽는다(beat.intro — 척화비 비문).
+    if (beat.intro) {
+      guide.set('글을 읽고 「다음」을 누르세요. 그다음 붓을 듭니다.')
+      await noteScreen.show(beat.intro)
+      guide.set(guideForBeat(beat))
+    }
     await brush.open({
       ...brushView(beat),
       // 획 하나에 한 번. 붓을 대는 순간에만 울린다(끄는 동안이 아니라) — 획을
@@ -1379,8 +1388,8 @@ export function boot(root) {
   // 안내문이 실제로 이 기기에서 참인 말만 하게 한다.
   function rushControlHint() {
     return isCoarse()
-      ? '손을 짚은 쪽으로 되도록 빨리 걸어간다.'
-      : 'Shift 를 눌러 달린다.'
+      ? '화면 아래 붉은 판을 누르면 목적지까지 달아난다. 바닥을 짚어 직접 걸어가도 된다.'
+      : 'Shift 를 눌러 달린다. 화면 아래 붉은 판을 누르면 목적지까지 달아난다.'
   }
 
   // 촉박 비트(C1 등) — 불이 방을 하나씩 삼키는 제한 시간. 판정은 프레임 루프 안에서
@@ -1392,7 +1401,9 @@ export function boot(root) {
       flow.setPhase('beat')
       hint.hidden = true
       const intro = { ...beat.intro, lines: [...(beat.intro.lines ?? []), rushControlHint()] }
+      guide.set('글을 읽고 「다음」을 누르세요. 그다음 서둘러 달아납니다.')
       noteScreen.show(intro).then(() => {
+        guide.set(guideForBeat(beat))
         const def = PALACES[flow.state.palace]
         const from = def.rooms.find(r => r.id === beat.spawnRoom)
         if (from) {
@@ -1532,6 +1543,7 @@ export function boot(root) {
 
   async function playBeatScreen(beat) {
     activeBeat = beat
+    guide.set(guideForBeat(beat))
     // 직전 장면의 탭 목표로 새 장면이 저절로 걷기 시작하지 않게 한다.
     acc = 0
     tapTarget = null; tapRoute = []; autoWalk = false
@@ -1578,6 +1590,7 @@ export function boot(root) {
   async function finishAct() {
     // 막이 끝난 화면은 글 화면이다 — 바닥 소리를 끈다.
     audio.setAmbient(null)
+    guide.hide()
     // 이 막에서 남긴 여러 결정(어전회의·훈령) 중 가장 나중 것의 「남긴 말」을 보여준다
     const decision = [...flow.state.decisions].reverse().find(d => d.actIndex === flow.actIndex)
     const reason = decision?.reason ?? ''
@@ -1662,6 +1675,9 @@ export function boot(root) {
     flow.state = advancePrices(flow.state, actIndex + 1)
     dateLabel = flow.act().dateLabel
     bindPalaceAndSpawn()
+    // 막마다 「이 막에서 할 일」 한 장 — 무엇이 일어나고 무엇을 하는지 먼저 말한다(data/guide.js).
+    guide.hide()
+    await noteScreen.show(actGuideView(ACTS[actIndex], actIndex))
     await runBeats()
   }
 
@@ -1742,6 +1758,18 @@ export function boot(root) {
     autoWalk = true
   }
 
+  // 촉박 장면 — 붉은 판을 누르면 목적지 방으로 달린다(2026-09-15 선생님: 「촉박 장면도 패드로 쉽게」).
+  // 판정은 그대로다: 시간 안에 목적지 방에 들어가야 한다. 길만 찾아 준다.
+  function runToGoal() {
+    if (flow.phase !== 'rush' || !session || pause.isOpen()) return
+    const route = objectiveRoute(PALACES[flow.state.palace], activeBeat?.goalRoom,
+      { x: ctx.player.position.x, z: ctx.player.position.z }, flow.state.control)
+    if (!route.length) return
+    tapTarget = route.shift()
+    tapRoute = route
+    autoWalk = true
+  }
+
   // 탭 목표를 향해 매 스텝 axisToward 로 계산한 축을 step() 에 그대로 먹인다 —
   // 두 번째 이동 경로를 만들지 않는다. 이동 키를 누르면 탭 목표는 즉시 지운다
   function inputForStep() {
@@ -1757,7 +1785,8 @@ export function boot(root) {
         if (!tapTarget) autoWalk = false
         return input
       }
-      return { axis: () => a, running: () => false }
+      // 촉박 장면에서 판을 눌러 달아나는 중이면 달린다.
+      return { axis: () => a, running: () => autoWalk && flow.phase === 'rush' }
     }
     return input
   }

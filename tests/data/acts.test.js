@@ -113,8 +113,9 @@ describe('2막 「양요」', () => {
   it('척화비를 쓰고 나면 그 비문이 사초함에 들어온다', () => {
     const b = beatsOf(a).find(x => x.kind === 'brush')
     expect(b.grantCard).toBe('cheokhwabi')
-    // 학생이 쓰는 것은 결론 두 글자뿐이다(2026-09-14). 주어진 열 자와 합쳐 비문 앞부분 열두 자가 된다.
-    expect(b.glyphs.join('')).toBe('賣國')
+    // 학생이 쓰는 것은 「主和賣國」 네 글자다(2026-09-15). 주어진 여덟 자와 합쳐 비문 앞부분 열두 자가 된다.
+    expect(b.glyphs.join('')).toBe('主和賣國')
+    expect(b.intro.lines.join(' ')).toContain('비문')
     expect((b.givenText + b.glyphs.join('')).replace(/\s/g, '')).toBe('洋夷侵犯非戰則和主和賣國')
   })
 
