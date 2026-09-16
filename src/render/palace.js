@@ -4,6 +4,7 @@ export { ROOM_SHRINK } from '../data/hall-geometry.js'
 import { buildRoofGeometry } from './roof.js'
 import { buildPalaceGarden, makeHallSign } from './palace-garden.js'
 import { buildInterior } from './interiors.js'
+import { buildYardProps } from './yard-props.js'
 import { woodGrain, dancheong, roofTile, baksok, changhoji, maru } from './film-textures.js'
 
 export function makeTextures(THREE) {
@@ -494,8 +495,7 @@ function buildRankStones(THREE, spec) {
 
 function buildYard(THREE, tex, def) {
   const g = new THREE.Group()
-  const y = def.yard
-  if (!y) return g
+  const y = def.yard ?? {}
   ;(y.trees ?? []).forEach(([x, z], i) => {
     const t = buildTree(THREE, i + 1)
     t.position.set(x, 0, z)
@@ -508,6 +508,12 @@ function buildYard(THREE, tex, def) {
       c.position.x = room.x
       g.add(c)
     }
+  }
+  // 마당 물건 — 가마·척화비·해치·드무·굴뚝·해시계·우물·장독대(render/yard-props.js).
+  {
+    const props = buildYardProps(THREE, def)
+    props.userData.yardProps = true
+    g.add(props)
   }
   if (y.rankStones) {
     const room = def.rooms.find(r => r.id === y.rankStones.room)

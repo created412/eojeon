@@ -7,6 +7,7 @@ import { buildMother } from './mother-person.js'
 import { updatePalaceOcclusion } from './occlusion.js'
 import { turnToward } from './facing.js'
 import { buildProp } from './props.js'
+import { applyYear as applyYardYear } from './yard-props.js'
 import { interpolateCameraShot } from './cinematic.js'
 import { createAtmosphere } from './atmosphere.js'
 import { interactionCue } from '../systems/interaction-cues.js'
@@ -426,6 +427,17 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
   }
   function setVeil(on) { veilOn = !!on; applyVeil() }
 
+  // 지금이 몇 해인가 — 마당 물건 가운데 fromYear 가 있는 것(척화비)이 이 값을 본다.
+  let sceneYear = null
+  function applyYardProps() {
+    palaceGroup?.traverse(o => { if (o.userData?.yardProps) applyYardYear(o, sceneYear) })
+  }
+  function setYear(year) {
+    if (year === sceneYear) return
+    sceneYear = year
+    applyYardProps()
+  }
+
   function setPalace(def) {
     activePalace = def
     if (palaceGroup) {
@@ -442,6 +454,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     // 첫 프레임 렌더 전에도 가림 판정을 정확히 하려면 월드 행렬이 미리 계산돼 있어야
     // 한다 — renderer.render() 가 매 프레임 다시 해 주지만, 그건 이 함수가 끝난 다음이다.
     palaceGroup.updateMatrixWorld(true)
+    applyYardProps()          // 그해에 이미 있는 마당 물건만 세운다(척화비는 1871년부터)
     faded = new Set()
     player.position.set(def.spawn.x, 1.9, def.spawn.z)
     snapCamera = true
@@ -559,7 +572,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
   return {
     THREE, scene, camera, renderer, player, fire,
     setPalace, setPickupMarkers, pickGround, resize, render, stats, setVeil,
-    setKingAge, setNpcs, placeNpc, setProps, setMood, setCinematic, setReducedMotion,
+    setKingAge, setNpcs, placeNpc, setProps, setMood, setCinematic, setReducedMotion, setYear,
     worldAxis, setOpeningView, rotateView, resetView,
     setInteractionCues,
     setCrisis(stage) { crisisStage = stage },

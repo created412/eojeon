@@ -924,6 +924,7 @@ export function boot(root) {
     // 같으면 아무것도 다시 짓지 않는다(render/scene.js).
     ctx.setNpcs(currentNpcs())
     // 임금은 해마다 자란다 — 「1막이면 아이, 아니면 어른」이 아니다(systems/king-age.js).
+    ctx.setYear?.(yearAtBeat(flow.act(), flow.state.beatIndex))
     ctx.setKingAge({ ...kingLookAt(yearAtBeat(flow.act(), flow.state.beatIndex)),
       attire: kingAttireAt(flow.act(), flow.state.beatIndex, flow.state.palace) })
     // syncPalace 는 궁이 바뀔 때만 다시 세운다 — 막이 바뀌어도 같은 궁에 머물 수 있으므로
@@ -1558,6 +1559,7 @@ export function boot(root) {
     // 어좌 앞에 늘어뜨린 것이라, 임금이 걸어 나가면 뒤에 남는다.
     // 이 비트의 해로 임금을 다시 세운다. 한 막 안에서도 해가 넘어간다(이어 비트) —
     // 2막은 1866년에 시작해 1871년에 끝나고, 그 사이 임금은 열다섯에서 스물이 된다.
+    ctx.setYear?.(yearAtBeat(flow.act(), flow.state.beatIndex))
     ctx.setKingAge({ ...kingLookAt(yearAtBeat(flow.act(), flow.state.beatIndex)),
       attire: kingAttireAt(flow.act(), flow.state.beatIndex, flow.state.palace) })
     if (beat.veil === true) { ctx.setVeil(true); sullyeom.show() }
@@ -2100,6 +2102,7 @@ export function boot(root) {
   const savedText = readSaveText()
   const saved = loadGame()
   ctx.setPalace(PALACES[act0.palace])
+  ctx.setYear?.(act0.year)
   ctx.setKingAge({ ...kingLookAt(act0.year), attire: kingAttireAt(act0, 0) })
   ctx.setNpcs(npcsAt(baseOf, act0.palace, 0))
   ctx.setCinematic(cinematicDirective({ actId: act0.id, phase: 'day' }))

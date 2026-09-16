@@ -64,6 +64,15 @@ export const PALACES = {
         [-18, -6], [-24, -8], [10, -22], [20, -30],
         [-33, 30], [33, -22],
       ],
+      // 마당에 놓이는 물건(render/yard-props.js · Higgsfield image_to_3d 로 만든 GLB).
+      // fromYear 를 적으면 그 해부터 서 있다 — 척화비는 1871년에 세워졌다.
+      props: [
+        { id: 'deumu', x: -9, z: 23 }, { id: 'deumu', x: 9, z: 23 },      // 인정전 앞 방화수
+        { id: 'sundial', x: -14, z: 25, yaw: 0.2 },                        // 앙부일구
+        { id: 'well', x: 9, z: -22 },
+        { id: 'jangdok', x: -28, z: -31, yaw: -0.3 },
+        { id: 'cheokhwabi', x: 13, z: 29, yaw: -0.35, fromYear: 1871 },
+      ],
     },
     pickups: [
       // 규장각 — 책과 목록이 있는 서고. 아무도 서 있지 않은, 손대지 않은 채 놓인 문서다.
@@ -123,6 +132,16 @@ export const PALACES = {
       // z 는 근정전 앞면(20.2)과 광화문 앞면(34.8) 사이다 — 두 집을 파고들지 않는다.
       colonnade: { room: 'geunjeongjeon', halfW: 14, z0: 21.5, z1: 34 },
       rankStones: { room: 'geunjeongjeon', halfW: 3.6, z0: 22, z1: 33, pairs: 6 },
+      props: [
+        { id: 'haetae', x: -7, z: 42, yaw: 0.25 },                          // 광화문 앞 한 쌍
+        { id: 'haetae', x: 7, z: 42, yaw: -0.25 },
+        { id: 'deumu', x: -11.5, z: 22 }, { id: 'deumu', x: 11.5, z: 22 },  // 근정전 앞 방화수
+        { id: 'chimney', x: 22, z: -23.5 },                                 // 자경전 십장생 굴뚝
+        { id: 'sundial', x: -17, z: 6, yaw: 0.3 },
+        { id: 'well', x: -34, z: 5 },
+        { id: 'jangdok', x: 33, z: -5, yaw: 0.4 },
+        { id: 'cheokhwabi', x: 9.5, z: 28, yaw: -0.4, fromYear: 1871 },   // 회랑과 근정전 사이 마당
+      ],
     },
     // ⚠ 좌표 규칙이 **뒤집혔다.** 아래 옛 주석은 「문서가 바닥에 놓여 있고 카메라가
     // 높이서 내려다보던 시절」의 것이다 — 그때는 방 밖(처마 밖)에 두어야 지붕에 안
@@ -194,6 +213,15 @@ export const PALACES = {
       { id: 'anchae', name: '노락당', gloss: '안채',   x: 12, z: -10, w: 16, d: 12, minControl: 'D', furnish: 'inner' },
       { id: 'daemun', name: '대문',                    x: 0,  z: 19, w: 8,  d: 4,  minControl: 'D', gate: true },
     ],
+    // 가마 — 1막에서 열두 살 명복이 이 가마를 타고 창덕궁으로 간다(acts.js unhyeon-procession).
+    // 대본이 말하는 물건이 마당에 실제로 서 있게 한다.
+    yard: {
+      props: [
+        { id: 'gama', x: 6, z: 1.5, yaw: 2.6 },        // 임금이 서는 자리(0,8) 앞
+        { id: 'well', x: -17, z: 6 },
+        { id: 'jangdok', x: 17, z: 2, yaw: -0.5 },
+      ],
+    },
     pickups: [],
   },
   // 계동궁 — 고종의 사촌 이재원의 집. 검증 B 6항: 조회한 모든 2차문헌이 일치하는 정설이다.
