@@ -2,8 +2,8 @@ import * as THREE from 'three'
 import { safePosition } from '../data/hall-geometry.js'
 import { makeTextures, buildPalace } from './palace.js'
 import { createFire } from './fire.js'
-// 인물은 인물마다 따로 그린 걷는 스프라이트 시트다(2026-09-15, render/anim-sprite-person.js).
-import { buildPerson, disposePerson, updateSway, RANK_SPECS, modelsReady } from './anim-sprite-person.js'
+import { buildPerson, disposePerson, updateSway, RANK_SPECS, modelsReady } from './glb-person.js'
+import { buildMother } from './mother-person.js'
 import { updatePalaceOcclusion } from './occlusion.js'
 import { turnToward } from './facing.js'
 import { buildProp } from './props.js'
@@ -218,7 +218,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
       // hatStyle 은 골격으로 사람을 쌓던 시절의 지정이다. 지금은 그림 자체에
       // 사모·익선관이 이미 그려져 있어 여기서 고를 것이 없다(npcs.js 의 값은 남겨 둔다).
       const spec = RANK_SPECS[n.rank] ?? RANK_SPECS.mid
-      const built = buildPerson(THREE, { ...spec, id: n.id, ageStage: 'adult' })
+      const built = n.id === 'mother' ? buildMother(THREE) : buildPerson(THREE, { ...spec, ageStage: 'adult' })
       const anchor = new THREE.Group()
       anchor.position.set(n.x, 1.9, n.z)
       anchor.add(built.pivot)
@@ -272,8 +272,8 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     return true
   }
 
-  // 인물 스프라이트 시트는 HTML 안에 base64 로 실려 있다. 한 번만 풀고,
-  // 인물마다 시트 하나를 모두가 함께 쓴다.
+  // Textured, skinned human figures are embedded in the HTML. Decode once;
+  // each role then clones its own skeleton while sharing the GPU assets.
   modelsReady(THREE)
 
   const tex = makeTextures(THREE)
@@ -486,7 +486,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     audio?.stepped(t, { walking, running: running?.() === true })
     // 카메라를 넘긴다 — 판이 카메라를 마주 보고, 걷는 방향과 카메라가 이루는
     // 각도가 앞·비스듬·옆·뒤 중 어느 그림을 쓸지 정한다(sprite-person.js).
-    updateSway(king.pivot, dt, { walking, running: running?.() === true, camera })
+    updateSway(king.pivot, dt, { walking, running: running?.() === true })
     lastPX = player.position.x
     lastPZ = player.position.z
   }
@@ -533,7 +533,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
       const want = e.yaw != null ? e.yaw
         : (Math.hypot(dx, dz) > 0.05 ? Math.atan2(dx, dz) : e.anchor.rotation.y)
       e.anchor.rotation.y = turnToward(e.anchor.rotation.y, want, dt)
-      updateSway(e.pivot, dt, { walking: e.walking, camera })
+      updateSway(e.pivot, dt, { walking: e.walking })
     }
 
     // 가림도 이 프레임의 카메라 위치로 잰다 — 위에서 이미 세워 두었다. player 는 지붕 밑을 걸어 다닐 수 있으니 방을 옮길 때만이

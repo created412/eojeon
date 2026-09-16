@@ -19,29 +19,30 @@ export const PALACES = {
       // gate — 앞뒤가 다 트인 집이다(doorsOf 참고). 궁 남쪽 끝에 있어 앞문만 두면
       // 궁 안에서는 들어갈 길이 없다.
       { id: 'donhwamun',    name: '돈화문',   gloss: '정문',       x:   0, z:  36, w: 10, d:  5, minControl: 'D', gate: true },
-      { id: 'injeongjeon',  name: '인정전',   gloss: '어전회의',   x:   0, z:  12, w: 22, d: 18, minControl: 'D' },
-      { id: 'seonjeongjeon',name: '선정전',   gloss: '편전',       x:  21, z:   6, w: 18, d: 16, minControl: 'C' },
-      { id: 'huijeongdang', name: '희정당',   gloss: '침전',       x:  -3, z:  -8, w: 26, d: 18, minControl: 'C' },
-      { id: 'daejojeon',    name: '대조전',   gloss: '중궁전',     x:  -3, z: -24, w: 16, d: 12, minControl: 'B' },
-      { id: 'gwanmulheon',  name: '관물헌',                        x:  17, z: -10, w: 12, d: 10, minControl: 'B' },
-      // furnish — 방을 채우는 것. 규장각은 책이 가득한 곳이어야 한다(render/palace.js).
-      { id: 'gyujanggak',   name: '규장각',   gloss: '왕실 도서관', x: -21, z:  10, w: 18, d: 16, minControl: 'C', furnish: 'shelves' },
+      { id: 'injeongjeon',  name: '인정전',   gloss: '어전회의',   x:   0, z:  12, w: 22, d: 18, minControl: 'D', furnish: 'court' },
+      { id: 'seonjeongjeon',name: '선정전',   gloss: '편전',       x:  21, z:   6, w: 18, d: 16, minControl: 'C', furnish: 'study' },
+      { id: 'huijeongdang', name: '희정당',   gloss: '침전',       x:  -3, z:  -8, w: 26, d: 18, minControl: 'C', furnish: 'bedchamber' },
+      { id: 'daejojeon',    name: '대조전',   gloss: '중궁전',     x:  -3, z: -24, w: 16, d: 12, minControl: 'B', furnish: 'inner' },
+      { id: 'gwanmulheon',  name: '관물헌',                        x:  17, z: -10, w: 12, d: 10, minControl: 'B', furnish: 'study' },
+      // furnish — 방 안을 채우는 것(render/interiors.js). 방마다 쓰임에 맞는 세간이 놓인다:
+      // 규장각은 서가와 책, 수정전은 기록 궤, 침전은 병풍과 잠자리, 창고는 가마니 …
+      { id: 'gyujanggak',   name: '규장각',   gloss: '왕실 도서관', x: -21, z:  10, w: 18, d: 16, minControl: 'C', furnish: 'library' },
       // 연경당은 'A' 에서 'B' 로 내렸다 — 3단계 Task 2. 5막 C3(정변 사흘째 밤)에서
       // 임금이 후원으로 도망칠 때 조작권은 환어로 회복된 B 다(history-verification-A
       // 이동 목록 9항). 연경당이 A 전용이면 그 방에 들어갈 수 없어 C3 가 성립하지 않는다.
       // A 전용 방의 자리는 아래 낙선재가 물려받는다 — 창덕궁의 A 전용 방은 여전히 한 채다.
-      { id: 'yeongyeongdang', name: '연경당', gloss: '사랑채',     x: -20, z: -25, w: 16, d: 12, minControl: 'B' },
+      { id: 'yeongyeongdang', name: '연경당', gloss: '사랑채',     x: -20, z: -25, w: 16, d: 12, minControl: 'B', furnish: 'sarang' },
 
       // ── 3단계 Task 2. 설계서 §7 「창덕궁 11곳 대 경우궁 3곳」을 숫자로 성립시킨다.
       // 세 채 모두 기존 여덟 채의 남쪽, 담과 여덟 채 사이의 빈 자리(z ≈ -34~-46)에
       // 둔다 — z 값만으로 기존 여덟 채와 모두 떨어져 있어 서로 겹치지 않는다.
       // 성정각 — 임금이 신하를 불러 만나던 곳. 밖에서 올라온 상소가 여기까지 온다
-      { id: 'seongjeonggak', name: '성정각', x:   8, z: -40, w: 14, d: 12, minControl: 'B' },
+      { id: 'seongjeonggak', name: '성정각', x:   8, z: -40, w: 14, d: 12, minControl: 'B', furnish: 'study' },
       // 낙선재 — 궁 안의 사가(私家) 같은 별당. 임금이 스스로 정할 수 있을 때에만 걸음이 닿는다.
       // 창덕궁에서 조작권 A 로만 열리는 방은 이 한 채뿐이다(연경당이 물려준 자리).
-      { id: 'nakseonjae',    name: '낙선재', x: -10, z: -40, w: 18, d: 12, minControl: 'A' },
+      { id: 'nakseonjae',    name: '낙선재', x: -10, z: -40, w: 18, d: 12, minControl: 'A', furnish: 'sarang' },
       // 선원전 — 역대 임금의 어진을 모신 곳
-      { id: 'seonwonjeon',   name: '선원전', x: -29, z: -40, w: 16, d: 12, minControl: 'B' },
+      { id: 'seonwonjeon',   name: '선원전', x: -29, z: -40, w: 16, d: 12, minControl: 'B', furnish: 'shrine' },
     ],
     // 창덕궁을 창덕궁으로 보이게 하는 것 — **나무**다.
     //
@@ -102,15 +103,15 @@ export const PALACES = {
     rooms: [
       // 광화문도 같은 이유로 근정전에서 넉넉히 떨어뜨린다 — donhwamun 주석 참고.
       { id: 'gwanghwamun',  name: '광화문', gloss: '정문',         x:   0, z:  37, w: 11, d:  6, minControl: 'D', gate: true },
-      { id: 'geunjeongjeon',name: '근정전', gloss: '정전',         x:   0, z:  13, w: 26, d: 20, minControl: 'D' },
+      { id: 'geunjeongjeon',name: '근정전', gloss: '정전',         x:   0, z:  13, w: 26, d: 20, minControl: 'D', furnish: 'court', throne: true },
       // 사정전은 깊이를 좀 더 준다 — 6장을 좌우 두 줄(x:±11)에 나눠 세우려면
       // 세로로 그만한 자리가 필요하다. 가운데 줄(x 근처 0)은 쓰지 않는다: 정면의
       // 근정전(팔작지붕, 10m 높이)이 그 축과 겹쳐 카메라와 임금 사이를 가린다
       // (2단계 실사 점검에서 실제로 걸렸다 — pickupsVisibility 주석 아래 참고).
-      { id: 'sajeongjeon',  name: '사정전', gloss: '어전회의',     x:   0, z: -12, w: 26, d: 26, minControl: 'C' },
+      { id: 'sajeongjeon',  name: '사정전', gloss: '어전회의',     x:   0, z: -12, w: 26, d: 26, minControl: 'C', furnish: 'court' },
       // 수정전도 사정전 왼쪽 줄(x:-11)과 10m 넘게 떨어지도록 서쪽으로 조금 더 둔다.
-      { id: 'sujeongjeon',  name: '수정전', gloss: '기록 보관',    x: -34, z:  -8, w: 22, d: 18, minControl: 'C' },
-      { id: 'jagyeongjeon', name: '자경전', gloss: '대비전',       x:  22, z: -14, w: 16, d: 14, minControl: 'B' },
+      { id: 'sujeongjeon',  name: '수정전', gloss: '기록 보관',    x: -34, z:  -8, w: 22, d: 18, minControl: 'C', furnish: 'archive' },
+      { id: 'jagyeongjeon', name: '자경전', gloss: '대비전',       x:  22, z: -14, w: 16, d: 14, minControl: 'B', furnish: 'dowager' },
     ],
     // 경복궁을 경복궁으로 보이게 하는 것 — **조정(朝庭)**이다. 근정전 앞의 넓은 마당을
     // 회랑이 둘러싸고, 그 가운데로 품계석이 두 줄 늘어선다. 신하가 품계에 따라 제 돌
@@ -164,9 +165,9 @@ export const PALACES = {
     ground: { w: 36, d: 32 },
     spawn: { x: 0, z: 13 },
     rooms: [
-      { id: 'jeongdang',  name: '정당',   x:   0, z:  -4, w: 16, d: 12, minControl: 'D' },
-      { id: 'haenggak-e', name: '동행각', x:  13, z:   6, w: 10, d: 10, minControl: 'D' },
-      { id: 'haenggak-w', name: '서행각', x: -13, z:   6, w: 10, d: 10, minControl: 'D' },
+      { id: 'jeongdang',  name: '정당',   x:   0, z:  -4, w: 16, d: 12, minControl: 'D', furnish: 'quarters' },
+      { id: 'haenggak-e', name: '동행각', x:  13, z:   6, w: 10, d: 10, minControl: 'D', furnish: 'storehouse' },
+      { id: 'haenggak-w', name: '서행각', x: -13, z:   6, w: 10, d: 10, minControl: 'D', furnish: 'storehouse' },
     ],
     // 경우궁에서 주울 수 있는 것은 이 한 장뿐이다(설계서 §7 의 표). 좁다는 것은
     // 걸음만 좁다는 뜻이 아니라 손에 들어오는 것이 적다는 뜻이기도 하다.
@@ -189,8 +190,8 @@ export const PALACES = {
     ground: { w: 48, d: 48 },
     spawn: { x: 0, z: 8 },
     rooms: [
-      { id: 'sarang', name: '노안당', gloss: '사랑채', x: -9, z: -8, w: 18, d: 12, minControl: 'D' },
-      { id: 'anchae', name: '노락당', gloss: '안채',   x: 12, z: -10, w: 16, d: 12, minControl: 'D' },
+      { id: 'sarang', name: '노안당', gloss: '사랑채', x: -9, z: -8, w: 18, d: 12, minControl: 'D', furnish: 'sarang' },
+      { id: 'anchae', name: '노락당', gloss: '안채',   x: 12, z: -10, w: 16, d: 12, minControl: 'D', furnish: 'inner' },
       { id: 'daemun', name: '대문',                    x: 0,  z: 19, w: 8,  d: 4,  minControl: 'D', gate: true },
     ],
     pickups: [],
@@ -203,7 +204,7 @@ export const PALACES = {
     ground: { w: 44, d: 40 },
     spawn: { x: 0, z: 12 },
     rooms: [
-      { id: 'sarangchae', name: '사랑채', x: 0, z: -6, w: 20, d: 14, minControl: 'D' },
+      { id: 'sarangchae', name: '사랑채', x: 0, z: -6, w: 20, d: 14, minControl: 'D', furnish: 'sarang' },
     ],
     pickups: [],
   },
@@ -215,7 +216,7 @@ export const PALACES = {
     ground: { w: 56, d: 52 },
     spawn: { x: 0, z: 16 },
     rooms: [
-      { id: 'sadang', name: '사당', x: 0, z: -6, w: 20, d: 16, minControl: 'D' },
+      { id: 'sadang', name: '사당', x: 0, z: -6, w: 20, d: 16, minControl: 'D', furnish: 'shrine' },
     ],
     pickups: [],
   },
@@ -229,7 +230,7 @@ export const PALACES = {
     ground: { w: 56, d: 52 },
     spawn: { x: 0, z: 16 },
     rooms: [
-      { id: 'yeongbang', name: '영방', x: 0, z: -6, w: 22, d: 14, minControl: 'D' },
+      { id: 'yeongbang', name: '영방', x: 0, z: -6, w: 22, d: 14, minControl: 'D', furnish: 'guardroom' },
     ],
     pickups: [],
   },

@@ -3,6 +3,7 @@ import { ROOM_SHRINK, WALL_THICKNESS } from '../data/hall-geometry.js'
 export { ROOM_SHRINK } from '../data/hall-geometry.js'
 import { buildRoofGeometry } from './roof.js'
 import { buildPalaceGarden, makeHallSign } from './palace-garden.js'
+import { buildInterior } from './interiors.js'
 import { woodGrain, dancheong, roofTile, baksok, changhoji, maru } from './film-textures.js'
 
 export function makeTextures(THREE) {
@@ -491,84 +492,6 @@ function buildRankStones(THREE, spec) {
   return g
 }
 
-// 서가 — 규장각 안을 책으로 채운다.
-//
-// 선생님: "규장각 검서관은 건물 안에서 책이 가득한 곳에 있는게 맞는거 같아."
-// 그리고 참고 영상의 도서관이 그렇다 — 방이 빈 상자가 아니라 물건으로 차 있고,
-// 그 물건들이 「여기가 어디인가」를 말한다. 우리 궁궐의 방은 지금 다 빈 상자다.
-//
-// 책은 InstancedMesh 하나로 그린다 — 백 권을 놓아도 드로우콜은 하나다.
-function buildShelves(THREE, tex, { w, d }) {
-  const g = new THREE.Group()
-  const wood = new THREE.MeshLambertMaterial({ map: tex.wood })
-  const CASE_W = 3.2, CASE_H = 2.6, CASE_D = 0.7
-
-  // 서가를 놓을 자리 — 뒷벽과 두 옆벽을 따라. 문이 있는 앞(+z)은 비운다.
-  const spots = []
-  const backZ = -d / 2 + CASE_D / 2 + 0.5
-  for (const x of [-w / 4, w / 4]) spots.push({ x, z: backZ, ry: 0 })
-  const sideX = w / 2 - CASE_D / 2 - 0.5
-  for (const z of [-d / 6, d / 5]) {
-    spots.push({ x: -sideX, z, ry: Math.PI / 2 })
-    spots.push({ x: sideX, z, ry: -Math.PI / 2 })
-  }
-
-  const books = []
-  for (const sp of spots) {
-    const frame = new THREE.Group()
-    // 옆널 둘과 선반 셋
-    for (const sx of [-CASE_W / 2 + 0.09, CASE_W / 2 - 0.09]) {
-      const side = new THREE.Mesh(new THREE.BoxGeometry(0.18, CASE_H, CASE_D), wood)
-      side.position.set(sx, BASE_H + FLOOR_H + CASE_H / 2, 0)
-      frame.add(side)
-    }
-    for (let i = 0; i < 4; i++) {
-      const board = new THREE.Mesh(new THREE.BoxGeometry(CASE_W, 0.1, CASE_D), wood)
-      board.position.set(0, BASE_H + FLOOR_H + 0.05 + i * (CASE_H / 3.4), 0)
-      frame.add(board)
-      if (i === 3) continue
-      // 그 선반 위의 책들 — 자리와 색만 모아 두었다가 아래에서 한꺼번에 그린다
-      let bx = -CASE_W / 2 + 0.3
-      while (bx < CASE_W / 2 - 0.3) {
-        const bw = 0.09 + Math.random() * 0.07
-        const bh = 0.42 + Math.random() * 0.16
-        books.push({
-          x: sp.x + Math.cos(sp.ry) * bx, z: sp.z - Math.sin(sp.ry) * bx,
-          y: BASE_H + FLOOR_H + 0.1 + i * (CASE_H / 3.4) + bh / 2,
-          w: bw, h: bh, ry: sp.ry,
-        })
-        bx += bw + 0.015
-      }
-    }
-    frame.position.set(sp.x, 0, sp.z)
-    frame.rotation.y = sp.ry
-    g.add(frame)
-  }
-
-  // 책 — 하나의 인스턴스 메시. 색은 옛 책의 표지 빛(쪽빛·먹빛·누런 종이)로만 고른다.
-  const PALETTE = [0x6b5a3e, 0x8a7550, 0x3f4a55, 0x5a4a3a, 0x7a6a4a, 0x4a4038, 0x9a8a63]
-  const bookGeo = new THREE.BoxGeometry(1, 1, 0.5)
-  const bookMat = new THREE.MeshLambertMaterial()
-  const inst = new THREE.InstancedMesh(bookGeo, bookMat, books.length)
-  const m = new THREE.Matrix4()
-  const q = new THREE.Quaternion()
-  const v = new THREE.Vector3()
-  const sc = new THREE.Vector3()
-  const col = new THREE.Color()
-  books.forEach((b, i) => {
-    q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), b.ry)
-    v.set(b.x, b.y, b.z)
-    sc.set(b.w, b.h, 0.44)
-    m.compose(v, q, sc)
-    inst.setMatrixAt(i, m)
-    inst.setColorAt(i, col.setHex(PALETTE[i % PALETTE.length]))
-  })
-  inst.instanceMatrix.needsUpdate = true
-  if (inst.instanceColor) inst.instanceColor.needsUpdate = true
-  g.add(inst)
-  return g
-}
-
 function buildYard(THREE, tex, def) {
   const g = new THREE.Group()
   const y = def.yard
@@ -631,15 +554,21 @@ export function buildPalace(THREE, tex, def) {
     hall.userData.occlusionShell = true
     // 어전회의가 열리는 방에만 어좌와 일월오봉도를 세운다 — 이 병풍이 서 있는
     // 자리가 곧 어전이다.
-    // 방을 채우는 것 — 지금은 서가 하나뿐이다(규장각).
-    if (r.furnish === 'shelves' && !r.burnt) {
-      const sh = buildShelves(THREE, tex, { w: r.w * ROOM_SHRINK, d: r.d * ROOM_SHRINK })
-      sh.position.set(r.x, 0, r.z)
-      sh.userData.roomId = r.id
-      root.add(sh)
+    // 방 안을 채우는 것 — 쓰임에 맞는 세간(render/interiors.js). 불탄 방은 비워 둔다.
+    if (r.furnish && !r.burnt) {
+      const inside = buildInterior(THREE, tex, r.furnish, { w: r.w * ROOM_SHRINK, d: r.d * ROOM_SHRINK })
+      inside.position.set(r.x, 0, r.z)
+      inside.userData.roomId = r.id
+      root.add(inside)
     }
-    // 사가(私家 — 운현궁)에는 어좌가 없다. 알현이 열리는 방이어도 세우지 않는다.
-    if (r.id === def.councilRoom && !r.burnt && def.private !== true) {
+    // 어좌 — 정전과 어전회의 방에만 세운다. 그 병풍(일월오봉도)이 서 있는 자리가 곧 어전이다.
+    //
+    // 「어전회의가 열리는 방」만으로 고르면 안 된다: 갑신정변에 임금이 급히 옮겨 간
+    // 경우궁·계동궁·북묘·오조유의 영방도 그 궁의 councilRoom 이라, 군졸이 자던 방에
+    // 일월오봉도와 어좌가 서 있었다. 임시로 든 거처에 어좌를 들고 갈 수는 없다.
+    // 그래서 조건을 furnish 로 바꾼다 — 어전(court)으로 꾸민 방과 정전(throne)만이다.
+    const isThroneRoom = r.throne === true || (r.id === def.councilRoom && r.furnish === 'court')
+    if (isThroneRoom && !r.burnt && def.private !== true) {
       const th = buildThrone(THREE, tex, { w: r.w * ROOM_SHRINK, d: r.d * ROOM_SHRINK })
       th.position.set(r.x, 0, r.z)
       th.userData.roomId = r.id
