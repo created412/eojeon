@@ -50,6 +50,9 @@ function mats(THREE, tex) {
     straw: M({ color: STRAW }),
     onggi: M({ color: ONGGI }),
     ink: M({ color: 0x59605c }),
+    leaf: M({ color: 0x3f5f3a }),
+    silk: M({ color: 0x8d7a5c }),
+    scroll: M({ color: 0xe3d8bd }),
     ember: M({ color: EMBER, emissive: EMBER, emissiveIntensity: 0.45 }),
     flame: M({ color: 0xffd9a0, emissive: 0xffc46b, emissiveIntensity: 0.9 }),
   }
@@ -340,108 +343,295 @@ function wallSpots(w, d, count = 6, depth = 0.7) {
 }
 
 // ── 방 종류마다 무엇을 놓는가 ─────────────────────────────────────────────
+// 족자 — 벽에 거는 그림·글씨. 벽이 허옇게 비어 있지 않게 한다.
+function hangingScroll(THREE, M, x, z, ry = 0, h = 1.6) {
+  const g = new THREE.Group()
+  const w = 0.7
+  g.add(box(THREE, M.silk, w, h, 0.03, 0, 1.1, 0))                              // 비단 바탕(장황)
+  g.add(box(THREE, M.scroll, w - 0.14, h - 0.24, 0.02, 0, 1.22, 0.02))          // 그림 종이
+  g.add(box(THREE, M.ink, w - 0.26, h * 0.5, 0.01, 0, 1.34, 0.035))             // 먹 그림
+  g.add(cyl(THREE, M.dark, 0.055, w + 0.16, 0, 1.1 + h, 0, { rz: Math.PI / 2 }))  // 위 축
+  g.add(cyl(THREE, M.dark, 0.055, w + 0.16, 0, 1.04, 0, { rz: Math.PI / 2 }))     // 아래 축
+  g.position.set(x, 0, z)
+  g.rotation.y = ry
+  return g
+}
+
+// 돗자리 — 방바닥에 까는 자리. 앉는 자리를 눈에 보이게 한다.
+function mat(THREE, M, x, z, w = 3.2, d = 2.2, ry = 0) {
+  const g = new THREE.Group()
+  g.add(box(THREE, M.straw, w, 0.03, d, 0, 0, 0))
+  g.add(box(THREE, M.dark, w, 0.035, 0.12, 0, 0, -d / 2 + 0.06))
+  g.add(box(THREE, M.dark, w, 0.035, 0.12, 0, 0, d / 2 - 0.06))
+  g.position.set(x, 0, z)
+  g.rotation.y = ry
+  return g
+}
+
+// 휘장 — 창방 아래로 드리운 천. 높고 허전한 위쪽을 덮는다.
+function drape(THREE, M, x, z, w = 4.0, ry = 0) {
+  const g = new THREE.Group()
+  const n = Math.max(4, Math.round(w / 0.55))
+  g.add(box(THREE, M.dark, w + 0.2, 0.12, 0.1, 0, 3.05, 0))            // 걸대
+  for (let i = 0; i < n; i++) {
+    const px = (i - (n - 1) / 2) * (w / n)
+    const drop = 0.5 + (i % 2) * 0.16
+    g.add(box(THREE, M.red, w / n - 0.05, drop, 0.05, px, 3.05 - drop, 0))
+    g.add(box(THREE, M.brass, w / n - 0.14, 0.06, 0.055, px, 3.02 - drop, 0))   // 끝단
+  }
+  g.position.set(x, 0, z)
+  g.rotation.y = ry
+  return g
+}
+
+// 좌등 — 방바닥에 놓는 낮은 등.
+function floorLamp(THREE, M, x, z) {
+  const g = new THREE.Group()
+  g.add(cyl(THREE, M.dark, 0.16, 0.08, 0, 0, 0))
+  g.add(box(THREE, M.paper, 0.3, 0.36, 0.3, 0, 0.08, 0))
+  g.add(box(THREE, M.flame, 0.1, 0.14, 0.1, 0, 0.18, 0))
+  g.add(box(THREE, M.dark, 0.36, 0.04, 0.36, 0, 0.44, 0))
+  g.position.set(x, 0, z)
+  return g
+}
+
+// 문서 더미 — 접어 쌓아 둔 종이.
+function paperStack(THREE, M, x, y, z, n = 3) {
+  const g = new THREE.Group()
+  for (let i = 0; i < n; i++) g.add(box(THREE, M.paper, 0.5, 0.04, 0.36, (i % 2) * 0.04 - 0.02, y + i * 0.045, (i % 3) * 0.03))
+  g.position.set(x, 0, z)
+  return g
+}
+
+// 화분 — 사랑방·대비전에 놓이던 분재.
+function pot(THREE, M, x, z) {
+  const g = new THREE.Group()
+  g.add(cyl(THREE, M.onggi, 0.3, 0.34, 0, 0, 0, { rTop: 0.34 }))
+  g.add(cyl(THREE, M.dark, 0.06, 0.5, 0, 0.34, 0))
+  for (const [dx, dz, dy] of [[0.18, 0.1, 0.72], [-0.16, -0.12, 0.66], [0.02, -0.2, 0.8]])
+    g.add(box(THREE, M.leaf, 0.42, 0.12, 0.34, dx, dy, dz))
+  g.position.set(x, 0, z)
+  return g
+}
+
+// 소반 — 세 발 달린 작은 상. 방 구석의 잔살림이다.
+function smallTray(THREE, M, x, z, top = null) {
+  const g = new THREE.Group()
+  g.add(cyl(THREE, M.dark, 0.34, 0.06, 0, 0.22, 0))
+  for (const a of [0.5, 2.6, 4.7]) g.add(cyl(THREE, M.dark, 0.04, 0.22, Math.cos(a) * 0.22, 0, Math.sin(a) * 0.22))
+  g.add(cyl(THREE, top ?? M.onggi, 0.12, 0.12, 0, 0.28, 0))
+  g.position.set(x, 0, z)
+  return g
+}
+
+// 벽을 따라 고르게 놓을 x 자리.
+function spread(count, span) {
+  return Array.from({ length: count }, (_, i) => (i - (count - 1) / 2) * (span / Math.max(1, count)))
+}
+
+// ── 방 종류마다 무엇을 놓는가 ─────────────────────────────────────────────
+//
+// 선생님(2026-09-16): 「그래 그걸 다 채워넣으라고.」 — 물건 네다섯으로는 넓은 마루가
+// 여전히 비어 보였다. 이제 방마다 벽(족자·서가·장롱), 바닥(돗자리·방석·상),
+// 구석(화분·등·궤)을 모두 쓴다. 가운데 길만 비워 둔다 — 임금과 신하가 그리로 걷는다.
+const BACK = (d) => -d / 2 + 0.75        // 뒷벽 안쪽
+const SIDE = (w) => w / 2 - 0.7          // 옆벽 안쪽
+
 const LAYOUTS = {
   library: (THREE, M, { w, d }) => [
-    bookcases(THREE, M, wallSpots(w, d)),
+    bookcases(THREE, M, wallSpots(w, d, 6)),
+    ...spread(3, w * 0.7).map(x => hangingScroll(THREE, M, x, BACK(d) - 0.3, 0, 1.2)),
+    mat(THREE, M, 0, d / 6, w * 0.45, 2.4),
     lowTable(THREE, M, -w / 6, d / 6),
-    cushion(THREE, M, -w / 6, d / 6 + 0.8, M.jade),
+    lowTable(THREE, M, w / 6, d / 6),
+    cushion(THREE, M, -w / 6, d / 6 + 0.85, M.jade),
+    cushion(THREE, M, w / 6, d / 6 + 0.85, M.indigo),
     bookStack(THREE, M, -w / 6, 0.49, d / 6),
-    scrolls(THREE, M, w / 6, d / 5),
+    paperStack(THREE, M, w / 6, 0.49, d / 6),
+    scrolls(THREE, M, -w / 3, 0, 6),
+    scrolls(THREE, M, w / 3, 0, 6),
+    chest(THREE, M, -SIDE(w) + 0.4, d / 3, Math.PI / 2, 1.2, 0.6),
+    chest(THREE, M, SIDE(w) - 0.4, d / 3, -Math.PI / 2, 1.2, 0.6),
+    floorLamp(THREE, M, -w / 4, d / 3),
+    floorLamp(THREE, M, w / 4, d / 3),
   ],
   archive: (THREE, M, { w, d }) => [
-    bookcases(THREE, M, wallSpots(w, d, 2)),
-    // 궤를 두 줄로 쌓아 둔다 — 실록과 의궤가 이런 궤에 담겨 있었다
-    ...[-1.6, 0, 1.6].map(x => chest(THREE, M, x, -d / 2 + 2.6, 0, 1.4, 0.7)),
-    ...[-1.6, 1.6].map(x => stackedChest(THREE, M, x, -d / 2 + 2.6, 0.7)),
-    chest(THREE, M, -w / 2 + 1.4, 0, Math.PI / 2, 1.4, 0.7),
-    chest(THREE, M, w / 2 - 1.4, 0, -Math.PI / 2, 1.4, 0.7),
-    scrolls(THREE, M, -1.2, -d / 6 + 1.2, 6),
-    lowTable(THREE, M, 1.4, -d / 6 + 1.2, Math.PI),
-    bookStack(THREE, M, 1.4, 0.49, -d / 6 + 1.2),
+    bookcases(THREE, M, wallSpots(w, d, 4)),
+    // 궤를 줄지어 쌓아 둔다 — 실록과 의궤가 이런 궤에 담겨 있었다
+    ...spread(4, w * 0.62).map(x => chest(THREE, M, x, BACK(d) + 1.6, 0, 1.3, 0.7)),
+    ...spread(4, w * 0.62).map(x => stackedChest(THREE, M, x, BACK(d) + 1.6, 0.7)),
+    ...[-1, 1].map(s => chest(THREE, M, s * (SIDE(w) - 0.4), -d / 6, s * Math.PI / 2, 1.3, 0.7)),
+    ...[-1, 1].map(s => chest(THREE, M, s * (SIDE(w) - 0.4), d / 8, s * Math.PI / 2, 1.3, 0.7)),
+    scrolls(THREE, M, -w / 4, d / 5, 6),
+    scrolls(THREE, M, w / 4, d / 5, 6),
+    mat(THREE, M, 0, d / 5, w * 0.3, 2.0),
+    lowTable(THREE, M, 0, d / 5, Math.PI),
+    paperStack(THREE, M, 0, 0.49, d / 5, 4),
+    cushion(THREE, M, 0, d / 5 - 0.85, M.indigo),
+    floorLamp(THREE, M, -w / 3, d / 4),
+    floorLamp(THREE, M, w / 3, d / 4),
   ],
   study: (THREE, M, { w, d }) => [
-    lowTable(THREE, M, 0, -d / 8),
-    cushion(THREE, M, 0, -d / 8 + 0.85, M.indigo),
-    bookStack(THREE, M, -0.4, 0.49, -d / 8),
-    box(THREE, M.lacquer, 0.3, 0.06, 0.2, 0.45, 0.49, -d / 8),      // 벼루
-    cyl(THREE, M.dark, 0.03, 0.26, 0.55, 0.52, -d / 8, { rz: 1.2 }), // 붓
-    chest(THREE, M, -w / 2 + 1.1, -d / 4, Math.PI / 2, 1.1, 0.6),
-    screen(THREE, M, 0, -d / 2 + 0.9, 0, 4),
-    candleStand(THREE, M, w / 2 - 1.2, -d / 4),
+    screen(THREE, M, 0, BACK(d) + 0.2, 0, 4),
+    hangingScroll(THREE, M, -w / 3, BACK(d) - 0.3, 0, 1.3),
+    hangingScroll(THREE, M, w / 3, BACK(d) - 0.3, 0, 1.3),
+    mat(THREE, M, 0, 0, w * 0.5, 2.6),
+    lowTable(THREE, M, 0, -d / 10),
+    cushion(THREE, M, 0, -d / 10 + 0.85, M.indigo),
+    bookStack(THREE, M, -0.45, 0.49, -d / 10),
+    box(THREE, M.lacquer, 0.3, 0.06, 0.2, 0.45, 0.49, -d / 10),        // 벼루
+    cyl(THREE, M.dark, 0.03, 0.26, 0.56, 0.52, -d / 10, { rz: 1.2 }),  // 붓
+    paperStack(THREE, M, 0.1, 0.49, -d / 10 + 0.3, 2),
+    etagere(THREE, M, SIDE(w) - 0.5, -d / 5, -Math.PI / 2),
+    chest(THREE, M, -SIDE(w) + 0.5, -d / 5, Math.PI / 2, 1.1, 0.6),
+    bookStack(THREE, M, -SIDE(w) + 0.5, 0.62, -d / 5, 3),
+    candleStand(THREE, M, SIDE(w) - 0.6, d / 5),
+    floorLamp(THREE, M, -SIDE(w) + 0.6, d / 5),
+    pot(THREE, M, w / 4, d / 3),
+    smallTray(THREE, M, -w / 4, d / 3),
   ],
   sarang: (THREE, M, { w, d }) => [
-    screen(THREE, M, 0, -d / 2 + 0.9, 0, 4),
-    lowTable(THREE, M, -w / 8, -d / 8),
-    cushion(THREE, M, -w / 8, -d / 8 + 0.85, M.red),
-    cushion(THREE, M, w / 6, 0, M.jade),
-    chest(THREE, M, -w / 2 + 1.1, d / 8, Math.PI / 2),
-    etagere(THREE, M, w / 2 - 1.1, -d / 5, -Math.PI / 2),
-    brazier(THREE, M, w / 8, -d / 4),
-    candleStand(THREE, M, -w / 2 + 1.4, -d / 3, 0.95),
+    screen(THREE, M, -w / 6, BACK(d) + 0.2, 0, 4),
+    hangingScroll(THREE, M, w / 4, BACK(d) - 0.3),
+    mat(THREE, M, -w / 6, -d / 8, w * 0.42, 2.6),
+    lowTable(THREE, M, -w / 6, -d / 8),
+    cushion(THREE, M, -w / 6, -d / 8 + 0.9, M.red),
+    cushion(THREE, M, -w / 6 - 1.3, -d / 8, M.jade),
+    cushion(THREE, M, -w / 6 + 1.3, -d / 8, M.indigo),
+    paperStack(THREE, M, -w / 6, 0.49, -d / 8),
+    etagere(THREE, M, w / 3, BACK(d) + 0.5),
+    chest(THREE, M, -SIDE(w) + 0.5, d / 6, Math.PI / 2),
+    chest(THREE, M, SIDE(w) - 0.5, d / 6, -Math.PI / 2, 1.1, 0.6),
+    smallTray(THREE, M, w / 6, -d / 8, M.jade),
+    brazier(THREE, M, w / 5, d / 8),
+    pot(THREE, M, SIDE(w) - 0.8, -d / 4),
+    candleStand(THREE, M, -SIDE(w) + 0.7, -d / 4, 0.95),
+    floorLamp(THREE, M, w / 3, d / 3),
   ],
   bedchamber: (THREE, M, { w, d }) => [
-    screen(THREE, M, -w / 6, -d / 2 + 0.9, 0, 6),
-    bedding(THREE, M, -w / 6, -d / 5),
-    chest(THREE, M, -w / 6 + 1.6, -d / 5, -Math.PI / 2, 0.9, 0.5, 0.5),
-    candleStand(THREE, M, -w / 6 - 1.7, -d / 5),
+    drape(THREE, M, 0, BACK(d) + 0.1, w * 0.7),
+    screen(THREE, M, -w / 5, BACK(d) + 0.3, 0, 6),
+    bedding(THREE, M, -w / 5, -d / 5),
+    chest(THREE, M, -w / 5 + 1.9, -d / 5, -Math.PI / 2, 0.9, 0.5, 0.5),   // 머릿장
+    floorLamp(THREE, M, -w / 5 - 1.9, -d / 5),
+    candleStand(THREE, M, -SIDE(w) + 0.7, 0),
+    mat(THREE, M, w / 4, -d / 8, w * 0.36, 2.4),
     lowTable(THREE, M, w / 4, -d / 8, 0, 1.2),
-    cushion(THREE, M, w / 4, -d / 8 + 0.8, M.indigo),
-    brazier(THREE, M, w / 4 + 1.3, -d / 4),
+    cushion(THREE, M, w / 4, -d / 8 + 0.85, M.indigo),
+    cushion(THREE, M, w / 4 - 1.2, -d / 8, M.jade),
+    smallTray(THREE, M, w / 4 + 1.2, -d / 8),
+    brazier(THREE, M, w / 4 + 1.9, -d / 4),
+    wardrobe(THREE, M, SIDE(w) - 0.5, BACK(d) + 1.6, -Math.PI / 2),
+    hangingScroll(THREE, M, w / 6, BACK(d) - 0.3, 0, 1.2),
+    pot(THREE, M, -SIDE(w) + 0.8, d / 4),
   ],
   inner: (THREE, M, { w, d }) => [
-    wardrobe(THREE, M, -w / 4, -d / 2 + 0.9),
-    wardrobe(THREE, M, w / 4, -d / 2 + 0.9),
-    screen(THREE, M, -w / 2 + 1.1, 0, Math.PI / 2, 3, 1.5),
-    mirrorStand(THREE, M, w / 2 - 1.2, -d / 6, -Math.PI / 2),
-    cushion(THREE, M, 0, 0, M.jade),
-    box(THREE, M.red, 0.42, 0.24, 0.34, 0.7, 0, 0.2),   // 반짇고리
-    brazier(THREE, M, -w / 4, d / 5),
+    wardrobe(THREE, M, -w / 4, BACK(d) + 0.4),
+    wardrobe(THREE, M, w / 4, BACK(d) + 0.4),
+    chest(THREE, M, 0, BACK(d) + 0.4, 0, 1.4, 0.8),
+    screen(THREE, M, -SIDE(w) + 0.6, 0, Math.PI / 2, 3, 1.5),
+    mirrorStand(THREE, M, SIDE(w) - 0.6, -d / 6, -Math.PI / 2),
+    mat(THREE, M, 0, d / 10, w * 0.4, 2.2),
+    cushion(THREE, M, -0.8, d / 10, M.jade),
+    cushion(THREE, M, 0.8, d / 10, M.red),
+    box(THREE, M.red, 0.42, 0.24, 0.34, 0, 0, d / 10 - 0.9),       // 반짇고리
+    smallTray(THREE, M, -w / 4, d / 4, M.jade),
+    brazier(THREE, M, w / 4, d / 4),
+    floorLamp(THREE, M, SIDE(w) - 0.7, d / 4),
   ],
   dowager: (THREE, M, { w, d }) => [
-    screen(THREE, M, 0, -d / 2 + 0.9, 0, 6),
-    box(THREE, M.red, 1.7, 0.14, 1.1, 0, 0, -d / 6),    // 보료
-    cushion(THREE, M, -1.3, -d / 6, M.jade),
-    lowTable(THREE, M, 0, -d / 6 + 1.1, Math.PI, 1.2),
-    brazier(THREE, M, 1.6, -d / 6),
-    chest(THREE, M, -w / 2 + 1.1, d / 8, Math.PI / 2, 1.2, 0.5),
-    candleStand(THREE, M, w / 2 - 1.2, -d / 4),
+    drape(THREE, M, 0, BACK(d) + 0.1, w * 0.66),
+    screen(THREE, M, 0, BACK(d) + 0.35, 0, 6),
+    mat(THREE, M, 0, -d / 8, w * 0.5, 2.6),
+    box(THREE, M.red, 1.7, 0.14, 1.1, 0, 0.03, -d / 8),             // 보료
+    cushion(THREE, M, -1.5, -d / 8, M.jade),
+    cushion(THREE, M, 1.5, -d / 8, M.indigo),
+    lowTable(THREE, M, 0, -d / 8 + 1.2, Math.PI, 1.2),
+    smallTray(THREE, M, -1.5, -d / 8 + 1.2, M.jade),
+    brazier(THREE, M, 1.8, -d / 8 + 1.2),
+    chest(THREE, M, -SIDE(w) + 0.5, d / 8, Math.PI / 2, 1.2, 0.5),
+    chest(THREE, M, SIDE(w) - 0.5, d / 8, -Math.PI / 2, 1.2, 0.5),
+    candleStand(THREE, M, -SIDE(w) + 0.7, -d / 4),
+    candleStand(THREE, M, SIDE(w) - 0.7, -d / 4),
+    pot(THREE, M, -w / 3, d / 3),
+    pot(THREE, M, w / 3, d / 3),
   ],
   shrine: (THREE, M, { w, d }) => [
-    altar(THREE, M, 0, -d / 2 + 1.3),
-    censer(THREE, M, 0, -d / 2 + 2.3),
-    candleStand(THREE, M, -1.5, -d / 2 + 2.2, 1.0),
-    candleStand(THREE, M, 1.5, -d / 2 + 2.2, 1.0),
-    cushion(THREE, M, 0, -d / 2 + 3.6, M.indigo),
+    drape(THREE, M, 0, BACK(d) + 0.1, w * 0.7),
+    altar(THREE, M, 0, BACK(d) + 0.55),
+    censer(THREE, M, 0, BACK(d) + 1.5),
+    censer(THREE, M, -1.9, BACK(d) + 1.5, 0.8),
+    censer(THREE, M, 1.9, BACK(d) + 1.5, 0.8),
+    candleStand(THREE, M, -1.7, BACK(d) + 1.4, 1.0),
+    candleStand(THREE, M, 1.7, BACK(d) + 1.4, 1.0),
+    mat(THREE, M, 0, 0, w * 0.5, 2.6),
+    cushion(THREE, M, 0, -0.4, M.indigo),
+    cushion(THREE, M, -1.3, 0.4, M.indigo),
+    cushion(THREE, M, 1.3, 0.4, M.indigo),
+    hangingScroll(THREE, M, -SIDE(w) + 0.3, -d / 6, Math.PI / 2, 1.3),
+    hangingScroll(THREE, M, SIDE(w) - 0.3, -d / 6, -Math.PI / 2, 1.3),
+    floorLamp(THREE, M, -w / 3, d / 4),
+    floorLamp(THREE, M, w / 3, d / 4),
   ],
   court: (THREE, M, { w, d }) => [
+    // 어좌는 palace.js 가 세운다 — 여기서는 그 앞과 옆을 갖춘다.
     censer(THREE, M, -w / 4, -d / 6, 1.2),
     censer(THREE, M, w / 4, -d / 6, 1.2),
-    candleStand(THREE, M, -w / 4 - 0.9, -d / 6, 1.3),
-    candleStand(THREE, M, w / 4 + 0.9, -d / 6, 1.3),
+    candleStand(THREE, M, -w / 4 - 1.0, -d / 6, 1.3),
+    candleStand(THREE, M, w / 4 + 1.0, -d / 6, 1.3),
+    candleStand(THREE, M, -SIDE(w) + 0.8, d / 8, 1.3),
+    candleStand(THREE, M, SIDE(w) - 0.8, d / 8, 1.3),
+    ...[-1, 1].map(s => mat(THREE, M, s * w / 4.5, d / 6, w * 0.28, 2.6)),   // 신하가 서는 자리
+    ...[-1, 1].flatMap(s => [
+      hangingScroll(THREE, M, s * (SIDE(w) - 0.3), -d / 5, s * Math.PI / 2, 1.4),
+      pot(THREE, M, s * (SIDE(w) - 0.9), d / 3),
+    ]),
   ],
   storehouse: (THREE, M, { w, d }) => [
-    sacks(THREE, M, -w / 4, -d / 2 + 1.2),
-    sacks(THREE, M, w / 4, -d / 2 + 1.2, 3),
-    jar(THREE, M, w / 2 - 1.1, 0),
-    jar(THREE, M, w / 2 - 1.1, 1.0, 0.8),
-    chest(THREE, M, -w / 2 + 1.1, d / 6, Math.PI / 2, 1.2, 0.6),
+    sacks(THREE, M, -w / 4, BACK(d) + 0.6),
+    sacks(THREE, M, w / 4, BACK(d) + 0.6),
+    sacks(THREE, M, -w / 4, BACK(d) + 1.9, 6),
+    ...spread(3, w * 0.5).map(x => jar(THREE, M, x, d / 6, 0.9)),
+    jar(THREE, M, SIDE(w) - 0.6, -d / 6),
+    jar(THREE, M, -SIDE(w) + 0.6, -d / 6, 0.8),
+    chest(THREE, M, SIDE(w) - 0.7, d / 4, -Math.PI / 2, 1.2, 0.6),
+    chest(THREE, M, -SIDE(w) + 0.7, d / 4, Math.PI / 2, 1.2, 0.6),
+    stackedChest(THREE, M, -SIDE(w) + 0.7, d / 4, 0.6),
+    scrolls(THREE, M, 0, -d / 5, 3),
+    floorLamp(THREE, M, 0, d / 3),
   ],
   guardroom: (THREE, M, { w, d }) => [
-    spearRack(THREE, M, 0, -d / 2 + 0.7),
-    chest(THREE, M, -w / 2 + 1.1, -d / 6, Math.PI / 2, 1.2, 0.6),
-    cushion(THREE, M, w / 5, -d / 6, M.indigo),
-    cushion(THREE, M, w / 5, d / 8, M.indigo),
-    brazier(THREE, M, -w / 5, d / 6),
+    spearRack(THREE, M, -w / 5, BACK(d) + 0.3),
+    spearRack(THREE, M, w / 5, BACK(d) + 0.3),
+    chest(THREE, M, -SIDE(w) + 0.6, -d / 6, Math.PI / 2, 1.2, 0.6),
+    chest(THREE, M, SIDE(w) - 0.6, -d / 6, -Math.PI / 2, 1.2, 0.6),
+    mat(THREE, M, 0, d / 8, w * 0.45, 2.4),
+    cushion(THREE, M, -1.2, d / 8, M.indigo),
+    cushion(THREE, M, 0, d / 8, M.indigo),
+    cushion(THREE, M, 1.2, d / 8, M.indigo),
+    smallTray(THREE, M, 0, d / 8 - 1.0),
+    brazier(THREE, M, -w / 4, d / 3),
+    jar(THREE, M, w / 4, d / 3, 0.8),
+    floorLamp(THREE, M, SIDE(w) - 0.7, d / 3),
+    candleStand(THREE, M, -SIDE(w) + 0.7, d / 3, 0.9),
   ],
   quarters: (THREE, M, { w, d }) => [
-    screen(THREE, M, 0, -d / 2 + 0.9, 0, 4, 1.6),
-    cushion(THREE, M, -0.9, -d / 6, M.red),
-    cushion(THREE, M, 0.9, -d / 6, M.indigo),
-    lowTable(THREE, M, 0, -d / 6 + 1.0, Math.PI, 1.2),
-    candleStand(THREE, M, w / 2 - 1.2, -d / 5, 0.9),
-    chest(THREE, M, -w / 2 + 1.1, d / 8, Math.PI / 2, 1.0, 0.5, 0.5),
+    screen(THREE, M, 0, BACK(d) + 0.25, 0, 4, 1.6),
+    mat(THREE, M, 0, -d / 8, w * 0.5, 2.6),
+    cushion(THREE, M, -1.0, -d / 8, M.red),
+    cushion(THREE, M, 1.0, -d / 8, M.indigo),
+    lowTable(THREE, M, 0, -d / 8 + 1.1, Math.PI, 1.2),
+    smallTray(THREE, M, -1.4, -d / 8 + 1.1),
+    paperStack(THREE, M, 0, 0.49, -d / 8 + 1.1, 2),
+    chest(THREE, M, -SIDE(w) + 0.6, d / 8, Math.PI / 2, 1.0, 0.5, 0.5),
+    chest(THREE, M, SIDE(w) - 0.6, d / 8, -Math.PI / 2, 1.0, 0.5, 0.5),
+    bedding(THREE, M, -w / 4, d / 4),
+    candleStand(THREE, M, SIDE(w) - 0.7, -d / 5, 0.9),
+    floorLamp(THREE, M, -SIDE(w) + 0.7, -d / 5),
+    brazier(THREE, M, w / 4, d / 4),
   ],
 }
+
 
 // 같은 재질을 쓰는 메시를 하나로 합친다. 세간은 한 번 놓으면 움직이지 않으므로
 // 월드 행렬을 지오메트리에 구워 넣어도 된다. InstancedMesh(책)는 그대로 둔다.
