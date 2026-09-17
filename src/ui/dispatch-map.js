@@ -1,3 +1,4 @@
+import { SCENE_ART } from './scene-art-data.js'
 import { arrivedAt, pendingAt, lagLabelAt } from '../systems/dispatch.js'
 import { noticeFor } from './dialog.js'
 import { drawGanghwa, MAP_W, MAP_H, CAPTION, APPROX, PLACES, project } from './ganghwa-map.js'
@@ -57,6 +58,7 @@ const CSS = `
 .dispatch .cannot{width:min(1060px,96vw);max-width:none;color:#b9b6a5}
 .dispatch .lag{letter-spacing:0;color:#dba57c}
 .dispatch .mapnote a{color:#bcb495;font-size:10px}
+.dispatch .report-art{margin:0 0 10px}.dispatch .report-art img{display:block;width:100%;max-height:26vh;object-fit:cover;border-radius:3px;filter:saturate(.85)}.dispatch .report-art figcaption{font-size:11px;opacity:.7;margin-top:3px;text-align:right}
 @media(max-width:760px){.dispatch{padding:18px 12px;justify-content:flex-start}.dispatch .dispatch-layout{grid-template-columns:1fr;gap:18px;width:100%}.dispatch .dispatch-report .body{min-height:0}.dispatch .map-hotspot{font-size:11px}.dispatch .map-hotspot .dot{width:28px;height:28px}.dispatch .mapnote{font-size:12px}}
 @media(max-width:450px){.dispatch .map-hotspot{min-height:26px;transform:translate(-12px,-12px)}.dispatch .map-hotspot .dot{width:24px;height:24px}.dispatch .map-hotspot[data-at=chojijin]{flex-direction:row-reverse;transform:translate(calc(-100% + 12px),-6px)}.dispatch .map-hotspot[data-at=chojijin] .place{margin:0 3px 0 0}}
 `
@@ -116,6 +118,11 @@ export function createDispatchMap(root) {
             body.hidden = false
             body.innerHTML = ''
             const heading=document.createElement('h3');heading.className='report-heading';heading.textContent=d.headline;body.appendChild(heading)
+            // 장계가 가리키는 배 — 재구성 그림(ui/scene-art-data.js). 글로만 「이양선」이라 읽던 것을 눈으로 본다.
+            const art=d.art&&SCENE_ART[d.art]
+            if(art){const fig=document.createElement('figure');fig.className='report-art'
+              fig.innerHTML=`<img src="${art.src}" alt="${art.alt}"><figcaption>${art.caption}</figcaption>`
+              fig.querySelector('img').addEventListener('error',()=>fig.remove());body.appendChild(fig)}
             const text = document.createElement('div')
             text.className = 'text'
             text.textContent = `${d.body}\n\n${d.origin}`

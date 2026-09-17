@@ -1,5 +1,6 @@
 import { RICE_NOTE } from '../systems/prices.js'
 import { FEEDBACK_MEDIA } from './feedback-media-data.js'
+import { SCENE_ART } from './scene-art-data.js'
 
 const CSS = `
 .ration{position:fixed;inset:0;z-index:56;background:#12100d;display:flex;flex-direction:column;
@@ -27,6 +28,7 @@ const CSS = `
 .ration .grain figcaption span{display:block;font-size:12px;color:#b9b2a1;margin-top:4px}
 .ration .art-note{font-size:11px;color:#aaa08b;max-width:620px;line-height:1.6}
 @media(max-width:600px){.ration{padding:20px 14px;gap:10px}.ration p{font-size:16px}.ration .grain figcaption{gap:12px}}
+.ration .market-art{margin:0;width:100%;max-width:640px}.ration .market-art img{display:block;width:100%;max-height:30vh;object-fit:cover;border-radius:3px;filter:saturate(.85)}.ration .market-art figcaption{font-size:11px;color:#9c9584;margin-top:3px;text-align:right}
 .ration button{margin-top:6px;padding:12px 30px;background:#3a2d20;border:1px solid #6a5230;
   color:#e0a23a;border-radius:3px;font-size:15px;cursor:pointer}
 `
@@ -71,6 +73,7 @@ export function createRation(root) {
           const m = view.market
           el.innerHTML = `
             <h2>${m.title}</h2>
+            ${SCENE_ART.market ? `<figure class="market-art"><img src="${SCENE_ART.market.src}" alt="${SCENE_ART.market.alt}"><figcaption>${SCENE_ART.market.caption}</figcaption></figure>` : ''}
             ${m.lines.map(l => `<p>${l}</p>`).join('')}
             <div class="chart">${chartHtml(m.series)}</div>
             <div class="rice-line">${m.riceText}</div>
@@ -78,6 +81,7 @@ export function createRation(root) {
             <div class="staged">${m.stagedNote}</div>
             <div class="origin">${m.origin}</div>
             <button>무위영으로 간다</button>`
+          el.querySelector('.market-art img')?.addEventListener('error', e => { e.target.closest('figure').remove() })
           el.querySelector('button').addEventListener('click', sack)
         }
 

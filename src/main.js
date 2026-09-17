@@ -1273,6 +1273,7 @@ export function boot(root) {
     // advance() 뒤에 한 번만 저장한다.
     await lossScreen.show({
       title: beat.title,
+      art: beat.art,
       lines: beat.lines,
       tag: LOSS_LABEL.plunder,
       cards: taken.length

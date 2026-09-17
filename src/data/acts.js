@@ -373,6 +373,7 @@ export const ACTS = [
             origin: '『고종실록』 고종 3년(1866) · 우리말 옮김',
             grade: 'source',
             at: 'ganghwaSea',
+            art: 'fleet-1866',
           },
           {
             id: 'by2', place: 'ganghwa', placeName: '강화부',
@@ -417,6 +418,7 @@ export const ACTS = [
         // 양헌수의 장계는 승정원으로 올라간 문서이므로 강화도 서고에서 실려 나가지 않는다.
         id: 'oegyujanggak-plunder',
         kind: 'plunder',
+        art: 'plunder-1866',
         cardIds: ['oegyujanggak'],
         title: '외 규 장 각',
         lines: [
@@ -543,6 +545,7 @@ export const ACTS = [
             origin: '『고종실록』 고종 8년(1871)의 초지진 교전 기록에 근거한 재구성 · 이 문장을 실록에서 그대로 옮기지 못했습니다',
             grade: 'staged',
             at: 'chojijin',
+            art: 'fleet-1871',
           },
           {
             id: 'sn2', place: 'ganghwa', placeName: '광성보',
@@ -840,6 +843,7 @@ export const ACTS = [
             origin: '『고등 한국사1』 p.110에 적힌 운요호 사건 경과에 근거한 재구성 · 이 문장을 교과서에서 그대로 옮기지 못했습니다',
             grade: 'staged',
             at: 'chojijin',
+            art: 'unyo-1875',
           },
           {
             id: 'un2', place: 'ganghwa', placeName: '영종진',
