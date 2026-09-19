@@ -152,8 +152,8 @@ function brazier(THREE, M, x, z) {
 // 촛대 — 방바닥에 세우는 긴 등. 밤 장면에서 방 안을 알아보게 한다.
 function candleStand(THREE, M, x, z, h = 1.15) {
   const g = new THREE.Group()
-  g.add(cyl(THREE, M.dark, 0.22, 0.1, 0, 0, 0))
-  g.add(cyl(THREE, M.dark, 0.06, h, 0, 0.1, 0))
+  g.add(cyl(THREE, M.dark, 0.26, 0.12, 0, 0, 0))
+  g.add(cyl(THREE, M.wood, 0.085, h, 0, 0.12, 0))     // 기둥 — 가늘고 어두우면 멀리서 갓만 떠 보인다
   // 등롱 — 네모진 종이 갓. 안에서 불이 비친다.
   g.add(box(THREE, M.paper, 0.42, 0.5, 0.42, 0, h + 0.1, 0))
   g.add(box(THREE, M.flame, 0.16, 0.2, 0.16, 0, h + 0.25, 0))
@@ -354,6 +354,7 @@ function hangingScroll(THREE, M, x, z, ry = 0, h = 1.6) {
   g.add(cyl(THREE, M.dark, 0.055, w + 0.16, 0, 1.04, 0, { rz: Math.PI / 2 }))     // 아래 축
   g.position.set(x, 0, z)
   g.rotation.y = ry
+  g.userData.wallMounted = true      // 벽에 걸린다 — 벽이 사라지면 함께 사라진다(buildInterior)
   return g
 }
 
@@ -381,6 +382,7 @@ function drape(THREE, M, x, z, w = 4.0, ry = 0) {
   }
   g.position.set(x, 0, z)
   g.rotation.y = ry
+  g.userData.wallMounted = true      // 창방에 매단다 — 벽·창방이 사라지면 함께 사라진다
   return g
 }
 
@@ -633,6 +635,15 @@ const LAYOUTS = {
 }
 
 
+// ⚠ 세간은 가림 판정(render/occlusion.js)에서 뺀다. 재질끼리 합쳐 두었으므로 가림 판정이
+// 「나무」 메시 하나를 지우면 방 안의 상 다리·등롱 기둥이 **한꺼번에** 사라지고, 그 위에
+// 얹힌 종이·책·등갓만 허공에 떠 보였다(선생님이 사정전 화면을 찍어 보내셨다, 2026-09-19).
+// 세간은 대부분 허리 아래라 카메라와 임금 사이를 가릴 일이 거의 없다. 그림자는 그대로 드리운다.
+function noOcclude(o) {
+  o.userData.noOcclude = true
+  o.userData.castShadow = true
+}
+
 // 같은 재질을 쓰는 메시를 하나로 합친다. 세간은 한 번 놓으면 움직이지 않으므로
 // 월드 행렬을 지오메트리에 구워 넣어도 된다. InstancedMesh(책)는 그대로 둔다.
 function mergeByMaterial(THREE, group) {
@@ -640,7 +651,7 @@ function mergeByMaterial(THREE, group) {
   const byMaterial = new Map()
   group.updateMatrixWorld(true)
   group.traverse(o => {
-    if (o.isInstancedMesh) { out.add(o); return }
+    if (o.isInstancedMesh) { noOcclude(o); out.add(o); return }
     if (!o.isMesh || !o.geometry) return
     const g = o.geometry.clone()
     g.applyMatrix4(o.matrixWorld)
@@ -652,7 +663,9 @@ function mergeByMaterial(THREE, group) {
     const merged = mergeGeometries(geometries, false)
     geometries.forEach(g => g.dispose())
     if (!merged) continue
-    out.add(new THREE.Mesh(merged, material))
+    const mesh = new THREE.Mesh(merged, material)
+    noOcclude(mesh)
+    out.add(mesh)
   }
   return out
 }
@@ -667,6 +680,16 @@ export function buildInterior(THREE, tex, kind, { w, d }) {
   const g = new THREE.Group()
   const make = LAYOUTS[kind]
   if (!make) return g
-  for (const part of make(THREE, mats(THREE, tex), { w, d })) g.add(part)
-  return mergeByMaterial(THREE, g)
+  const floor = new THREE.Group(), wall = new THREE.Group()
+  for (const part of make(THREE, mats(THREE, tex), { w, d })) (part.userData?.wallMounted ? wall : floor).add(part)
+  const out = mergeByMaterial(THREE, floor)
+  // 벽걸이(족자·휘장)는 따로 합쳐 이름을 붙여 둔다 — palace.js 가 이것을 집(hall)의
+  // 벽과 같은 운명으로 묶는다: 카메라가 방에 들어가 벽이 지워지면 족자도 함께 지워진다.
+  // 그러지 않으면 보이지 않는 벽에 족자만 허공에 걸려 있었다.
+  if (wall.children.length) {
+    const mounted = mergeByMaterial(THREE, wall)
+    mounted.name = 'wallMounted'
+    out.add(mounted)
+  }
+  return out
 }

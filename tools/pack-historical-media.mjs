@@ -49,7 +49,7 @@ for(const [id,title,caption,credit] of specs){
   await writeFile(originalPath,bytes)
   await new Promise(r=>setTimeout(r,4500))
  }
- const webp=await sharp(bytes).rotate().resize({width:960,height:1000,fit:'inside',withoutEnlargement:true}).webp({quality:78}).toBuffer()
+ const webp=await sharp(bytes).rotate().resize({width:760,height:800,fit:'inside',withoutEnlargement:true}).webp({quality:70}).toBuffer()
  await writeFile(`assets/historical/${id}.webp`,webp)
  const license=id==='cheokhwabi'?'KOGL Type 1':i.extmetadata.LicenseShortName?.value
  const licenseUrl=license==='KOGL Type 1'?'https://www.kogl.or.kr/info/licenseType1.do':license==='CC BY-SA 4.0'?'https://creativecommons.org/licenses/by-sa/4.0/':license==='CC BY-SA 3.0'?'https://creativecommons.org/licenses/by-sa/3.0/':license==='CC0'?'https://creativecommons.org/publicdomain/zero/1.0/':'https://creativecommons.org/publicdomain/mark/1.0/'

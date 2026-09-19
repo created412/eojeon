@@ -429,6 +429,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
 
   // 지금이 몇 해인가 — 마당 물건 가운데 fromYear 가 있는 것(척화비)이 이 값을 본다.
   let sceneYear = null
+  let wallHalls = []          // 벽걸이 세간이 있는 집들 — setPalace 에서 한 번만 모은다
   function applyYardProps() {
     palaceGroup?.traverse(o => { if (o.userData?.yardProps) applyYardYear(o, sceneYear) })
   }
@@ -454,6 +455,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     // 첫 프레임 렌더 전에도 가림 판정을 정확히 하려면 월드 행렬이 미리 계산돼 있어야
     // 한다 — renderer.render() 가 매 프레임 다시 해 주지만, 그건 이 함수가 끝난 다음이다.
     palaceGroup.updateMatrixWorld(true)
+    wallHalls = palaceGroup.children.filter(o => o.userData?.wallItems && o.userData?.walls)
     applyYardProps()          // 그해에 이미 있는 마당 물건만 세운다(척화비는 1871년부터)
     faded = new Set()
     player.position.set(def.spawn.x, 1.9, def.spawn.z)
@@ -553,6 +555,8 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     // 아니라 매 프레임 다시 잰다.
     if (palaceGroup && !openingView) {
       faded = updatePalaceOcclusion(THREE, palaceGroup, camera.position, player.position.x, player.position.z, faded)
+      // 벽이 지워진 방의 족자·휘장도 함께 지운다 — 보이지 않는 벽에 걸려 허공에 뜨지 않게.
+      for (const hall of wallHalls) hall.userData.wallItems.visible = hall.userData.walls.visible && hall.visible
     }
     renderer.render(scene, camera)
 

@@ -61,3 +61,42 @@ it('임시로 든 거처(경우궁·계동궁·북묘·영방)에는 어좌가 �
     expect(council.throne, id).toBeUndefined()
   }
 })
+
+// 2026-09-19 선생님 화면(사정전) — 「책상 없이 물건이 공중에 떠 있다」.
+// ① 가림 판정이 재질째 합친 나무 메시를 지우면 상 다리·등롱 기둥이 한꺼번에 사라져
+//    종이·책·등갓만 떠 보였다 → 세간은 가림 판정에서 뺀다.
+// ② 벽이 지워진 방에서 족자·휘장이 허공에 걸려 있었다 → 벽걸이는 따로 묶어 벽과 함께 보였다 사라진다.
+it('세간은 가림 판정에 걸리지 않고, 벽걸이는 따로 묶인다', () => {
+  for (const kind of FURNISH_KINDS) {
+    const g = buildInterior(THREE, null, kind, ROOM)
+    g.traverse(o => { if (o.isMesh) expect(o.userData.noOcclude, kind).toBe(true) })
+  }
+  const withScrolls = buildInterior(THREE, null, 'shrine', ROOM)
+  const mounted = withScrolls.getObjectByName('wallMounted')
+  expect(mounted).toBeTruthy()
+  // 벽걸이가 바닥 세간 쪽에 섞여 있지 않다 — 바닥 쪽 가장 높은 곳은 3m 를 넘지 않는다(휘장은 3m 높이)
+  const floorOnly = withScrolls.children.filter(c => c !== mounted)
+  const box = new THREE.Box3()
+  floorOnly.forEach(c => box.expandByObject(c))
+  expect(box.max.y).toBeLessThan(2.9)
+})
+
+it('벽걸이가 있는 방의 집은 그 벽과 벽걸이를 서로 안다(scene.js 가 함께 보였다 감춘다)', async () => {
+  const { buildPalace } = await import('../../src/render/palace.js')
+  const tex = { wood: null, dancheong: null, roof: null, ground: null, paper: null, maru: null }
+  let linked = 0
+  try {
+    const root = buildPalace(THREE, tex, PALACES.changdeok)
+    for (const hall of root.children) {
+      if (hall.userData?.wallItems) {
+        expect(hall.userData.walls).toBeTruthy()
+        linked++
+      }
+    }
+  } catch (e) {
+    // 궁 전체를 짓는 데는 캔버스(현판 글씨)가 필요하다 — 노드에 없으면 이 시험은 건너뛴다
+    if (!/document|canvas/i.test(String(e))) throw e
+    return
+  }
+  expect(linked).toBeGreaterThan(3)
+})

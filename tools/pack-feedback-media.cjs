@@ -12,7 +12,7 @@ const files = {
   for (const [key, filename] of Object.entries(files)) {
     const original = path.join(out, key + '.png');
     if (!fs.existsSync(original)) fs.copyFileSync(path.join(base, filename), original);
-    const webp = await sharp(original).resize({ width: 1024, withoutEnlargement: true }).webp({ quality: 86 }).toBuffer();
+    const webp = await sharp(original).resize({ width: 820, withoutEnlargement: true }).webp({ quality: 76 }).toBuffer();
     fs.writeFileSync(path.join(out, key + '.webp'), webp);
     media[key] = 'data:image/webp;base64,' + webp.toString('base64');
     console.log(key, Math.round(webp.length / 1024), 'KB');

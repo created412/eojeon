@@ -113,6 +113,7 @@ export function buildHall(THREE, tex, { w, d, h = 7, bays = 5, burnt = false, la
   )
   walls.position.y = BASE_H
   g.add(walls)
+  g.userData.walls = walls      // 벽걸이 세간(족자·휘장)이 이 벽과 함께 보였다 사라진다(scene.js)
 
   // 창방 (단청 띠)
   const beam = new THREE.Mesh(
@@ -566,6 +567,9 @@ export function buildPalace(THREE, tex, def) {
       inside.position.set(r.x, 0, r.z)
       inside.userData.roomId = r.id
       root.add(inside)
+      // 벽걸이는 벽이 보일 때만 보인다 — scene.js 가 매 프레임 hall.userData.walls 를 따라 맞춘다.
+      const mounted = inside.getObjectByName('wallMounted')
+      if (mounted) hall.userData.wallItems = mounted
     }
     // 어좌 — 정전과 어전회의 방에만 세운다. 그 병풍(일월오봉도)이 서 있는 자리가 곧 어전이다.
     //
