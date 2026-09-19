@@ -55,6 +55,19 @@ export const PALACES = {
     //
     // 좌표는 방 자리·사료 지점과 겹치지 않게 골랐다. tests/data/yard.test.js 가 붙든다.
     yard: {
+      // 금천을 건너 정전으로 향한다 — 실측 복원이 아니라 압축한 궁 안의 의례 동선이다.
+      bridge: { name: '금천교', x: 0, z: 29, w: 5, d: 3.6, streamW: 40, streamD: 2 },
+      // 삼도 가운데 길을 높인다. 스폰 주변 1.5m는 비워 첫 발이 돌에 묻히지 않게 한다.
+      royalRoad: [
+        { x: 0, z: 20, w: 4.6, d: 2 },
+        { x: 0, z: 25.6, w: 4.6, d: 3.2 },
+        { x: 0, z: 32.4, w: 4.6, d: 3.2 },
+      ],
+      // 부용지의 방지원도(네모난 못·둥근 섬)를 읽게 한다 — 방 없는 동북쪽으로 옮겨 담았다.
+      pond: { x: 26, z: -37, w: 12, d: 10,
+        pavilion: { x: 26, z: -31.5, w: 5.6, d: 4.8 } },
+      gateGuards: [ { x: -6, z: 36, w: 2.2, d: 2.2 }, { x: 6, z: 36, w: 2.2, d: 2.2 } ],
+      birds: { x: 0, z: 42, w: 54, d: 3, y: 13 },
       // 카메라는 임금에게 바짝 붙어 있다(CAM_DIST 14) — 담 근처에 심으면 화면에
       // 한 번도 안 들어온다. 처음 판이 그랬다: 나무를 열 그루 심었는데 실제로
       // 보이는 것은 화면 귀퉁이의 초록 조각 하나뿐이었다. **걸어 다니는 길가에** 심는다.
@@ -132,6 +145,13 @@ export const PALACES = {
       // z 는 근정전 앞면(20.2)과 광화문 앞면(34.8) 사이다 — 두 집을 파고들지 않는다.
       colonnade: { room: 'geunjeongjeon', halfW: 14, z0: 21.5, z1: 34 },
       rankStones: { room: 'geunjeongjeon', halfW: 3.6, z0: 22, z1: 33, pairs: 6 },
+      // 광화문 바닥은 z=34.84부터다 — 영제교를 35에 놓으면 문 안으로 들어가므로 앞 틈에 압축한다.
+      bridge: { name: '영제교', x: 0, z: 34.45, w: 5, d: .7, streamW: 22, streamD: .36 },
+      royalRoad: [ { x: 0, z: 21.5, w: 4.6, d: 2 }, { x: 0, z: 29.8, w: 4.6, d: 8.6 } ],
+      gateGuards: [ { x: -6.4, z: 37, w: 2.2, d: 2.2 }, { x: 6.4, z: 37, w: 2.2, d: 2.2 } ],
+      birds: { x: 0, z: 44, w: 70, d: 2, y: 14 },
+      // 온돌을 덥힌 연기는 방 바깥 굴뚝으로 빠진다 — 불탄 자경전에서는 피우지 않는다.
+      smokeSources: [ { x: 22, z: -23.5, w: 2.4, d: 2.4, y: 4.2, room: 'jagyeongjeon' } ],
       props: [
         { id: 'haetae', x: -7, z: 42, yaw: 0.25 },                          // 광화문 앞 한 쌍
         { id: 'haetae', x: 7, z: 42, yaw: -0.25 },
@@ -216,6 +236,10 @@ export const PALACES = {
     // 가마 — 1막에서 열두 살 명복이 이 가마를 타고 창덕궁으로 간다(acts.js unhyeon-procession).
     // 대본이 말하는 물건이 마당에 실제로 서 있게 한다.
     yard: {
+      // 사가의 문지기는 이 수업의 배경 재구성이다 — 말을 거는 이야기 인물과는 나눈다.
+      gateGuards: [ { x: -4.8, z: 19, w: 2.2, d: 2.2 }, { x: 4.8, z: 19, w: 2.2, d: 2.2 } ],
+      birds: { x: 0, z: 22, w: 38, d: 1, y: 12 },
+      smokeSources: [ { x: 20, z: -16, w: 2.4, d: 2.4, y: 3.4, room: 'anchae', buildChimney: true } ],
       props: [
         { id: 'gama', x: 6, z: 1.5, yaw: 2.6 },        // 임금이 서는 자리(0,8) 앞
         { id: 'well', x: -17, z: 6 },

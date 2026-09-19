@@ -30,7 +30,14 @@ export function createAtmosphere(scene) {
   const motes = new THREE.Points(moteGeo, new THREE.PointsMaterial({ color: 0xf4d69a, size: .055, transparent: true, opacity: .45, depthWrite: false }))
   scene.add(motes)
   let night = false
+  let mood = 'day', birds = null, smoke = null, birdPath = null, smokeSources = []
+  const smokePose = new THREE.Object3D()
+  function smokeVisibility() {
+    if (smoke) smoke.visible = mood === 'dawnwinter' || mood === 'night'
+  }
   function setMood(name) {
+    mood = name
+    smokeVisibility()
     night = name === 'night' || name === 'fire'
     const colours = {
       dawnwinter: ['#526e88', '#bbc0bb'], day: ['#5a7c95', '#c3ccc9'],
@@ -45,6 +52,27 @@ export function createAtmosphere(scene) {
     scenery.traverse(o => { o.geometry?.dispose(); o.material?.dispose() })
     scenery.clear()
     lamps.length = 0
+    birds = null; smoke = null
+    birdPath = def.yard?.birds
+    smokeSources = (def.yard?.smokeSources ?? []).filter(s =>
+      def.rooms.some(r => r.id === s.room && !r.burnt))
+    // 궁 담 위로 가끔 지나는 새 셋 — 날개 두 획을 한 번에 그려 인물 모델 비용을 보태지 않는다.
+    if (birdPath) {
+      const geo = new THREE.BufferGeometry()
+      geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(36), 3))
+      birds = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0x35414a }))
+      birds.name = 'yardBirds'
+      scenery.add(birds)
+    }
+    // 온돌 굴뚝 연기는 불꽃이 아니다 — 겨울·밤에만 아주 옅게, 같은 구 도형 여덟을 돌려 쓴다.
+    if (smokeSources.length) {
+      smoke = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1),
+        new THREE.MeshLambertMaterial({ color: 0xd0d5d1, transparent: true, opacity: .12, depthWrite: false }), smokeSources.length * 8)
+      smoke.name = 'chimneySmoke'
+      scenery.add(smoke)
+    }
+    animateYard(0)
+    smokeVisibility()
     // Layered ridges beyond the playable wall; no claim to survey-grade geography.
     for (let layer = 0; layer < 3; layer++) {
       const ridge = new THREE.PlaneGeometry(420, 160, 84, 28)
@@ -81,8 +109,42 @@ export function createAtmosphere(scene) {
       }
     }
   }
+  function animateYard(time) {
+    if (birds) {
+      const phase = (time * .001) % 85
+      birds.visible = phase < 45
+      const p = birds.geometry.attributes.position
+      for (let i = 0; i < 3; i++) {
+        const x = birdPath.x + (Math.min(phase / 45, 1) - .5) * (birdPath.w - 4) + (i - 1) * .9
+        const z = birdPath.z + (i - 1) * Math.min(.35, birdPath.d / 5)
+        const y = birdPath.y + i * .25, wing = .18 + Math.sin(time * .002 + i) * .09
+        p.setXYZ(i * 4, x - .45, y + wing, z)
+        p.setXYZ(i * 4 + 1, x, y, z + .12)
+        p.setXYZ(i * 4 + 2, x, y, z + .12)
+        p.setXYZ(i * 4 + 3, x + .45, y + wing, z)
+      }
+      p.needsUpdate = true
+      birds.geometry.computeBoundingSphere()
+    }
+    if (smoke) {
+      smokeSources.forEach((s, j) => {
+        for (let i = 0; i < 8; i++) {
+          const rise = (time * .00007 + i / 8) % 1
+          smokePose.position.set(s.x + rise * .55, s.y + .15 + rise * 3.4, s.z + Math.sin(rise * 4 + j) * .2)
+          // 처음과 끝에서 작아지게 해 연기 덩이가 되감기는 순간이 도드라지지 않게 한다.
+          smokePose.scale.setScalar(.03 + Math.sin(rise * Math.PI) * .36)
+          smokePose.updateMatrix()
+          smoke.setMatrixAt(j * 8 + i, smokePose.matrix)
+        }
+      })
+      smoke.instanceMatrix.needsUpdate = true
+      smoke.computeBoundingSphere()
+    }
+  }
   function update(time, player, reduced) {
     dome.position.set(player.x, 0, player.z)
+    // 기존 먼지와 같은 reducedMotion 값을 쓴다 — 켜는 순간의 자리·날개·연기 크기까지 멈춘다.
+    if (!reduced) animateYard(time)
     if (!reduced) motes.position.y = Math.sin(time * .0002) * .4
     const nearest = [...lamps].sort((a,b) => a.distanceToSquared(player)-b.distanceToSquared(player))
     localLights.forEach((light,i) => {

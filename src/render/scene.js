@@ -10,6 +10,7 @@ import { buildProp } from './props.js'
 import { applyYear as applyYardYear } from './yard-props.js'
 import { interpolateCameraShot } from './cinematic.js'
 import { createAtmosphere } from './atmosphere.js'
+import { createGateGuards } from './gate-guards.js'
 import { interactionCue } from '../systems/interaction-cues.js'
 import { createCrisis } from './crisis.js'
 
@@ -51,6 +52,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
   scene.background = new THREE.Color(0x1a1d21)
   scene.fog = new THREE.Fog(0x1a1d21, 70, 150)
   const atmosphere = createAtmosphere(scene)
+  const gateGuards = createGateGuards(THREE, scene)
   const crisis = createCrisis(scene)
   let crisisStage = null
 
@@ -451,6 +453,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     })
     scene.add(palaceGroup)
     atmosphere.setPalace(def)
+    gateGuards.setPalace(def)
     applyVeil()   // 궁을 다시 지었으니 발을 다시 걸어 준다
     // 첫 프레임 렌더 전에도 가림 판정을 정확히 하려면 월드 행렬이 미리 계산돼 있어야
     // 한다 — renderer.render() 가 매 프레임 다시 해 주지만, 그건 이 함수가 끝난 다음이다.
@@ -590,6 +593,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
       canvas.removeEventListener('wheel', onWheel)
       motionQuery?.removeEventListener('change', motionChange)
       atmosphere.dispose()
+      gateGuards.dispose()
       crisis.dispose()
       fire.dispose()
       if (palaceGroup) disposeGroup(palaceGroup)

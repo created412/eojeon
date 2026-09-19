@@ -5,6 +5,7 @@ import { buildRoofGeometry } from './roof.js'
 import { buildPalaceGarden, makeHallSign } from './palace-garden.js'
 import { buildInterior } from './interiors.js'
 import { buildYardProps } from './yard-props.js'
+import { buildYardFeatures } from './yard-features.js'
 import { woodGrain, dancheong, roofTile, baksok, changhoji, maru } from './film-textures.js'
 
 export function makeTextures(THREE) {
@@ -496,6 +497,7 @@ function buildRankStones(THREE, spec) {
 
 function buildYard(THREE, tex, def) {
   const g = new THREE.Group()
+  g.add(buildYardFeatures(THREE, tex, def))
   const y = def.yard ?? {}
   ;(y.trees ?? []).forEach(([x, z], i) => {
     const t = buildTree(THREE, i + 1)
