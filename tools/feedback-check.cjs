@@ -6,11 +6,11 @@ const pw=require(path.join(os.homedir(),'.cache/codex-runtimes/codex-primary-run
  const {outputFiles}=await require('esbuild').build({stdin:{resolveDir:process.cwd(),loader:'js',contents:`
  import {createRation} from './src/ui/ration.js';import {createSalvage} from './src/ui/salvage.js';
  import {createSpeak} from './src/ui/speak.js';import {createDialog} from './src/ui/dialog.js';
- import {createVoicePlayer} from './src/systems/voice.js';import {VOICE} from './src/data/voice-data.js';import {NARRATION} from './src/data/narration-data.js';
+ import {createVoicePlayer} from './src/systems/voice.js';import {VOICE} from './src/data/voice-data.js';
  import {ACTS} from './src/data/acts.js';import {NPCS,portraitKeyOf} from './src/data/npcs.js';import {SOURCES} from './src/data/sources.js';
  import {createScene} from './src/render/scene.js';import {PALACES} from './src/data/palaces.js';import {modelsReady} from './src/render/glb-person.js';
  import {installCinematicStyle} from './src/ui/cinematic-style.js';import {installRoyalInterface} from './src/ui/royal-interface.js';
- const root=document.querySelector('#root'), voice=createVoicePlayer({clips:{...VOICE,...NARRATION}});
+ const root=document.querySelector('#root'), voice=createVoicePlayer({clips:VOICE});
  installCinematicStyle(root);installRoyalInterface();
  const ration=createRation(root),salvage=createSalvage(root),speak=createSpeak(root,{voice});let record={};
  const dialog=createDialog(root,{getInquiry:()=>record,onInquirySave:(_id,r)=>{record=r;return true}});
@@ -23,7 +23,7 @@ const pw=require(path.join(os.homedir(),'.cache/codex-runtimes/codex-primary-run
  cloze(){dialog.showCard(SOURCES.find(s=>s.id==='joseon-chaeryak'))},
  preservation(){const b=ACTS.flatMap(a=>a.beats).find(b=>b.id==='great-fire');salvage.open({...b,cards:SOURCES.slice(0,6)}).then(r=>window.qa.result=r)},
  async world(){ctx=createScene(document.querySelector('canvas'));ctx.setPalace(PALACES.unhyeon);await modelsReady(ctx.THREE);ctx.setNpcs([NPCS.find(n=>n.id==='mother')]);ctx.player.position.set(12,1.9,7);ctx.setReducedMotion(true);function frame(){if(!ctx)return;ctx.render();requestAnimationFrame(frame)}frame()},
- get record(){return record},clips:NARRATION,
+ get record(){return record},clips:{},
  };
  `},bundle:true,format:'iife',write:false});
  const fixture=path.join(out,'fixture.html');fs.writeFileSync(fixture,`<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box}body{margin:0;background:#283829;font-family:system-ui}canvas{width:100vw;height:100vh;display:block}#root{position:fixed;inset:0;pointer-events:none}#root>*{pointer-events:auto}</style><canvas></canvas><div id="root"></div><script>${outputFiles[0].text.replace(/<\/script/gi,'<\\/script')}</script></html>`);

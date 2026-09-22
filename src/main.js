@@ -32,7 +32,6 @@ import { createDialog } from './ui/dialog.js'
 import { createSpeak } from './ui/speak.js'
 import { createVoicePlayer } from './systems/voice.js'
 import { VOICE } from './data/voice-data.js'
-import { NARRATION } from './data/narration-data.js'
 import { BGM } from './data/bgm-data.js'
 import { createBgm, bgmForBeat } from './systems/bgm.js'
 import { recordPreservation } from './systems/preservation.js'
@@ -511,7 +510,7 @@ export function boot(root) {
   // 배경 음악(systems/bgm.js) — 대사·독백이 나오는 동안에는 줄인다.
   const bgm = createBgm({ tracks: BGM, isMuted: () => audio.isMuted(), isReady: () => audio.isReady() })
   bgm.set('main')
-  const voice = createVoicePlayer({ clips: { ...VOICE, ...NARRATION }, isMuted: () => audio.isMuted() || !audio.isReady(),
+  const voice = createVoicePlayer({ clips: VOICE, isMuted: () => audio.isMuted() || !audio.isReady(),
     onStart: () => bgm.duck(true), onEnd: () => bgm.duck(false) })
   const noteScreen = createNoteScreen(root, { voice })
   const moveScreen = createMoveScreen(root)
@@ -1048,6 +1047,8 @@ export function boot(root) {
     for (const e of escort) ctx.placeNpc(e.npc, { x: start.x + e.dx, z: start.z + e.dz, yaw: 0 })
 
     // 걷는 동안 한 줄씩 뜬다. 화면을 덮는 판이 아니라 배너다 — 장면을 가리지 않는다.
+    // 소리는 없다(2026-09-22 선생님: 「나레이션을 모두 제거」) — 음성 파일이 없으니 narrate() 는
+    // 줄마다 읽을 시간만 두고 자막을 넘긴다. 음성은 인물의 「」 대사에만 남는다.
     const lines = beat.lines ?? []
     let caption = null
     const narration = voice.narrate(lines, { onLine: (text, clip) => {
