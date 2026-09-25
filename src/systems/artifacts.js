@@ -28,8 +28,16 @@ export function artifactsIn(def, year = null) {
     out.push({ id: p.id, kind: 'yard', x: p.x, z: p.z, reach: YARD_REACH, room: null })
   }
   for (const s of ARTIFACT_SPOTS[def?.id] ?? []) {
+    if (!artifactById(s.id)) continue
+    // 자리를 적는 방법이 둘이다.
+    //   { room, dx, dz } — 그 방 한가운데에서 dx·dz 만큼. 세간 사이에 놓인 물건이다.
+    //   { x, z }         — 마당의 그 자리. 다리·길·품계석처럼 방이 없는 것들이다.
+    if (s.room == null) {
+      out.push({ id: s.id, kind: 'yard', x: s.x, z: s.z, reach: YARD_REACH, room: null })
+      continue
+    }
     const room = def.rooms.find(r => r.id === s.room)
-    if (!room || !artifactById(s.id)) continue
+    if (!room) continue
     out.push({ id: s.id, kind: 'room', x: room.x + (s.dx ?? 0), z: room.z + (s.dz ?? 0),
       reach: ROOM_REACH, room: room.id })
   }

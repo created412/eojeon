@@ -102,6 +102,46 @@ export const ARTIFACTS = [
     note: '비문의 내용은 2막에서 사료로 다룹니다. 이 카드는 비석 자체에 대한 해설입니다.',
   },
 
+  // ── 궁의 짜임새 — 물건이 아니라 **자리**다 ───────────────────────
+  // 다리·길·돌·못은 손에 드는 물건이 아니지만, 학생이 그 위를 걷는다. 걸으면서
+  // 「이 길은 왜 가운데만 높은가」를 묻게 하는 것이 이 카드들의 일이다.
+  {
+    id: 'geumcheon', name: '금천교', hanja: '禁 금하다 · 川 내 · 橋 다리 — 「함부로 드나들지 못하는 물 위의 다리」', kind: 'yard',
+    lines: [
+      '궁궐의 정문 안에는 개울을 파고 다리를 놓았다. 창덕궁에서는 금천교, 경복궁에서는 영제교라 한다.',
+      '물이 안과 밖을 가른다. 이 다리를 건너야 임금의 공간이다.',
+      '창덕궁 금천교는 1411년에 놓았고, 서울에 남아 있는 가장 오래된 돌다리다.',
+    ],
+    note: '궁궐 건축에 대한 해설입니다.',
+  },
+  {
+    id: 'eodo', name: '어도', hanja: '御 임금 · 道 길 — 「임금의 길」', kind: 'yard',
+    lines: [
+      '정문에서 정전까지 세 갈래 길이 나란히 놓인다. 이것을 삼도(三道)라 한다.',
+      '가운데 길이 한 뼘 높다. 그 길로는 임금만 걷는다. 양옆의 낮은 길로 신하가 걷는다.',
+      '길의 높이가 곧 자리다. 조선의 궁은 걷는 자리로 사람의 위아래를 보여 주었다.',
+    ],
+    note: '궁궐 의례 공간에 대한 해설입니다.',
+  },
+  {
+    id: 'pumgyeseok', name: '품계석', hanja: '品 품 · 階 계단 · 石 돌 — 「품계를 새긴 돌」', kind: 'yard',
+    lines: [
+      '정전 앞마당에 두 줄로 늘어선 돌이다. 돌마다 정일품·종일품처럼 품계가 새겨져 있다.',
+      '조회 때 신하는 제 품계가 새겨진 돌 옆에 섰다. 동쪽에 문신, 서쪽에 무신이 선다.',
+      '어디에 서는지가 이미 정해져 있다. 그 자리에서 임금의 얼굴은 아주 멀다.',
+    ],
+    note: '경복궁 조정(朝庭)에 대한 해설입니다.',
+  },
+  {
+    id: 'buyongji', name: '부용지와 부용정', kind: 'yard',
+    lines: [
+      '창덕궁 후원의 네모난 못이다. 못 한가운데에 둥근 섬이 있고 소나무가 자란다.',
+      '하늘은 둥글고 땅은 네모나다고 보던 생각을 못 하나에 담았다.',
+      '물가의 정자가 부용정이다. 임금은 이곳에서 신하와 시를 짓고 낚시를 했다.',
+    ],
+    note: '창덕궁 후원에 대한 해설입니다. 이 게임의 후원은 좁힌 궁에 맞춰 옮겨 담은 재구성입니다.',
+  },
+
   // ── 방 안 ────────────────────────────────────────────────────────
   {
     id: 'uigwe', name: '의궤', hanja: '儀 의례 · 軌 본보기 — 「의례를 어떻게 치렀는지 적어 둔 본보기」', kind: 'room',
@@ -181,6 +221,59 @@ export const ARTIFACTS = [
     ],
     note: '조선 가구에 대한 해설입니다.',
   },
+  {
+    id: 'ondol', name: '온돌', hanja: '溫 따뜻하다 · 突 굴뚝', kind: 'room',
+    lines: [
+      '아궁이에 불을 때면 그 연기가 방바닥 아래의 고랑을 지나 굴뚝으로 빠져나간다. 지나가는 동안 돌과 흙이 데워져 바닥이 따뜻해진다.',
+      '그래서 조선의 집은 의자를 쓰지 않는다. 가장 따뜻한 자리가 바닥이기 때문이다.',
+      '서안의 다리가 짧은 것도, 임금이 자리를 깔고 앉는 것도 다 이 바닥 때문이다.',
+    ],
+    note: '한국 전통 난방에 대한 해설입니다.',
+  },
+  {
+    id: 'munbang', name: '문방사우', hanja: '文 글 · 房 방 · 四 넷 · 友 벗 — 「글방의 네 벗」', kind: 'room',
+    lines: [
+      '붓·먹·벼루·종이. 글을 쓰는 데 드는 넷을 벗이라 불렀다.',
+      '조선의 정치는 읽고 쓰는 일로 이루어졌다. 상소도, 교지도, 장계도 다 이 넷에서 나왔다.',
+      '당신이 2막에서 비문을 쓴 붓도 이 가운데 하나다.',
+    ],
+    note: '조선의 문방구에 대한 해설입니다.',
+  },
+  {
+    id: 'jamyeongjong', name: '자명종', hanja: '自 스스로 · 鳴 울다 · 鍾 종 — 「스스로 울려 때를 알리는 것」', kind: 'room',
+    lines: [
+      '태엽으로 가는 서양 시계다. 17세기부터 중국을 거쳐 조선에 들어왔고, 궁과 일부 양반가에 놓였다.',
+      '마당의 앙부일구는 해가 있어야 읽는다. 이것은 밤에도, 비가 와도 간다.',
+      '같은 하루를 두 가지 방법으로 재고 있었다.',
+    ],
+    note: '조선 후기에 들어온 서양 기물에 대한 해설입니다. 이 방에 실제로 놓여 있었다는 기록은 아닙니다 — 놓인 자리는 재구성입니다.',
+  },
+  {
+    id: 'hyangno', name: '향로와 제기', hanja: '香 향 · 爐 화로 · 祭 제사 · 器 그릇', kind: 'room',
+    lines: [
+      '제사에 쓰는 그릇을 제기라 하고, 향을 피우는 그릇을 향로라 한다.',
+      '왕실의 제사는 집안일이 아니라 나라의 큰일이었다. 누가 제사를 지내느냐가 곧 누가 왕실을 잇느냐였다.',
+      '그래서 왕비가 죽으면 나라가 멈추고, 세자가 누구인가로 조정이 갈렸다.',
+    ],
+    note: '왕실 제례에 대한 해설입니다.',
+  },
+  {
+    id: 'hwaro', name: '화로', kind: 'room',
+    lines: [
+      '숯불을 담아 두는 그릇이다. 온돌이 방바닥을 덥히고, 화로가 그 위의 공기를 덥힌다.',
+      '물을 끓이고 다리미를 달구는 것도 이 불이다. 방 안의 살림이 이 하나에 매여 있었다.',
+    ],
+    note: '조선 살림살이에 대한 해설입니다.',
+  },
+  {
+    id: 'chaekpan', name: '책판', hanja: '冊 책 · 板 널 — 「책을 찍어 내는 나무판」', kind: 'room',
+    lines: [
+      '책의 한 면을 통째로 뒤집어 새긴 나무판이다. 먹을 칠하고 종이를 얹어 문지르면 한 장이 찍힌다.',
+      '조선은 금속활자도 만들었지만, 같은 책을 오래 두고 여러 번 찍을 때는 목판이 편했다.',
+      '판이 남아 있는 한 책은 다시 찍을 수 있다. 판이 타면 그 책은 거기서 끊긴다.',
+    ],
+    note: '조선의 인쇄에 대한 해설입니다.',
+  },
 ]
 
 export const ARTIFACT_BY_ID = new Map(ARTIFACTS.map(a => [a.id, a]))
@@ -205,21 +298,39 @@ export function artifactLines(artifact, actIndex = 0) {
 export const ARTIFACT_SPOTS = {
   changdeok: [
     { id: 'uigwe', room: 'gyujanggak', dx: 0, dz: -4 },
+    { id: 'chaekpan', room: 'gyujanggak', dx: 6, dz: 3 },
     { id: 'ilwolobongdo', room: 'injeongjeon', dx: 0, dz: -6 },
     { id: 'yeom', room: 'huijeongdang', dx: -8, dz: -5 },
+    { id: 'ondol', room: 'huijeongdang', dx: 8, dz: -5 },
     { id: 'deungjan', room: 'seonjeongjeon', dx: 5, dz: -4 },
     { id: 'eojin', room: 'seonwonjeon', dx: 0, dz: -3 },
+    { id: 'hyangno', room: 'seonwonjeon', dx: 6, dz: 2 },
     { id: 'seoan', room: 'gwanmulheon', dx: -3, dz: -2 },
+    { id: 'jamyeongjong', room: 'gwanmulheon', dx: 3, dz: -2 },
+    { id: 'munbang', room: 'seongjeonggak', dx: 0, dz: -3 },
+    { id: 'hwaro', room: 'daejojeon', dx: 4, dz: -3 },
+    // 마당의 짜임새 — 다리·길·못은 방이 아니라 자리다(x·z 를 그대로 적는다).
+    { id: 'geumcheon', x: 0, z: 29 },          // 금천교 (palaces.js yard.bridge)
+    { id: 'eodo', x: 0, z: 20 },               // 삼도의 첫 마디 (yard.royalRoad)
+    { id: 'buyongji', x: 26, z: -33 },         // 부용지와 부용정 사이
   ],
   gyeongbok: [
     { id: 'ilwolobongdo', room: 'geunjeongjeon', dx: 0, dz: -7 },
     { id: 'sillokgwe', room: 'sujeongjeon', dx: -7, dz: -5 },
+    { id: 'chaekpan', room: 'sujeongjeon', dx: 7, dz: 4 },
     { id: 'yeom', room: 'jagyeongjeon', dx: -5, dz: -4 },
+    { id: 'ondol', room: 'jagyeongjeon', dx: 5, dz: -4 },
     { id: 'seoan', room: 'sajeongjeon', dx: 9, dz: -9 },
+    { id: 'munbang', room: 'sajeongjeon', dx: -9, dz: -9 },
+    { id: 'geumcheon', x: 0, z: 34.45 },       // 영제교 (yard.bridge)
+    { id: 'eodo', x: 0, z: 27 },               // 근정전으로 오르는 삼도 위
+    { id: 'pumgyeseok', x: 6, z: 31 },         // 품계석 두 줄 곁(돌은 x ±3.6)
   ],
   unhyeon: [
     { id: 'seoan', room: 'sarang', dx: -5, dz: -3 },
+    { id: 'ondol', room: 'sarang', dx: 5, dz: 3 },
     { id: 'deungjan', room: 'anchae', dx: 5, dz: -3 },
+    { id: 'hwaro', room: 'anchae', dx: -5, dz: 3 },
   ],
   gyedong: [
     { id: 'seoan', room: 'sarangchae', dx: -6, dz: -4 },
@@ -227,9 +338,7 @@ export const ARTIFACT_SPOTS = {
   gyeongu: [
     { id: 'malloe', room: 'haenggak-e', dx: 0, dz: -2 },
     { id: 'deungjan', room: 'jeongdang', dx: 5, dz: -3 },
-  ],
-  ojoyu: [
-    { id: 'hwando', room: 'yeongbang', dx: -7, dz: -4 },
+    { id: 'munbang', room: 'jeongdang', dx: -4, dz: -3 },
   ],
   // 북묘(관왕묘)에는 두지 않는다 — 임금의 어진을 모신 곳이 아니라 관우를 모신
   // 사당이고, 학생이 거기 머무는 시간은 갑신정변의 한 장면뿐이다.

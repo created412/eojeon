@@ -744,6 +744,8 @@ export function boot(root) {
 
   // 물건을 들여다본다. 해 칸을 쓰지 않는다 — 궁을 둘러보는 일이 하루를 깎으면
   // 학생은 둘러보지 않는다(core/clock.js: 값을 치르는 것은 「아룀을 듣는 일」뿐이다).
+  let loreBanner = null      // 첫 물건 안내 — 다음 카드가 열리면 걷는다(아래 참고)
+
   function applyArtifact(id) {
     const artifact = artifactById(id)
     if (!artifact) return
@@ -752,10 +754,16 @@ export function boot(root) {
     flow.state = markArtifactSeen(flow.state, id)
     saveGame(flow.state)
     // 첫 물건을 만난 자리에서 이 갈래 자체를 한 번 알린다 — 그런데 **카드를 닫은 뒤에**
-    // 알린다. 배너는 화면 한가운데에 뜨고 카드도 한가운데에 뜬다: 함께 내면 배너가
-    // 카드의 제목과 첫 줄을 덮는다(실제로 그렇게 나갔다 — 2026-09-25 화면 확인).
+    // 알린다. 배너는 화면 한가운데에 뜨고(z-index 60) 카드도 한가운데에 뜬다(40):
+    // 함께 내면 배너가 카드의 제목과 첫 줄을 덮는다(2026-09-25 화면 확인).
+    //
+    // 닫은 뒤로 미루는 것만으로는 모자랐다 — 배너는 4.2초 떠 있는데, 학생이 곧바로
+    // 두 걸음 옆의 다음 물건을 열면 그 카드를 덮는다(2026-09-26 어도 → 금천교에서
+    // 실제로 그랬다). 그래서 카드를 열 때마다 앞서 띄운 안내를 걷는다.
+    loreBanner?.dispose()
+    loreBanner = null
     dialog.showArtifact(artifact, artifactLines(artifact, flow.actIndex),
-      first ? () => banner(root, '궁 안의 물건도 살펴볼 수 있다. 본 것은 사초함(Q) 아래쪽에 쌓인다 — 해 칸은 쓰지 않는다.', 4200) : undefined)
+      first ? () => { loreBanner = banner(root, '궁 안의 물건도 살펴볼 수 있다. 본 것은 사초함(Q) 아래쪽에 쌓인다 — 해 칸은 쓰지 않는다.', 4200) } : undefined)
   }
 
   function pressEAction() {

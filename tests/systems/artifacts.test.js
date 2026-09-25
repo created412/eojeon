@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { PALACES } from '../../src/data/palaces.js'
+import { collides } from '../../src/data/hall-geometry.js'
 import { ARTIFACTS, ARTIFACT_SPOTS, artifactById, artifactLines } from '../../src/data/artifacts.js'
 import {
   artifactsIn, artifactNear, markArtifactSeen, hasSeen, artifactCount, artifactRecord,
@@ -26,13 +27,40 @@ describe('물건 데이터', () => {
     for (const [palaceId, spots] of Object.entries(ARTIFACT_SPOTS)) {
       const def = PALACES[palaceId]
       expect(def, palaceId).toBeTruthy()
-      for (const s of spots) {
+      for (const s of spots.filter(spot => spot.room != null)) {
         expect(artifactById(s.id), `${palaceId}/${s.id}`).toBeTruthy()
         const room = def.rooms.find(r => r.id === s.room)
         expect(room, `${palaceId}/${s.room}`).toBeTruthy()
         // 벽을 뚫고 나가 앉으면 학생은 그 앞에 설 수 없다 — 방 안에 있어야 한다.
         expect(Math.abs(s.dx ?? 0), `${palaceId}/${s.id} dx`).toBeLessThan(room.w / 2 - 0.5)
         expect(Math.abs(s.dz ?? 0), `${palaceId}/${s.id} dz`).toBeLessThan(room.d / 2 - 0.5)
+      }
+    }
+  })
+
+  it('마당의 자리(다리·길·품계석)는 담 안이고 벽에 박혀 있지 않다', () => {
+    for (const [palaceId, spots] of Object.entries(ARTIFACT_SPOTS)) {
+      const def = PALACES[palaceId]
+      for (const s of spots.filter(spot => spot.room == null)) {
+        expect(artifactById(s.id), `${palaceId}/${s.id}`).toBeTruthy()
+        expect(Math.abs(s.x), `${palaceId}/${s.id} x`).toBeLessThan(def.ground.w / 2)
+        expect(Math.abs(s.z), `${palaceId}/${s.id} z`).toBeLessThan(def.ground.d / 2)
+        // 학생이 그 앞에 설 수 있어야 한다 — 벽·기둥 속이면 다가갈 수 없다.
+        expect(Boolean(collides(def, { x: s.x, z: s.z }, 0.6)), `${palaceId}/${s.id}`).toBe(false)
+      }
+    }
+  })
+
+  it('같은 궁에서 두 물건이 한자리에 겹치지 않는다', () => {
+    // 겹치면 가까운 쪽만 잡히고 나머지는 영영 안 잡힌다 — 학생은 그것을 알 길이 없다.
+    for (const palaceId of Object.keys(ARTIFACT_SPOTS)) {
+      const list = artifactsIn(PALACES[palaceId], 1884)
+      for (let i = 0; i < list.length; i++) {
+        for (let j = i + 1; j < list.length; j++) {
+          if (list[i].id === list[j].id) continue   // 드무·해치는 한 쌍으로 서 있다
+          const d = Math.hypot(list[i].x - list[j].x, list[i].z - list[j].z)
+          expect(d, `${palaceId}: ${list[i].id} ↔ ${list[j].id}`).toBeGreaterThan(2.5)
+        }
       }
     }
   })

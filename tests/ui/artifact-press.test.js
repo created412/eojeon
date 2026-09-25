@@ -42,7 +42,7 @@ function environment(over = {}) {
       actIndex: 0, act: () => ACTS[0], taken: new Set(), phase: 'day', setPhase() {} },
     ctx: { player: { position }, setPickupMarkers() {} },
     dialog: { isOpen: () => false, close() {}, showArtifact(a, lines) { shown.push({ a, lines }) } },
-    audio: { play() {} }, banner() {}, root: {}, saveGame() {},
+    audio: { play() {} }, banner: () => ({ dispose() {} }), root: {}, saveGame() {}, loreBanner: null,
     selectedOption: () => null, currentNpcs: () => [], currentExit: () => null, currentStops: () => [],
     ...over,
   }
