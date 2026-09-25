@@ -4,6 +4,7 @@ import { makeTextures, buildPalace } from './palace.js'
 import { createFire } from './fire.js'
 import { buildPerson, disposePerson, updateSway, RANK_SPECS, modelsReady } from './glb-person.js'
 import { buildMother } from './mother-person.js'
+import { createPalaceStaff } from './palace-staff.js'
 import { updatePalaceOcclusion } from './occlusion.js'
 import { turnToward } from './facing.js'
 import { buildProp } from './props.js'
@@ -54,6 +55,8 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
   scene.fog = new THREE.Fog(0x1a1d21, 70, 150)
   const atmosphere = createAtmosphere(scene)
   const gateGuards = createGateGuards(THREE, scene)
+  // 궁을 오가는 사람들 — 수문장과 같은 자리에 둔다(말을 거는 신하가 아니다).
+  const palaceStaff = createPalaceStaff(THREE, scene)
   const crisis = createCrisis(scene)
   let crisisStage = null
 
@@ -522,6 +525,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     scene.add(palaceGroup)
     atmosphere.setPalace(def)
     gateGuards.setPalace(def)
+    palaceStaff.setPalace(def)
     applyVeil()   // 궁을 다시 지었으니 발을 다시 걸어 준다
     // 첫 프레임 렌더 전에도 가림 판정을 정확히 하려면 월드 행렬이 미리 계산돼 있어야
     // 한다 — renderer.render() 가 매 프레임 다시 해 주지만, 그건 이 함수가 끝난 다음이다.
@@ -623,6 +627,14 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
       // 읍은 걸음 자세 **뒤에** 얹는다 — updateSway 가 허리를 쉬는 자세로 되돌리므로.
       applyBow(e)
     }
+    // 궁을 오가는 사람들(render/palace-staff.js).
+    // 지우는 자리가 셋이다 —
+    //   · danger    불·난군의 장면. 거기에 내관이 서류를 들고 지나가면 그림이 거짓말을 한다.
+    //   · audience  알현. 정전 한가운데에서 아뢰는 장면인데, 같은 방을 가로지르는
+    //               사람이 있으면 아뢰는 이와 몸이 겹친다(이들은 알현을 모른다).
+    //   · openingView 타이틀 — 궁을 멀리서 보여 주는 화면이다.
+    palaceStaff.tick(t, dt, player.position,
+      { reducedMotion, hidden: danger || audience || openingView })
 
     // 가림도 이 프레임의 카메라 위치로 잰다 — 위에서 이미 세워 두었다. player 는 지붕 밑을 걸어 다닐 수 있으니 방을 옮길 때만이
     // 아니라 매 프레임 다시 잰다.
@@ -664,6 +676,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
       motionQuery?.removeEventListener('change', motionChange)
       atmosphere.dispose()
       gateGuards.dispose()
+      palaceStaff.dispose()
       crisis.dispose()
       fire.dispose()
       if (palaceGroup) disposeGroup(palaceGroup)
