@@ -2,6 +2,7 @@ import { SOURCES, sourceById } from '../data/sources.js'
 import { evaluateChoices } from '../systems/council.js'
 import { lostWithReason, everRead } from '../systems/loss-log.js'
 import { ACTS, FUTURE_COUNCIL } from '../data/acts.js'
+import { freedomRecord } from '../systems/freedom.js'
 
 // 마지막 화면의 「몇 년부터 몇 년까지, 몇 해를 지났다」를 ACTS 에서 뽑는다.
 // 손으로 적어 두면 막이 하나 붙는 순간 조용히 거짓말이 된다 — 실제로 그랬다:
@@ -176,6 +177,18 @@ export function createActEnd(root) {
             버린 것 때문에 나중에 곤란해질까요?
           </div>`
         root.appendChild(el)
+
+        const journey = freedomRecord(state)
+        if (journey.length) {
+          const box = document.createElement('div'); box.className = 'box'
+          const title = document.createElement('b'); title.textContent = '내가 고른 여정과 하지 않은 일'
+          box.appendChild(title)
+          for (const line of journey) {
+            const row = document.createElement('div'); row.className = 'row'; row.textContent = line
+            box.appendChild(row)
+          }
+          el.appendChild(box)
+        }
 
         if (onCopy) {
           const copyBtn = document.createElement('button')

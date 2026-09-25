@@ -184,16 +184,48 @@ export function rebukeOf(beat) {
 // 선생님(2026-09-15): 「신하들과 함께 걷는 중에 인물들이 막 흔들린다.」 예전에는 매 프레임 원하는 자리를 그대로
 // 주고 씬(placeNpc)이 safePosition 으로 가장 가까운 빈칸을 찾았는데, 그 빈칸이 프레임마다 이쪽저쪽으로 바뀌어
 // 한 프레임에 2m 넘게 튀었다. 여기서는 임금 쪽에서 바깥으로 간격을 넓혀 가며 벽에 닿기 전까지의 자리를 쓴다 — 자리가 이어져 움직인다.
-export function escortSpot(def, king, offset, radius = 0.8) {
-  // 임금에게서 바깥으로 5%씩 넓혀 가다가 벽에 닿기 직전에 멈춘다. 바깥에서 안으로 찾으면 벽 **너머**의 빈자리를
-  // 먼저 잡아, 문간을 지날 때 벽을 사이에 두고 자리가 2m 넘게 튄다.
-  let best = { x: king.x, z: king.z }
+// 사람 사이에 반드시 남겨야 할 거리(m). 어른 어깨 너비의 두 배쯤 — 이보다 가까우면 화면에서 몸이 겹친다.
+export const PERSONAL_SPACE = 1.35
+
+function far(p, others, gap = PERSONAL_SPACE) {
+  return others.every(o => Math.hypot(p.x - o.x, p.z - o.z) >= gap)
+}
+
+/**
+ * 행렬에서 곁을 걷는 사람의 자리 — 기둥·대문에 걸리면 먼 빈칸으로 튕기지 않고 임금 쪽으로 대열을 좁힌다.
+ *
+ * taken — 이미 자리를 잡은 사람들(임금 포함). 그 자리에서 PERSONAL_SPACE 안으로는 서지 않는다.
+ *
+ * 선생님(2026-09-22): 「이동 중 사람이 겹쳐지는 문제」. 문간처럼 좁은 데서는 옆으로 넓혀 갈 자리가 아예 없어
+ * 예전 코드가 **임금의 자리 그대로**를 돌려주었고, 그래서 대문을 지나는 동안 임금과 대원군이 한 몸처럼 겹쳤다.
+ * 옆이 막히면 옆이 아니라 **뒤로** 선다 — 좁은 문을 지날 때 사람이 줄을 서는 것이 실제 행렬의 모습이기도 하다.
+ */
+export function escortSpot(def, king, offset, radius = 0.8, taken = []) {
+  const others = taken.filter(Boolean)
+  // ① 본래 자리 — 임금에게서 바깥으로 5%씩 넓혀 간다. 벽에 닿거나 남의 자리에 겹치기 직전까지.
+  let best = null
   for (let k = 0.05; k <= 1.0001; k += 0.05) {
     const p = { x: king.x + offset.dx * k, z: king.z + offset.dz * k }
     if (def && collides(def, p, radius)) break
+    if (!far(p, others)) continue
     best = p
   }
-  return best
+  if (best) return best
+  // ② 옆이 막혔다 — 임금 뒤로 줄을 선다. 뒤쪽은 offset.dz 가 가리키는 쪽(행렬은 늘 앞으로 걷는다).
+  const back = Math.sign(offset.dz || -1)
+  const candidates = []
+  for (const d of [1.4, 1.8, 2.2, 2.7, 3.2, 3.8, 4.4, 5.0]) {
+    for (const side of [0, 0.6, -0.6, 1.1, -1.1]) {
+      const p = { x: king.x + side, z: king.z + back * d }
+      if (def && collides(def, p, radius)) continue
+      if (far(p, others)) return p
+      candidates.push(p)
+    }
+  }
+  // ③ 어디를 봐도 비좁다 — 그중 남들과 가장 멀리 떨어지는 자리를 고른다(겹치는 것보다는 낫다).
+  const gapOf = p => Math.min(...others.map(o => Math.hypot(p.x - o.x, p.z - o.z)), Infinity)
+  const fallback = { x: king.x, z: king.z + back * (PERSONAL_SPACE + 0.6) }
+  return [...candidates, fallback].sort((p, q) => gapOf(q) - gapOf(p))[0]
 }
 
 // 행렬이 걷는 데 걸리는 시간. 수업 한 시간 안에서 볼 장면이라 길게 두지 않는다.

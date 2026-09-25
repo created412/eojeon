@@ -9,9 +9,11 @@ import { isRoomOpen } from '../core/control.js'
 
 const CELL = 0.75
 
-export function objectiveRoute(def, roomId, from, control = 'A') {
+export function objectiveRoute(def, roomId, from, control = 'A', destination = null) {
   const room = def?.rooms?.find(r => r.id === roomId)
-  if (!room || !from || roomAt(def, from.x, from.z)?.id === roomId) return []
+  if ((!room && !destination) || !from) return []
+  if (!destination && roomAt(def, from.x, from.z)?.id === roomId) return []
+  if (destination && Math.hypot(from.x - destination.x, from.z - destination.z) < 1.5) return []
   const half = { w: def.ground.w / 2 - 2, d: def.ground.d / 2 - 2 }
   const cols = Math.floor((half.w * 2) / CELL), rows = Math.floor((half.d * 2) / CELL)
   const toCell = (x, z) => [Math.round((x + half.w) / CELL), Math.round((z + half.d) / CELL)]
@@ -24,7 +26,10 @@ export function objectiveRoute(def, roomId, from, control = 'A') {
     return !collides(def, p, 0.6)
   }
   // 목표: 방 안, 앞문 쪽 가까운 칸들
-  const goal = (c, r) => roomAt(def, toWorld(c, r).x, toWorld(c, r).z)?.id === roomId
+  const goal = (c, r) => {
+    const p = toWorld(c, r)
+    return destination ? Math.hypot(p.x - destination.x, p.z - destination.z) < CELL : roomAt(def, p.x, p.z)?.id === roomId
+  }
   const [sc, sr] = toCell(from.x, from.z)
   const key = (c, r) => r * (cols + 1) + c
   const prev = new Map([[key(sc, sr), null]])
@@ -50,6 +55,6 @@ export function objectiveRoute(def, roomId, from, control = 'A') {
   }
   // 방에 막 들어선 칸에서 멈추지 않고 한가운데까지 — 걸음은 목표 1.5m 앞에서 멈추므로(movement.js
   // ARRIVE_RADIUS) 문간 칸만 짚으면 광화문처럼 얇은 문간에서는 문 밖에 서 버린다.
-  pts.push({ x: room.x, z: room.z })
+  pts.push(destination ?? { x: room.x, z: room.z })
   return pts
 }

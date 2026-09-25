@@ -42,7 +42,7 @@ export const ACT_GUIDE = {
 // 장면 종류마다 「지금 할 일」. beat.guide 가 있으면 그것이 먼저다.
 const KIND_GUIDE = {
   note: '글을 읽고 「다음」을 누르세요.',
-  explore: '신하에게 다가가 E(대화)로 말을 걸고 문서를 받으세요. 다 들었으면 왼쪽 위 「지금의 여정」을 누르세요.',
+  explore: '왼쪽 위 「지금의 여정」에서 할 일을 고르면 그곳으로 걸어갑니다. 도착해서 E(대화)를 누르세요. 남은 일을 두고 다음 사건으로 가도 됩니다.',
   audience: '신하가 임금 앞으로 와서 아룁니다. 끝까지 들으세요 — E나 대화창을 누르면 넘어갑니다.',
   procession: '신하들이 임금을 모시고 갑니다. 지켜보세요.',
   council: '어전회의입니다. 선택지 하나를 고르고, 그렇게 정한 이유를 한 문장 이상 쓰세요.',
@@ -62,7 +62,7 @@ const KIND_GUIDE = {
 export function guideForBeat(beat) {
   if (!beat) return ''
   if (beat.guide) return beat.guide
-  if (beat.kind === 'explore' && beat.free) return '집 안을 걸으며 사람들과 이야기해 보세요(E 대화). 준비되면 왼쪽 위 「지금의 여정」을 누르세요.'
+  if (beat.kind === 'explore' && beat.free) return '자유롭게 걷고 이야기해 보세요(E 대화). 「지금의 여정」에서 방문할 일을 고르거나 다음 사건으로 갈 수 있습니다.'
   return KIND_GUIDE[beat.kind] ?? ''
 }
 

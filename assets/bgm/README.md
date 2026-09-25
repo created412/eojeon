@@ -1,12 +1,39 @@
-# BGM
+# 배경 음악 — 진짜 국악기 연주로 지었다
 
-2026-09-14 · Google Gemini **Lyria RealTime**(`models/lyria-realtime-exp`)으로 만들었다. Suno 잔액이 부족해 선생님이 Gemini 로 바꾸라 했다.
-(`lyria-3.5`·`lyria-3-pro-preview`·`lyria-3-clip-preview` 는 무료 등급 한도 0 이라 거절됐다.)
+2026-09-25 · 선생님 요청(「이 게임에 어울리는 최적화된 BGM」)과 BGM 계획서에 따라 다시 만들었다.
 
-| 파일 | 쓰는 곳 | 만든 방법 |
-|---|---|---|
-| bgm-main.ogg (94초) | 제목·궁·알현·회의 | `python tools/bgm-lyria-realtime.py main.wav 104 66 "Korean traditional court music jeongak, daegeum bamboo flute slow melancholic melody" "geomungo plucked zither bass, haegeum fiddle, soft janggu hand drum" "slow cinematic low strings, solemn dignified ambient, sparse, no vocals"` |
-| bgm-tension.ogg (54초) | 촉박(화재·임오군란·갑신정변) | `... tension.wav 64 96 "Korean traditional percussion buk and janggu, urgent tense rhythm" "sharp haegeum fiddle tremolo, piri double reed, dark low strings ostinato" "palace in danger, suspense, cinematic, no vocals"` |
+## 재료 — AI 가 아니라 실제 연주
 
-`python tools/bgm-loop.py` 가 앞 몇 초(워밍업)를 자르고 끝 4초를 처음에 겹쳐 반복 이음새를 지운 뒤 모노 Opus 32kbps 로 줄인다.
-API 키는 환경 변수 `GEMINI_API_KEY` 로만 넘긴다 — 저장소에 적지 않는다.
+한국저작권위원회 **「국악기」 시리즈**(공유마당, **CC BY 4.0**)의 정악대금·거문고·해금·가야금·대아쟁·
+장단장구·소리북·징 **실연 악구**다. 고쳐 쓰는 것과 프로그램에 넣어 배포하는 것이 허용된다(출처 표시 조건).
+
+왜 AI 음악이 아닌가: 국악은 음악 생성 모델이 가장 못 만드는 소리다(국립국악원도 「왜곡되거나 비국악적인
+결과물」을 이유로 국악 학습데이터를 따로 만들고 있다). 그리고 Suno·Mureka·Loudly 는 **무료 등급 결과물을
+배포할 수 없고**(저작권을 회사가 갖거나 비영리로 제한), Udio 는 내려받기가 막혔다. 전에 쓰던 두 곡도
+Gemini Lyria 실험 모델로 만든 것이라 이용 조건이 불분명했다 — 이번 교체로 그 문제도 함께 정리됐다.
+
+## 곡 — 하나의 주제, 다섯 막의 변주
+
+| 파일 | 길이 | 쓰는 곳 | 편성 |
+|---|---|---|---|
+| theme.ogg | 50초 | 제목·막 시작·엔딩 | 대금 셋, 거문고, 해금 |
+| act1.ogg | 64초 | 1막 1863 겨울 아침 | 대금 홀로, 사이가 넓다 |
+| act2.ogg | 64초 | 2막 1866~71 양요 | 해금이 주제를 받고 소리북이 느린 맥박 |
+| act3.ogg | 64초 | 3막 1873~76 친정 | 가야금이 밝게, 장구가 가볍게 |
+| act4.ogg | 64초 | 4막 1882 임오 | 아쟁이 낮게 긁고 북이 무겁다 |
+| act5.ogg | 64초 | 5막 1884 갑신 | 거문고 한 줄과 긴 쉼 |
+| march.ogg | 40초 | 행렬·궁 옮기기 | 장구·징·대금 (태평소는 뺐다 — 교실 스피커에서 찌른다) |
+| tension.ogg | 50초 | 촉박·탈출 | 빠른 장단, 북, 해금의 떨림 |
+| council.ogg | 40초 | 어전회의·훈령·보존 선택 | 박자 없는 해금·아쟁 |
+| loss.ogg | 9초 | 기록을 잃는 순간 | 해금 한 음 |
+| actend.ogg | 11초 | 막이 끝나는 자리 | 대금 종지와 정주 |
+
+## 만드는 법
+
+1. 공유마당에서 「국악기」 클립을 받는다(로그인 없이 `wrtFileMediaPlay.do?wrtSn=<번호>&fileSn=1`).
+   받은 것은 `clips/` 에 두고 조성·길이를 재어 `clips/tonal.json` 으로 적어 둔다.
+2. `python tools/bgm-compose.py <재료폴더> assets/bgm` — 악구마다 으뜸음을 재어 같은 조(E)로 옮기고
+   (rubberband, 길이 유지) 정악의 호흡대로 겹친 뒤 −20 LUFS 로 맞추고 20kbps 모노 Opus 로 줄인다.
+3. `python tools/pack-bgm.py` — base64 로 `src/data/bgm-data.js` 에 싣는다(외부 요청 0건).
+
+장면과 음량을 정하는 규칙은 `src/systems/bgm.js` 의 `bgmForBeat()` 에 있다.

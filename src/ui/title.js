@@ -66,6 +66,7 @@ const CSS = `
 .opening .opening-lines div:last-child{color:#e0a23a}
 .opening .opening-notice{max-width:560px;padding:12px 16px;border:1px solid #6a5230;border-radius:3px;
   background:#23201a;color:#c9b98f;font-size:14px;line-height:1.7}
+.opening .opening-credit{max-width:560px;font-size:12px;color:#8d8471;line-height:1.7;margin-top:-4px}
 .opening .opening-buttons{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:10px}
 .opening .opening-buttons button{padding:15px 34px;background:#3a2d20;border:1px solid #6a5230;
   color:#e0a23a;border-radius:3px;font-size:16px;cursor:pointer;min-width:150px}
@@ -232,7 +233,12 @@ export function createTitle(root) {
       const footer = document.createElement('div')
       footer.className='opening-footer'
       footer.textContent='사료를 읽고, 사람을 만나고, 자신의 판단을 남기는 여정 · 3D 공간은 학습용 재구성입니다.'
+      // 음악의 출처 — CC BY 는 이름을 밝히는 것이 조건이다(assets/bgm/README.md).
+      const credit = document.createElement('div')
+      credit.className = 'opening-credit'
+      credit.textContent = '배경 음악: 한국저작권위원회 「국악기」 연주(공유마당, CC BY 4.0)를 이 게임에 맞게 엮었습니다.'
       el.appendChild(footer)
+      el.appendChild(credit)
 
       root.appendChild(el)
       addEventListener('keydown', onKey)

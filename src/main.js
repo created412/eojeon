@@ -62,6 +62,8 @@ import { relocate } from './systems/relocate.js'
 import { createAudio } from './systems/audio.js'
 import { createWebAudioEngine } from './systems/web-audio-engine.js'
 import { createRation } from './ui/ration.js'
+import { hubAt, hubOptions, hubDate, shouldDeferReport, pendingReport, performReport, completeActivity, closeHub, freedomRecord } from './systems/freedom.js'
+import { createActivityBoard } from './ui/activity-board.js'
 
 // 이어 화면 하단에 붙는 양력 미확정 고지 — 네 건(1868·1873·1875·1877)의 음력 날짜는
 // 『고종실록』에서 확인했지만 양력 일 단위 환산은 어떤 자료로도 특정하지 못했다(「확인불가」).
@@ -319,6 +321,7 @@ export function buildRecordText(state, acts) {
   })
   return [
     ...(blocks.length ? blocks : ['(아직 정한 것이 없다)']),
+    ...freedomRecord(state),
     ...Object.entries(state.inquiries ?? {}).flatMap(([id, record]) => [
       '', `[사료 탐구] ${sourceById(id)?.title ?? id}`,
       // 빈칸 채우기(조선책략)는 표시한 근거 대신 채운 칸을 적는다.
@@ -486,7 +489,7 @@ export function boot(root) {
   const hud = createCinematicHud(root, { onCodex: () => {
     if (flow.phase === 'day' && !pause.isOpen()) pressQ()
   }, onRotate: direction => ctx.rotateView(direction), onResetView: () => ctx.resetView(),
-  onObjective: () => walkToObjective(), onEscape: () => runToGoal() })
+  onObjective: () => openActivities(), onEscape: () => runToGoal() })
   // 문서·사초함이 닫히는 소리. 「어떻게 닫히든 정확히 한 번」을 dialog 가 이미
   // 보증한다 — 화면 안 「닫기」 단추로 닫아도 여기를 지난다. 태블릿 학생에게는
   // 그 단추가 유일한 길이다(.veil 은 z-index 40, 태블릿 E·Q 단추는 22 라 문서가
@@ -509,7 +512,7 @@ export function boot(root) {
   const pause = createPause(root)
   // 배경 음악(systems/bgm.js) — 대사·독백이 나오는 동안에는 줄인다.
   const bgm = createBgm({ tracks: BGM, isMuted: () => audio.isMuted(), isReady: () => audio.isReady() })
-  bgm.set('main')
+  bgm.set('theme')
   const voice = createVoicePlayer({ clips: VOICE, isMuted: () => audio.isMuted() || !audio.isReady(),
     onStart: () => bgm.duck(true), onEnd: () => bgm.duck(false) })
   const noteScreen = createNoteScreen(root, { voice })
@@ -527,6 +530,12 @@ export function boot(root) {
   // 첫 대사가 뜰 때는 이미 「시작」 단추를 누른 뒤다.
   const speak = createSpeak(root, { voice })
   const guide = createGuideStrip(root)
+  const activityBoard = createActivityBoard(root, {
+    onChoose: id => chooseActivity(id), onLeave: () => resolveExplore?.(),
+    onClose: () => { input.tap(); acc = 0 },
+  })
+  let selectedActivity = null
+  let hubBusy = false
   const title = createTitle(root)
   const controlsHint = createControlsHint(root)
   const hold = createHold(root)
@@ -624,7 +633,9 @@ export function boot(root) {
       .map(s => def.rooms.find(r => r.id === s.room))
       .filter(Boolean)
       .map(r => ({ x: r.x, z: r.z, label: '나들이' }))
-    return [...pickupsRemaining(), ...peopleRemaining(), ...stops]
+    const reports = hubOptions(flow.state, flow.act()).filter(o => o.kind === 'report' && !o.done && !o.blocked)
+      .map(o => ({ ...o.point, label: o.label }))
+    return [...pickupsRemaining(), ...peopleRemaining(), ...stops, ...reports]
   }
 
   // 지금 궁·막에서 실제로 서 있는 신하 목록. bindPalaceAndSpawn() 이 씬에 심을 때도,
@@ -648,6 +659,12 @@ export function boot(root) {
   }
 
   function updateHint() {
+    const selected = selectedOption()
+    if (selected) {
+      hint.textContent = activityReady(selected) ? `E — ${selected.label}` : `걷는 곳 — ${selected.place}`
+      hint.hidden = false
+      return
+    }
     const exit = currentExit()
     if (exit && flow.state.room === exit.room) {
       hint.textContent = exit.label
@@ -686,6 +703,7 @@ export function boot(root) {
   // 사초함(史草)이 열리고 닫히는 소리. 바닥에서 문서를 줍는 순간에는 'open' 을 겹치지
   // 않는다 — 거기서는 이미 'pick' 이 울린다. 한 사건에 두 소리를 겹치면 둘 다 안 들린다.
   function pressQ() {
+    if (activityBoard.isOpen()) return
     if (dialog.isOpen()) {
       dialog.close()      // 닫는 소리는 createDialog 의 onClose 가 낸다 — 여기서 또 내면 두 번 난다
     } else {
@@ -700,6 +718,23 @@ export function boot(root) {
   // 그래서 이 함수 하나가 '다가서기 → spend → pickUp → markRead' 배선 전체를 그대로 통과한다.
   //
   function pressEAction() {
+    const selected = selectedOption()
+    if (!dialog.isOpen() && selected && !activityReady(selected)) return { type: 'approaching' }
+    if (!dialog.isOpen() && selected && activityReady(selected)) {
+      if (selected.kind === 'report') return { type: 'hub-report', id: selected.id }
+      if (selected.kind === 'npc') return { type: 'talk', npc: selected.npc }
+      // 이름을 골랐을 때는 같은 방의 출구가 그 선택을 가로채지 않는다.
+      if (selected.kind === 'stop') {
+        const paid = spend(flow.state)
+        return paid.ok ? { type: 'stop', stopId: selected.stop.id, beat: selected.stop.beat,
+          state: markStopPaid(paid.state, selected.stop.id) } : { type: 'no-time' }
+      }
+      if (selected.kind === 'card') {
+        const paid = spend(flow.state)
+        return paid.ok ? { type: 'pickup', cardId: selected.cardId,
+          state: markRead(pickUp(paid.state, selected.cardId), selected.cardId) } : { type: 'no-time' }
+      }
+    }
     const found = npcNear(currentNpcs(), ctx.player.position.x, ctx.player.position.z)
     return pressE({
       dialogOpen: dialog.isOpen(),
@@ -725,6 +760,7 @@ export function boot(root) {
     const firstEver = flow.taken.size === 0
     flow.taken.add(action.cardId)
     flow.state = action.state
+    flow.state = completeActivity(flow.state, flow.act(), `card:${action.cardId}`)
     ctx.setPickupMarkers(markerPoints())
     saveGame(flow.state)   // 문서를 읽은 시점 — 학생이 여기서 새로고침해도 잃지 않는다
     if (firstEver) {
@@ -766,14 +802,19 @@ export function boot(root) {
   // 통째로 틀린 답이다 — 그 국면에는 주울 것도 나갈 방도 없고, 좌표만 보고 판정하면
   // 어좌 앞에 선 임금이 「문서를 줍는다」로 새어 나간다. 국면으로 먼저 가른다.
   function onE() {
+    if (activityBoard.isOpen()) return
     if (flow.phase === 'audience') { onAudienceE(); return }
     onPressE()
   }
 
   function onPressE() {
     if (speak.press()) return          // 말하는 중이면 한 줄 넘긴다
+    if (hubBusy) return
     const action = pressEAction()
+    if (action.type === 'approaching') return
+    selectedActivity = null
     switch (action.type) {
+      case 'hub-report': runHubReport(action.id); return
       case 'close-dialog': dialog.close(); return   // 닫는 소리는 dialog 의 onClose 가 낸다
       // 이 비트가 정한 나가는 방에 서 있으면 탐색 비트를 끝낸다 — 다음 비트(대개 어전회의)로 넘어간다
       case 'exit-explore': resolveExplore?.(); return
@@ -781,6 +822,7 @@ export function boot(root) {
       case 'stop': runStop(action); return
       case 'talk': {
         const npc = action.npc
+        hubBusy = true
         // 낮에 만나는 신하도 얼굴이 뜬다 — 알현과 같은 화면을 쓴다.
         speak.show({
           name: npc.name,
@@ -790,13 +832,21 @@ export function boot(root) {
           lines: npc.lines,
         }).then(() => {
           const cardIds = npcCardIds(npc)
-          if (cardIds.length === 0) return   // 흥선대원군처럼 문서 없이 말만 건네는 신하도 있다
+          if (cardIds.length === 0) {
+            flow.state = completeActivity(flow.state, flow.act(), `npc:${npc.id}`)
+            saveGame(flow.state)
+            return
+          }
           // 한 장이든 뭉치든 applyPickupPacket() 하나로 건넨다 — cardId 로 직접
           // 찾아 값을 치르므로, 신하가 서 있는 자리와 palaces.js 의 pickups 좌표가
           // 어긋나 있어도(신헌처럼) 안전하다. 좌표가 같은 자리에서 pressE 를 다시
           // 부르는 옛 지름길은 그 어긋남을 파고드는 구멍이었다 — pressE() 위 주석 참고.
           applyPickupPacket(cardIds)
-        })
+          if (cardIds.every(id => flow.state.sources.held.includes(id) || isLost(flow.state, id))) {
+            flow.state = completeActivity(flow.state, flow.act(), `npc:${npc.id}`)
+            saveGame(flow.state)
+          }
+        }).finally(() => { hubBusy = false })
         return
       }
       case 'already-taken': audio.play('deny'); return   // 이미 손에 든 문서다 — 화면은 그대로 둔다
@@ -827,6 +877,10 @@ export function boot(root) {
   }
 
   function handleKey(e) {
+    if (activityBoard.isOpen()) {
+      if (e.code === 'Escape') activityBoard.close()
+      return
+    }
     // 글을 쓰는 칸에 커서가 있으면 E·Q·Esc 를 가로채지 않는다 — 「왜 그렇게
     // 정했는가」를 쓰다가 E 를 치면 문서를 줍고 Esc 를 치면 멈춤 화면이 떴다.
     if (isTyping(e)) return
@@ -878,6 +932,7 @@ export function boot(root) {
     const extra = flow.actIndex === 0
       ? ['垂 드리우다 · 簾 발 · 聽 듣다 · 政 정치 — 발을 드리우고 그 뒤에서 정치를 듣는 것. 당신이 게임 내내 위쪽이 가려진 채 걸은 이유다.']
       : []
+    bgm.sting('actend')        // 막이 닫히는 자리 — 대금 종지와 정주 한 번
     return actEnd.show({
       title: `${flow.actIndex + 1} 막 「${ended.title}」 끝`,
       lines: extra,
@@ -941,18 +996,92 @@ export function boot(root) {
     lastRoom = null
   }
 
-  function playExplore(beat) {
-    return new Promise(resolve => {
+  async function playExplore(beat) {
+    const finished = new Promise(resolve => {
       flow.setPhase('day')
       hint.hidden = true
       resolveExplore = () => {
+        if (hubBusy || speak.isOpen() || dialog.isOpen() || pendingReport(flow.state, flow.act())) return
+        flow.state = closeHub(flow.state, flow.act())
         resolveExplore = null
+        selectedActivity = null
+        activityBoard.close()
         flow.setPhase('beat')
         dialog.close()
         hint.hidden = true
         resolve(flow.state)
       }
     })
+    const pending = pendingReport(flow.state, flow.act())
+    if (pending) await runHubReport(pending)
+    restoreHub()
+    openActivities()
+    return finished
+  }
+
+  function selectedOption() {
+    return hubOptions(flow.state, flow.act()).find(o => o.id === selectedActivity && !o.disabled) ?? null
+  }
+
+  function activityReady(option) {
+    if (!option?.point) return false
+    const sameRoom = !option.room || flow.state.room === option.room
+    return sameRoom && Math.hypot(ctx.player.position.x - option.point.x, ctx.player.position.z - option.point.z) < 6
+  }
+
+  function openActivities() {
+    if (flow.phase !== 'day' || hubBusy || pause.isOpen() || speak.isOpen() || dialog.isOpen()) return
+    tapTarget = null; tapRoute = []; autoWalk = false
+    const hub = hubAt(flow.act(), flow.state.beatIndex)
+    if (!hub) return
+    activityBoard.show({ title: hubDate(flow.act(), hub), dayLeft: flow.state.dayLeft,
+      free: hub.free, options: hubOptions(flow.state, flow.act()) })
+  }
+
+  function chooseActivity(id) {
+    if (flow.phase !== 'day' || hubBusy || pause.isOpen() || speak.isOpen() || dialog.isOpen()) return
+    const option = hubOptions(flow.state, flow.act()).find(o => o.id === id && !o.disabled)
+    if (!option) return
+    selectedActivity = id
+    if (activityReady(option)) { onPressE(); return }
+    const route = objectiveRoute(PALACES[flow.state.palace], option.room,
+      { x: ctx.player.position.x, z: ctx.player.position.z }, flow.state.control, option.point)
+    if (!route.length) { selectedActivity = null; banner(root, '지금은 그곳으로 가는 길이 막혀 있다'); return }
+    tapTarget = route.shift(); tapRoute = route; autoWalk = true
+    banner(root, '그곳으로 걷는다. 도착하면 대화 단추 또는 여정 판에서 선택한 일을 누르세요.', 3500)
+  }
+
+  function restoreHub() {
+    const hub = hubAt(flow.act(), flow.state.beatIndex)
+    if (!hub) return
+    activeBeat = hub
+    dateLabel = hubDate(flow.act(), hub)
+    guide.set('여정 판에서 지금 고를 일을 보세요. 방문 순서를 정하거나, 남은 일을 두고 다음 사건으로 갈 수 있습니다.')
+    audio.setAmbient('hall')
+    bgm.set(bgmForBeat(hub))
+    ctx.setNpcs(currentNpcs())
+    ctx.setPickupMarkers(markerPoints())
+    flow.setPhase('day')
+  }
+
+  async function runHubReport(id) {
+    if (hubBusy) return
+    hubBusy = true
+    selectedActivity = null
+    flow.setPhase('beat')
+    try {
+      flow.state = await performReport({ state: flow.state, act: flow.act(), id,
+        save: state => { flow.state = state; saveGame(state) },
+        play: async (beat, state) => {
+          flow.state = state
+          if (beat.dateLabel) dateLabel = beat.dateLabel
+          return await playBeat(beat)
+        },
+      })
+    } finally {
+      hubBusy = false
+      restoreHub()
+    }
   }
 
   // ── 알현(謁見) 비트 ──────────────────────────────────────────────
@@ -1197,10 +1326,11 @@ export function boot(root) {
     flow.setPhase('beat')
     flow.state = await playBeat(action.beat)
     flow.state = markStopDone(flow.state, action.stopId)   // 화면을 다 본 시점 — 밀린 표시를 지운다
+    flow.state = completeActivity(flow.state, flow.act(), `stop:${action.stopId}`)
     saveGame(flow.state)
     // 나들이에서 돌아오면 다시 낮이다. 다만 해가 다 졌으면 그대로 밤으로 넘어간다
+    restoreHub()
     if (isDusk(flow.state)) { resolveExplore?.(); return }
-    flow.setPhase('day')
     // 나들이는 낮 안의 짧은 장면이라 runBeats 를 거치지 않는다 — 돌아온 뒤의 바닥
     // 소리를 여기서 직접 되돌린다. 다시 궁 안이다.
     audio.setAmbient('hall')
@@ -1272,6 +1402,7 @@ export function boot(root) {
     // held 가 이미 줄어든 채로 이 비트를 다시 돌려 taken 을 빈 배열로 다시 셈하고,
     // 「가지고 있던 것이 없다」를 잃지도 않은 문서에 대해 보여준다. runBeats() 가
     // advance() 뒤에 한 번만 저장한다.
+    bgm.sting('loss')          // 기록을 잃는 순간의 여운 — 해금 한 음(systems/bgm.js)
     await lossScreen.show({
       title: beat.title,
       art: beat.art,
@@ -1555,7 +1686,7 @@ export function boot(root) {
     // 바닥 소리를 바꾸는 자리는 여기 하나다 — 비트(=화면) 하나에 한 번.
     // 매 프레임 부르면 0.6초 페이드가 겹쳐 잠깐 두 겹으로 들린다.
     audio.setAmbient(ambientForBeat(beat))
-    bgm.set(bgmForBeat(beat))
+    bgm.set(bgmForBeat(beat, flow.actIndex))
     ctx.setMood(moodForBeat(beat, flow.actIndex))
     // 발은 세계에 걸린 물건이다(render/palace.js). 화면 위 판이 아니라 인정전
     // 어좌 앞에 늘어뜨린 것이라, 임금이 걸어 나가면 뒤에 남는다.
@@ -1619,6 +1750,12 @@ export function boot(root) {
     let skipApply = resumeMidBeat
     while (!isActOver(flow.state, act)) {
       const beat = beatAt(act, flow.state.beatIndex)
+      if (shouldDeferReport(flow.state, act, beat)) {
+        flow.state = { ...advance(flow.state), beatEntered: false }
+        skipApply = false
+        saveGame(flow.state)
+        continue
+      }
       // 조건이 안 맞는 비트는 재생하지 않는다. 번호만 넘기고, applyBeat 도 저장도 하지
       // 않는다 — 갈리는 것은 「무엇을 보는가」이지 「어디까지 왔는가」가 아니다(설계서 7.6).
       // beatEntered 를 false 로 두는 것이 중요하다: 이 비트에는 들어간 적이 없으므로
@@ -1717,6 +1854,7 @@ export function boot(root) {
     // 없는 화면을 열려다 이어하기 자체가 멈추는 것이 가장 나쁘다.
     if (stop) flow.state = await playBeat(stop.beat)
     flow.state = markStopDone(flow.state, stopId)
+    flow.state = completeActivity(flow.state, flow.act(), `stop:${stopId}`)
     saveGame(flow.state)
   }
 
@@ -1779,6 +1917,7 @@ export function boot(root) {
   function inputForStep() {
     const kb = input.axis()
     if (kb.x !== 0 || kb.z !== 0) {
+      selectedActivity = null
       tapTarget = null; tapRoute = []; autoWalk = false
       return { axis: () => ctx.worldAxis(kb), running: () => input.running() }
     }
@@ -1867,8 +2006,11 @@ export function boot(root) {
       flow.state = { ...flow.state, room: roomAt(PALACES[flow.state.palace], p.x, p.z)?.id ?? null }
       const yaw = yawToward(pr.from, pr.to)
       const def = PALACES[flow.state.palace]
+      // 자리를 차례로 잡는다 — 앞사람이 이미 선 자리는 다음 사람이 피한다(겹침 방지).
+      const taken = [{ x: p.x, z: p.z }]
       for (const e of pr.escort) {
-        const at = escortSpot(def, p, e)
+        const at = escortSpot(def, p, e, 0.8, taken)
+        taken.push(at)
         ctx.placeNpc(e.npc, { x: at.x, z: at.z, yaw, walking: u < 1, smooth: true })
       }
       if (u >= 1) {
@@ -1909,7 +2051,7 @@ export function boot(root) {
       } else {
         if (tapped) {
           const p = ctx.pickGround(tapped.x, tapped.y)
-          if (p) { tapTarget = p; tapRoute = []; autoWalk = false }
+          if (p) { tapTarget = p; tapRoute = []; autoWalk = false; selectedActivity = null }
         }
         const def = PALACES[flow.state.palace]
         const roomId = audienceBeat.room ?? def.councilRoom
@@ -1937,38 +2079,43 @@ export function boot(root) {
     // 화재 탈출 90초 내내 아무 입력도 못 받고 매번 잡혔다. 힌트·해질녘 판정만
     // 'day' 고유의 것이라 거기서만 돈다.
     if (flow.phase === 'day' || flow.phase === 'rush') {
-      const tapped = input.tap()
-      if (tapped) {
-        const p = ctx.pickGround(tapped.x, tapped.y)
-        if (p) { tapTarget = p; tapRoute = []; autoWalk = false }
-      }
-
-      acc = Math.min(acc + dt, FIXED_MS * MAX_STEPS)
-      let steps = 0
-      while (acc >= FIXED_MS && steps < MAX_STEPS) {
-        flow.state = step(ctx, inputForStep(), flow.state, FIXED_MS)
-        acc -= FIXED_MS
-        steps++
-      }
-      // 방이 바뀌었다 — 문 하나를 지났다. 프레임을 세는 것이 아니라 방 이름이
-      // 실제로 달라졌을 때만 본다.
-      if (lastRoom === null) lastRoom = flow.state.room
-      else if (flow.state.room !== lastRoom) {
-        lastRoom = flow.state.room
-        audio.play('door', { gain: ROOM_DOOR_GAIN })
-      }
-      if (flow.state.blocked && !autoWalk && now - lastBlockedBannerAt >= BLOCKED_BANNER_MS) {
-        banner(root, '임금이 갈 수 있는 곳은 정해져 있다')
-        lastBlockedBannerAt = now
-      }
-      if (flow.phase === 'day') {
-        updateHint()
-        // 그날 들을 것을 다 들으면 낮이 끝난다. 아무 말 없이 화면이 넘어가면 학생은
-        // 무엇 때문에 끝났는지 모른다 — 한 줄로 알린다.
-        if (!activeBeat?.free && isDusk(flow.state) && resolveExplore) {
-          banner(root, '오늘 들을 수 있는 것을 다 들었다', 2600)
-          resolveExplore()
+      if (!activityBoard.isOpen() && !pause.isOpen() && !dialog.isOpen() && !speak.isOpen() && !hubBusy) {
+        const tapped = input.tap()
+        if (tapped) {
+          const p = ctx.pickGround(tapped.x, tapped.y)
+          if (p) { tapTarget = p; tapRoute = []; autoWalk = false; selectedActivity = null }
         }
+
+        acc = Math.min(acc + dt, FIXED_MS * MAX_STEPS)
+        let steps = 0
+        while (acc >= FIXED_MS && steps < MAX_STEPS) {
+          flow.state = step(ctx, inputForStep(), flow.state, FIXED_MS)
+          acc -= FIXED_MS
+          steps++
+        }
+        // 방이 바뀌었다 — 문 하나를 지났다. 프레임을 세는 것이 아니라 방 이름이
+        // 실제로 달라졌을 때만 본다.
+        if (lastRoom === null) lastRoom = flow.state.room
+        else if (flow.state.room !== lastRoom) {
+          lastRoom = flow.state.room
+          audio.play('door', { gain: ROOM_DOOR_GAIN })
+        }
+        if (flow.state.blocked && !autoWalk && now - lastBlockedBannerAt >= BLOCKED_BANNER_MS) {
+          banner(root, '임금이 갈 수 있는 곳은 정해져 있다')
+          lastBlockedBannerAt = now
+        }
+        if (flow.phase === 'day') {
+          updateHint()
+          // 그날 들을 것을 다 들으면 낮이 끝난다. 아무 말 없이 화면이 넘어가면 학생은
+          // 무엇 때문에 끝났는지 모른다 — 한 줄로 알린다.
+          if (!activeBeat?.free && isDusk(flow.state) && resolveExplore && !dialog.isOpen() && !speak.isOpen() && !hubBusy) {
+            banner(root, '오늘 들을 수 있는 것을 다 들었다', 2600)
+            resolveExplore()
+          }
+        }
+      } else {
+        acc = 0
+        input.tap()
       }
     }
     // 촉박 판정 — session.tick() 은 performance.now() 로 받은 now 하나만 보고 판정한다.
@@ -2010,7 +2157,7 @@ export function boot(root) {
     hud.update({
       hidden: flow.phase === 'council' || flow.phase === 'done',
       phase: flow.phase,
-      objective: activeBeat?.exit?.label ?? '신하를 찾아 보고를 듣고 사료를 살펴보십시오.',
+      objective: flow.phase === 'day' ? '지금 고를 일 — 보고·사료·방문 순서를 정한다' : activeBeat?.exit?.label ?? '신하를 찾아 보고를 듣고 사료를 살펴보십시오.',
       actIndex: flow.actIndex,
       actTitle: flow.act().title,
       readCount: flow.state.sources.read.length,
@@ -2153,6 +2300,7 @@ export function boot(root) {
       running = false; session = null; rushFire = false
       holdSession?.dispose(); holdSession = null   // 막 전환·종료에 이 판이 남으면 다음 화면을 덮는다
       speak.dispose()
+      activityBoard.dispose()
       audio.setAmbient(null); bgm.stop(); flow.dispose()
       ctx.dispose()
     },

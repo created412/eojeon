@@ -1,3 +1,5 @@
+// 기존 선형 경로의 저장 효과와 공통 저장 배선을 검사한다.
+// 자유 여정의 모든 새 저장 경계는 freedom-full-run.test.js가 실제 진행자 본문으로 검사한다.
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'

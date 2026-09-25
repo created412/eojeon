@@ -38,6 +38,7 @@ function environment() {
     audienceBeat: {kind:'audience',room:'injeongjeon',visitors:[]}, procession: null, audienceWalk: null,
     audienceExitOpen: false, audienceWasWalking: false, resolveAudience: null, lastRebukeAt: -Infinity,
     speak: {isOpen: () => false}, dialog: {isOpen: () => false, close() {}}, pause: {isOpen: () => false},
+    activityBoard: {isOpen: () => false}, hubBusy: false,
     hint: {}, audio: {play() {}}, currentNpcs: () => [],
     acc: 12, tapTarget: {x:9,z:9}, dt: 17, FIXED_MS: 16, MAX_STEPS: 5, now: 5000,
     rebuke() {}, lastRoom: null, lastBlockedBannerAt: 0, BLOCKED_BANNER_MS: 3000,
@@ -110,6 +111,26 @@ it('free 낮은 남은 아룀이 0인 저장을 이어받아도 저절로 끝나
   env.activeBeat.free = false
   runBlock("if (flow.phase === 'day' || flow.phase === 'rush')", env)
   expect(env.resolveExplore).toHaveBeenCalledOnce()
+})
+
+it.each(['dialog', 'speak', 'activityBoard', 'hubBusy'])('%s 중에는 마지막 해 칸을 썼어도 다음 사건이 덮어쓰지 않는다', name => {
+  const env = environment()
+  env.flow.phase = 'day'; env.flow.state.dayLeft = 0; env.activeBeat.free = false
+  if (name === 'hubBusy') env.hubBusy = true
+  else env[name].isOpen = () => true
+  runBlock("if (flow.phase === 'day' || flow.phase === 'rush')", env)
+  expect(env.resolveExplore).not.toHaveBeenCalled()
+})
+
+it('직접 방향을 바꾸면 이전 방문 목표를 취소하여 다른 사람과 이야기할 수 있다', async () => {
+  const env = environment()
+  env.selectedActivity = 'npc:mother'
+  env.tapRoute = [{x:1,z:1}]; env.autoWalk = true
+  env.ctx.worldAxis = axis => axis
+  env.input.running = () => false
+  await runFunction('inputForStep', env)
+  expect(env.selectedActivity).toBeNull()
+  expect(env.tapRoute).toEqual([])
 })
 
 it('어머니 캐릭터에게 갈 자리를 인물 표식과 미니맵에 남긴다', async () => {

@@ -30,6 +30,7 @@ export function createState() {
     moves: [],
     riceIndex: 100,
     flags: {},
+    freedom: { hubs: {} },
   }
 }
 
@@ -45,5 +46,11 @@ export function deserialize(json) {
     return null
   }
   if (!data || data.version !== VERSION) return null
+  // 비트 배열은 그대로다. 버전 3의 기존 좌표와 이미 본 보고를 함께 보존한다.
+  if (!data.freedom || typeof data.freedom !== 'object' || Array.isArray(data.freedom)) {
+    data.freedom = { hubs: {}, legacy: {
+      actIndex: data.actIndex, beatIndex: data.beatIndex, beatEntered: data.beatEntered === true,
+    } }
+  }
   return data
 }

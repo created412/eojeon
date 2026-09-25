@@ -1,3 +1,4 @@
+// 기존 선형 경로의 회귀 검사. 선택·생략이 있는 실제 진행은 freedom-full-run.test.js에서 검사한다.
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
