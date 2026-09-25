@@ -246,7 +246,9 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
   // 쓰기 때문이다 — 한 번만 굽혀 두면 다음 프레임에 펴진다.
   // ⚠ 어머니(mother-person.js)처럼 판 하나로 선 인물은 굽힐 허리가 없다 — 지나간다.
   //   1863년 운현궁에서 어머니가 아들에게 읍하는 그림도 애초에 틀렸다.
-  const BOW_MAX = 0.30          // 약 17도. 이보다 깊으면 절이 된다
+  // 0.30(약 17도)으로 두었더니 화면에서 보이지 않았다 — 실제 빌드를 찍어 확인하고
+  // 0.45(약 26도)로 올린다. 1.2 까지 올려 보면 허리가 접혀 절이 된다: 읍은 그보다 얕다.
+  const BOW_MAX = 0.45
   const bowQuat = new THREE.Quaternion()
 
   function applyBow(e) {

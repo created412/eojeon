@@ -751,10 +751,11 @@ export function boot(root) {
     audio.play('open')
     flow.state = markArtifactSeen(flow.state, id)
     saveGame(flow.state)
-    if (first) {
-      banner(root, '궁 안의 물건도 살펴볼 수 있다. 본 것은 사초함(Q) 아래쪽에 쌓인다 — 해 칸은 쓰지 않는다.', 4200)
-    }
-    dialog.showArtifact(artifact, artifactLines(artifact, flow.actIndex))
+    // 첫 물건을 만난 자리에서 이 갈래 자체를 한 번 알린다 — 그런데 **카드를 닫은 뒤에**
+    // 알린다. 배너는 화면 한가운데에 뜨고 카드도 한가운데에 뜬다: 함께 내면 배너가
+    // 카드의 제목과 첫 줄을 덮는다(실제로 그렇게 나갔다 — 2026-09-25 화면 확인).
+    dialog.showArtifact(artifact, artifactLines(artifact, flow.actIndex),
+      first ? () => banner(root, '궁 안의 물건도 살펴볼 수 있다. 본 것은 사초함(Q) 아래쪽에 쌓인다 — 해 칸은 쓰지 않는다.', 4200) : undefined)
   }
 
   function pressEAction() {
