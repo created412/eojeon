@@ -669,6 +669,19 @@ export function boot(root) {
       hint.hidden = false
       return
     }
+    // 아직 안 본 물건 — 눈앞에 있을 때만 한 줄로 알린다. 미니맵에 점을 찍지 않는
+    // 까닭: 선생님이 말한 「뒤져 보는 재미」가 표지에 다 적히면 남지 않는다.
+    //
+    // **나가는 방보다 먼저 본다.** E 판정(pressEAction)이 그 순서이기 때문이다 —
+    // 일월오봉도는 인정전에 서 있고 인정전이 곧 나가는 방이라, 안내만 「오늘은 여기까지」로
+    // 두면 학생이 나가려고 누른 E 가 병풍을 열어 버린다. 한 번 본 뒤에는 이 줄이
+    // 사라지고 나가는 안내가 제자리로 돌아온다.
+    const art = nearbyArtifact()
+    if (art) {
+      hint.textContent = `${artifactById(art.id)?.name ?? '물건'} — E 로 살펴본다`
+      hint.hidden = false
+      return
+    }
     const exit = currentExit()
     if (exit && flow.state.room === exit.room) {
       hint.textContent = exit.label
@@ -690,14 +703,6 @@ export function boot(root) {
       const last = flow.state.dayLeft === 1 && npcCardIds(found.npc).length > 0
         ? ' · 오늘 마지막 하나다' : ''
       hint.textContent = `${found.npc.name}${title} · ${m}m — E 로 말을 건다${last}`
-      hint.hidden = false
-      return
-    }
-    // 아직 안 본 물건 — 눈앞에 있을 때만 한 줄로 알린다. 미니맵에 점을 찍지 않는
-    // 까닭: 선생님이 말한 「뒤져 보는 재미」가 표지에 다 적히면 남지 않는다.
-    const art = nearbyArtifact()
-    if (art) {
-      hint.textContent = `${artifactById(art.id)?.name ?? '물건'} — E 로 살펴본다`
       hint.hidden = false
       return
     }
