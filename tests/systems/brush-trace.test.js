@@ -5,6 +5,8 @@ import {
   CHEOKHWABI_LINES, CHEOKHWABI_GLYPHS, CHEOKHWABI_REST, CHEOKHWABI_PARTIAL_NOTE,
   HIT_RADIUS, DONE_RATIO, coverage, isTraced,
   ILSA_GLYPHS, ILSA_VARIANTS, ILSA_NOTE,
+  INK_MS, INK_WARN_MS, INK_PASSED_LINE, inkMsOf, isInkTimed, inkRemaining, inkRatio,
+  inkSeconds, inkLabel, inkDried, inkDrying, inkDryNote, inkReport, glyphCountWord,
 } from '../../src/systems/brush-trace.js'
 import { actById } from '../../src/data/acts.js'
 import { beatsOf } from '../../src/systems/scenario.js'
@@ -156,7 +158,10 @@ describe('붓 화면은 마무리 문장 하나만 인자로 연다', () => {
   it('두 판을 순수 함수가 만든다 — open() 이 제 손으로 짜지 않는다', () => {
     const body = methodBody(brushSrc, /\bopen\s*\(view\)\s*\{/)
     expect(body).toContain('el.innerHTML = writingHtml(view)')
-    expect(body).toContain('el.innerHTML = finishHtml(view)')
+    // 마무리 판은 이제 둘째 인자를 받는다 — 먹을 다시 간 횟수다(2026-09-25). 그 값은
+    // 비트의 데이터가 아니라 학생이 방금 한 일이라 view 에 얹지 않았다. 이 검사가
+    // 붙드는 것은 인자의 개수가 아니라 「open() 이 제 손으로 판을 짜지 않는다」다.
+    expect(body).toMatch(/el\.innerHTML = finishHtml\(view,\s*regrinds\)/)
     // 판을 짜는 백틱 템플릿이 open() 안에 남아 있으면 새 슬롯이 몰래 생길 수 있다
     // 따옴표 한 종류만 훑지 않는다 — 겹따옴표로 바꿔 적어도 지나가면 검사가 헛돈다
     expect(body).not.toContain('<canvas')
@@ -340,5 +345,199 @@ describe('붓 화면이 받는 view 는 비트에서 한 칸도 흘리지 않는
     const before = writingHtml(brushView(f1))
     expect(before).toContain(f1.partial ?? CHEOKHWABI_PARTIAL_NOTE)
     expect(before).toContain(f1.origin)
+  })
+})
+
+// ── 먹이 마른다 (2026-09-25 선생님) ────────────────────────────────────
+//
+// 「3의 척화비는 오히려 아이들이 싫어할만한 내용이야. 타임어택을 넣고 척화비
+// 글씨쓰게 하는게 좋아보여.」 붓 화면에 시계가 붙었다. 이 묶음이 붙드는 것은
+// 「빠른가」가 아니라 「학생이 갇히지 않는가」와 「판정 R96 이 그대로 서 있는가」다.
+describe('먹이 마른다 — 재는 방식', () => {
+  it('글자 하나에 22초이고, 6초 밑에서 빛깔이 바뀐다', () => {
+    expect(INK_MS).toBe(22000)
+    expect(INK_WARN_MS).toBeLessThan(INK_MS)
+    expect(INK_WARN_MS).toBeGreaterThan(0)
+  })
+
+  it('비트가 ink 를 실어야 시간을 잰다 — 안 실으면 예전 그대로다', () => {
+    expect(isInkTimed({})).toBe(false)
+    expect(inkMsOf({})).toBe(0)
+    expect(isInkTimed({ ink: { ms: 22000 } })).toBe(true)
+    expect(inkMsOf({ ink: { ms: 9000 } })).toBe(9000)
+    // ms 를 안 적으면 기본값, 숫자 하나만 줘도 받는다
+    expect(inkMsOf({ ink: {} })).toBe(INK_MS)
+    expect(inkMsOf({ ink: 5000 })).toBe(5000)
+    // 0 이나 음수는 「안 잰다」로 읽는다 — 열자마자 마르는 화면을 만들지 않는다
+    expect(inkMsOf({ ink: { ms: 0 } })).toBe(0)
+    expect(isInkTimed({ ink: { ms: -1 } })).toBe(false)
+  })
+
+  // 이 검사가 이 기능의 심장이다 — 첫 획을 긋기 전에는 먹이 줄지 않는다.
+  // 안내문을 읽는 시간을 벌로 매기면 글을 안 읽는 학생이 유리해진다.
+  it('첫 획을 긋기 전에는 아무리 기다려도 먹이 가득하다', () => {
+    expect(inkRemaining(null, 999999, 22000)).toBe(22000)
+    expect(inkRatio(null, 999999, 22000)).toBe(1)
+    expect(inkDried(null, 999999, 22000)).toBe(false)
+    expect(inkDrying(null, 999999, 22000)).toBe(false)
+    expect(inkLabel(null, 0, 22000)).toBe('먹 — 첫 획을 그으면 마르기 시작한다')
+  })
+
+  it('첫 획이 지난 만큼만 줄고, 0 밑으로는 안 내려간다', () => {
+    expect(inkRemaining(1000, 1000, 22000)).toBe(22000)
+    expect(inkRemaining(1000, 11000, 22000)).toBe(12000)
+    expect(inkRemaining(1000, 23000, 22000)).toBe(0)
+    expect(inkRemaining(1000, 99999, 22000)).toBe(0)
+    expect(inkRatio(1000, 12000, 22000)).toBeCloseTo(0.5, 5)
+    // 시계가 거꾸로 가도(단조롭지 않은 시각) 가득을 넘지 않는다
+    expect(inkRemaining(1000, 0, 22000)).toBe(22000)
+  })
+
+  it('남은 초는 올림으로 센다 — 0.4초가 남았는데 「0초」라고 적지 않는다', () => {
+    expect(inkSeconds(0, 0, 22000)).toBe(22)
+    expect(inkSeconds(0, 21600, 22000)).toBe(1)
+    expect(inkSeconds(0, 22000, 22000)).toBe(0)
+    expect(inkLabel(0, 12000, 22000)).toBe('먹 — 마르기까지 10초')
+  })
+
+  it('말랐다·마르는 중이다를 가른다', () => {
+    expect(inkDrying(0, 15000, 22000)).toBe(false)
+    expect(inkDrying(0, 17000, 22000)).toBe(true)     // 5초 남음
+    expect(inkDried(0, 21999, 22000)).toBe(false)
+    expect(inkDried(0, 22000, 22000)).toBe(true)
+  })
+
+  it('마른 뒤에 뜨는 줄이 「틀렸다」고 말하지 않는다 — 먹을 다시 가는 일이다', () => {
+    const note = inkDryNote(1)
+    expect(note).toContain('먹이 말랐다')
+    expect(note).toContain('다시')
+    expect(note).toContain('1번')
+    expect(note).not.toMatch(/실패|틀렸|벌|졌/)
+    expect(inkDryNote(3)).toContain('3번')
+  })
+
+  it('마르기 전에 다 쓴 글자에도 한 줄이 있다 — 시간이 벌로만 쓰이지 않는다', () => {
+    expect(INK_PASSED_LINE).toContain('다 썼다')
+    expect(INK_PASSED_LINE).not.toMatch(/[A-Za-z]/)
+  })
+
+  it('마지막 한 줄은 몇 번을 갈았든 「썼다」로 끝난다 — 꾸짖지 않는다', () => {
+    expect(inkReport(0, 4)).toBe('먹을 한 번도 다시 갈지 않고 넉 자를 썼다.')
+    expect(inkReport(1, 4)).toBe('먹을 1번 다시 갈아 넉 자를 썼다.')
+    expect(inkReport(7, 4)).toBe('먹을 7번 다시 갈아 넉 자를 썼다.')
+    for (const n of [0, 1, 2, 9, 40]) {
+      expect(inkReport(n, 4), String(n)).toContain('썼다')
+      expect(inkReport(n, 4), String(n)).not.toMatch(/실패|틀렸|못|아쉽/)
+      expect(inkReport(n, 4), String(n)).not.toMatch(/[A-Za-z]/)
+    }
+  })
+
+  it('자릿수를 우리말로 센다', () => {
+    expect(glyphCountWord(4)).toBe('넉 자')
+    expect(glyphCountWord(2)).toBe('두 자')
+    expect(glyphCountWord(12)).toBe('12자')
+  })
+})
+
+describe('먹 시계는 척화비에만 붙는다 (2026-09-25)', () => {
+  const F1_BEAT = beatsOf(actById('yangyo')).find(b => b.kind === 'brush')
+
+  it('2막 척화비 비트가 ink 를 들고 있다 — 데이터가 켠다', () => {
+    expect(F1_BEAT.id).toBe('cheokhwabi-brush')
+    expect(isInkTimed(F1_BEAT)).toBe(true)
+    expect(inkMsOf(F1_BEAT)).toBe(22000)
+  })
+
+  it('4막 「친 필」은 안 잰다 — 붓을 놓은 뒤에 남아야 하는 것이 의심이기 때문이다', () => {
+    expect(F2_BEAT.ink).toBeUndefined()
+    expect(isInkTimed(F2_BEAT)).toBe(false)
+  })
+
+  it('brushView() 가 ink 를 화면까지 실어 보낸다 — 조립하는 자리에서 흘리지 않는다 (판정 R97)', () => {
+    expect(inkMsOf(brushView(F1_BEAT))).toBe(22000)
+    expect(isInkTimed(brushView(F2_BEAT))).toBe(false)
+  })
+
+  it('시간을 재는 화면에만 먹 띠가 생긴다', () => {
+    const timed = writingHtml(brushView(F1_BEAT))
+    expect(timed).toContain('class="ink"')
+    expect(timed).toContain('class="inkfill"')
+    expect(timed).toContain('먹 — 첫 획을 그으면 마르기 시작한다')
+
+    const untimed = writingHtml(brushView(F2_BEAT))
+    expect(untimed).not.toContain('class="ink"')
+    expect(untimed).not.toContain('inkfill')
+    expect(untimed).not.toContain('먹')
+  })
+
+  // ── 판정 R96 은 칸이 하나 늘어도 그대로 선다 ──────────────────────
+  // 먹 띠에 실리는 글은 「마르기까지 몇 초」뿐이다. 반전을 한 조각이라도 끌어오면
+  // (예컨대 남은 시간을 설명하려고 partial 을 갖다 붙이면) 여기서 운다.
+  it('시계를 붙여도 쓰기 전 화면에 반전이 새지 않는다', () => {
+    const view = { ...brushView(F2_BEAT), ink: { ms: 22000 } }
+    const before = writingHtml(view) + view.glyphs.join('')
+    expect(before).toContain('class="ink"')          // 실제로 시계가 붙은 판을 보고 있다
+    for (const w of ['『갑신일록』', '김옥균', '망명', '논쟁', '의심', '갈린다', '그중 하나']) {
+      expect(before.includes(w), `쓰기 전 화면에 「${w}」가 있다`).toBe(false)
+    }
+    // 마무리 판의 글이 미리 오지도 않는다
+    expect(before).not.toContain(ILSA_NOTE)
+    for (const v of ILSA_VARIANTS) expect(before).not.toContain(v.text)
+  })
+
+  it('붓을 놓은 뒤 판이 먹을 간 횟수를 한 줄로 전한다', () => {
+    const view = brushView(F1_BEAT)
+    expect(finishHtml(view, 0)).toContain('먹을 한 번도 다시 갈지 않고 넉 자를 썼다.')
+    expect(finishHtml(view, 3)).toContain('먹을 3번 다시 갈아 넉 자를 썼다.')
+    expect(finishHtml(view, 3)).toContain('class="inkreport"')
+    // 횟수를 안 주면 「한 번도 안 갈았다」로 읽는다 — 없는 실수를 지어내지 않는다
+    expect(finishHtml(view)).toContain('한 번도')
+  })
+
+  it('시간을 안 재는 비트의 마무리 판에는 그 줄이 아예 없다', () => {
+    const after = finishHtml(brushView(F2_BEAT), 2)
+    expect(after).not.toContain('inkreport')
+    expect(after).not.toContain('먹을')
+  })
+
+  it('먹 띠가 쓰기 전 판에서 안내문·출처 자리를 밀어내지 않는다', () => {
+    const timed = writingHtml(brushView(F1_BEAT))
+    expect(timed).toContain(CHEOKHWABI_PARTIAL_NOTE)
+    expect(timed).toContain(F1_BEAT.origin)
+    expect(timed).toContain('<canvas')
+  })
+})
+
+// 프레임을 지우는 자리가 하나뿐인지는 소스로 붙든다 — 붓 화면은 DOM 을 타서
+// node 환경에서 못 돌린다(위 「붓 화면은 …」 묶음과 같은 이유다).
+describe('먹 시계가 프레임을 흘리지 않는다', () => {
+  const brushSrc = readFileSync(join(process.cwd(), 'src', 'ui', 'brush.js'), 'utf8')
+
+  it('cancelAnimationFrame 을 부르는 자리가 stopInk() 하나다', () => {
+    expect(brushSrc.match(/cancelAnimationFrame/g)).toHaveLength(1)
+    expect(bodyOf(brushSrc, 'stopInk')).toContain('cancelAnimationFrame')
+  })
+
+  it('글자를 새로 열 때·말랐을 때·통과했을 때·붓을 놓을 때 모두 멈춘다', () => {
+    for (const fn of ['loadGlyph', 'dryOut', 'passInk', 'finish']) {
+      expect(bodyOf(brushSrc, fn), fn).toContain('stopInk()')
+    }
+  })
+
+  it('첫 획에서만 시계가 선다 — 화면을 여는 자리에서 시작하지 않는다', () => {
+    // 시작 함수는 inkStartedAt 이 이미 있으면 되돌아간다(두 번 돌지 않는다)
+    expect(bodyOf(brushSrc, 'startInk')).toContain('inkStartedAt !== null')
+    // 시작을 부르는 곳은 붓이 닿는 순간 하나뿐이다
+    expect(brushSrc.match(/^\s*startInk\(\)$/gm)).toHaveLength(1)
+  })
+
+  it('움직임을 줄여 달라고 한 학생에게는 초 단위로만 고쳐 그린다', () => {
+    expect(brushSrc).toContain('prefers-reduced-motion')
+    expect(bodyOf(brushSrc, 'drawInk')).toContain('stepped')
+  })
+
+  it('먹이 말랐을 때 소리를 이 화면이 고르지 않는다 — 부른 쪽에 넘긴다', () => {
+    expect(bodyOf(brushSrc, 'dryOut')).toContain('view.onDry?.()')
+    expect(brushSrc).not.toContain('audio')
   })
 })

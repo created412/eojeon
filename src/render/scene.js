@@ -12,6 +12,7 @@ import { interpolateCameraShot } from './cinematic.js'
 import { createAtmosphere } from './atmosphere.js'
 import { createGateGuards } from './gate-guards.js'
 import { interactionCue } from '../systems/interaction-cues.js'
+import { createPalaceLife } from '../systems/palace-life.js'
 import { createCrisis } from './crisis.js'
 
 // 카메라는 임금 뒤 이만큼에서 이 높이로 내려다본다. **시험도 이 값을 가져다 쓴다** —
@@ -228,8 +229,70 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
       npcGroup.add(anchor)
       // walking·yaw 는 알현 장면(systems/audience.js)이 쓴다. 평소에는 walking 이
       // false 이고 yaw 가 null 이라, 아래 render() 가 임금 쪽을 보게 돌려 준다.
-      npcMeshes.set(n.id, { anchor, pivot: built.pivot, npc: n, walking: false, yaw: null })
+      // mesh(=발부터 머리까지의 몸)는 읍할 때 앞으로 기울이는 자리다(applyBow).
+      npcMeshes.set(n.id, { anchor, pivot: built.pivot, mesh: built.mesh, npc: n, walking: false, yaw: null, bow: 0, bowShown: 0 })
     }
+  }
+
+  // ── 읍(揖) ──────────────────────────────────────────────────────────────
+  // 임금이 다가오면 신하가 고개를 숙인다(systems/palace-life.js 가 깊이를 정한다).
+  //
+  // 굽히는 자리를 두 군데로 나눈다. 허리(Spine 뼈)가 크게 굽고, 몸 전체(mesh)는
+  // 발목에서 조금만 기운다. 허리만 굽히면 머리만 까딱이고, 몸만 기울이면 널판이
+  // 넘어가듯 보인다. 발끝이 바닥을 파지 않게 기우는 쪽은 아주 작게 둔다.
+  //
+  // ⚠ 허리는 **매 프레임 다시** 굽혀야 한다. glb-person.js 의 updateSway 가 걸음
+  // 자세를 그리며 Spine 의 quaternion 을 제 쉬는 자세(restQuat)에서 통째로 다시
+  // 쓰기 때문이다 — 한 번만 굽혀 두면 다음 프레임에 펴진다.
+  // ⚠ 어머니(mother-person.js)처럼 판 하나로 선 인물은 굽힐 허리가 없다 — 지나간다.
+  //   1863년 운현궁에서 어머니가 아들에게 읍하는 그림도 애초에 틀렸다.
+  const BOW_MAX = 0.30          // 약 17도. 이보다 깊으면 절이 된다
+  const bowQuat = new THREE.Quaternion()
+
+  function applyBow(e) {
+    const amount = e.bow ?? 0
+    if (amount === 0 && e.bowShown === 0) return
+    e.bowShown = amount
+    const person = e.pivot.userData?.person
+    if (!person) return
+    if (e.mesh) e.mesh.rotation.x = BOW_MAX * amount * 0.32
+    const spine = person.bones?.spine
+    const rest = spine?.userData?.restQuat
+    const axis = spine?.userData?.swingAxis
+    if (!rest || !axis) return
+    // 축은 뼈마다 따로 재 둔 「앞뒤로 굽히는 축」이다(glb-person.js measureSwingAxis).
+    // rotation.x 를 직접 돌리면 리그에 따라 허리가 옆으로 꺾인다.
+    bowQuat.setFromAxisAngle(axis, BOW_MAX * amount * 0.75)
+    spine.quaternion.copy(rest).multiply(bowQuat)
+  }
+
+  // 낮(day)의 궁 — 신하가 제자리 주변을 서성이고, 임금이 다가오면 읍한다.
+  // 계산은 전부 systems/palace-life.js 가 한다(DOM·three 를 모르는 순수 모듈).
+  // 여기서는 그 결과를 placeNpc 로 옮기고 허리를 굽히는 일만 한다.
+  //
+  // main.js 는 flow.phase === 'day' 일 때만 이것을 부른다 — 알현·행렬은 같은
+  // placeNpc 로 자리를 직접 몰기 때문에, 두 손이 한 사람을 잡으면 몸이 떤다.
+  const palaceLife = createPalaceLife()
+  let applyingLife = false
+
+  function tickNpcLife(list = [], now = performance.now()) {
+    // 장면이 직접 옮긴 사람은 서성임을 처음부터 다시 센다 — 알현이 끝나고 낮으로
+    // 돌아왔을 때, 옛 시계를 들고 오면 첫 프레임에 저만치로 튄다.
+    for (const [id, e] of npcMeshes) {
+      if (!e.lifeStale) continue
+      e.lifeStale = false
+      palaceLife.forget(id)
+    }
+    const king = { x: player.position.x, z: player.position.z }
+    const states = palaceLife.tick({ npcs: list, now, king, palace: activePalace, reducedMotion })
+    applyingLife = true
+    for (const s of states) {
+      placeNpc(s.id, { x: s.x, z: s.z, yaw: s.yaw, walking: s.walking })
+      const e = npcMeshes.get(s.id)
+      if (e) e.bow = s.bow
+    }
+    applyingLife = false
+    return states
   }
 
   // ── 장면에 놓이는 물건(지금은 도끼 하나) ────────────────────────────────
@@ -272,6 +335,9 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     if (hidden != null) e.anchor.visible = !hidden
     e.yaw = yaw
     e.walking = walking === true
+    // 장면(알현·행렬·낮의 시작)이 직접 옮긴 것이면 서성임과 읍을 지운다 — 그 장면이
+    // 신하의 자리를 몰고 있는 동안 궁의 하루가 같은 사람을 함께 잡아당기지 않게 한다.
+    if (!applyingLife) { e.lifeStale = true; e.bow = 0 }
     return true
   }
 
@@ -552,6 +618,8 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
         : (Math.hypot(dx, dz) > 0.05 ? Math.atan2(dx, dz) : e.anchor.rotation.y)
       e.anchor.rotation.y = turnToward(e.anchor.rotation.y, want, dt)
       updateSway(e.pivot, dt, { walking: e.walking })
+      // 읍은 걸음 자세 **뒤에** 얹는다 — updateSway 가 허리를 쉬는 자세로 되돌리므로.
+      applyBow(e)
     }
 
     // 가림도 이 프레임의 카메라 위치로 잰다 — 위에서 이미 세워 두었다. player 는 지붕 밑을 걸어 다닐 수 있으니 방을 옮길 때만이
@@ -579,7 +647,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
   return {
     THREE, scene, camera, renderer, player, fire,
     setPalace, setPickupMarkers, pickGround, resize, render, stats, setVeil,
-    setKingAge, setNpcs, placeNpc, setProps, setMood, setCinematic, setReducedMotion, setYear,
+    setKingAge, setNpcs, placeNpc, tickNpcLife, setProps, setMood, setCinematic, setReducedMotion, setYear,
     worldAxis, setOpeningView, rotateView, resetView,
     setInteractionCues,
     setCrisis(stage) { crisisStage = stage },

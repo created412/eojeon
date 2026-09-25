@@ -31,7 +31,6 @@ import { createMinimap } from './ui/minimap.js'
 import { createDialog } from './ui/dialog.js'
 import { createSpeak } from './ui/speak.js'
 import { createVoicePlayer } from './systems/voice.js'
-import { VOICE } from './data/voice-data.js'
 import { BGM } from './data/bgm-data.js'
 import { createBgm, bgmForBeat } from './systems/bgm.js'
 import { recordPreservation } from './systems/preservation.js'
@@ -62,8 +61,12 @@ import { relocate } from './systems/relocate.js'
 import { createAudio } from './systems/audio.js'
 import { createWebAudioEngine } from './systems/web-audio-engine.js'
 import { createRation } from './ui/ration.js'
-import { hubAt, hubOptions, hubDate, shouldDeferReport, pendingReport, performReport, completeActivity, closeHub, freedomRecord } from './systems/freedom.js'
-import { createActivityBoard } from './ui/activity-board.js'
+import { hubAt, hubOptions, hubDate, shouldDeferReport, pendingReport, performReport, completeActivity, closeHub, freedomRecord, dayReport } from './systems/freedom.js'
+// 궁 안의 물건 — 걸어가 E 를 누르면 뜨는 해설(data/artifacts.js). 사료가 아니라서
+// 사초함에 쌓이지 않고, 값(해 칸)도 치르지 않는다(systems/artifacts.js 머리말).
+import { artifactNear, hasSeen, markArtifactSeen, artifactRecord, artifactCount } from './systems/artifacts.js'
+import { artifactById, artifactLines } from './data/artifacts.js'
+import { createDayEnd } from './ui/day-end.js'
 
 // 이어 화면 하단에 붙는 양력 미확정 고지 — 네 건(1868·1873·1875·1877)의 음력 날짜는
 // 『고종실록』에서 확인했지만 양력 일 단위 환산은 어떤 자료로도 특정하지 못했다(「확인불가」).
@@ -322,6 +325,8 @@ export function buildRecordText(state, acts) {
   return [
     ...(blocks.length ? blocks : ['(아직 정한 것이 없다)']),
     ...freedomRecord(state),
+    // 본 물건은 사료 목록과 나란히 서지 않는다 — 제목이 따로 붙는다(systems/artifacts.js).
+    ...artifactRecord(state),
     ...Object.entries(state.inquiries ?? {}).flatMap(([id, record]) => [
       '', `[사료 탐구] ${sourceById(id)?.title ?? id}`,
       // 빈칸 채우기(조선책략)는 표시한 근거 대신 채운 칸을 적는다.
@@ -513,7 +518,9 @@ export function boot(root) {
   // 배경 음악(systems/bgm.js) — 대사·독백이 나오는 동안에는 줄인다.
   const bgm = createBgm({ tracks: BGM, isMuted: () => audio.isMuted(), isReady: () => audio.isReady() })
   bgm.set('theme')
-  const voice = createVoicePlayer({ clips: VOICE, isMuted: () => audio.isMuted() || !audio.isReady(),
+  // 음성은 하나도 넣지 않는다(2026-09-26 선생님: 「목소리 나레이션은 하나도 안 빠졌고」).
+  // 대사는 자막으로만 나간다 — 글자가 한 자씩 드러나는 속도는 읽는 시간으로 잰다(systems/voice.js).
+  const voice = createVoicePlayer({ clips: {}, isMuted: () => audio.isMuted() || !audio.isReady(),
     onStart: () => bgm.duck(true), onEnd: () => bgm.duck(false) })
   const noteScreen = createNoteScreen(root, { voice })
   const moveScreen = createMoveScreen(root)
@@ -525,15 +532,12 @@ export function boot(root) {
   const escape = createEscape(root)
   const edict = createEdict(root)
   const ration = createRation(root)
+  const dayEnd = createDayEnd(root)
   installPaperVars()          // 한지·장계를 CSS 변수로 걸어 둔다(ui/paper-css.js)
   // 대사 음성 — 게임의 음소거를 그대로 따른다. 소리는 사용자 조작 뒤에만 틀 수 있으므로(자동 재생 규칙)
   // 첫 대사가 뜰 때는 이미 「시작」 단추를 누른 뒤다.
   const speak = createSpeak(root, { voice })
   const guide = createGuideStrip(root)
-  const activityBoard = createActivityBoard(root, {
-    onChoose: id => chooseActivity(id), onLeave: () => resolveExplore?.(),
-    onClose: () => { input.tap(); acc = 0 },
-  })
   let selectedActivity = null
   let hubBusy = false
   const title = createTitle(root)
@@ -689,6 +693,14 @@ export function boot(root) {
       hint.hidden = false
       return
     }
+    // 아직 안 본 물건 — 눈앞에 있을 때만 한 줄로 알린다. 미니맵에 점을 찍지 않는
+    // 까닭: 선생님이 말한 「뒤져 보는 재미」가 표지에 다 적히면 남지 않는다.
+    const art = nearbyArtifact()
+    if (art) {
+      hint.textContent = `${artifactById(art.id)?.name ?? '물건'} — E 로 살펴본다`
+      hint.hidden = false
+      return
+    }
     const def = PALACES[flow.state.palace]
     const near = pickupNear(def, ctx.player.position.x, ctx.player.position.z)
     if (near && !flow.taken.has(near.cardId) && !isLost(flow.state, near.cardId) &&
@@ -703,7 +715,6 @@ export function boot(root) {
   // 사초함(史草)이 열리고 닫히는 소리. 바닥에서 문서를 줍는 순간에는 'open' 을 겹치지
   // 않는다 — 거기서는 이미 'pick' 이 울린다. 한 사건에 두 소리를 겹치면 둘 다 안 들린다.
   function pressQ() {
-    if (activityBoard.isOpen()) return
     if (dialog.isOpen()) {
       dialog.close()      // 닫는 소리는 createDialog 의 onClose 가 낸다 — 여기서 또 내면 두 번 난다
     } else {
@@ -717,6 +728,30 @@ export function boot(root) {
   // 실제 부수효과(배너·flow.state 반영·카드 표시)는 onPressE() 가 아래 스위치에서 적용한다.
   // 그래서 이 함수 하나가 '다가서기 → spend → pickUp → markRead' 배선 전체를 그대로 통과한다.
   //
+  // 지금 선 자리에서 아직 안 본 물건 하나(없으면 null). 궁·해·방을 다 넘긴다 —
+  // 척화비는 1871년부터 서 있고, 방 안 물건은 그 방에 들어와 있어야 잡힌다.
+  function nearbyArtifact() {
+    const found = artifactNear(PALACES[flow.state.palace],
+      ctx.player.position.x, ctx.player.position.z,
+      { year: yearAtBeat(flow.act(), flow.state.beatIndex), room: flow.state.room })
+    return found && !hasSeen(flow.state, found.id) ? found : null
+  }
+
+  // 물건을 들여다본다. 해 칸을 쓰지 않는다 — 궁을 둘러보는 일이 하루를 깎으면
+  // 학생은 둘러보지 않는다(core/clock.js: 값을 치르는 것은 「아룀을 듣는 일」뿐이다).
+  function applyArtifact(id) {
+    const artifact = artifactById(id)
+    if (!artifact) return
+    const first = artifactCount(flow.state) === 0
+    audio.play('open')
+    flow.state = markArtifactSeen(flow.state, id)
+    saveGame(flow.state)
+    if (first) {
+      banner(root, '궁 안의 물건도 살펴볼 수 있다. 본 것은 사초함(Q) 아래쪽에 쌓인다 — 해 칸은 쓰지 않는다.', 4200)
+    }
+    dialog.showArtifact(artifact, artifactLines(artifact, flow.actIndex))
+  }
+
   function pressEAction() {
     const selected = selectedOption()
     if (!dialog.isOpen() && selected && !activityReady(selected)) return { type: 'approaching' }
@@ -736,6 +771,11 @@ export function boot(root) {
       }
     }
     const found = npcNear(currentNpcs(), ctx.player.position.x, ctx.player.position.z)
+    // 아직 안 본 물건이 가장 가까이 있으면 그것을 본다. **안 본 것만** 가로챈다 —
+    // 한 번 본 뒤에는 조용해져야 한다: 일월오봉도는 인정전에 있고 인정전은 대개
+    // 이 비트의 나가는 방이다. 늘 가로채면 학생이 그 방에서 나갈 수 없다.
+    const art = nearbyArtifact()
+    if (art && !(found && found.dist < art.dist)) return { type: 'artifact', id: art.id }
     return pressE({
       dialogOpen: dialog.isOpen(),
       exit: currentExit(),
@@ -802,7 +842,6 @@ export function boot(root) {
   // 통째로 틀린 답이다 — 그 국면에는 주울 것도 나갈 방도 없고, 좌표만 보고 판정하면
   // 어좌 앞에 선 임금이 「문서를 줍는다」로 새어 나간다. 국면으로 먼저 가른다.
   function onE() {
-    if (activityBoard.isOpen()) return
     if (flow.phase === 'audience') { onAudienceE(); return }
     onPressE()
   }
@@ -849,6 +888,7 @@ export function boot(root) {
         }).finally(() => { hubBusy = false })
         return
       }
+      case 'artifact': applyArtifact(action.id); return
       case 'already-taken': audio.play('deny'); return   // 이미 손에 든 문서다 — 화면은 그대로 둔다
       case 'pickup': applyPickup(action); return
       default: return
@@ -877,10 +917,6 @@ export function boot(root) {
   }
 
   function handleKey(e) {
-    if (activityBoard.isOpen()) {
-      if (e.code === 'Escape') activityBoard.close()
-      return
-    }
     // 글을 쓰는 칸에 커서가 있으면 E·Q·Esc 를 가로채지 않는다 — 「왜 그렇게
     // 정했는가」를 쓰다가 E 를 치면 문서를 줍고 Esc 를 치면 멈춤 화면이 떴다.
     if (isTyping(e)) return
@@ -1000,22 +1036,27 @@ export function boot(root) {
     const finished = new Promise(resolve => {
       flow.setPhase('day')
       hint.hidden = true
-      resolveExplore = () => {
+      resolveExplore = async () => {
         if (hubBusy || speak.isOpen() || dialog.isOpen() || pendingReport(flow.state, flow.act())) return
         flow.state = closeHub(flow.state, flow.act())
+        // **먼저 끈다.** 아래에서 하루의 끝 판을 기다리는 동안 해가 지거나(frame) E 가
+        // 한 번 더 들어와 이 함수가 두 번 도는 일을 막는다 — 그러면 판이 두 장 뜬다.
         resolveExplore = null
         selectedActivity = null
-        activityBoard.close()
         flow.setPhase('beat')
         dialog.close()
         hint.hidden = true
+        // 하루의 끝 — 오늘 한 일과 하지 않은 일을 나란히 보여 준다(ui/day-end.js).
+        // 선생님(2026-09-25): 「선택에 무게가 생깁니다.」 할 일이 애초에 없던 탐색
+        // 비트에서는 dayReport() 가 null 을 내므로 판이 뜨지 않는다.
+        const report = dayReport(flow.state, flow.act())
+        if (report) await dayEnd.show({ ...report, buttonLabel: '해가 지고, 다음 일로' })
         resolve(flow.state)
       }
     })
     const pending = pendingReport(flow.state, flow.act())
     if (pending) await runHubReport(pending)
     restoreHub()
-    openActivities()
     return finished
   }
 
@@ -1029,13 +1070,25 @@ export function boot(root) {
     return sameRoom && Math.hypot(ctx.player.position.x - option.point.x, ctx.player.position.z - option.point.z) < 6
   }
 
+  // 선생님(2026-09-26): 「선택지를 창으로 주는 게 아니라 직접 다니면서 자유롭게 깨야 할 작은 미션처럼」.
+  // 그래서 목록 창을 없앴다. 할 일은 궁 안에 **표지**로 서 있고(markerPoints), 여정 판을 누르면
+  // 남은 일 가운데 **가장 가까운 곳으로 걸어간다**. 어디로 갈지는 학생이 걸으면서 정한다.
+  function remainingActivities() {
+    return hubOptions(flow.state, flow.act()).filter(o => !o.done && !o.blocked && !o.disabled && o.point)
+  }
+
+  function nearestActivity() {
+    const me = { x: ctx.player.position.x, z: ctx.player.position.z }
+    return remainingActivities()
+      .map(o => ({ o, d: Math.hypot(o.point.x - me.x, o.point.z - me.z) }))
+      .sort((a, b) => a.d - b.d)[0]?.o ?? null
+  }
+
   function openActivities() {
     if (flow.phase !== 'day' || hubBusy || pause.isOpen() || speak.isOpen() || dialog.isOpen()) return
-    tapTarget = null; tapRoute = []; autoWalk = false
-    const hub = hubAt(flow.act(), flow.state.beatIndex)
-    if (!hub) return
-    activityBoard.show({ title: hubDate(flow.act(), hub), dayLeft: flow.state.dayLeft,
-      free: hub.free, options: hubOptions(flow.state, flow.act()) })
+    const next = nearestActivity()
+    if (!next) { banner(root, '이 궁에서 들을 것은 다 들었다. 마당과 방 안의 물건은 아직 볼 수 있다 — 나가는 곳으로 가면 다음 사건으로 넘어간다.', 4200); return }
+    chooseActivity(next.id)
   }
 
   function chooseActivity(id) {
@@ -1048,7 +1101,7 @@ export function boot(root) {
       { x: ctx.player.position.x, z: ctx.player.position.z }, flow.state.control, option.point)
     if (!route.length) { selectedActivity = null; banner(root, '지금은 그곳으로 가는 길이 막혀 있다'); return }
     tapTarget = route.shift(); tapRoute = route; autoWalk = true
-    banner(root, '그곳으로 걷는다. 도착하면 대화 단추 또는 여정 판에서 선택한 일을 누르세요.', 3500)
+    banner(root, `${option.label} — 그곳으로 걷는다. 도착하면 E 를 누르세요.`, 3200)
   }
 
   function restoreHub() {
@@ -1056,7 +1109,7 @@ export function boot(root) {
     if (!hub) return
     activeBeat = hub
     dateLabel = hubDate(flow.act(), hub)
-    guide.set('여정 판에서 지금 고를 일을 보세요. 방문 순서를 정하거나, 남은 일을 두고 다음 사건으로 갈 수 있습니다.')
+    guide.set('궁을 걸어 다니며 표지가 선 곳에서 E 를 누르세요. 순서는 마음대로, 건너뛰어도 됩니다. 마당과 방 안의 물건도 E 로 살펴볼 수 있습니다 — 해 칸은 쓰지 않습니다.')
     audio.setAmbient('hall')
     bgm.set(bgmForBeat(hub))
     ctx.setNpcs(currentNpcs())
@@ -1462,6 +1515,8 @@ export function boot(root) {
       // 획 하나에 한 번. 붓을 대는 순간에만 울린다(끄는 동안이 아니라) — 획을
       // 긋는 내내 울리면 소리가 아니라 잡음이 된다. 화면 쪽은 소리를 모른다.
       onStroke: () => audio.play('brush'),
+      // 먹이 말랐을 때 한 번. 「안 된다」를 귀로도 알린다 — 화면은 소리를 모른다.
+      onDry: () => audio.play('deny'),
     })
     return flow.state
   }
@@ -1480,6 +1535,8 @@ export function boot(root) {
         riceText: riceLabel(flow.state.riceIndex),
       },
       ration: beat.ration,
+      // 낟알 하나를 집을 때마다 한 번. 화면은 소리를 모른다 — ui/brush.js 의 onStroke 와 같은 모양이다.
+      onPick: () => audio.play('pick'),
     })
     audio.play('close')
     return flow.state
@@ -2079,7 +2136,7 @@ export function boot(root) {
     // 화재 탈출 90초 내내 아무 입력도 못 받고 매번 잡혔다. 힌트·해질녘 판정만
     // 'day' 고유의 것이라 거기서만 돈다.
     if (flow.phase === 'day' || flow.phase === 'rush') {
-      if (!activityBoard.isOpen() && !pause.isOpen() && !dialog.isOpen() && !speak.isOpen() && !hubBusy) {
+      if (!pause.isOpen() && !dialog.isOpen() && !speak.isOpen() && !hubBusy) {
         const tapped = input.tap()
         if (tapped) {
           const p = ctx.pickGround(tapped.x, tapped.y)
@@ -2105,11 +2162,15 @@ export function boot(root) {
           lastBlockedBannerAt = now
         }
         if (flow.phase === 'day') {
+          // 궁의 하루 — 신하가 제자리 주변을 서성이고, 임금이 다가오면 읍한다.
+          // 낮에만 부른다: 알현·행렬은 같은 placeNpc 로 자리를 직접 몬다(2026-09-25).
+          ctx.tickNpcLife(currentNpcs(), now)
           updateHint()
           // 그날 들을 것을 다 들으면 낮이 끝난다. 아무 말 없이 화면이 넘어가면 학생은
           // 무엇 때문에 끝났는지 모른다 — 한 줄로 알린다.
           if (!activeBeat?.free && isDusk(flow.state) && resolveExplore && !dialog.isOpen() && !speak.isOpen() && !hubBusy) {
-            banner(root, '오늘 들을 수 있는 것을 다 들었다', 2600)
+            // 배너를 여기서 또 내지 않는다 — 하루의 끝 판(ui/day-end.js)이 무엇 때문에
+            // 끝났는지까지 적는다. 배너와 판이 같은 말을 두 번 하면 둘 다 안 읽힌다.
             resolveExplore()
           }
         }
@@ -2157,7 +2218,11 @@ export function boot(root) {
     hud.update({
       hidden: flow.phase === 'council' || flow.phase === 'done',
       phase: flow.phase,
-      objective: flow.phase === 'day' ? '지금 고를 일 — 보고·사료·방문 순서를 정한다' : activeBeat?.exit?.label ?? '신하를 찾아 보고를 듣고 사료를 살펴보십시오.',
+      objective: flow.phase === 'day'
+        ? (remainingActivities().length
+            ? `남은 일 ${remainingActivities().length}곳 — 표지를 찾아가 E`
+            : '할 일은 다 했다 — 나가는 곳으로')
+        : activeBeat?.exit?.label ?? '신하를 찾아 보고를 듣고 사료를 살펴보십시오.',
       actIndex: flow.actIndex,
       actTitle: flow.act().title,
       readCount: flow.state.sources.read.length,
@@ -2300,7 +2365,6 @@ export function boot(root) {
       running = false; session = null; rushFire = false
       holdSession?.dispose(); holdSession = null   // 막 전환·종료에 이 판이 남으면 다음 화면을 덮는다
       speak.dispose()
-      activityBoard.dispose()
       audio.setAmbient(null); bgm.stop(); flow.dispose()
       ctx.dispose()
     },

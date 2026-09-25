@@ -25,8 +25,9 @@ beforeAll(async () => {
     import {serialize,deserialize,createState} from './src/core/state.js';
     import {recordPreservation} from './src/systems/preservation.js';
     import {FEEDBACK_MEDIA} from './src/ui/feedback-media-data.js';
+    import {createTray,TRAY_W,TRAY_H} from './src/systems/grain-tray.js';
     window.fixture={createRation,createSalvage,createDialog,createSpeak,createNoteScreen,createVoicePlayer,voiceKey,
-      ACTS,SOURCES,serialize,deserialize,createState,recordPreservation,FEEDBACK_MEDIA};
+      ACTS,SOURCES,serialize,deserialize,createState,recordPreservation,FEEDBACK_MEDIA,createTray,TRAY_W,TRAY_H};
   ` }, bundle: true, write: false, format: 'iife', plugins: [{ name: 'workspace-files', setup(b) {
     b.onResolve({filter:/^\./}, args=>({path:resolve(args.importer ? dirname(args.importer) : process.cwd(),args.path),namespace:'workspace'}))
     b.onLoad({filter:/.*/,namespace:'workspace'}, async args=>({contents:await readFile(args.path,'utf8'),loader:'js'}))
@@ -72,6 +73,11 @@ it('390px에서 가마·곡물 그림이 없거나 손상되어도 깨진 이미
   await page.waitForFunction(()=>{const i=document.querySelector('.sack img');return i.complete&&!i.naturalWidth})
   expect(await page.locator('.sack img').isVisible()).toBe(false)
   await page.locator('.sack').click()
+  // 가마를 열면 낟알판이 먼저 나온다(2026-09-25 선생님: 「쌀에서 겨와 모래 골라내기」).
+  // 이 시험이 보는 것은 깨진 그림 처리이므로, 손으로 고르는 자리는 건너뛰는 길로 지난다 —
+  // 그 단추가 언제나 있다는 것 자체가 이 화면의 약속이다(갇히는 학생을 만들지 않는다).
+  await page.locator('.skip').click()
+  await page.locator('.to-reveal').click()
   await page.locator('.grain img').evaluate(img=>{img.src='data:image/webp;base64,broken'})
   await page.waitForFunction(()=>{const i=document.querySelector('.grain img');return i.complete&&!i.naturalWidth})
   expect(await page.locator('.grain img').isVisible()).toBe(false)
@@ -79,6 +85,41 @@ it('390px에서 가마·곡물 그림이 없거나 손상되어도 깨진 이미
   const bounds=await page.locator('.grain').boundingBox()
   expect(bounds.x).toBeGreaterThanOrEqual(0)
   expect(bounds.x+bounds.width).toBeLessThanOrEqual(390)
+  await page.getByRole('button',{name:'돌아간다'}).click()
+  expect(await page.locator('.ration').count()).toBe(0)
+})
+
+// 손으로 하는 자리를 손으로 해 본다 — 이 화면의 값은 「골라냈다」는 동작 자체이므로,
+// 건너뛰기만 눌러 보는 시험으로는 지켜지지 않는다. 판은 seed 가 같으면 같은 판이라
+// (systems/grain-tray.js) 겨와 모래의 자리를 그대로 셈해 눌러 볼 수 있다.
+it('낟알판에서 겨와 모래를 손으로 집어내면 남은 것이 열세 달치 급료라고 말한다', async () => {
+  await page.evaluate(() => {
+    const f=fixture
+    const beat=f.ACTS.flatMap(a=>a.beats).flatMap(b=>b.stops??[]).map(s=>s.beat).find(b=>b?.ration)
+    f.createRation(document.querySelector('#root')).open({market:{title:'쌀값',lines:[],series:[]},ration:beat.ration})
+  })
+  await page.getByRole('button',{name:'무위영으로 간다'}).click()
+  await page.locator('.open-sack').click()
+  const {debris,rice}=await page.evaluate(() => {
+    const t=fixture.createTray(), at=g=>({x:g.x/fixture.TRAY_W,y:g.y/fixture.TRAY_H})
+    return {debris:t.grains.filter(g=>g.kind!=='rice').map(at), rice:at(t.grains.find(g=>g.kind==='rice'))}
+  })
+  const box=await page.locator('.tray').boundingBox()
+  const press=g=>page.mouse.click(box.x+g.x*box.width, box.y+g.y*box.height)
+
+  // 쌀을 눌러도 벌하지 않는다 — 한 줄 알려 주고 판은 그대로다
+  await press(rice)
+  expect(await page.locator('.nudge').innerText()).toContain('쌀')
+  const before=await page.locator('.tray-count').innerText()
+
+  for(const g of debris)await press(g)
+  expect(await page.locator('.tray-count').count()).toBe(0)   // 다 골라내면 다음 화면이다
+  expect(before).not.toBe('')
+  const wage=await page.locator('.wage-line').innerText()
+  expect(wage).toContain('열세 달')
+  expect(wage).toContain('급료')
+  await page.locator('.to-reveal').click()
+  expect(await page.locator('.grain figcaption').innerText()).toContain('모래')
   await page.getByRole('button',{name:'돌아간다'}).click()
   expect(await page.locator('.ration').count()).toBe(0)
 })
@@ -168,6 +209,13 @@ it.each([true,false])('390px에서 그림 유무(%s)와 무관하게 가마·곡
   if(present)await page.locator('.sack img').evaluate(i=>i.decode())
   await checkBounds('.sack,.sack span,.open-sack')
   await page.locator('.open-sack').click()
+  // 낟알판과 그 단추들도 390px 안에 들어와야 한다 — 판이 화면을 넘으면 학생은
+  // 오른쪽 끝의 겨를 영원히 집을 수 없다. 그림 파일과 무관한 화면이므로 present 와
+  // 상관없이 같은 검사를 받는다.
+  await checkBounds('.tray-wrap,.tray,.tray-count,.skip')
+  await page.locator('.skip').click()
+  await checkBounds('.tray-wrap,.wage-line,.to-reveal')
+  await page.locator('.to-reveal').click()
   expect(await page.locator('.grain img').count()).toBe(present?1:0)
   if(present)await page.locator('.grain img').evaluate(i=>i.decode())
   await checkBounds('.grain,.grain figcaption div')

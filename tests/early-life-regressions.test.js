@@ -32,13 +32,14 @@ function environment() {
     ...audience, PALACES, roomAt, npcById, npcCardIds, isDusk,
     flow: {state: {...createState(), palace: 'changdeok', control: 'C', blocked: null}, phase: 'audience',
       setPhase(phase) { this.phase = phase }, actIndex: 0, taken: new Set()},
-    ctx: {player: {position}, setProps() {}, setNpcs() {}, setPickupMarkers() {}, placeNpc() {}, pickGround: p => p},
+    ctx: {player: {position}, setProps() {}, setNpcs() {}, setPickupMarkers() {}, placeNpc() {},
+      tickNpcLife() {}, pickGround: p => p},
     input: {tap: () => null, axis: () => ({x:0,z:1})},
     inputForStep: () => ({axis: () => ({x:0,z:1}), running: () => false}), step,
     audienceBeat: {kind:'audience',room:'injeongjeon',visitors:[]}, procession: null, audienceWalk: null,
     audienceExitOpen: false, audienceWasWalking: false, resolveAudience: null, lastRebukeAt: -Infinity,
     speak: {isOpen: () => false}, dialog: {isOpen: () => false, close() {}}, pause: {isOpen: () => false},
-    activityBoard: {isOpen: () => false}, hubBusy: false,
+    hubBusy: false,
     hint: {}, audio: {play() {}}, currentNpcs: () => [],
     acc: 12, tapTarget: {x:9,z:9}, dt: 17, FIXED_MS: 16, MAX_STEPS: 5, now: 5000,
     rebuke() {}, lastRoom: null, lastBlockedBannerAt: 0, BLOCKED_BANNER_MS: 3000,
@@ -113,7 +114,7 @@ it('free 낮은 남은 아룀이 0인 저장을 이어받아도 저절로 끝나
   expect(env.resolveExplore).toHaveBeenCalledOnce()
 })
 
-it.each(['dialog', 'speak', 'activityBoard', 'hubBusy'])('%s 중에는 마지막 해 칸을 썼어도 다음 사건이 덮어쓰지 않는다', name => {
+it.each(['dialog', 'speak', 'hubBusy'])('%s 중에는 마지막 해 칸을 썼어도 다음 사건이 덮어쓰지 않는다', name => {
   const env = environment()
   env.flow.phase = 'day'; env.flow.state.dayLeft = 0; env.activeBeat.free = false
   if (name === 'hubBusy') env.hubBusy = true

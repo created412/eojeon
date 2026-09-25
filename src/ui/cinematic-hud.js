@@ -28,7 +28,7 @@ export function createCinematicHud(root, { onCodex = () => {}, onRotate = () => 
   }
   const find = c => el.querySelector(c)
   find('.cinema-codex').addEventListener('click', onCodex)
-  find('.cinema-objective .cinema-go').textContent = '▶ 눌러서 지금 고를 일 보기'
+  find('.cinema-objective .cinema-go').textContent = '▶ 눌러서 가장 가까운 곳으로 걸어가기'
   // 태블릿에서 3D 바닥을 여러 번 짚어 문을 찾기는 번거롭다(2026-09-14) — 여정 판을 누르면 그곳으로 걸어간다.
   find('.cinema-objective').addEventListener('click', onObjective)
   // 촉박 장면도 태블릿에서 쉽게(2026-09-15) — 붉은 판을 누르면 목적지로 달아난다.

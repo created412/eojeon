@@ -1,5 +1,7 @@
 import {
   coverage, isTraced, HIT_RADIUS, DONE_RATIO, CHEOKHWABI_REST, CHEOKHWABI_PARTIAL_NOTE,
+  inkMsOf, isInkTimed, inkRatio, inkLabel, inkSeconds, inkDried, inkDrying, inkDryNote,
+  inkReport, INK_PASSED_LINE,
 } from '../systems/brush-trace.js'
 import { BRUSH_GUIDES } from './brush-guides-data.js'
 
@@ -28,6 +30,18 @@ const CSS = `
 .brush button.go{background:#3a2d20;border-color:#6a5230;color:#e0a23a}
 .brush .after{max-width:560px;background:#e8e2d4;color:#23201a;border-radius:4px;padding:20px 22px;
   line-height:1.9;font-size:16px;text-align:left;white-space:pre-wrap}
+/* 먹 — 마르기까지. 띠의 너비는 매 프레임 JS 가 직접 정한다(transition 을 걸지 않는다):
+   남은 시간을 보여 주는 띠에 0.3초 뒤늦은 움직임을 붙이면 「0초」와 화면이 어긋나고,
+   prefers-reduced-motion 을 켠 학생에게 끌 수단도 없어진다. 줄이는 쪽은 JS 가
+   초 단위로만 고쳐 그린다(createBrush 의 drawInk). */
+.brush .ink{width:${S}px;max-width:88vw;display:flex;flex-direction:column;gap:5px;text-align:left}
+.brush .inkword{font-size:12px;color:#8f8a7c;letter-spacing:2px}
+.brush .inkbar{height:7px;background:#23282c;border:1px solid #3a4248;border-radius:4px;overflow:hidden}
+.brush .inkfill{height:100%;width:100%;background:#6a5230}
+.brush .ink.dry .inkfill{background:#b8562f}
+.brush .ink.dry .inkword{color:#e0a23a}
+.brush .inknote{font-size:12px;color:#c9a06a;letter-spacing:1px;min-height:1.3em}
+.brush .inkreport{font-size:14px;color:#b9b2a1;max-width:560px;line-height:1.8}
 `
 
 let styled = false
@@ -90,11 +104,21 @@ function glyphGuides(ch, want = 90) {
 export function writingHtml(view) {
   const note = view.noteWhileWriting ?? view.partial ?? CHEOKHWABI_PARTIAL_NOTE
   const origin = view.originWhileWriting ?? view.origin ?? ''
+  // 먹 띠는 시간을 재는 비트에서만 생긴다(ink 를 실은 비트 — F1 척화비). 여기에
+  // 실리는 글은 「먹이 마르기까지 몇 초」뿐이다: 반전은 한 조각도 지나가지 않는다.
+  // 그래서 판정 R96 은 이 칸이 늘어도 그대로 선다 — 아래 검사가 그것을 못 박는다.
+  const inkMs = inkMsOf(view)
+  const ink = inkMs > 0 ? `
+          <div class="ink">
+            <div class="inkword">${inkLabel(null, 0, inkMs)}</div>
+            <div class="inkbar"><div class="inkfill"></div></div>
+            <div class="inknote"></div>
+          </div>` : ''
   return `
           <h2>${view.title ?? ''}</h2>
           ${view.givenText ? `<div class="meaning">척화비에 새길 비문을 쓰고 있습니다. ${view.givenText} (${view.givenGloss ?? ''})은 이미 새겨져 있습니다.<br>이어지는 마지막 ${view.glyphs?.length ?? 0}글자 「${(view.glyphs ?? []).join('')}」를 안내선을 따라 써 주세요.</div>` : ''}
           <div class="line"></div>
-          <canvas class="paper" width="${S}" height="${S}"></canvas>
+          <canvas class="paper" width="${S}" height="${S}"></canvas>${ink}
           <div class="count"></div>
           ${note ? `<div class="partial">${note}</div>` : ''}
           <div class="meaning">${view.meaning ?? ''}</div>
@@ -105,7 +129,10 @@ export function writingHtml(view) {
 // 붓을 놓은 뒤에 뜨는 판. 「나머지」를 여기서 보여 준다 — 척화비에서는 비문의
 // 뒷부분이고(F1), 「日使來衛」에서는 함께 전하는 다른 표기들이다(F2). 앞에 붙는
 // 문장만 달라진다 — 학생이 쓴 것이 전부가 아님을 밝히는 자리라는 뜻은 둘 다 같다.
-export function finishHtml(view) {
+// regrinds 를 view 에 실어 보내지 않고 둘째 인자로 받는다 — 이것은 비트가 들고 있는
+// 데이터가 아니라 **이 학생이 방금 한 일**이고, view 에 슬쩍 얹으면 다음 사람이
+// 「비트에 적힌 값」으로 읽는다. 시간을 안 재는 비트에서는 줄 자체가 없다.
+export function finishHtml(view, regrinds = 0) {
   const partial = view.partial ?? CHEOKHWABI_PARTIAL_NOTE
   const rest = view.rest ?? CHEOKHWABI_REST
   const lead = view.restLead ?? '이 열두 자 뒤에 비석은 이렇게 이어진다.'
@@ -114,9 +141,13 @@ export function finishHtml(view) {
       rest.map(r => `<b>${r.text}</b> — ${r.gloss}`).join('<br>') +
       `<br><br>${partial}</div>`
     : ''
+  const report = isInkTimed(view)
+    ? `<div class="inkreport">${inkReport(regrinds, view.glyphs?.length ?? 4)}</div>`
+    : ''
   return `
             <h2>${view.title ?? ''}</h2>
             <div class="after">${(view.afterLines ?? []).join('\n')}${restHtml}</div>
+            ${report}
             <div class="origin">${view.origin ?? ''}</div>
             <div class="row"><button class="go">붓을 놓는다</button></div>`
 }
@@ -167,6 +198,78 @@ export function createBrush(root) {
         let pointer = null
         const nextButton=el.querySelector('.next')
 
+        // ── 먹이 마른다 ────────────────────────────────────────────────
+        // 재는 방식은 brush-trace.js 의 순수 함수들이 정한다. 이 아래는 배선뿐이다 —
+        // 「언제 시작하고 언제 멈추는가」와 「누가 프레임을 지우는가」.
+        const inkMs = inkMsOf(view)
+        const inkEl = el.querySelector('.ink')
+        const inkFill = el.querySelector('.inkfill')
+        const inkWord = el.querySelector('.inkword')
+        const inkNote = el.querySelector('.inknote')
+        // 움직임을 줄여 달라고 한 학생에게는 띠를 매 프레임 흘리지 않고 초 단위로만
+        // 고쳐 그린다. 재는 시간은 똑같다 — 보이는 방식만 계단이 된다.
+        const stepped = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true
+        let inkStartedAt = null   // null = 아직 첫 획을 안 그었다(그래서 안 마른다)
+        let regrinds = 0
+        let inkFrame = 0
+        let shownSecond = -1
+
+        const nowMs = () => globalThis.performance?.now?.() ?? Date.now()
+
+        // 타이머를 지우는 자리는 이 함수 하나뿐이다 — 글자를 새로 열 때, 말랐을 때,
+        // 통과했을 때, 붓을 놓을 때가 모두 여기로 모인다. 새는 프레임을 만들지 않는다.
+        function stopInk() {
+          if (inkFrame) cancelAnimationFrame(inkFrame)
+          inkFrame = 0
+        }
+
+        function drawInk(now) {
+          if (!inkEl) return
+          const ratio = inkRatio(inkStartedAt, now, inkMs)
+          const second = inkSeconds(inkStartedAt, now, inkMs)
+          if (stepped && second === shownSecond) return
+          shownSecond = second
+          inkFill.style.width = `${ratio * 100}%`
+          inkWord.textContent = inkLabel(inkStartedAt, now, inkMs)
+          inkEl.classList.toggle('dry', inkDrying(inkStartedAt, now, inkMs))
+        }
+
+        // 마르면 그 글자만 처음부터 다시 쓴다. 지는 일은 없고 횟수 제한도 없다 —
+        // 학생이 갇히는 상태를 만들지 않는 것이 이 장면에서 가장 중요하다.
+        function dryOut() {
+          stopInk()
+          regrinds++
+          view.onDry?.()          // 무슨 소리를 낼지는 부른 쪽이 정한다. 이 화면은 소리를 모른다.
+          loadGlyph()
+          if (inkNote) inkNote.textContent = inkDryNote(regrinds)
+        }
+
+        function tickInk() {
+          inkFrame = requestAnimationFrame(tickInk)
+          const now = nowMs()
+          // 이미 다 쓴 글자를 시간이 지웠다면 그것은 게임이 아니라 사고다.
+          // 마르기 전에 먼저 도달률을 본다.
+          if (isTraced(guides, marks.filter(m => !m.break))) { passInk(); return }
+          if (inkDried(inkStartedAt, now, inkMs)) { dryOut(); return }
+          drawInk(now)
+        }
+
+        function startInk() {
+          if (!inkEl || inkStartedAt !== null) return
+          inkStartedAt = nowMs()
+          shownSecond = -1
+          drawInk(inkStartedAt)
+          stopInk()
+          inkFrame = requestAnimationFrame(tickInk)
+        }
+
+        function passInk() {
+          stopInk()
+          if (!inkEl) return
+          inkEl.classList.remove('dry')
+          inkWord.textContent = INK_PASSED_LINE
+        }
+
         function paint() {
           g.fillStyle = '#efe6cf'
           g.fillRect(0, 0, S, S)
@@ -192,6 +295,13 @@ export function createBrush(root) {
           guides = BRUSH_GUIDES[view.glyphs[index]] ?? glyphGuides(view.glyphs[index])
           marks = []
           drawing=false;pointer=null;nextButton.disabled=true
+          // 시계는 글자마다 새로 선다. 「다시 쓰기」로 들어와도 마찬가지다 — 다만
+          // 그것은 먹을 간 것으로 세지 않는다(마른 것이 아니라 학생이 고른 것이다).
+          stopInk()
+          inkStartedAt = null
+          shownSecond = -1
+          if (inkNote) inkNote.textContent = ''
+          drawInk(nowMs())
           lineEl.innerHTML = (view.givenText ? `${view.givenText} ` : '') + view.glyphs
             .map((ch, i) => (i === index ? `<b>${ch}</b>` : ch))
             .join('')
@@ -219,6 +329,9 @@ export function createBrush(root) {
           // 획 하나에 한 번. 붓을 대는 순간에만 알린다 — 무슨 소리를 낼지는
           // 부른 쪽(main.js)이 정한다. 이 화면은 소리를 모른다.
           view.onStroke?.()
+          // 먹은 붓이 닿는 순간부터 마른다 — 화면이 열리는 순간이 아니다.
+          // 안내문을 읽는 시간은 재지 않는다.
+          startInk()
           canvas.setPointerCapture(ev.pointerId)
           marks.push({ break: true })
           marks.push(at(ev))
@@ -237,6 +350,9 @@ export function createBrush(root) {
           pointer=null
           const written=marks.filter(m=>!m.break),ready=isTraced(guides,written,HIT_RADIUS)
           nextButton.disabled=!ready
+          // 도달률을 넘긴 순간 먹은 더 안 마른다. 다음 글자로 넘길 때까지 화면을
+          // 들여다보는 시간에 시계가 돌면, 완성한 글자를 살펴보는 일이 벌이 된다.
+          if (ready) passInk()
           countEl.textContent=`${index+1} / ${view.glyphs.length} 자 · 도달률 ${Math.floor(coverage(guides,written)*100)}% · ${ready?'완료했습니다. 다음 글자로를 눌러 주세요.':`${DONE_RATIO * 100}% 이상까지 안내선을 더 따라 써 주세요.`}`
         })
         canvas.addEventListener('pointercancel',()=>{drawing=false;pointer=null})
@@ -246,8 +362,9 @@ export function createBrush(root) {
         onTap(el.querySelector('.reset'), loadGlyph)
 
         function finish() {
-          el.innerHTML = finishHtml(view)
-          onTap(el.querySelector('.go'), () => { el.remove(); resolve() })
+          stopInk()
+          el.innerHTML = finishHtml(view, regrinds)
+          onTap(el.querySelector('.go'), () => { stopInk(); el.remove(); resolve() })
         }
 
         loadGlyph()

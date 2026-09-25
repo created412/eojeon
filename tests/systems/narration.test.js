@@ -3,15 +3,14 @@ import { createVoicePlayer } from '../../src/systems/voice.js'
 import { voiceKey } from '../../src/data/voice-cast.js'
 import { ACTS } from '../../src/data/acts.js'
 import { NPCS } from '../../src/data/npcs.js'
-import { VOICE } from '../../src/data/voice-data.js'
 
-// 2026-09-22 선생님: 「나레이션을 모두 제거하는게 나을거 같아.」 — 행렬 장면의 독백도 소리 없이 자막만 뜬다.
-it('나레이션 음성은 하나도 없다 — 행렬 독백·글 화면·지문 모두 자막뿐이다', () => {
-  const monologue = []
-  for (const act of ACTS) for (const b of act.beats) if (b.kind === 'procession') monologue.push(...(b.lines ?? []))
-  expect(monologue).toContain('그 집안의 세도가 오늘로 저문다는 것을, 그는 알고 왔을까.')
-  for (const line of monologue.filter(Boolean)) expect(VOICE[voiceKey('gojong-narrator', line)], line).toBeUndefined()
-  expect(Object.keys(VOICE).some(k => k.startsWith('gojong-narrator'))).toBe(false)
+// 2026-09-26 선생님: 「목소리 나레이션은 하나도 안 빠졌고」 — 이제 게임에 음성 파일이 하나도 없다.
+// 대사는 자막으로만 나간다. 아래 시험들은 자막 타이밍 장치(systems/voice.js)가 그대로 도는지를 본다.
+it('게임에 실린 음성이 하나도 없다', async () => {
+  const fs = await import('node:fs')
+  expect(fs.existsSync('src/data/voice-data.js')).toBe(false)
+  const main = fs.readFileSync('src/main.js', 'utf8')
+  expect(main).not.toMatch(/voice-data/)
 })
 
 it('서사 음성을 줄 순서대로 재생하고 화면이 닫히면 다음 줄을 시작하지 않는다', () => {

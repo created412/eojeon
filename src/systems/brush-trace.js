@@ -28,6 +28,99 @@ export function isTraced(guides, marks, radius = HIT_RADIUS, need = DONE_RATIO) 
   return !!guides?.length && coverage(guides, marks, radius) >= need
 }
 
+// ── 먹이 마른다 (2026-09-25 선생님) ────────────────────────────────────
+//
+// 「3의 척화비는 오히려 아이들이 싫어할만한 내용이야. 타임어택을 넣고 척화비
+// 글씨쓰게 하는게 좋아보여.」 — 맞는 말이다. 안내선을 따라 넉 자를 그리는 일은
+// 아무 압박이 없으면 게임이 아니라 숙제다. 손이 움직이는데 아무것도 걸려 있지
+// 않으면 학생은 그냥 빨리 끝내려고만 한다.
+//
+// 그런데 시계를 그냥 얹으면 이 장면이 거짓이 된다. 「왜 서둘러야 하는가」에
+// 게임 밖의 대답(점수·제한시간)을 붙이면 학생이 재는 것은 비석이 아니라 시험이다.
+// 그래서 시계의 이름을 장면 안에서 찾는다 — **먹이 마른다.** 비문은 돌에 쓰는 글이고
+// 먹은 접시에서 마른다. 마르면 다시 갈면 된다. 그것이 실제로 일어나는 일이다.
+//
+// 지켜야 하는 것 세 가지. 이 세 가지가 「압박이 기다리기를 보상한다」는 예전 실패를
+// 막는다(게임 재제작 실패 패턴):
+//   ① 시계는 **글자마다** 따로 돈다. 넉 자를 한 통에 몰아 재면 마지막 글자에서
+//      남은 시간이 0 이 되고, 학생은 손을 놓고 화면만 본다.
+//   ② 시계는 **첫 획에서** 시작한다. 화면이 열리는 순간이 아니다 — 안내문을 읽는
+//      시간을 벌로 매기면 글을 안 읽는 학생이 유리해진다. 정확히 거꾸로다.
+//   ③ 마르면 **그 글자만** 처음부터 다시 쓴다. 지는 일도, 막히는 일도 없다.
+//      횟수 제한도 없다. 마지막에 「먹을 몇 번 갈았나」 한 줄만 남는다.
+export const INK_MS = 22000
+// 6초 밑에서 빛깔이 바뀐다 — 숫자를 안 읽는 학생도 색으로 안다.
+export const INK_WARN_MS = 6000
+
+// 붓 화면이 시간을 재는가. 비트가 ink 를 실어 보낼 때만 잰다 — 4막 「친 필」은
+// 안 싣는다. 그 장면의 내용은 「썼다, 그런데 그 기록이 하나뿐이다」이고, 거기에
+// 시계를 붙이면 학생이 붓을 놓은 뒤에 남는 감정이 의심이 아니라 안도가 된다.
+export function inkMsOf(view) {
+  const ink = view?.ink
+  if (!ink) return 0
+  const ms = typeof ink === 'number' ? ink : ink.ms ?? INK_MS
+  return ms > 0 ? ms : 0
+}
+
+export function isInkTimed(view) {
+  return inkMsOf(view) > 0
+}
+
+// 첫 획을 긋기 전(startedAt 이 없을 때)에는 먹이 가득 차 있다 — 아직 안 마르기
+// 시작한 것이지, 다 마른 것이 아니다. 이 한 줄이 ②를 떠받친다.
+export function inkRemaining(startedAt, now, ms = INK_MS) {
+  if (!(ms > 0)) return 0
+  if (startedAt == null) return ms
+  return Math.max(0, Math.min(ms, ms - (now - startedAt)))
+}
+
+export function inkRatio(startedAt, now, ms = INK_MS) {
+  if (!(ms > 0)) return 0
+  return inkRemaining(startedAt, now, ms) / ms
+}
+
+export function inkDried(startedAt, now, ms = INK_MS) {
+  return startedAt != null && inkRemaining(startedAt, now, ms) <= 0
+}
+
+export function inkDrying(startedAt, now, ms = INK_MS) {
+  return startedAt != null && inkRemaining(startedAt, now, ms) <= INK_WARN_MS
+}
+
+// 남은 초. 올림으로 센다 — 0.4초가 남았는데 「0초」라고 적어 두면 화면이 멈춘 것처럼
+// 보인다. 1초부터 시작해 0 은 마르는 순간에만 지나간다.
+export function inkSeconds(startedAt, now, ms = INK_MS) {
+  return Math.ceil(inkRemaining(startedAt, now, ms) / 1000)
+}
+
+export function inkLabel(startedAt, now, ms = INK_MS) {
+  if (startedAt == null) return '먹 — 첫 획을 그으면 마르기 시작한다'
+  return `먹 — 마르기까지 ${inkSeconds(startedAt, now, ms)}초`
+}
+
+// 마르기 전에 다 쓴 글자에도 한 줄을 준다. 잘한 일이 아무 말 없이 지나가면
+// 학생이 받는 신호는 「시간은 벌로만 쓰인다」가 된다.
+export const INK_PASSED_LINE = '먹이 마르기 전에 이 글자를 다 썼다'
+
+// 말랐을 때 뜨는 줄. 「틀렸다」·「실패」라고 쓰지 않는다 — 실제로 일어난 일은
+// 먹이 마른 것이고, 먹은 다시 갈면 된다.
+export function inkDryNote(regrinds) {
+  return `먹이 말랐다 — 먹을 다시 갈고 이 글자를 처음부터 쓴다 (먹을 간 횟수 ${regrinds}번)`
+}
+
+// 넉 자·석 자 — 자릿수 세는 우리말을 그대로 쓴다.
+const GLYPH_WORDS = ['', '한 자', '두 자', '석 자', '넉 자']
+export function glyphCountWord(n) {
+  return GLYPH_WORDS[n] ?? `${n}자`
+}
+
+// 붓을 놓은 뒤에 붙는 한 줄. 꾸짖지 않는다 — 몇 번을 갈았든 학생은 넉 자를 다 썼다.
+export function inkReport(regrinds = 0, glyphCount = 4) {
+  const word = glyphCountWord(glyphCount)
+  if (!(regrinds > 0)) return `먹을 한 번도 다시 갈지 않고 ${word}를 썼다.`
+  return `먹을 ${regrinds}번 다시 갈아 ${word}를 썼다.`
+}
+
 // ── F2 (설계서 §5.F2 · 판정 R10 · 사료 검증 B 1항) ──────────────────
 // 학생이 쓰는 네 글자. 그런데 이것은 확정된 사실이 아니다 — 표기가 최소 세 갈래이고,
 // 이 문구를 전하는 기록은 김옥균이 일본 망명 중에 쓴 『갑신일록』 하나뿐이며,

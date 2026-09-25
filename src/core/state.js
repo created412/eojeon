@@ -31,6 +31,10 @@ export function createState() {
     riceIndex: 100,
     flags: {},
     freedom: { hubs: {} },
+    // 궁 안에서 들여다본 물건(data/artifacts.js). 사료가 아니므로 sources 와 섞지
+    // 않는다 — 버전을 올리지 않아도 되는 자리다: 이 칸이 없는 저장에서도
+    // systems/artifacts.js 가 빈 목록으로 읽는다.
+    lore: { seen: [] },
   }
 }
 

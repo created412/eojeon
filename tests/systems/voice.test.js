@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { revealCount, createVoicePlayer } from '../../src/systems/voice.js'
-import { spokenText, voiceKey, CAST, VOICES } from '../../src/data/voice-cast.js'
+import { spokenText } from '../../src/data/voice-cast.js'
 import { ACTS } from '../../src/data/acts.js'
 import { NPCS } from '../../src/data/npcs.js'
-import { VOICE } from '../../src/data/voice-data.js'
 
 describe('대사 음성 — 글자와 말의 시계', () => {
   it('revealCount 는 그 시각까지 나타날 글자 수다', () => {
@@ -35,23 +34,22 @@ describe('대사 음성 — 글자와 말의 시계', () => {
   })
 })
 
-describe('대사 음성 — 빠진 줄이 없다', () => {
-  const spoken = []
-  for (const a of ACTS) for (const b of a.beats) for (const v of b.visitors ?? []) {
-    for (const line of v.lines ?? NPCS.find(n => n.id === v.npc)?.lines ?? []) if (spokenText(line)) spoken.push([v.npc, line])
-  }
-  for (const n of NPCS) for (const line of n.lines ?? []) if (spokenText(line)) spoken.push([n.id, line])
-
-  it('대화판에 뜨는 「」 대사마다 목소리가 정해져 있다', () => {
-    for (const [npc] of spoken) expect(VOICES[CAST[npc]], npc).toBeTruthy()
+// 2026-09-26 — 게임에서 음성을 모두 뺐다(선생님 요청). 남은 것은 자막의 시계뿐이라
+// 「녹음이 다 있는가」를 보던 시험은 지웠다. 대신 음성 없이도 자막이 도는지를 본다.
+describe('음성 없이도 자막은 돈다', () => {
+  it('녹음이 없으면 재생할 것이 없다 — 화면은 글자만 찍는 길로 간다', () => {
+    const p = createVoicePlayer({ clips: {}, makeAudio: () => ({ play: () => Promise.resolve(), pause() {}, addEventListener() {} }) })
+    expect(p.clipFor('heungseon', '「가거라.」')).toBeFalsy()
+    expect(p.play(undefined)).toBeNull()
   })
 
-  it('대화판에 뜨는 「」 대사마다 녹음과 글자 시각이 있다 — 대사를 고치면 다시 녹음해야 한다', () => {
-    for (const [npc, line] of spoken) {
-      const clip = VOICE[voiceKey(npc, line)]
-      expect(clip, `${npc}: ${line}`).toBeTruthy()
-      expect(clip.t).toHaveLength(line.length)
-      expect(clip.src.startsWith('data:audio/mpeg;base64,')).toBe(true)
-    }
+  it('줄마다 읽을 시간을 두고 다음 줄로 넘어간다', async () => {
+    const shown = []
+    const p = createVoicePlayer({ clips: {} })
+    const run = p.narrate(['첫 줄', '둘째 줄'], { onLine: t => shown.push(t) })
+    expect(shown).toEqual(['첫 줄'])
+    await new Promise(r => setTimeout(r, 3600))   // 읽을 시간(기본 3초)이 지나면 다음 줄로
+    expect(shown).toEqual(['첫 줄', '둘째 줄'])
+    run.stop()
   })
 })

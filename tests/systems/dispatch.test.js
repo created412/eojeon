@@ -1,7 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import {
   arrivalDay, arrivedAt, pendingAt, latestAt, lagDaysAt, lagLabelAt,
+  arrivalOrder, happenedOrder, shouldOfferOrdering, isInHappenedOrder,
+  arrivalMatchesHappened, pendingOlderThanArrived, happenedLabel, travelLabel,
+  orderingVerdict,
 } from '../../src/systems/dispatch.js'
+import { ACTS } from '../../src/data/acts.js'
+import { beatsOf } from '../../src/systems/scenario.js'
 
 const list = [
   { id: 'a', place: 'ganghwa',    placeName: '강화도', sentDay: 0, lagDays: 2, headline: '함대가 물길을 거슬러 올랐다' },
@@ -87,5 +92,175 @@ describe('강화도 장계 — 결정은 언제나 다음 장계보다 먼저 �
   it('회의 날 기준으로 임금이 보는 것은 갑곶 소식뿐, 그나마도 어제 것이다', () => {
     expect(latestAt(GANGHWA_1866, COUNCIL_DAY).id).toBe('gapgot')
     expect(lagLabelAt(GANGHWA_1866, COUNCIL_DAY)).toBe('이 소식은 1일 전에 강화도에서 보낸 것이다')
+  })
+})
+
+// ── 놓아 보기 — 닿은 순서와 일어난 순서 ─────────────────────────────────
+// 2026-09-25 선생님: 「장계 도착 순서 맞추기(2·3막).」 학생이 늘어놓아 보는 동작이
+// 붙었지만, 이 장치가 가르치는 것은 예전과 한 글자도 다르지 않다 — 소식은 거리만큼
+// 늦게 온다. 그래서 이 검사가 붙드는 것은 「맞혔나」가 아니라 둘이다.
+//   ① 물음이 성립하는 자리에서만 물어본다(닿은 것이 둘 이상, 보낸 날이 서로 다를 때).
+//   ② 어느 갈래에서도 학생을 채점하지 않는다.
+describe('놓아 보기를 내줄 자리인가', () => {
+  it('닿은 장계가 하나뿐이면 「순서」라는 물음이 성립하지 않는다', () => {
+    expect(shouldOfferOrdering(list, 2)).toBe(false)   // a 한 통만 닿았다
+    expect(shouldOfferOrdering(list, 0)).toBe(false)   // 아무것도 안 닿았다
+    expect(shouldOfferOrdering([], 9)).toBe(false)
+  })
+
+  it('보낸 날이 서로 다른 장계가 둘 이상 닿았으면 물어본다', () => {
+    expect(shouldOfferOrdering(list, 4)).toBe(true)    // a(0일 보냄) + b(2일 보냄)
+  })
+
+  it('같은 날 보낸 장계만 닿았으면 물어보지 않는다 — 앞뒤가 애초에 없다', () => {
+    const sameDay = [
+      { id: 'p', placeName: '평양', sentDay: 1, lagDays: 1, headline: '' },
+      { id: 'q', placeName: '동래', sentDay: 1, lagDays: 3, headline: '' },
+    ]
+    expect(shouldOfferOrdering(sameDay, 2)).toBe(false)
+    expect(shouldOfferOrdering(sameDay, 4)).toBe(false)
+  })
+})
+
+describe('두 순서를 셈한다', () => {
+  // 나중에 보낸 것이 먼저 닿는 판 — 이 장치가 가르치려는 바로 그 어긋남이다.
+  const crossed = [
+    { id: 'far',  placeName: '평양', sentDay: 0, lagDays: 6, headline: '먼 곳의 일' },
+    { id: 'near', placeName: '강화', sentDay: 3, lagDays: 1, headline: '가까운 곳의 일' },
+  ]
+
+  it('닿은 순서는 도착일 순이다', () => {
+    expect(arrivalOrder(crossed, 6).map(d => d.id)).toEqual(['near', 'far'])
+    expect(arrivalOrder(list, 6).map(d => d.id)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('일어난 순서는 보낸 날 순이다', () => {
+    expect(happenedOrder(crossed, 6).map(d => d.id)).toEqual(['far', 'near'])
+  })
+
+  it('도착일이 같으면 비트에 적힌 순서를 따른다 — 없는 앞뒤를 지어내지 않는다', () => {
+    const tie = [
+      { id: 'x', placeName: '강화', sentDay: 2, lagDays: 2, headline: '' },
+      { id: 'y', placeName: '평양', sentDay: 1, lagDays: 3, headline: '' },
+    ]
+    expect(arrivalOrder(tie, 4).map(d => d.id)).toEqual(['x', 'y'])
+    expect(happenedOrder(tie, 4).map(d => d.id)).toEqual(['y', 'x'])
+  })
+
+  it('나중에 닿은 것이 먼저 일어난 일일 수 있다 — 그것이 이 장면의 전부다', () => {
+    expect(arrivalMatchesHappened(crossed, 6)).toBe(false)
+    // 여섯째 날의 list 도 그렇다 — 평양 장계(c)는 첫 장계(a)와 같은 날 떠났는데
+    // 맨 나중에 닿는다. 그 판에서는 닿은 순서가 일어난 순서가 아니다.
+    expect(arrivalMatchesHappened(list, 6)).toBe(false)
+    // 넷째 날에는 아직 평양 장계가 없어, 닿은 순서가 그대로 일어난 순서다
+    expect(arrivalMatchesHappened(list, 4)).toBe(true)
+  })
+
+  it('놓인 차례는 보낸 날의 차례로 견준다 — 같은 날이면 어느 쪽이 앞이어도 순서대로다', () => {
+    const sameDay = [
+      { id: 'p', placeName: '평양', sentDay: 1, lagDays: 1, headline: '' },
+      { id: 'q', placeName: '동래', sentDay: 1, lagDays: 3, headline: '' },
+      { id: 'r', placeName: '강화', sentDay: 4, lagDays: 1, headline: '' },
+    ]
+    expect(isInHappenedOrder(sameDay, ['p', 'q', 'r'])).toBe(true)
+    expect(isInHappenedOrder(sameDay, ['q', 'p', 'r'])).toBe(true)
+    expect(isInHappenedOrder(sameDay, ['r', 'p', 'q'])).toBe(false)
+  })
+
+  it('없는 장계를 놓았다고 하면 순서대로가 아니다', () => {
+    expect(isInHappenedOrder(crossed, ['far', '없는것'])).toBe(false)
+  })
+
+  it('아직 오지 않은 장계 가운데 이미 닿은 것보다 먼저 보낸 것을 센다', () => {
+    // 1866년 셋째 날 — 평양 장계는 강화 첫 장계와 같은 날 떠났는데 아직 없다
+    expect(pendingOlderThanArrived(GANGHWA_1866, 2)).toBe(1)
+    expect(pendingOlderThanArrived(GANGHWA_1866, 5)).toBe(0)
+    expect(pendingOlderThanArrived(GANGHWA_1866, 0)).toBe(0)   // 닿은 것이 없으면 견줄 것도 없다
+  })
+
+  it('날수는 언제나 정수 며칠이다 — 시각이 끼어들지 않는다', () => {
+    expect(happenedLabel(crossed[0], 6)).toBe('6일 전에 보낸 것이다')
+    expect(happenedLabel({ sentDay: 6, lagDays: 0 }, 6)).toBe('오늘 보낸 것이다')
+    expect(travelLabel(crossed[1])).toBe('닿는 데 1일이 걸렸다')
+    expect(travelLabel({ lagDays: 0 })).toBe('보낸 날 그날 닿았다')
+  })
+})
+
+describe('놓아 본 뒤 — 채점하지 않는다', () => {
+  const crossed = [
+    { id: 'far',  placeName: '평양', sentDay: 0, lagDays: 6, headline: '먼 곳의 일', origin: 'ㅇ' },
+    { id: 'near', placeName: '강화', sentDay: 3, lagDays: 1, headline: '가까운 곳의 일', origin: 'ㅇ' },
+  ]
+  // 네 갈래 — 짚었나(둘) × 닿은 순서가 그대로였나(둘).
+  const verdicts = [
+    orderingVerdict(crossed, 6, ['far', 'near']),   // 짚었다 · 순서가 갈린 판
+    orderingVerdict(crossed, 6, ['near', 'far']),   // 못 짚었다 · 순서가 갈린 판
+    orderingVerdict(list, 4, ['a', 'b']),           // 짚었다 · 순서가 같았던 판
+    orderingVerdict(list, 4, ['b', 'a']),           // 못 짚었다 · 순서가 같았던 판
+  ]
+
+  it('네 갈래 어디에도 「오답」이나 점수가 없다', () => {
+    for (const v of verdicts) {
+      const text = [v.headline, ...v.lines].join(' ')
+      expect(text).not.toMatch(/오답|틀렸|점수|정답|X|✗/)
+    }
+  })
+
+  it('짚었으면 짚었다고 말해 준다', () => {
+    expect(verdicts[0].placedRight).toBe(true)
+    expect(verdicts[0].headline).toContain('놓은 대로였다')
+    expect(verdicts[1].placedRight).toBe(false)
+  })
+
+  it('못 짚었을 때 설명하는 것은 학생이 아니라 거리다', () => {
+    expect(verdicts[1].headline).toContain('알 수 없는')
+    expect(verdicts[1].lines.join(' ')).toContain('거리만큼 늦게')
+  })
+
+  it('닿은 순서가 그대로였던 날에는 그 사실도 그대로 말한다 — 없는 어긋남을 지어내지 않는다', () => {
+    expect(verdicts[2].arrivalSame).toBe(true)
+    expect(verdicts[2].headline).toContain('닿은 순서가 그대로 일어난 순서')
+    // 못 짚었어도, 그 순서는 장계 어디에도 적혀 있지 않았다고 말해 준다
+    expect(verdicts[3].placedRight).toBe(false)
+    expect(verdicts[3].headline).toContain('적혀 있지 않았다')
+  })
+
+  it('참된 순서는 보낸 날 순으로 나가고, 장계의 출처는 그대로 실려 간다', () => {
+    expect(verdicts[1].truth.map(d => d.id)).toEqual(['far', 'near'])
+    expect(verdicts[1].truth.every(d => d.origin)).toBe(true)
+  })
+
+  it('아직 오지 않은 장계가 있으면 그 말도 함께 나간다 — 임금은 그것을 모른다', () => {
+    const v = orderingVerdict(GANGHWA_1866, 2, ['gapgot', 'fleet-up'])
+    expect(v.lines.join(' ')).toContain('아직 오지 않은 장계')
+    expect(v.lines.join(' ')).toContain('1통')
+  })
+})
+
+// 실제 비트를 그대로 먹여 본다 — 검사용 목록만 잘 돌고 게임 안에서는 안 돌면
+// 초록불이 아무것도 지키지 않는다. 2·3막의 장계 비트 셋을 acts.js 에서 꺼내 쓴다.
+describe('게임 안의 장계 비트 셋 — 실제 데이터로 돌려본다', () => {
+  const beats = ACTS.flatMap(a => beatsOf(a)).filter(b => b.kind === 'dispatch')
+
+  it('장계 비트가 셋 있다', () => {
+    expect(beats.map(b => b.id)).toEqual(['byeongin-dispatch', 'sinmi-dispatch', 'unyo-dispatch'])
+  })
+
+  it('세 비트 모두 놓아 보기가 성립한다 — 닿은 것이 둘 이상이고 보낸 날이 다르다', () => {
+    for (const b of beats) {
+      expect(arrivedAt(b.dispatches, b.day).length, b.id).toBeGreaterThanOrEqual(2)
+      expect(shouldOfferOrdering(b.dispatches, b.day), b.id).toBe(true)
+    }
+  })
+
+  it('놓아 보기를 지나도 장계의 뜻·출처·지연 일수는 하나도 달라지지 않는다', () => {
+    for (const b of beats) {
+      const v = orderingVerdict(b.dispatches, b.day, arrivalOrder(b.dispatches, b.day).map(d => d.id))
+      for (const d of v.truth) {
+        const original = b.dispatches.find(x => x.id === d.id)
+        expect(d).toBe(original)                    // 베껴 만든 카드가 아니라 그 장계 그대로다
+        expect(travelLabel(d)).toContain(`${original.lagDays}일`)
+      }
+    }
   })
 })

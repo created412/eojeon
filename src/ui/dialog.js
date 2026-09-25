@@ -4,6 +4,8 @@ import { lossLabel } from '../systems/loss-log.js'
 import { sourceMedia, mediaFigure, installHistoricalMedia, bindMedia } from './historical-media.js'
 import { INQUIRIES } from '../data/inquiries.js'
 import { inquiryHtml, bindInquiry, installInquiryStyle } from './source-inquiry.js'
+import { seenArtifacts } from '../systems/artifacts.js'
+import { artifactById } from '../data/artifacts.js'
 import { RUMOR_NOTICE } from './grade-notice.js'
 export { RUMOR_NOTICE }
 
@@ -37,6 +39,9 @@ const CSS = `
 .codex .row .tag{float:right;font-size:11px;color:#a0522d;text-decoration:none}
 .card .talktitle{font-size:13px;color:#5e5849;margin-bottom:14px}
 .card .talkline{margin:0 0 10px;font-size:15px;line-height:1.7;color:#23201a}
+/* 물건 카드는 사료 카드와 한눈에 갈려야 한다 — 사초함에 쌓이는 것이 아니기 때문이다.
+   같은 한지 위에 앉지만 제목 옆에 「물건」이라 적고 본문에 인용 줄(excerpt)을 두지 않는다. */
+.card.lore h3 small{font-size:11px;color:#6b6558;letter-spacing:3px;margin-left:8px;vertical-align:middle}
 `
 
 // 등급이 하는 말은 두 가지가 다르다 —
@@ -130,11 +135,14 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
       }
       const held = SOURCES.filter(c => state.sources.held.includes(c.id))
       const gone = SOURCES.filter(c => state.sources.lost.includes(c.id))
+      // 사료와 같은 목록에 섞지 않는다 — 문서 칸 아래에 따로 선다(showArtifact 머리말).
+      const seenNames = seenArtifacts(state).map(id => artifactById(id)?.name ?? id)
       open(`<div class="card codex">
         <h3>사초함</h3>
         <div class="sub">내가 읽은 문서를 모아 두는 곳</div>
         <div class="grp"><b>가지고 있는 문서 ${held.length}</b>${held.map(row).join('') || '<div class="row">아직 없다</div>'}</div>
         <div class="grp"><b>잃어버린 문서 ${gone.length}</b>${gone.map(row).join('') || '<div class="row">아직 없다</div>'}</div>
+        <div class="grp"><b>본 물건 ${seenNames.length}</b>${seenNames.map(n => `<div class="row">${n}</div>`).join('') || '<div class="row">아직 없다 — 궁을 걸어 다니며 물건 앞에서 E 를 눌러 보라</div>'}</div>
         <button class="close">닫기 (Q)</button>
       </div>`, onClose)
       const readCards=held.filter(c=>isRead(state,c.id))
@@ -146,6 +154,23 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
         row.addEventListener('click',reopen)
         row.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();reopen()}})
       })
+    },
+    // 궁 안의 물건(data/artifacts.js) — 걸어가 E 를 누르면 뜨는 해설 카드.
+    //
+    // 사료 카드(showCard)와 **일부러** 다르게 생겼다: 인용 줄이 없고, 등급도 출처도
+    // 붙지 않으며, 제목 옆에 「물건」이라 적힌다. 이것은 사료가 아니라 해설이고,
+    // 사초함에 쌓이지 않는다(systems/artifacts.js 머리말). 학생이 두 카드를 같은
+    // 것으로 보면 「무엇을 근거로 아는가」가 흐려진다.
+    //   lines — 이미 막에 따라 걸러진 줄 목록(data/artifacts.js 의 artifactLines)
+    showArtifact(artifact, lines = [], onClose) {
+      const hanja = artifact.hanja ? `<div class="gloss">${artifact.hanja}</div>` : ''
+      open(`<div class="card lore">
+        <h3>${artifact.name}<small>물건</small></h3>
+        ${hanja}
+        ${lines.map(l => `<p class="talkline">${l}</p>`).join('')}
+        <div class="rendered">※ ${artifact.note}</div>
+        <button class="close">닫기 (E)</button>
+      </div>`, onClose)
     },
     // 신하와의 대화 — 이름·직함·짧은 대사를 보여준다. cardId 가 있는 신하면
     // 이 화면을 닫는 순간(단추든 E 든) main.js 가 그 문서를 손에 쥐여 준다 —

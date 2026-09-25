@@ -165,6 +165,21 @@ export function closeHub(state, act) {
     title: `${state.actIndex + 1}막 · ${hubDate(act, hub) ?? act.title}` })
 }
 
+// 방금 닫힌 하루의 셈 — ui/day-end.js 가 화면으로 만들고, 여기서는 값만 낸다.
+// closeHub() 이 먼저 불려 있어야 한다(그때 missed 가 적힌다). 오늘 한 일도 없고
+// 남긴 일도 없으면 null 을 돌려준다 — 보여 줄 하루가 아니다(할 일이 애초에 없던
+// 탐색 비트에서 빈 판이 뜨지 않게).
+export function dayReport(state, act) {
+  const hub = hubAt(act, state.beatIndex)
+  if (!hub) return null
+  const log = logOf(state, act, hub)
+  if (!log.closed) return null
+  const done = log.done.map(d => d.label)
+  const missed = (log.missed ?? []).map(m => ({ label: m.label, reason: m.reason }))
+  if (done.length === 0 && missed.length === 0) return null
+  return { title: log.title ?? hubDate(act, hub) ?? act.title, done, missed }
+}
+
 export function freedomRecord(state) {
   return Object.values(state.freedom?.hubs ?? {}).filter(log => log.closed).flatMap(log => [
     `[궁중 여정] ${log.title}`,
