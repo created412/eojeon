@@ -195,7 +195,6 @@ describe('ambientForBeat — 어느 화면에 무엇을 깔 것인가', () => {
     move: null,           // 이어(移御)
     dispatch: null,       // 장계
     plunder: null,        // 약탈
-    salvage: null,        // 소실
     brush: null,          // 친필 — 붓소리 말고는 조용한 것이 맞다
     outing: null,         // 나들이(회수 화면)
     edict: null,          // 국상
@@ -225,17 +224,24 @@ describe('ambientForBeat — 어느 화면에 무엇을 깔 것인가', () => {
   })
 
   it('글·문서·회의 화면에는 아무것도 깔지 않는다', () => {
-    for (const kind of ['note', 'council', 'orders', 'move', 'dispatch', 'plunder', 'salvage', 'brush', 'outing', 'edict']) {
+    for (const kind of ['note', 'council', 'orders', 'move', 'dispatch', 'plunder', 'brush', 'outing', 'edict']) {
       expect(ambientForBeat({ kind }), kind).toBe(null)
     }
     expect(ambientForBeat(null)).toBe(null)
   })
 
-  // 표의 네 바닥이 이 게임 안에서 실제로 한 번씩은 깔린다 — 이름만 맞고 아무 데도
-  // 안 붙은 바닥이 없게 한다.
-  it('네 바닥이 모두 실제 비트에서 한 번씩은 깔린다', () => {
+  // 바닥 소리는 이 게임 안에서 실제로 한 번씩은 깔려야 한다 — 이름만 맞고 아무 데도
+  // 안 붙은 바닥이 없게 한다. 'fire' 는 2026-09-26 에 갈 곳을 잃었다: 불길을 뚫고
+  // 달리던 장면(1873 자경전)을 선생님이 걷어 내셨고, 남은 불은 고르는 화면(대화재)
+  // 하나였는데 그 화면마저 함께 지웠다. 소리는 systems/audio.js 에 남아 있다 —
+  // 불이 다시 붙는 장면이 생기면 그때 이 목록으로 돌아온다.
+  const UNUSED_FOR_NOW = new Set(['fire'])
+  it('바닥 소리가 모두 실제 비트에서 한 번씩은 깔린다', () => {
     const used = new Set(beats.map(ambientForBeat).filter(Boolean))
-    for (const bed of AMBIENCES) expect([...used], `'${bed}' 를 까는 비트가 없다`).toContain(bed)
+    for (const bed of AMBIENCES) {
+      if (UNUSED_FOR_NOW.has(bed)) { expect([...used]).not.toContain(bed); continue }
+      expect([...used], `'${bed}' 를 까는 비트가 없다`).toContain(bed)
+    }
   })
 
   it('setAmbient 를 매 프레임 부르지 않는다 — frame() 몸통에는 없다', () => {

@@ -12,8 +12,6 @@ export const HUB_REPORTS = [
   { act: 'yangyo', hub: 'day-changdeok', beat: 'garye-audience', label: '가례 뒤 하례를 듣는다', room: 'injeongjeon' },
   { act: 'chinjeong', hub: 'day-1873', beat: 'seogye-audience', label: '일본의 외교 문서 보고를 듣는다', room: 'sajeongjeon' },
   { act: 'chinjeong', hub: 'day-1875', beat: 'axe-sangso', label: '최익현의 상소를 듣는다', room: 'sajeongjeon' },
-  { act: 'imo', hub: 'imo-day', beat: 'wanhwa-death', label: '지난 기록 — 1880년 완화군의 죽음', room: 'huijeongdang', recollectionYear: 1880 },
-  { act: 'imo', hub: 'imo-day', beat: 'jaeseon-order', label: '지난 기록 — 1881년 이재선의 일', room: 'seonjeongjeon', recollectionYear: 1881 },
   { act: 'gapsin', hub: 'gapsin-day', beat: 'gapsin-gov', label: '개화당 정부의 기록을 살펴본다', room: 'haenggak-e' },
 ]
 

@@ -14,7 +14,6 @@ let browser, page, script
 beforeAll(async () => {
   const result = await build({ stdin: { resolveDir: process.cwd(), contents: `
     import {createRation} from './src/ui/ration.js';
-    import {createSalvage} from './src/ui/salvage.js';
     import {createDialog} from './src/ui/dialog.js';
     import {createSpeak} from './src/ui/speak.js';
     import {createNoteScreen} from './src/ui/note-screen.js';
@@ -23,11 +22,10 @@ beforeAll(async () => {
     import {ACTS} from './src/data/acts.js';
     import {SOURCES} from './src/data/sources.js';
     import {serialize,deserialize,createState} from './src/core/state.js';
-    import {recordPreservation} from './src/systems/preservation.js';
     import {FEEDBACK_MEDIA} from './src/ui/feedback-media-data.js';
     import {createTray,TRAY_W,TRAY_H} from './src/systems/grain-tray.js';
-    window.fixture={createRation,createSalvage,createDialog,createSpeak,createNoteScreen,createVoicePlayer,voiceKey,
-      ACTS,SOURCES,serialize,deserialize,createState,recordPreservation,FEEDBACK_MEDIA,createTray,TRAY_W,TRAY_H};
+    window.fixture={createRation,createDialog,createSpeak,createNoteScreen,createVoicePlayer,voiceKey,
+      ACTS,SOURCES,serialize,deserialize,createState,FEEDBACK_MEDIA,createTray,TRAY_W,TRAY_H};
   ` }, bundle: true, write: false, format: 'iife', plugins: [{ name: 'workspace-files', setup(b) {
     b.onResolve({filter:/^\./}, args=>({path:resolve(args.importer ? dirname(args.importer) : process.cwd(),args.path),namespace:'workspace'}))
     b.onLoad({filter:/.*/,namespace:'workspace'}, async args=>({contents:await readFile(args.path,'utf8'),loader:'js'}))
@@ -42,26 +40,6 @@ beforeEach(async () => {
   await page.addScriptTag({ content: script })
 })
 afterAll(async () => { await browser?.close() })
-
-it('대화재에서 작성 중 새로 열어도 선택과 이유가 복원된다', async () => {
-  await page.evaluate(() => {
-    const f=fixture, root=document.querySelector('#root')
-    const beat=f.ACTS.flatMap(a=>a.beats).find(b=>b.id==='great-fire')
-    let saved=f.serialize(f.createState())
-    window.reopen=()=>{
-      root.replaceChildren()
-      f.createSalvage(root).open({...beat, initial:f.deserialize(saved).preservation?.[beat.id],
-        onSave:r=>{saved=f.serialize(f.recordPreservation(f.deserialize(saved),beat.id,r));return true}})
-    }
-    reopen()
-  })
-  await page.locator('[data-id="daebo"]').click()
-  await page.locator('[data-id="busin"]').click()
-  await page.locator('.reason').fill('명령이 진짜라는 것을 증명해야 한다.')
-  await page.evaluate(() => reopen())
-  expect(await page.locator('.doc[aria-pressed="true"]').evaluateAll(es=>es.map(e=>e.dataset.id))).toEqual(['daebo','busin'])
-  expect(await page.locator('.reason').inputValue()).toBe('명령이 진짜라는 것을 증명해야 한다.')
-})
 
 it('390px에서 가마·곡물 그림이 없거나 손상되어도 깨진 이미지를 숨기고 진행한다', async () => {
   await page.evaluate(() => {
@@ -220,6 +198,4 @@ it.each([true,false])('390px에서 그림 유무(%s)와 무관하게 가마·곡
   if(present)await page.locator('.grain img').evaluate(i=>i.decode())
   await checkBounds('.grain,.grain figcaption div')
   await page.getByRole('button',{name:'돌아간다'}).click()
-  await page.evaluate(()=>{fixture.createSalvage(document.querySelector('#root')).open(fixture.ACTS.flatMap(a=>a.beats).find(b=>b.id==='great-fire'))})
-  await checkBounds('.salvage .doc,.salvage .reason,.salvage .go')
 })

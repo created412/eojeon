@@ -144,10 +144,10 @@ describe('어느 저장 지점에서 끊어도 이어달리기가 같은 곳에 
   })
 
   // 3단계 완주 시나리오가 콕 집어 요구하는 세 자리 — 실제로 저장되는지 이름으로 본다.
-  it('학생이 실제로 끊는 세 자리에서 저장된다 — 3막 화재 · 4막 나들이 뒤 · 4막 어전회의', () => {
+  it('학생이 실제로 끊는 자리에서 저장된다 — 3막 조약 회의 · 4막 나들이 뒤 · 4막 어전회의', () => {
     const { saves } = playThrough(createState(), { caught: true })
     const at = saves.map(s => s.at)
-    expect(at).toContain('chinjeong/great-fire')
+    expect(at).toContain('chinjeong/council-treaty')
     expect(at).toContain('imo/imo-council')
     // 나들이는 비트가 아니라 낮 안의 장면이라 예전에는 이 목록에 아예 없었다 —
     // 「모든 저장 지점을 훑는다」는 이 시험이 나들이 두 자리를 통째로 못 보고 있었다.
@@ -289,7 +289,6 @@ describe('완주 도중에 배선이 끊긴 비트 종류가 없다', () => {
       { fn: 'playMove', call: 'moveScreen.show', module: 'move-screen.js' },
       { fn: 'playDispatch', call: 'dispatchMap.show', module: 'dispatch-map.js' },
       { fn: 'playPlunder', call: 'lossScreen.show', module: 'loss-screen.js' },
-      { fn: 'playSalvage', call: 'salvage.open', module: 'salvage.js' },
       { fn: 'playBrush', call: 'brush.open', module: 'brush.js' },
       // 막 끝 화면 — 손으로 칸을 고르는 자리인데 검사 밖에 있었다. 그래서
       // view.lost 가 아무도 안 채우는 죽은 칸으로 남아 있었다(지웠다).

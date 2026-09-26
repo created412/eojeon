@@ -233,10 +233,12 @@ export function createTitle(root) {
       const footer = document.createElement('div')
       footer.className='opening-footer'
       footer.textContent='사료를 읽고, 사람을 만나고, 자신의 판단을 남기는 여정 · 3D 공간은 학습용 재구성입니다.'
-      // 음악의 출처 — CC BY 는 이름을 밝히는 것이 조건이다(assets/bgm/README.md).
+      // 음악의 출처 — 선생님 지시(2026-09-26)로 배경 음악을 전부 선생님이 직접 만든 곡으로 바꿨다.
+      // 공유마당 CC BY 국악기 실연은 이제 한 파일도 남아 있지 않으므로 그 출처 표시도 걷어 냈다.
+      // 열한 곡이 모두 한 곡의 악장이라는 사실 자체가 이 게임 음악의 설계다(assets/bgm/README.md).
       const credit = document.createElement('div')
       credit.className = 'opening-credit'
-      credit.textContent = '배경 음악: 한국저작권위원회 「국악기」 연주(공유마당, CC BY 4.0)를 이 게임에 맞게 엮었습니다.'
+      credit.textContent = '배경 음악: 선생님이 직접 만든 「Beneath the Bronze Bell」 한 곡에서 떴습니다 — 다섯 막의 음악은 그 곡의 연속된 다섯 악장입니다.'
       el.appendChild(footer)
       el.appendChild(credit)
 

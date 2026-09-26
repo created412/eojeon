@@ -114,16 +114,15 @@ describe('실제 runBeats로 1~5막 자유 여정 완주', () => {
       expect(result.state.actIndex).toBe(4)
       expect(result.state.beatIndex).toBe(ACTS[4].beats.length)
       expect(result.played.at(-1)).toBe('gapsin/end')
-      expect(result.state.moves).toHaveLength(9)
+      expect(result.state.moves).toHaveLength(6)
       expect(result.state.moves.every(m => m.from && m.to)).toBe(true)
-      expect(Object.keys(result.state.freedom.hubs)).toHaveLength(10)
+      expect(Object.keys(result.state.freedom.hubs)).toHaveLength(8)
       // 하루의 셈은 없어졌다(core/clock.js 2026-09-26) — 저장에 그 칸이 실리지 않는다.
       expect(result.saves.every(json => deserialize(json).dayLeft === undefined)).toBe(true)
       expect(buildRecordText(result.state, ACTS)).toContain('[궁중 여정]')
       // 다 하고 나가는 길이므로 막히는 자리가 없다.
       expect(result.blocked, '다 했는데도 못 나가는 자리가 있다').toEqual([])
     }
-    expect(a.played).not.toEqual(b.played)
     expect(a.historical).toEqual(b.historical)
     expect(a.state.moves).toEqual(b.state.moves)
     expect(a.historical.indexOf('yangyo/byeongin-dispatch')).toBeLessThan(a.historical.indexOf('imo/imo-rush'))
@@ -145,14 +144,15 @@ describe('실제 runBeats로 1~5막 자유 여정 완주', () => {
     for (const report of HUB_REPORTS) expect(r.played).not.toContain(`${report.act}/${report.beat}`)
     expect(r.state.decisions.filter(d => !d.choiceId.startsWith('orders:'))).toHaveLength(5)
   })
-  it('기존 두 비트를 반대 순서로 읽는 두 경로도 5막까지 같은 역사 순서를 유지한다', async () => {
-    const a = await playRoute('reports-first'), b = await playRoute('reverse-reports')
-    const pair = ['imo/wanhwa-death', 'imo/jaeseon-order']
-    expect(a.played.filter(id => pair.includes(id))).toEqual(pair)
-    expect(b.played.filter(id => pair.includes(id))).toEqual([...pair].reverse())
-    expect(a.historical).toEqual(b.historical)
-    expect(a.state.moves).toEqual(b.state.moves)
-    expect(b.played.at(-1)).toBe('gapsin/end')
+  it('선택 순서가 달라도 5막까지 같은 역사 순서를 유지한다', () => {
+    // 4막 거점의 보고 두 개(완화군·이재선)를 걷어 내면서(2026-09-26) 「한 거점 안에서
+    // 두 보고의 순서를 뒤집는」 경로가 사라졌다. 남은 것은 사람·문서를 어느 차례로
+    // 만나든 역사가 같은 순서로 지나간다는 것이다.
+    return Promise.all([playRoute('reports-first'), playRoute('reverse-reports')]).then(([a, b]) => {
+      expect(a.historical).toEqual(b.historical)
+      expect(a.state.moves).toEqual(b.state.moves)
+      expect(b.played.at(-1)).toBe('gapsin/end')
+    })
   })
   it.each(['reports-first', 'people-first'])('%s의 모든 저장 지점에서 재개해 같은 기록으로 끝난다', async policy => {
     const full = await playRoute(policy)

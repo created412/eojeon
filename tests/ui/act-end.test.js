@@ -18,7 +18,7 @@ describe('마지막 화면의 햇수는 ACTS 에서 나온다', () => {
     // 3막까지였을 때: 막의 year 는 1873 이지만 마지막 이어(move-1877)가 1877 이다.
     const upTo3 = ACTS.slice(0, 3)
     expect(upTo3[2].year).toBe(1873)
-    expect(actSpan(upTo3)).toEqual({ from: 1863, to: 1877, span: 14 })
+    expect(actSpan(upTo3)).toEqual({ from: 1863, to: 1876, span: 13 })
   })
 
   it('햇수를 우리말 수로 읽는다 — 「14해」가 아니라 「열네 해」다', () => {

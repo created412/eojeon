@@ -15,9 +15,9 @@ function atHub(actIndex, id) {
 }
 
 describe('역사 경계 안의 거점 선택', () => {
-  it('92비트를 보존하고 10개의 탐색 거점만 연다', () => {
-    expect(ACTS.flatMap(a => a.beats)).toHaveLength(92)
-    expect(ACTS.flatMap(a => a.beats.map((_, i) => hubAt(a, i))).filter(Boolean)).toHaveLength(10)
+  it('75비트를 보존하고 8개의 탐색 거점만 연다', () => {
+    expect(ACTS.flatMap(a => a.beats)).toHaveLength(75)
+    expect(ACTS.flatMap(a => a.beats.map((_, i) => hubAt(a, i))).filter(Boolean)).toHaveLength(8)
   })
   it('다른 막과 다음 시기의 보고를 현재 거점에서 열지 못한다', () => {
     const s = atHub(1, 'day-changdeok')
@@ -71,28 +71,14 @@ describe('역사 경계 안의 거점 선택', () => {
     expect(lines.indexOf(opts[1].label)).toBeLessThan(lines.indexOf(opts[0].label))
     expect(lines).not.toContain(`하지 않은 일 — ${opts[0].label}`)
   })
-  it('같은 거점에서 기존 비트 두 개의 열람 순서를 실제로 뒤집을 수 있다', () => {
+  it('보고가 없는 거점도 열리고, 그 낮의 남은 일은 사람이다', () => {
+    // 4막 거점의 보고 두 개(완화군의 죽음·이재선의 일)는 그 화면들과 함께 지워졌다
+    // (선생님 2026-09-26 — 「교과서에 없는 것들」). 거점 자체는 그대로 열려야 한다.
     const s = atHub(3, 'imo-day')
-    const reports = hubOptions(s, ACTS[3]).filter(o => o.kind === 'report')
-    expect(reports).toHaveLength(2)
-    for (const option of reports) {
-      const original = ACTS[3].beats.find(b => b.id === option.beat.id)
-      expect(option.beat.grade).toBe(original.grade)
-      expect(option.beat.origin).toContain(original.origin)
-      expect(option.beat.lines.slice(1)).toEqual(original.lines)
-      expect(option.beat.lines[0]).toContain('1882')
-    }
-    const run = options => options.reduce((state, option) => {
-      const started = beginReport(state, ACTS[3], option.id)
-      expect(started.ok).toBe(true)
-      return finishReport(started.state, ACTS[3])
-    }, s)
-    const forward = run(reports), reverse = run([...reports].reverse())
-    const ids = state => state.freedom.hubs['imo/imo-day'].done.map(o => o.id)
-    expect(ids(forward)).toEqual([...ids(reverse)].reverse())
-    expect(forward.palace).toBe(reverse.palace)
-    expect(forward.control).toBe(reverse.control)
-    expect(forward.beatIndex).toBe(reverse.beatIndex)
+    const options = hubOptions(s, ACTS[3])
+    expect(options.filter(o => o.kind === 'report')).toHaveLength(0)
+    expect(options.length).toBeGreaterThan(0)
+    expect(options.every(o => o.point)).toBe(true)
   })
   it('구형 저장의 좌표와 이미 지난 보고를 보존한다', () => {
     const legacy = atHub(1, 'day-changdeok')

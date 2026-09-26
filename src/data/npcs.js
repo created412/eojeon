@@ -345,11 +345,6 @@ export const NPCS = [
     rank: 'mid', voice: true, actsVisible: [],
     lines: ['대조전 쪽에서 왕비의 전갈이 온다.'],
   },
-  {
-    id: 'gungin', name: '궁인', title: '', palace: 'changdeok', x: 0, z: 46,
-    rank: 'mid', voice: true, actsVisible: [],
-    lines: ['문밖에서 궁인이 아뢴다.'],
-  },
   // 김옥균 — 5막 정변 전 알현에만 나온다(2026-09-13 5막 보강).
   {
     id: 'kimokgyun', name: '김옥균', title: '개화파', palace: 'changdeok', x: 0, z: 46,

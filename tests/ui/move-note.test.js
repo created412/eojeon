@@ -16,8 +16,8 @@ const moves = ACTS.flatMap(a => beatsOf(a).map(b => ({ act: a.id, beat: b })))
 const SOLAR_NOTE_TAIL = '확실하지 않아 적지 않습니다'
 
 describe('이어 화면의 근거 줄', () => {
-  it('이어가 아홉 번이다 — 1~4막 넷, 5막 다섯', () => {
-    expect(moves).toHaveLength(9)
+  it('이어가 여섯 번이다 — 2막 하나, 5막 다섯', () => {
+    expect(moves).toHaveLength(6)
   })
 
   it('모든 이어의 실록 근거가 실제로 화면 글에 실린다', () => {
@@ -42,10 +42,10 @@ describe('이어 화면의 근거 줄', () => {
     }
   })
 
-  it('양력이 없는 네 이어에는 그 고지가 그대로 붙는다', () => {
+  it('양력이 없는 이어 하나에는 그 고지가 그대로 붙는다', () => {
     const lunarOnly = moves.filter(x => !x.beat.solarDate)
     expect(lunarOnly.map(x => x.beat.id).sort())
-      .toEqual(['move-1868', 'move-1873', 'move-1875', 'move-1877'])
+      .toEqual(['move-1868'])
     for (const { act, beat } of lunarOnly) {
       expect(moveNote(beat, null), `${act}/${beat.id}`).toContain(SOLAR_NOTE_TAIL)
     }
@@ -73,10 +73,4 @@ describe('이어 화면의 풀이가 스스로 정한 이동을 세지 않는다
     expect(main).not.toMatch(/스스로 정한 것은[^\r\n]*\$\{/)
   })
 
-  it('그러면서 환어 풀이는 여전히 이 이동 하나를 말한다 — 지우기만 한 것이 아니다', () => {
-    const beat = moves.find(x => x.beat.id === 'move-1875')
-    expect(beat, '3막에 move-1875 이어가 없다').toBeTruthy()
-    expect(beat.beat.self).toBe(true)
-    expect(main).toContain('이 이동은 임금이 스스로 정했다.')
-  })
 })

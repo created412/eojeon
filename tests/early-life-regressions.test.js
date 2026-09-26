@@ -187,7 +187,7 @@ it.each(['muted','blocked','audible'])('행렬 %s 재생 중 빠르게 E를 눌�
   } finally { vi.unstubAllGlobals();vi.useRealTimers() }
 })
 
-it.each([[1,'wanhwa',1868],[1,'wonja',1871],[2,'sunjong',1874]])('%s막 %s의 몸은 장면의 해에 맞게 자란다', (a,id,year) => {
+it.each([[1,'move-1868',1868],[2,'day-1875',1876],[3,'imo-open',1882]])('%s막 %s의 몸은 장면의 해에 맞게 자란다', (a,id,year) => {
   expect(yearAtBeat(ACTS[a], ACTS[a].beats.findIndex(b => b.id === id))).toBe(year)
 })
 

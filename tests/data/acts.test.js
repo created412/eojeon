@@ -191,146 +191,57 @@ describe('3막 「친정」', () => {
     expect(a.control).toBe('B')
   })
 
-  it('조작권이 B → A → B → A → B 로 오르내린다', () => {
-    expect(controlTimeline(a)).toEqual(['B', 'A', 'B', 'A', 'B'])
+  // 선생님(2026-09-26)이 화재를 따라 궁을 옮겨 다니던 화면들을 걷어 냈다. 조작권을
+  // 오르내리게 하던 것이 그 이어(移御)들이었으므로, 이 막의 조작권은 이제 두 자리다:
+  // 아버지가 물러난 뒤 열리고(B → A), 그대로 막이 끝난다.
+  it('조작권이 B 에서 A 로 한 번 오른다 — 아버지가 물러난 그 자리다', () => {
+    expect(controlTimeline(a)).toEqual(['B', 'A'])
   })
 
-  it('정점은 A 인데 끝은 B 다 — 오른 자리보다 낮게 끝난다', () => {
-    expect(peakControl(a)).toBe('A')
-    expect(endControl(a)).toBe('B')
-    expect(RANK[endControl(a)]).toBeLessThan(RANK[peakControl(a)])
+  it('이 막에서는 궁을 옮기지 않는다 — 경복궁 한 집에서 개항까지 간다', () => {
+    expect(palaceTimeline(a)).toEqual(['gyeongbok'])
+    expect(beatsOf(a).filter(b => b.kind === 'move')).toHaveLength(0)
   })
 
-  it('궁이 세 번 바뀐다', () => {
-    expect(beatsOf(a).filter(b => b.kind === 'move')).toHaveLength(3)
+  it('줄인 이어를 학생에게 밝힌다 — 뺀 것을 숨기지 않는다', () => {
+    const end = beatsOf(a).at(-1)
+    const said = (end.afterLines ?? []).join(' ')
+    expect(said).toContain('慈慶殿災')
+    expect(said).toContain('1876')
+    expect(said).toContain('화면에서 뺐습니다')
+    expect(end.origin).toContain('『고종실록』')
   })
 
-  it('그중 스스로 정한 이동은 1875 환어 하나뿐이다', () => {
-    const self = beatsOf(a).filter(b => b.kind === 'move' && b.self === true)
-    expect(self).toHaveLength(1)
-    expect(self[0].year).toBe(1875)
-  })
 
-  it('불이 두 번 난다 — 1873 자경전과 1876 대화재', () => {
-    expect(beatsOf(a).filter(b => b.kind === 'rush')).toHaveLength(1)
-    expect(beatsOf(a).filter(b => b.kind === 'salvage')).toHaveLength(1)
-  })
 
-  it('촉박은 90초이며 광화문까지 나가는 것이 목표다', () => {
-    const r = beatsOf(a).find(b => b.kind === 'rush')
-    expect(r.totalMs).toBe(90000)
-    expect(r.goalRoom).toBe('gwanghwamun')
-    expect(r.track[0]).toBe('jagyeongjeon')
-    expect(r.track.at(-1)).toBe('gwanghwamun')
-  })
 
-  it('자경전이 탄 뒤 돌아온 경복궁은 자경전이 봉쇄된 변형이다', () => {
-    const back = beatsOf(a).find(b => b.kind === 'move' && b.year === 1875)
-    expect(back.palace).toBe('gyeongbok_jagyeong')
-  })
+  // 선생님(2026-09-26): 「경복궁 화재로 궁궐 옮겨다니는거 큰 의미 없어보임」 —
+  // 1873 자경전 촉박과 그 뒤의 빈 창덕궁 낮을 걷어 냈다. 불의 사실은 옮기는 화면
+  // 하나가 안는다(아래 「자경전의 불은 옮기는 화면 하나에 남는다」).
 
-  it('대화재 뒤에는 불탄 경복궁을 걸어 나온다', () => {
-    const ks = beatsOf(a)
-    const salvageAt = ks.findIndex(b => b.kind === 'salvage')
-    const walk = ks.slice(salvageAt).find(b => b.kind === 'explore')
-    expect(walk.palace).toBe('gyeongbok_burnt')
-    expect(walk.exit.room).toBe('gwanghwamun')
-  })
 
-  it('D2 는 촉박이 아니다 — 시계를 붙이지 않는다', () => {
-    const s = beatsOf(a).find(b => b.kind === 'salvage')
-    expect(s.totalMs).toBeUndefined()
-    expect(s.track).toBeUndefined()
-  })
 
-  it('조약 어전회의는 D2 보다 먼저다 — 읽고 정한 뒤에 잃는다', () => {
-    const ks = beatsOf(a).map(b => b.kind)
-    expect(ks.lastIndexOf('council')).toBeLessThan(ks.indexOf('salvage'))
-  })
 
-  it('모든 이어가 실록에서 확인한 음력 날짜와 근거를 달고 있다', () => {
-    for (const b of ACTS.flatMap(x => beatsOf(x)).filter(b => b.kind === 'move')) {
-      expect(b.lunarDate, `${b.id}`).toMatch(/고종 \d+년 음력 \d+월 \d+일/)
-      expect(b.sillok, `${b.id}`).toContain('『고종실록』')
-      expect(b.lunarDate, `${b.id} — 양력을 적으면 안 된다`).not.toContain('양력')
-    }
-  })
 
-  it('대화재 뒤 창덕궁 이어는 1876년이 아니라 1877년이다', () => {
-    const last = beatsOf(a).filter(b => b.kind === 'move').at(-1)
-    expect(last.year).toBe(1877)
-    expect(last.lunarDate).toContain('고종 14년')
-  })
 
-  it('자경전 화재 장면은 재구성으로 표시한다 — 실록에는 「慈慶殿災」 네 글자뿐이다', () => {
-    const r = beatsOf(a).find(b => b.kind === 'rush')
-    expect(r.intro.grade).toBe('staged')
-    expect(r.intro.origin).toContain('음력 12월 10일')
-  })
+
 
   // 선생님 지적 11번: "불날 때 사초함 3개만 들고 나갈 수 있는건 교육적 의미가 뭐야?
   // 그리고 왕이 왜 사초를 들고나가? 사관이 들고가야지"
   //
   // 두 가지를 못 박는다. ① 지고 나오는 사람은 사관이고 임금은 무엇을 먼저 꺼내라
   // 이르기만 한다. ② 왜 셋뿐인지가 화면 어딘가에서 학생에게 말해져야 한다.
-  it('불에서 문서를 지고 나오는 사람은 사관이다 — 임금은 이르기만 한다', () => {
-    const s = beatsOf(a).find(b => b.kind === 'salvage')
-    expect(s.asker, '무엇을 먼저 꺼낼지 여쭙는 사람이 없다').toBeTruthy()
-    expect(s.asker.name).toBe('사관')
-    expect(s.asker.lines.length).toBeGreaterThan(0)
-    const said = s.asker.lines.join(' ')
-    expect(said).toContain('지고 나올 수 있는')
-    expect(said).toContain('하시겠습니까')
-    // 「임금이 들고 나간다」로 읽히는 문장이 이 비트 안에 남아 있지 않다
-    const all = [...s.lines, ...s.asker.lines, s.footer].join(' ')
-    expect(all).not.toContain('들고 나')
-  })
 
   // 2026-09-13 — 사료 카드를 태우는 가상 규칙 대신, 실록이 적은 실제 소실물로 묻는다.
-  it('대화재는 실록이 적은 실제 소실물로 묻고, 실제로 건진 것은 대보와 세자 옥인뿐이다', () => {
-    const s = beatsOf(a).find(b => b.kind === 'salvage')
-    expect(s.treasures.map(t => t.id).sort()).toEqual(['busin', 'daebo', 'eopil', 'oksae', 'seja-in'])
-    expect(s.treasures.filter(t => t.saved).map(t => t.id).sort()).toEqual(['daebo', 'seja-in'])
-    expect(s.actual.origin).toContain('11월 4일')
-    expect(s.pick).toBe(2)
-    expect(s.footer).toContain('옥새와 부신')
-  })
 
-  it('「830여 칸」이 실록 원문 표현임을 밝히고 이견도 적는다', () => {
-    const s = beatsOf(a).find(b => b.kind === 'salvage')
-    expect(s.origin).toContain('실록 국역 원문의 표현')
-    expect(s.origin).toContain('922칸')
-  })
 
   // Gate 1·2 — 촉박(재구성) 바로 뒤에, 실록이 실제로 남긴 넉 자를 밝히는 카드가
   // 반드시 뒤따른다. 이 카드는 재구성이 아니라 실록 원문 그대로이므로 grade 는
   // 'staged'가 아니라 'source'여야 한다 — 'staged'로 두면 note-screen.js 가
   // 「이 장면은 기록이 남아있지 않아 재구성했습니다」를 정확한 인용 화면 위에 찍는다.
-  it('촉박 바로 다음 비트가 실록 원문 고지다 — grade 는 source, staged 가 아니다', () => {
-    const ks = beatsOf(a)
-    const rushIdx = ks.findIndex(b => b.kind === 'rush')
-    const actual = ks[rushIdx + 1]
-    expect(actual.kind).toBe('note')
-    expect(actual.grade).toBe('source')
-    expect(actual.lines.join(' ')).toContain('慈慶殿災')
-    expect(actual.origin).toContain('『고종실록』')
-  })
-
   // Gate 3 — 이어는 화재 당일 밤이 아니라 열흘 뒤다. 양력 날짜는 어디에도 적지 않는다.
-  it('1873 이어는 화재 당일이 아니라 열흘 뒤다', () => {
-    const m = beatsOf(a).find(b => b.kind === 'move' && b.year === 1873)
-    expect(m.lunarDate).toBe('고종 10년 음력 12월 20일')
-    expect(m.sillok).toContain('열흘')
-  })
 
   // 1875 환어는 이 게임 전체에서 조작권이 A로 오르는 유일한 이어다.
-  it('1875 환어는 음력 5월 27일이고, 이 막에서 조작권이 A 로 오르는 유일한 이어다', () => {
-    const m = beatsOf(a).find(b => b.kind === 'move' && b.year === 1875)
-    expect(m.lunarDate).toBe('고종 12년 음력 5월 27일')
-    const risingMoves = beatsOf(a).filter(b => b.kind === 'move' && b.control === 'A')
-    expect(risingMoves).toHaveLength(1)
-    expect(risingMoves[0].year).toBe(1875)
-  })
 })
 
 // [R75] 양력이 확정된 것은 1884년뿐이다. 1868·1873·1875·1877 네 이어는 실록이
@@ -338,13 +249,22 @@ describe('3막 「친정」', () => {
 // 갖지 않는다 — 오늘은 그렇다. 이 시험이 없으면 나중에 「그럴듯해 보여서」 넷
 // 중 하나에 solarDate 를 조용히 지어 붙여도 아무것도 울지 않는다.
 describe('양력이 확정된 것은 1884년뿐이다 (R75)', () => {
-  const LUNAR_ONLY_MOVE_IDS = ['move-1868', 'move-1873', 'move-1875', 'move-1877']
+  // 1873·1875·1877 이어를 화면에서 걷어 낸 뒤(2026-09-26) 음력만 남은 이어는 하나다.
+  const LUNAR_ONLY_MOVE_IDS = ['move-1868']
 
-  it('네 이어(1868·1873·1875·1877)가 모두 있고, 그 넷만 solarDate 를 갖지 않는다', () => {
+  it('그 이어에는 양력 날짜가 없다 — 그럴듯하다고 지어 붙이지 않는다', () => {
     const moves = ACTS.flatMap(a => beatsOf(a)).filter(b => b.kind === 'move')
-    const found = moves.filter(b => LUNAR_ONLY_MOVE_IDS.includes(b.id))
-    expect(found.map(b => b.id).sort()).toEqual([...LUNAR_ONLY_MOVE_IDS].sort())
-    for (const b of found) expect(b.solarDate, b.id).toBeUndefined()
+    for (const id of LUNAR_ONLY_MOVE_IDS) {
+      const m = moves.find(b => b.id === id)
+      expect(m, id).toBeTruthy()
+      expect(m.solarDate, id).toBeUndefined()
+      expect(m.lunarDate, id).toBeTruthy()
+    }
+  })
+
+  it('양력을 단 이어는 1884년 것뿐이다', () => {
+    const withSolar = ACTS.flatMap(a => beatsOf(a)).filter(b => b.kind === 'move' && b.solarDate)
+    expect(withSolar.every(b => b.year === 1884), withSolar.map(b => b.id).join(',')).toBe(true)
   })
 })
 
@@ -380,9 +300,9 @@ describe('막 전체를 가로지르는 규칙', () => {
   // 3막 자경전 화재(C1) · 4막 난군의 밤(C2) · 5막 정변 사흘째 밤(C3) 셋이다.
   // 셋뿐이라는 것을 못 박아 둔다 — 촉박이 조용히 늘면 게임이 기다림이 아니라
   // 재촉으로 기운다(설계서 5장 C).
-  it('다섯 막을 다 합쳐 촉박은 세 번이다', () => {
+  it('다섯 막을 다 합쳐 촉박은 두 번이다 — 1882 난군과 1884 청군', () => {
     const rushes = ACTS.flatMap(a => beatsOf(a)).filter(b => b.kind === 'rush')
-    expect(rushes.map(b => b.id)).toEqual(['jagyeong-fire', 'imo-rush', 'gapsin-rush'])
+    expect(rushes.map(b => b.id)).toEqual(['imo-rush', 'gapsin-rush'])
   })
 })
 
@@ -790,18 +710,27 @@ describe('다섯 막이 이어진다', () => {
 
   // 화재 변형(gyeongbok_jagyeong 등)은 같은 집이므로 baseOf 로 견준다.
   // 여기가 어긋나면 학생이 잠든 곳과 눈뜬 곳이 달라진다 — 이어 화면 없이 순간이동한 셈이다.
-  it('막이 넘어갈 때 궁이 이어진다 — 끝난 그 집에서 다음 막이 시작한다', () => {
+  it('막이 넘어갈 때 궁이 이어진다 — 줄인 이어 한 자리만 빼고', () => {
+    // 3막 끝은 경복궁인데 4막은 창덕궁에서 연다. 그 사이에 실제로 있었던 이어
+    // (1876년 경복궁 대화재 뒤 창덕궁으로)를 화면에서 줄였기 때문이다 — 줄였다는
+    // 사실은 3막 끝 화면이 학생에게 그대로 말한다(위 「줄인 이어를 학생에게 밝힌다」).
+    const compressed = new Set(['chinjeong→imo'])
     for (let i = 0; i + 1 < ACTS.length; i++) {
+      const key = `${ACTS[i].id}→${ACTS[i + 1].id}`
       const endPalace = palaceTimeline(ACTS[i]).at(-1)
       const nextStart = ACTS[i + 1].palace
-      expect(baseOf(nextStart), `${ACTS[i].id} → ${ACTS[i + 1].id}`).toBe(baseOf(endPalace))
+      if (compressed.has(key)) {
+        expect(baseOf(nextStart), key).not.toBe(baseOf(endPalace))
+        continue
+      }
+      expect(baseOf(nextStart), key).toBe(baseOf(endPalace))
     }
   })
 
-  it('촉박은 통틀어 세 번뿐이고, 불이 붙는 것은 그중 하나다 — 자경전', () => {
+  it('촉박은 통틀어 두 번뿐이고, 불길을 뚫고 달리는 장면은 없다', () => {
     const rushes = ACTS.flatMap(a => beatsOf(a).filter(b => b.kind === 'rush'))
-    expect(rushes).toHaveLength(3)
-    expect(rushes.filter(r => r.fire === true).map(r => r.id)).toEqual(['jagyeong-fire'])
+    expect(rushes).toHaveLength(2)
+    expect(rushes.filter(r => r.fire === true)).toHaveLength(0)
   })
 
   it('친필은 두 번뿐이다 — F1 척화비 · F2 日使來衛 (F3 는 4단계 엔딩)', () => {
@@ -925,50 +854,24 @@ it('1막 알현 — 발 뒤의 조 대비가 먼저 말하고, 김좌근이 물�
   expect(a.visitors.some(v => v.npc === 'kimjwageun')).toBe(true)
 })
 
-describe('2막 — 고종의 사사로운 삶', () => {
-  const beats = beatsOf(ACTS[1])
-  const ids = beats.map(b => b.id)
-  it('시간 순서로 끼운다 — 박해 → 철렴 → 가례 → 병인양요 → 완화군 → 경복궁 → 신미양요 → 척화비 → 원자', () => {
-    const order = ['byeongin-audience', 'cheolryeom', 'garye-note', 'garye-audience', 'day-changdeok',
-      'oegyujanggak-plunder', 'wanhwa', 'wanhwa-rumor', 'move-1868-out', 'move-1868',
-      'sinmi-dispatch', 'cheokhwabi-brush', 'wonja', 'wonja-rumor', 'end']
-    const at = order.map(id => ids.indexOf(id))
-    expect(at.every(i => i >= 0), JSON.stringify(at)).toBe(true)
-    expect([...at].sort((a, b) => a - b)).toEqual(at)
-  })
-  it('소문은 제 비트에 따로 선다', () => {
-    for (const id of ['wanhwa-rumor', 'wonja-rumor']) expect(beats.find(b => b.id === id).grade).toBe('rumor')
-  })
-  it('원자의 날짜는 실록대로다', () => {
-    const w = beats.find(b => b.id === 'wonja')
-    expect(w.origin).toContain('고종실록')
-    expect(w.lines.join(' ')).toContain('11월 4일')
-    expect(w.lines.join(' ')).toContain('11월 8일')
-  })
-})
+// 2026-09-26 — 「2막 — 고종의 사사로운 삶」 블록이 여기 있었다. 완화군 출생(1868)·
+// 원자의 죽음(1871)과 그 두 소문 화면을 선생님이 걷어 내라 하셨다(「교과서에 없는
+// 것들」). 그 화면들을 지켰던 검사도 함께 간다 — 지켜야 할 대상이 없는 검사는
+// 다음 사람에게 「있었던 것」을 있다고 거짓말한다.
 
-it('3막 — 아버지가 물러간 자리를 고종이 말하고, 원자(순종)가 산다', () => {
+it('3막 — 아버지가 물러간 자리를 고종이 스스로 말한다', () => {
   const beats = beatsOf(ACTS[2])
   expect(beats.find(b => b.id === 'doors-open').lines.join(' ')).toContain('처음으로 아무도 곁에 서 있지 않다')
-  const s = beats.find(b => b.id === 'sunjong')
-  expect(s.lines.join(' ')).toContain('이번 아이는 살았다')
-  expect(beats.indexOf(s)).toBeGreaterThan(beats.findIndex(b => b.id === 'move-1873'))
-  expect(beats.indexOf(s)).toBeLessThan(beats.findIndex(b => b.id === 'move-1875'))
 })
 
 describe('4·5막 보강 — 난 전의 집안, 정변 전의 믿음', () => {
   const imo = beatsOf(ACTS[3]).map(b => b.id), gap = beatsOf(ACTS[4]).map(b => b.id)
-  it('4막: 완화군의 죽음 → 이재선 → 세자 가례가 난보다 먼저, 아버지의 귀환이 대원군 집권 글 앞, 왕비 환궁이 제물포 뒤', () => {
+  // 완화군의 죽음(1880)·이재선의 옥사(1881)·세자 가례를 걷어 냈다(2026-09-26).
+  // 남은 순서만 붙든다 — 아버지의 귀환이 대원군 집권 글 앞, 왕비 환궁이 제물포 뒤.
+  it('4막: 아버지의 귀환이 대원군 집권 글 앞, 왕비 환궁이 제물포 뒤', () => {
     const at = id => imo.indexOf(id)
-    expect(at('wanhwa-death')).toBeGreaterThan(at('imo-open'))
-    expect(at('wanhwa-death')).toBeLessThan(at('jaeseon'))
-    expect(at('jaeseon')).toBeLessThan(at('seja-garye'))
-    expect(at('seja-garye')).toBeLessThan(at('imo-rush'))
     expect(at('imo-father-returns')).toBe(at('imo-daewongun') - 1)
     expect(at('queen-return')).toBe(at('imo-jemulpo') + 1)
-  })
-  it('이재선 사사는 실록 날짜를 댄다', () => {
-    expect(beatsOf(ACTS[3]).find(b => b.id === 'jaeseon').origin).toContain('10월 27일')
   })
   it('5막: 김옥균의 알현으로 열고, 그의 끝을 닫기 전에 적는다 — 알현은 한쪽 회고라 재구성이다', () => {
     expect(gap[0]).toBe('kimokgyun-audience')

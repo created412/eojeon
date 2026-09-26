@@ -2,7 +2,7 @@
 // 이 모듈은 게임이 돌 때 쓰이지 않는다 — 테스트가 두 경로를 실제로 걸어가 비교하는 데 쓴다.
 // 그래서 4막 데이터를 누가 나중에 고쳐 실패가 역사를 바꾸게 만들면 그 자리에서 빨개진다.
 import { beatsOf, beatAt, enterAct, applyBeat, advance, isActOver, isBeatActive, applyGrant } from './scenario.js'
-import { plunder, survive } from './codex.js'
+import { plunder } from './codex.js'
 import { recordLoss } from './loss-log.js'
 
 // 상태에서 「역사에 해당하는 것」만 뽑는다. 여기 없는 것(flags·decisions·beatIndex·room·blocked)은
@@ -38,11 +38,9 @@ export function knowledgeDiff(a, b) {
 //    남기므로 여기서는 state.moves 가 늘 비어 있고, 그래서 historyOf 의 moves 비교는
 //    두 경로 모두 빈 배열끼리 견주는 셈이다. 대신 palace 가 비트마다 그대로 옮겨 가므로
 //    「어디에 서서 막을 나오는가」는 정확히 견준다 — 테스트가 그 값을 직접 단정한다.
-// ⚠ kind: 'plunder'/'salvage' 는 main.js 의 playPlunder()/playSalvage() 가 하는 그대로,
-//    codex.js(잠금)의 plunder()/survive() 와 loss-log.js 의 recordLoss() 를 직접 불러
+// ⚠ kind: 'plunder' 는 main.js 의 playPlunder() 가 하는 그대로,
+//    codex.js(잠금)의 plunder() 와 loss-log.js 의 recordLoss() 를 직접 불러
 //    흉내 낸다 — 규칙을 여기 다시 적으면(예: "가진 것만 잃는다") main.js 가 바뀔 때
-//    말없이 어긋난다. salvage 는 학생이 무엇을 들고 나갈지 화면에서 고르는 장면이라
-//    dryRun 에는 그 화면이 없다 — 가진 것을 통째로 survive() 에 넘겨 codex.js 자신이
 //    정한 상한(MAX_SURVIVORS)만큼만 남게 하고, 사라진 나머지를 doomed 로 셈한다.
 export function dryRun(act, state, actIndex = 0) {
   let s = enterAct(state, act, actIndex)
@@ -66,13 +64,6 @@ export function dryRun(act, state, actIndex = 0) {
         const taken = (beat.cardIds ?? []).filter(id => s.sources.held.includes(id))
         s = plunder(s, taken)
         s = recordLoss(s, taken, 'plunder')
-      } else if (beat.kind === 'salvage') {
-        // playSalvage() 와 같은 계산: doomed 는 survive() 를 부른 "결과"에서 거꾸로 셈한다 —
-        // MAX_SURVIVORS 를 여기서 다시 알 필요가 없다.
-        const before = s.sources.held
-        s = survive(s, before)
-        const doomed = before.filter(id => !s.sources.held.includes(id))
-        s = recordLoss(s, doomed, 'fire')
       }
       played.push(beat.id)
       if (beat.historical === true) historical.push(beat.id)
@@ -95,9 +86,9 @@ export function dryRun(act, state, actIndex = 0) {
 const GUARDED_FIELDS = ['palace', 'control', 'grantCard', 'cardIds', 'visitors']
 
 // 이 kind 들은 필드 하나가 아니라 kind 자체가 historyOf() 의 sources 를 바꾼다
-// (codex.js 의 plunder()/survive() 를 통해서 — 위 dryRun 이 흉내 내는 바로 그 효과다).
+// (codex.js 의 plunder() 를 통해서 — 위 dryRun 이 흉내 내는 바로 그 효과다).
 // 새 kind 를 추가할 때 그것이 held/read/lost 를 건드리면 여기도 같이 늘려야 한다.
-const MUTATING_KINDS = ['plunder', 'salvage']
+const MUTATING_KINDS = ['plunder']
 
 export function unsafeConditionalBeats(act) {
   const out = []

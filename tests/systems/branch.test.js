@@ -110,10 +110,6 @@ describe('조건부 plunder — 어느 문서가 살아남았는지도 역사다
     expect(bad.every(b => b.id === 'loot')).toBe(true)
   })
 
-  it('조건부 salvage 도 마찬가지로 잡는다', () => {
-    const bad = { ...act, beats: [{ id: 's', kind: 'salvage', whenFlag: 'p' }] }
-    expect(unsafeConditionalBeats(bad)).toEqual([{ id: 's', field: 'kind' }])
-  })
 })
 
 describe('국상(edict) 비트 — 두 경로 모두 지나가야 한다 (설계서 7.6 · Task 9)', () => {

@@ -17,7 +17,6 @@
 import { ACTS } from '../../src/data/acts.js'
 import { beatAt, isActOver, applyBeat, advance, enterAct, isBeatActive, applyGrant } from '../../src/systems/scenario.js'
 import { plunder } from '../../src/systems/codex.js'
-import { recordPreservation } from '../../src/systems/preservation.js'
 import { recordLoss } from '../../src/systems/loss-log.js'
 import { relocate } from '../../src/systems/relocate.js'
 import { advancePrices } from '../../src/systems/prices.js'
@@ -29,7 +28,7 @@ import { serialize, deserialize } from '../../src/core/state.js'
 export const MIRRORED_KINDS = new Set([
   'note', 'explore', 'dispatch',                                       // 상태에 남기는 것이 없다
   'audience', 'procession',                                             // 알현·행렬 — 문서는 applyGrant 가 준다(아래 공통 경로)
-  'council', 'orders', 'plunder', 'salvage', 'brush', 'move', 'rush',   // 1~3단계
+  'council', 'orders', 'plunder', 'brush', 'move', 'rush',   // 1~3단계
   'hold', 'edict', 'escape', 'outing',                                  // 3단계가 더한 것
 ])
 
@@ -54,12 +53,6 @@ export function firstChoiceDecider(beat, state, caught = true) {
       const taken = (beat.cardIds ?? []).filter(id => state.sources.held.includes(id))
       return recordLoss(plunder(state, taken), taken, 'plunder')
     }
-    case 'salvage': {
-      const picked = (beat.treasures ?? []).slice(0, beat.pick ?? 2).map(t => t.id)
-      return recordPreservation(state, beat.id, { selected: picked, reason: '명령을 증명하는 도장이 먼저다.' }, (beat.treasures ?? []).map(t => t.id))
-    }
-    // 친필은 상태에 남기는 것이 없다 — 카드를 쥐여 주는 것은 종류와 무관하게
-    // runAct 가 applyGrant() 로 한다(main.js 의 playBeat 이 그 자리에 있다).
     case 'brush':
       return state
     case 'move':

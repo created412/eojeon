@@ -32,7 +32,7 @@ const SEED_HELD = {
 describe('CRITICAL 1 — advance() 뒤에 저장하면 이어하기가 끝난 비트를 다시 돌리지 않는다', () => {
   for (const act of ACTS) {
     const decisionBearing = beatsOf(act).filter(b =>
-      ['council', 'orders', 'plunder', 'salvage', 'brush'].includes(b.kind))
+      ['council', 'orders', 'plunder', 'brush'].includes(b.kind))
 
     for (const stopBeat of decisionBearing) {
       it(`${act.id}/${stopBeat.id} 직후 "저장"했다가 이어하면 이 비트가 한 번만 돈다`, () => {

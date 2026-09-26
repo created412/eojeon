@@ -80,11 +80,6 @@ const CLAIMS = [
     from: 'act:yangyo', to: 'act:imo',
   },
   {
-    where: '스스로 정해 돌아간 집이',
-    note: '3막 끝 — 스스로 정해 환어한 해(move-1875)에서 대화재(great-fire, 1876)까지',
-    from: 'beat:move-1875', to: 'beat:great-fire',
-  },
-  {
     where: '오십만 원을',
     note: '제물포 조약 배상금을 나누어 무는 기간이다 — 두 해 사이의 간격이 아니다',
     kind: 'duration',

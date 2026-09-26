@@ -33,7 +33,6 @@ import { createSpeak } from './ui/speak.js'
 import { createVoicePlayer } from './systems/voice.js'
 import { BGM } from './data/bgm-data.js'
 import { createBgm, bgmForBeat } from './systems/bgm.js'
-import { recordPreservation } from './systems/preservation.js'
 import { INQUIRIES, clozeBlanks } from './data/inquiries.js'
 import { installPaperVars } from './ui/paper-css.js'
 import { createCouncil } from './ui/council-ui.js'
@@ -43,7 +42,6 @@ import { createNoteScreen } from './ui/note-screen.js'
 import { createMoveScreen } from './ui/move-screen.js'
 import { createDispatchMap } from './ui/dispatch-map.js'
 import { createLossScreen } from './ui/loss-screen.js'
-import { createSalvage } from './ui/salvage.js'
 import { createOrders } from './ui/orders-ui.js'
 import { createBrush } from './ui/brush.js'
 import { createEscape } from './ui/escape-screen.js'
@@ -337,11 +335,6 @@ export function buildRecordText(state, acts) {
       `해설과 비교 — ${record.compared ? '비교함' : '아직 비교하지 않음'}`,
       ...(record.revision ? [`보완한 생각 — ${record.revision}`] : []),
     ]),
-    ...Object.values(state.preservation ?? {}).flatMap(record => [
-      '', '[경복궁 대화재] 무엇을 먼저 꺼내라 했는가',
-      `꺼내라 한 것 — ${record.selected.map(id => ACTS.flatMap(a => a.beats).flatMap(b => b.treasures ?? []).find(t => t.id === id)?.name ?? id).join(' / ')}`,
-      `그 이유 — ${record.reason}`,
-    ]),
     '',
     `읽은 문서 ${readIds.length}장 — ${readTitles.length ? readTitles.join(', ') : '(없음)'}`,
   ].join('\n')
@@ -526,7 +519,6 @@ export function boot(root) {
   const moveScreen = createMoveScreen(root)
   const dispatchMap = createDispatchMap(root)
   const lossScreen = createLossScreen(root)
-  const salvage = createSalvage(root)
   const orders = createOrders(root)
   const brush = createBrush(root)
   const escape = createEscape(root)
@@ -1491,33 +1483,6 @@ export function boot(root) {
     return flow.state
   }
 
-  // 1876 대화재 — 실록이 적은 소실물 가운데 무엇을 먼저 꺼내라 할지 고르고, 실제와 견준다(ui/salvage.js).
-  async function playSalvage(beat) {
-    flow.setPhase('beat')
-    hint.hidden = true
-    const result = await salvage.open({
-      title: beat.title,
-      lines: beat.lines,
-      asker: beat.asker ?? null,   // 무엇을 먼저 꺼낼지 여쭙는 사람(사관)
-      treasures: beat.treasures ?? [],
-      pick: beat.pick,
-      question: beat.question,
-      actual: beat.actual,
-      footer: beat.footer,
-      origin: beat.origin,
-      initial: flow.state.preservation?.[beat.id],
-      onSave: record => {
-        const allowedIds = (beat.treasures ?? []).map(t => t.id)
-        flow.state = recordPreservation(flow.state, beat.id, record, allowedIds)
-        const checkpoint = loadGame()
-        return checkpoint ? saveGame({ ...checkpoint, preservation: flow.state.preservation }) : false
-      },
-    })
-
-    flow.state = recordPreservation(flow.state, beat.id, result, (beat.treasures ?? []).map(t => t.id))
-    // 상태 저장은 기존과 같이 비트가 끝난 뒤 runBeats()에서 한다.
-    return flow.state
-  }
 
   // 친필 비트(F1) — 양이침범은 제시하고 나머지 여덟 글자를 직접 따라 쓴다. 실패할 수 없는 장면이라
   // 다 쓰면 그 카드를 자기 손으로 읽은 것으로 친다 — 지급 자체는 여기서 하지 않는다.
@@ -1784,7 +1749,6 @@ export function boot(root) {
       case 'move':    return await playMove(beat)
       case 'dispatch': return await playDispatch(beat)
       case 'plunder': return await playPlunder(beat)
-      case 'salvage': return await playSalvage(beat)
       case 'orders':  return await playOrders(beat)
       case 'brush':   return await playBrush(beat)
       case 'rush':    return await playRush(beat)
