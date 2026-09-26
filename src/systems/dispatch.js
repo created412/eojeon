@@ -47,8 +47,10 @@ export function lagLabelAt(list, day) {
 // 남는다 — 「장계만 보고는 알 수 없었다」.
 //
 // ⚠ 셈은 전부 정수 며칠이다. 이 파일에 시각은 없다(맨 위 주석).
-// ⚠ 채점하지 않는다. 아래 함수들은 「맞다/틀리다」가 아니라 「같은 순서였나」를
-//    돌려준다 — 화면이 점수를 매기는 순간 이 장면은 역사 수업이 아니라 퀴즈가 된다.
+// ⚠ 점수를 매기지 않는다. 아래 함수들은 「몇 점인가」가 아니라 「같은 순서였나」를
+//    돌려준다. 다만 2026-09-26 선생님의 지시로 **제대로 놓기 전에는 넘어가지 않는다**
+//    — 아래 「제대로 놓을 때까지」 묶음이 그 일을 맡는다. 붙잡아 두는 것과 벌하는
+//    것은 다르다: 붙잡되, 갈수록 더 말해 준다.
 // ⚠ 순서는 id 로 견주지 않고 보낸 날의 차례로 견준다. 같은 날 보낸 장계가 둘이면
 //    둘 사이의 앞뒤는 애초에 정해지지 않았으므로, 어느 쪽을 앞에 놓아도 「순서대로」다.
 
@@ -100,6 +102,94 @@ export function arrivalMatchesHappened(list, day) {
   return isInHappenedOrder(list, arrivalOrder(list, day).map(d => d.id))
 }
 
+// ── 제대로 놓을 때까지 넘어가지 않는다 ────────────────────────────────────
+// 2026-09-26 선생님: 「장계의 순서를 정하는거도 틀린지도 모르겠어. 제대로 놓기
+// 전까지는 안넘어가야해.」 어제까지 이 자리는 어떤 순서든 받아 주고 곧바로 설명으로
+// 넘어갔다 — 「채점하지 않는다」를 지키려던 설계였지만, 그 대가로 학생은 아무것도
+// 풀지 않아도 되었다. 선생님이 그 설계를 물리셨다.
+//
+// 그래서 바뀌는 것과 바뀌지 않는 것을 갈라 적는다.
+//   바뀐다 : 어긋난 채로는 다음 화면이 오지 않는다. 다시 놓아 보게 한다.
+//   안 바뀐다 : 벌하지 않는다. 세지 않는다. 「오답」이라는 말도, 점수도 없다.
+//              말해 주는 것이 갈수록 늘어날 뿐이다.
+//
+// 그리고 이 물음은 **읽으면 풀린다**. 장계 본문이 일의 앞뒤를 이미 적고 있기
+// 때문이다 — 「포를 쏘았다」가 있고 나서야 「올라와 사람을 죽이고 빼앗아 갔다」가
+// 있을 수 있다. 그래서 힌트는 답을 주기 전에 먼저 「다시 읽어 보라」고 한다.
+//
+// ⚠ 손대는 말 하나하나가 학생에게 가는 말이다. 「틀렸다·오답·실패·몇 번째」는
+//    한 글자도 쓰지 않는다. 물음이 성립하는 자리인지를 정하는 shouldOfferOrdering
+//    은 건드리지 않았다(닿은 것 둘 이상 · 보낸 날이 서로 다른 것 둘 이상).
+
+// 놓인 줄에서 앞뒤가 뒤집힌 첫 이웃 한 쌍. isInHappenedOrder 와 같은 눈으로 본다 —
+// 거기서도 견주는 것은 바로 앞 장계뿐이라, 걸리는 자리가 언제나 같다.
+export function firstOutOfOrderPair(list, placedIds) {
+  const byId = new Map((list ?? []).map(d => [d.id, d]))
+  const ids = placedIds ?? []
+  for (let i = 0; i + 1 < ids.length; i++) {
+    const a = byId.get(ids[i])
+    const b = byId.get(ids[i + 1])
+    if (!a || !b) return null
+    if (b.sentDay < a.sentDay) return [a, b]
+  }
+  return null
+}
+
+// 가장 먼저 일어난 장계들. 「들」인 까닭은 같은 날 떠난 것이 둘일 수 있어서다 —
+// 그때는 앞뒤가 애초에 정해져 있지 않으므로 하나를 골라 답이라고 말하지 않는다.
+export function earliestHappened(list, day) {
+  const arrived = arrivedAt(list, day)
+  if (arrived.length === 0) return []
+  const first = Math.min(...arrived.map(d => d.sentDay))
+  return happenedOrder(list, day).filter(d => d.sentDay === first)
+}
+
+// 몇 번째 말까지 갈 것인가. 1·2·3 뿐이고 그 위로는 더 오르지 않는다 —
+// 세 번째부터는 언제나 같은 말을 한다. 학생이 몇 번을 다시 놓든 잃는 것이 없다.
+export function orderingHintLevel(tries) {
+  const n = Math.trunc(Number(tries) || 0)
+  if (n <= 1) return 1
+  return n >= 3 ? 3 : 2
+}
+
+// 장계를 가리키는 이름. 화면에서 학생이 붙들고 있는 것은 지명이므로 그것을 먼저
+// 쓰되, 같은 지명이 둘이면 표제로 가리킨다(「강화 앞바다」와 「강화부」처럼 갈리지
+// 않는 판이 언제 생길지 모른다).
+function labelsOf(a, b) {
+  if (a.placeName && b.placeName && a.placeName !== b.placeName) return [a.placeName, b.placeName]
+  return [a.headline ?? a.placeName ?? '', b.headline ?? b.placeName ?? '']
+}
+
+// 어긋났을 때 건네는 한 줄. 갈수록 더 말해 준다 — 나무라지 않고.
+export function orderingHint(list, day, placedIds, tries) {
+  const level = orderingHintLevel(tries)
+  if (level === 1) {
+    return { level, text: '아직 아니다 — 장계에 적힌 일이 서로 어떤 차례로 이어지는지 다시 읽어 보라.' }
+  }
+  if (level === 2) {
+    const pair = firstOutOfOrderPair(list, placedIds)
+    if (pair) {
+      const [x, y] = labelsOf(pair[0], pair[1])
+      return { level, text:
+        `「${x}」 장계와 「${y}」 장계, 이 둘을 나란히 두고 다시 읽어 보라. ` +
+        '한쪽에 적힌 일은 다른 쪽에 적힌 일이 있고 나서야 일어날 수 있는 일이다.' }
+    }
+    return { level, text: '아직 아니다 — 어느 일이 있고 나서야 다른 일이 있을 수 있었는지, 장계 본문을 다시 읽어 보라.' }
+  }
+  const first = earliestHappened(list, day)
+  if (first.length === 0) {
+    return { level, text: '아직 아니다 — 장계 본문을 다시 읽어 보라.' }
+  }
+  if (first.length === 1) {
+    const name = first[0].placeName || first[0].headline
+    return { level, text: `가장 먼저 일어난 일은 「${name}」 장계에 적힌 일이다. 그것을 맨 위에 두고, 나머지는 마저 놓아 보라.` }
+  }
+  const names = first.map(d => `「${d.placeName || d.headline}」`).join('나 ')
+  return { level, text:
+    `가장 먼저 일어난 일은 ${names} 장계에 적힌 일이다 — 둘은 같은 날 떠났으니 어느 쪽이 위여도 좋다. ` +
+    '그것을 맨 위에 두고, 나머지는 마저 놓아 보라.' }
+}
+
 // 아직 오지 않은 장계 가운데, 이미 닿은 장계보다 먼저(또는 같은 날) 보낸 것의 수.
 // 1866년 3일째가 그렇다 — 평양 장계는 강화 첫 장계와 같은 날 떠났는데 아직 없다.
 export function pendingOlderThanArrived(list, day) {
@@ -120,6 +210,11 @@ export function travelLabel(d) {
 
 // 놓아 본 뒤에 나가는 판정. 네 갈래를 다 적는다 — 어느 갈래에서도 「오답」이라는
 // 말이 나오지 않는다. 못 짚었을 때 설명하는 것은 학생이 아니라 거리다.
+//
+// 2026-09-26 이후로 화면은 제대로 놓은 뒤에만 이것을 부른다(placedRight 가 참인
+// 두 갈래만 실제로 학생에게 간다). 네 갈래를 그대로 남겨 두는 까닭은, 이 함수가
+// 판정하는 것이 「학생이 어떠했나」가 아니라 「이번 판이 어떠했나」이기 때문이다 —
+// 닿은 순서가 그대로였던 날과 갈린 날은 끝까지 다르게 말해야 한다.
 export function orderingVerdict(list, day, placedIds) {
   const truth = happenedOrder(list, day)
   const arrival = arrivalOrder(list, day)

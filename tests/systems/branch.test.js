@@ -187,6 +187,6 @@ describe('조건 비트가 궁·조작권·낮을 건드리면 잡아낸다', ()
         { id: 'd', kind: 'explore', whenFlag: 'p', dayUnits: 6 },
       ],
     }
-    expect(unsafeConditionalBeats(bad).map(b => b.field).sort()).toEqual(['control', 'dayUnits'])
+    expect(unsafeConditionalBeats(bad).map(b => b.field).sort()).toEqual(['control'])
   })
 })

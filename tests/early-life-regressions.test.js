@@ -103,20 +103,22 @@ it('문으로 알현을 나간 뒤 회의는 어좌 앞으로 돌아와 열린�
   expect(env.flow.state.room).toBe('injeongjeon')
 })
 
-it('free 낮은 남은 아룀이 0인 저장을 이어받아도 저절로 끝나지 않는다', () => {
+// 2026-09-26 — 해가 저절로 지는 일이 없어졌다(core/clock.js). 낮을 끝내는 것은
+// 남은 칸이 아니라 **남은 일**이고, 그 판정은 나가는 방에서 E 를 누를 때만 돈다.
+// 그래서 프레임이 낮을 저 혼자 닫아 버리지 않는다는 것을 여기서 붙든다.
+it('프레임은 낮을 저 혼자 닫지 않는다 — 나가는 것은 학생의 E 다', () => {
   const env = environment()
   env.flow.phase = 'day'
-  env.flow.state.dayLeft = 0
   runBlock("if (flow.phase === 'day' || flow.phase === 'rush')", env)
   expect(env.resolveExplore).not.toHaveBeenCalled()
   env.activeBeat.free = false
   runBlock("if (flow.phase === 'day' || flow.phase === 'rush')", env)
-  expect(env.resolveExplore).toHaveBeenCalledOnce()
+  expect(env.resolveExplore).not.toHaveBeenCalled()
 })
 
-it.each(['dialog', 'speak', 'hubBusy'])('%s 중에는 마지막 해 칸을 썼어도 다음 사건이 덮어쓰지 않는다', name => {
+it.each(['dialog', 'speak', 'hubBusy'])('%s 중에도 프레임이 낮을 닫지 않는다', name => {
   const env = environment()
-  env.flow.phase = 'day'; env.flow.state.dayLeft = 0; env.activeBeat.free = false
+  env.flow.phase = 'day'; env.activeBeat.free = false
   if (name === 'hubBusy') env.hubBusy = true
   else env[name].isOpen = () => true
   runBlock("if (flow.phase === 'day' || flow.phase === 'rush')", env)

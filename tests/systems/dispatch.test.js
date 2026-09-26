@@ -3,7 +3,7 @@ import {
   arrivalDay, arrivedAt, pendingAt, latestAt, lagDaysAt, lagLabelAt,
   arrivalOrder, happenedOrder, shouldOfferOrdering, isInHappenedOrder,
   arrivalMatchesHappened, pendingOlderThanArrived, happenedLabel, travelLabel,
-  orderingVerdict,
+  orderingVerdict, firstOutOfOrderPair, earliestHappened, orderingHintLevel, orderingHint,
 } from '../../src/systems/dispatch.js'
 import { ACTS } from '../../src/data/acts.js'
 import { beatsOf } from '../../src/systems/scenario.js'
@@ -234,6 +234,124 @@ describe('놓아 본 뒤 — 채점하지 않는다', () => {
     const v = orderingVerdict(GANGHWA_1866, 2, ['gapgot', 'fleet-up'])
     expect(v.lines.join(' ')).toContain('아직 오지 않은 장계')
     expect(v.lines.join(' ')).toContain('1통')
+  })
+})
+
+// ── 제대로 놓기 전에는 넘어가지 않는다 ─────────────────────────────────────
+// 2026-09-26 선생님: 「장계의 순서를 정하는거도 틀린지도 모르겠어. 제대로 놓기
+// 전까지는 안넘어가야해.」 이 묶음이 붙드는 것은 셋이다.
+//   ① 어긋난 줄은 통과하지 못하고, 순서대로인 줄은 통과한다(같은 날은 어느 쪽이든).
+//   ② 갈수록 더 말해 준다 — 그러나 답은 세 번째에야 나온다.
+//   ③ 붙잡되 벌하지 않는다 — 말 어디에도 「오답·점수·실패·몇 번째」가 없다.
+describe('어긋난 채로는 넘어가지 않는다', () => {
+  const crossed = [
+    { id: 'far',  placeName: '평양', sentDay: 0, lagDays: 6, headline: '먼 곳의 일' },
+    { id: 'near', placeName: '강화', sentDay: 3, lagDays: 1, headline: '가까운 곳의 일' },
+  ]
+
+  it('넘어갈지 말지를 정하는 것은 isInHappenedOrder 하나다 — 화면이 따로 셈하지 않는다', () => {
+    expect(isInHappenedOrder(crossed, ['far', 'near'])).toBe(true)
+    expect(isInHappenedOrder(crossed, ['near', 'far'])).toBe(false)
+  })
+
+  it('같은 날 떠난 둘은 어느 쪽이 위여도 넘어간다 — 없는 앞뒤를 요구하지 않는다', () => {
+    const sameDay = [
+      { id: 'p', placeName: '평양', sentDay: 1, lagDays: 1, headline: '' },
+      { id: 'q', placeName: '동래', sentDay: 1, lagDays: 3, headline: '' },
+      { id: 'r', placeName: '강화', sentDay: 4, lagDays: 1, headline: '' },
+    ]
+    expect(isInHappenedOrder(sameDay, ['p', 'q', 'r'])).toBe(true)
+    expect(isInHappenedOrder(sameDay, ['q', 'p', 'r'])).toBe(true)
+    expect(isInHappenedOrder(sameDay, ['p', 'r', 'q'])).toBe(false)
+  })
+
+  it('어긋난 첫 이웃 한 쌍을 짚는다 — 넘어가지 못하게 한 바로 그 자리다', () => {
+    expect(firstOutOfOrderPair(crossed, ['near', 'far']).map(d => d.id)).toEqual(['near', 'far'])
+    expect(firstOutOfOrderPair(crossed, ['far', 'near'])).toBeNull()
+    const three = [
+      { id: 'a', placeName: '가', sentDay: 0, lagDays: 1, headline: '' },
+      { id: 'b', placeName: '나', sentDay: 2, lagDays: 1, headline: '' },
+      { id: 'c', placeName: '다', sentDay: 4, lagDays: 1, headline: '' },
+    ]
+    // 앞은 맞고 뒤가 뒤집힌 줄 — 걸리는 자리는 뒤의 한 쌍이다
+    expect(firstOutOfOrderPair(three, ['a', 'c', 'b']).map(d => d.id)).toEqual(['c', 'b'])
+    expect(firstOutOfOrderPair(three, ['a', 'b', 'c'])).toBeNull()
+  })
+
+  it('가장 먼저 일어난 장계를 고른다 — 같은 날이 둘이면 둘 다 내놓는다', () => {
+    expect(earliestHappened(crossed, 6).map(d => d.id)).toEqual(['far'])
+    expect(earliestHappened(list, 6).map(d => d.id).sort()).toEqual(['a', 'c'])
+    expect(earliestHappened([], 3)).toEqual([])
+  })
+
+  it('말의 단은 1·2·3 뿐이고 그 위로 오르지 않는다 — 오래 걸린다고 더 모질어지지 않는다', () => {
+    expect(orderingHintLevel(1)).toBe(1)
+    expect(orderingHintLevel(2)).toBe(2)
+    expect(orderingHintLevel(3)).toBe(3)
+    expect(orderingHintLevel(9)).toBe(3)
+    expect(orderingHintLevel(0)).toBe(1)
+  })
+
+  it('첫 단은 답이 아니라 「다시 읽어 보라」다', () => {
+    const h = orderingHint(crossed, 6, ['near', 'far'], 1)
+    expect(h.level).toBe(1)
+    expect(h.text).toContain('아직 아니다')
+    expect(h.text).toContain('다시 읽어')
+    // 어느 쪽이 먼저인지는 아직 말하지 않는다
+    expect(h.text).not.toContain('평양')
+    expect(h.text).not.toContain('강화')
+  })
+
+  it('둘째 단은 걸린 한 쌍만 짚고, 어느 쪽이 먼저인지는 말하지 않는다', () => {
+    const h = orderingHint(crossed, 6, ['near', 'far'], 2)
+    expect(h.level).toBe(2)
+    expect(h.text).toContain('평양')
+    expect(h.text).toContain('강화')
+    expect(h.text).toContain('나란히')
+    // 「평양이 먼저다」를 여기서 흘리지 않는다 — 답은 셋째 단의 몫이다
+    expect(h.text).not.toContain('맨 위')
+    expect(h.text).not.toContain('가장 먼저 일어난 일은')
+  })
+
+  it('셋째 단에서야 가장 먼저 일어난 장계를 이름으로 짚어 준다 — 나머지는 아직 학생 몫이다', () => {
+    const h = orderingHint(crossed, 6, ['near', 'far'], 3)
+    expect(h.level).toBe(3)
+    expect(h.text).toContain('「평양」')
+    expect(h.text).toContain('맨 위')
+    expect(h.text).toContain('나머지는 마저 놓아')
+    // 네 번째 다섯 번째에도 같은 말을 한다 — 더 밀어붙이지 않는다
+    expect(orderingHint(crossed, 6, ['near', 'far'], 7).text).toBe(h.text)
+  })
+
+  it('가장 먼저 일어난 것이 둘이면 둘을 다 대고, 어느 쪽이 위여도 좋다고 말해 준다', () => {
+    const h = orderingHint(list, 6, ['b', 'a', 'c'], 3)
+    expect(h.text).toContain('「강화도」')
+    expect(h.text).toContain('「평양」')
+    expect(h.text).toContain('어느 쪽이 위여도 좋다')
+  })
+
+  it('같은 지명이 둘이면 표제로 가리킨다 — 「강화도 장계와 강화도 장계」라고 하지 않는다', () => {
+    const twin = [
+      { id: 's', placeName: '강화도', sentDay: 0, lagDays: 1, headline: '물길을 재고 있다' },
+      { id: 't', placeName: '강화도', sentDay: 2, lagDays: 1, headline: '갑곶에 내렸다' },
+    ]
+    const h = orderingHint(twin, 3, ['t', 's'], 2)
+    expect(h.text).toContain('물길을 재고 있다')
+    expect(h.text).toContain('갑곶에 내렸다')
+  })
+
+  it('세 단 어디에도 학생을 벌하는 말이 없다 — 오답도, 점수도, 몇 번째도 없다', () => {
+    for (const tries of [1, 2, 3, 4, 12]) {
+      const { text } = orderingHint(crossed, 6, ['near', 'far'], tries)
+      expect(text, `${tries}번째`).not.toMatch(/오답|틀렸|틀린|점수|정답|실패|잘못|다시 한 번 더|번째|회|X|✗/)
+      expect(text.length, `${tries}번째`).toBeGreaterThan(10)
+    }
+  })
+
+  it('빈 판에서도 말이 끊기지 않는다 — 화면이 빈 줄을 내보내지 않게', () => {
+    for (const tries of [1, 2, 3]) {
+      expect(orderingHint([], 3, [], tries).text).toContain('아직 아니다')
+    }
   })
 })
 

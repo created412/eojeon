@@ -1,4 +1,3 @@
-import { DAY_UNITS } from './clock.js'
 export const CONTROL = { FREE: 'A', LIMITED: 'B', ESCORTED: 'C', LOST: 'D' }
 export const SAVE_KEY = 'eojeon.save.v1'
 // ACTS(src/data/acts.js)가 바뀔 때마다 이 값을 올린다 — beatIndex·actIndex 는
@@ -13,9 +12,16 @@ export const SAVE_KEY = 'eojeon.save.v1'
 // 아직 아무에게도 배포되지 않았고, 그래서 버려질 학생 기록이 세상에 하나도 없다.
 // 나중에 올리면 진짜 수업 기록이 사라진다.
 //
+// 3 → 4 (2026-09-26). 두 가지가 한꺼번에 바뀌었다.
+//   ① 하루의 셈(dayLeft)을 없앴다 — 저장의 모양이 달라졌다(core/clock.js).
+//   ② 2막에 비를 세우는 두 걸음을 끼웠다(cheokhwabi-order·cheokhwabi-place) —
+//      그 뒤의 beatIndex 가 통째로 밀린다. 옛 좌표는 엉뚱한 비트를 가리킨다.
+// 지금 올려도 버려질 기록은 선생님의 시험 판뿐이다. 수업이 시작된 뒤에 올리면
+// 그때는 진짜 학생의 기록이 사라진다.
+//
 // 못 읽는 저장을 만난 학생이 겪는 일은 main.js 의 STALE_SAVE_NOTICE 를 보라 —
 // 「이어서 하기」가 그냥 사라지면 학생은 자기가 뭔가 잘못한 줄 안다.
-const VERSION = 3
+const VERSION = 4
 
 export function createState() {
   return {
@@ -24,7 +30,6 @@ export function createState() {
     beatIndex: 0,
     palace: 'changdeok',
     control: CONTROL.ESCORTED,
-    dayLeft: DAY_UNITS,
     sources: { held: [], read: [], lost: [] },
     decisions: [],
     moves: [],

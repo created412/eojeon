@@ -72,7 +72,7 @@ export function hubOptions(state, act) {
   const held = new Set([...(state.sources?.held ?? []), ...(state.sources?.lost ?? [])])
   const candidates = HUB_REPORTS.filter(r => r.act === act.id && r.hub === hub.id).map(r => ({
     id: `beat:${r.beat}`, kind: 'report', label: r.label, room: r.room,
-    beat: reportView(act, r), cost: hub.free ? 0 : 1,
+    beat: reportView(act, r), cost: 0, main: true,
     done: !!legacySaw(state, act, r.beat),
   }))
   for (const npc of npcsAt(baseOf, state.palace, state.actIndex, hubYear(act, state.beatIndex))) {
@@ -82,7 +82,7 @@ export function hubOptions(state, act) {
     const room = roomAt(def, npc.x, npc.z)
     candidates.push({ id: `npc:${npc.id}`, kind: 'npc', label: `${npc.name}에게 말을 건다`,
       room: room?.id, point: { x: npc.x, z: npc.z }, npc,
-      cost: cards.length && !cards.every(id => held.has(id)) ? 1 : 0,
+      cost: 0,
       done: cards.length > 0 && cards.every(id => held.has(id)),
     })
   }
@@ -90,11 +90,11 @@ export function hubOptions(state, act) {
   for (const p of def.pickups ?? []) {
     if (handled.has(p.cardId) || (sourceById(p.cardId)?.act ?? 0) > state.actIndex + 1) continue
     candidates.push({ id: `card:${p.cardId}`, kind: 'card', label: `『${sourceById(p.cardId)?.title ?? p.cardId}』을 살펴본다`,
-      room: p.placeId, point: { x: p.x, z: p.z }, cardId: p.cardId, cost: 1, done: held.has(p.cardId) })
+      room: p.placeId, point: { x: p.x, z: p.z }, cardId: p.cardId, cost: 0, done: held.has(p.cardId) })
   }
   for (const stop of hub.stops ?? []) {
     candidates.push({ id: `stop:${stop.id}`, kind: 'stop', label: stop.label, room: stop.room,
-      stop, cost: 1, done: isStopDone(state, stop.id) })
+      stop, cost: 0, done: isStopDone(state, stop.id) })
   }
   return candidates.map(o => {
     const room = def.rooms.find(r => r.id === o.room)
@@ -103,7 +103,7 @@ export function hubOptions(state, act) {
     const done = o.done || log.done.some(d => d.id === o.id)
     return { ...o, point: o.point ?? (room ? { x: room.x, z: room.z } : null),
       place: room?.name ?? '마당', done, blocked,
-      disabled: log.closed || done || !!blocked || (o.cost > state.dayLeft && log.pending !== o.id) }
+      disabled: log.closed || done || !!blocked }
   })
 }
 
@@ -152,6 +152,30 @@ export async function performReport({ state, act, id, play, save = () => {} }) {
   return done
 }
 
+// **이 하루를 나갈 수 있는가.**
+//
+// 선생님(2026-09-26): 「메인 이벤트를 클리어하지 않으면 다음으로 안넘어가야하는데,
+// 지금은 그냥 잘 넘어가버려」 · 「해 칸 없애버리고 나머지 미션 수행하지 못하면
+// 못넘어가게 해야해」
+//
+// 예전에는 나가는 방에서 E 를 누르면 언제든 하루가 끝났다. 학생은 궁에 들어서자마자
+// 나가는 방으로 걸어가 1876년 최익현의 상소를 통째로 건너뛸 수 있었다 — 그것이
+// 이 수업의 내용인데도.
+//
+// 그래서 규칙이 하나다: **남은 일이 있으면 못 나간다.** 값을 치르는 일이 없어졌으므로
+// (core/clock.js) 못 하는 일도 없다 — 역사가 막은 자리(조작권·봉쇄)만 예외다.
+//
+// 돌려주는 것: 나갈 수 있으면 null, 아니면 { count, first, labels } — 화면이 무엇이
+// 몇 곳 남았는지 학생에게 말해 줄 수 있게(main.js 의 나가기 판정과 안내가 같은 값을 본다).
+export function exitBlock(state, act) {
+  const hub = hubAt(act, state.beatIndex)
+  if (!hub) return null
+  if (logOf(state, act, hub).closed) return null
+  const left = hubOptions(state, act).filter(o => !o.done && !o.blocked)
+  if (left.length === 0) return null
+  return { count: left.length, first: left[0], labels: left.map(o => o.label) }
+}
+
 export function closeHub(state, act) {
   const hub = hubAt(act, state.beatIndex)
   if (!hub) return state
@@ -159,7 +183,9 @@ export function closeHub(state, act) {
   if (log.closed || log.pending) return state
   const missed = hubOptions(state, act).filter(o => !o.done).map(o => ({
     id: o.id, label: o.label,
-    reason: o.blocked ?? (o.cost > state.dayLeft ? '해 칸을 다 씀' : '선택하지 않음'),
+    // 값이 사라진 뒤로 「해 칸을 다 씀」은 없다. 남는 것은 역사가 막은 자리뿐이다
+    // (조작권·봉쇄). 그 밖의 것은 나가기 전에 다 하게 되어 있다(exitBlock).
+    reason: o.blocked ?? '하지 못함',
   }))
   return putLog(state, act, hub, { ...log, closed: true, missed,
     title: `${state.actIndex + 1}막 · ${hubDate(act, hub) ?? act.title}` })

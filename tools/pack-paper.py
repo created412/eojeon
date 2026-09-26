@@ -17,10 +17,16 @@ ROOT = Path(os.environ.get('SPRITE_ROOT') or Path(__file__).resolve().parent.par
 SRC = ROOT / 'assets' / 'paper'
 OUT_JS = ROOT / 'src' / 'ui' / 'paper-data.js'
 
-# (키, 파일, 최대 너비, 품질, 어두운 바탕을 잘라낼 것인가)
+# (키, 파일, 최대 너비, 품질, 바탕을 잘라낼 밝기 문턱 — False 면 자르지 않는다)
+#
+# 문턱을 칸마다 따로 적는 까닭: 그림마다 바탕색이 다르다. 세로로 긴 janggye.png 는
+# 거의 검은 바탕(밝기 70 아래)에 놓여 있지만, 가로로 넓은 janggye-wide.png 는
+# 중간 회색 바탕(밝기 76~80)에 놓여 있다 — 예전의 고정 문턱 70 으로는 그 회색이
+# 「종이」로 잡혀, 잘라내야 할 바탕이 카드 밑에 그대로 깔린다.
 PLAN = [
     ('hanji',   'hanji.png',           1000, 78, False),   # 대화판 바탕
-    ('janggye', 'janggye.png',          760, 80, True),    # 장계 한 장 — 종이만 남긴다
+    ('janggye', 'janggye.png',          760, 80, 70),      # 장계 한 장(세로) — 종이만 남긴다
+    ('janggyeWide', 'janggye-wide.png',  900, 72, 110),    # 펼친 장계(가로) — 장계 카드 바탕
     ('injeongjeon', 'bg-injeongjeon.png', 1500, 74, False), # 어전 배경
     ('court',   'bg-court.png',        1500, 74, False),   # 조정 배경
 ]
@@ -54,7 +60,7 @@ def main():
             continue
         im = Image.open(p).convert('RGB')
         if trim:
-            im = trim_dark(im)
+            im = trim_dark(im, thresh=70 if trim is True else trim)
         if im.width > maxw:
             im = im.resize((maxw, round(im.height * maxw / im.width)), Image.LANCZOS)
         buf = io.BytesIO()

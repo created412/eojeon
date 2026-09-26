@@ -118,7 +118,7 @@ describe('2·3막 장계 — 일어난 순서로 놓아 본다', () => {
   })
 
   it('눌러서 자리 바꾸기와 한 칸 단추 둘이 다 있다 — 끌어 놓기만으로 되는 길은 없다', () => {
-    expect(dispatch).toContain('class="order-card"')
+    expect(dispatch).toContain('class="order-card janggye"')
     expect(dispatch).toContain('aria-pressed="${picked === id}"')
     expect(dispatch).toContain('class="order-up"')
     expect(dispatch).toContain('class="order-down"')
@@ -133,6 +133,70 @@ describe('2·3막 장계 — 일어난 순서로 놓아 본다', () => {
 
   it('채점하지 않는다 — 화면에 점수도 정답 표시도 없다', () => {
     expect(dispatch).not.toMatch(/오답|정답|점수|맞았습니다|틀렸/)
+  })
+
+  // 2026-09-26 선생님: 「장계의 순서를 정하는거도 틀린지도 모르겠어. 제대로 놓기
+  // 전까지는 안넘어가야해.」 붙잡는 일과 벌하는 일을 갈라서 잰다.
+  it('제대로 놓기 전에는 넘어가지 않는다 — 다음 화면은 순서대로일 때만 열린다', () => {
+    expect(dispatch).toContain('isInHappenedOrder')
+    expect(dispatch).toMatch(/if \(isInHappenedOrder\(view\.dispatches, placed\)\) \{ truthStep\(placed\); return \}/)
+    // 어긋난 줄로 truthStep 에 들어가는 다른 길이 없다
+    expect(dispatch.match(/truthStep\(/g)).toHaveLength(2)   // 정의 한 번, 부름 한 번
+  })
+
+  it('다시 놓아 볼 수 있다 — 판은 그대로 남고 한 줄만 더해진다', () => {
+    expect(dispatch).toContain('class="order-hint"')
+    expect(dispatch).toContain('orderingHint')
+    expect(dispatch).toMatch(/tries \+= 1/)
+    // 놓인 것을 흩뜨리거나 처음으로 되돌리는 자리가 없다
+    expect(dispatch).not.toMatch(/order\s*=\s*cards\.map\(d => d\.id\)[\s\S]{0,400}tries \+= 1[\s\S]{0,200}order\s*=/)
+  })
+
+  it('말은 systems 가 만든다 — 화면이 힌트 문구를 짓지 않는다', () => {
+    expect(dispatch).toMatch(/orderingHint\(view\.dispatches, view\.day, placed, tries\)\.text/)
+    expect(dispatch).not.toMatch(/아직 아니다/)
+  })
+
+  it('붙잡되 벌하지 않는다 — 횟수도, 남은 기회도 화면에 적지 않는다', () => {
+    expect(dispatch).not.toMatch(/실패|오답|번째 시도|남은 기회|기회가|다시 처음부터/)
+    // 시계가 없다는 것은 아래에서 따로 잰다 — 여기서는 「세어 보이는 것」만 본다
+    expect(dispatch).not.toMatch(/\$\{tries\}/)
+  })
+
+  it('화면을 눈으로 좇지 않는 학생에게도 그 한 줄이 읽힌다', () => {
+    expect(dispatch).toMatch(/class="order-hint" role="status" aria-live="polite"/)
+  })
+
+  // 읽으면 풀리는 물음이어야 한다 — 표제만 보고 찍게 두면 이 자리는 동전 던지기다
+  it('카드에 장계 본문이 실린다 — 일의 앞뒤는 그 글 안에 적혀 있다', () => {
+    expect(dispatch).toContain('class="order-text"')
+    expect(dispatch).toMatch(/\$\{d\.body \?\? ''\}/)
+    expect(dispatch).toContain('적힌 일')
+    expect(dispatch).toContain('일어날 수 있었는지')
+  })
+
+  // 2026-09-26 선생님: 「장계가 그냥 텍스트가 아니라 실제 장계같은 모습이어야하고,
+  // 힉스필드 활용해서 실제 장계처럼 만들어봐.」 종이를 깔되, 종이를 사실로 읽히게
+  // 두지 않는다 — ration.js 의 MIX_NOTE 와 같은 규칙이다.
+  it('장계는 장계 종이 위에 앉는다 — 기존 종이 변수 체계를 그대로 쓴다', () => {
+    expect(dispatch).toContain('.dispatch .janggye')
+    expect(dispatch).toContain('var(--janggye-wide)')
+    expect(dispatch).toContain('background-size:100% 100%')
+    expect(dispatch).not.toMatch(/background-size:cover/)
+    // 그림 파일을 화면이 직접 들이지 않는다 — 종이는 CSS 변수로만 온다(ui/paper-css.js)
+    expect(dispatch).not.toMatch(/data:image\/(webp|png)/)
+  })
+
+  it('종이가 없는 빌드에서도 글이 남는다 — 단색 종이빛을 먼저 깔아 둔다', () => {
+    expect(dispatch).toMatch(/\.dispatch \.janggye[^{]*\{background:#[0-9a-f]{6};color:#[0-9a-f]{6}/)
+  })
+
+  it('재구성 고지가 있다 — 깔린 종이를 그 장계의 사진으로 읽히게 두지 않는다', () => {
+    expect(dispatch).toContain('PAPER_NOTE')
+    expect(dispatchRaw).toContain('재구성 그림')
+    expect(dispatchRaw).toContain('사진이 아니')
+    // 장계 종이가 깔린 세 화면 모두에 나간다 — 놓아 보기·참된 순서·지도
+    expect(dispatch.match(/\$\{PAPER_NOTE\}/g)).toHaveLength(3)
   })
 
   it('참된 순서를 보여 준 뒤, 예전의 지도와 장계로 이어진다', () => {
@@ -155,7 +219,8 @@ describe('2·3막 장계 — 일어난 순서로 놓아 본다', () => {
 
   it('새 클래스는 모두 .dispatch 안에 있고, 400px 폭에 들어간다', () => {
     for (const name of ['order-help', 'order-aside', 'order-list', 'order-item', 'order-card',
-      'order-moves', 'order-verdict', 'order-truth', 'order-note']) {
+      'order-moves', 'order-verdict', 'order-truth', 'order-note',
+      'order-hint', 'order-recon', 'janggye']) {
       expect(dispatch, name).toContain(`.dispatch .${name}`)
     }
     expect(dispatch).toContain('width:min(650px,92vw)')

@@ -62,8 +62,10 @@ export function stopAt(stops, roomId, state) {
 }
 
 // 나가기 전에 얼마가 드는지 보여 준다. 값을 숨기면 학생이 무엇을 포기하는지 모른 채 포기한다.
-export function stopHint(stop, cost) {
-  return `${stop.label}  ·  해 ${cost}칸`
+export function stopHint(stop) {
+  // 예전에는 뒤에 「해 N칸」이 붙었다. 하루의 셈을 없앴으므로(core/clock.js 2026-09-26)
+  // 붙일 값이 없다 — 값 대신 무엇을 하는 일인지만 남긴다.
+  return `${stop.label}  ·  E`
 }
 
 export function stopsOfAct(act) {

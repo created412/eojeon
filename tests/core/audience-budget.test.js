@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { DAY_UNITS } from '../../src/core/clock.js'
+import { exitBlock } from '../../src/systems/freedom.js'
 import { PALACES, baseOf, isPassable } from '../../src/data/palaces.js'
 import { isRoomOpen } from '../../src/core/control.js'
 import { createState } from '../../src/core/state.js'
@@ -9,12 +9,15 @@ import { beatsOf, enterAct, applyBeat, grantedIdsOf } from '../../src/systems/sc
 import { npcsAt, npcCardIds, NPCS } from '../../src/data/npcs.js'
 import { stopsOfAct } from '../../src/systems/outing.js'
 
-// 이 파일은 tests/core/place-cost.test.js 와 tests/core/day-budget.test.js 를 대신한다.
-// 그 두 파일은 「방마다 값이 있고 임금이 걸어가며 해를 쓴다」는 옛 모델을 지키고 있었다.
-// 선생님이 그 모델을 끝냈다 — 이제 값은 자리가 아니라 **사람**이다(core/clock.js).
+// 2026-09-26 — 이 파일의 첫째 기둥이 무너졌다.
 //
-// 지켜야 할 것은 그대로다:
-//   ① 부족은 참이다 — 그날 만날 수 있는 사람이 들을 수 있는 수보다 많다.
+// 오래도록 이 게임의 규칙은 「부족은 참이다 — 그날 다 들을 수는 없다」였다. 그런데
+// 선생님이 화면을 찍어 보내셨다: 해 칸이 떨어져 **1876년 최익현의 상소를 못 들은 채**
+// 3막이 끝나 있었다. 「해 칸 없애버리고 나머지 미션 수행하지 못하면 못넘어가게 해야해.」
+//
+// 그래서 규칙이 뒤집혔다. 이제 지켜야 할 것은 이렇다:
+//   ① **넘침이 참이다** — 그날 만날 수 있는 사람을 다 만나야 그 하루가 끝난다.
+//      값이 없으므로 못 만나는 사람도 없다(core/clock.js).
 //   ② 어느 사료든 제 막 안에서 실제로 손에 들어올 길이 하나는 있다.
 //   ③ 바닥에 임자 없이 놓인 문서가 없다 — 문서에는 그것을 들고 있는 사람이 있다.
 
@@ -44,7 +47,7 @@ function exploreDays() {
       if (b.kind !== 'explore' || b.free) continue   // free — 문서 없는 낮(운현궁)은 고를 것이 없는 게 내용이다
       out.push({
         key: `${act.id}/${b.id}`, act, actIndex: i, beat: b,
-        budget: s.dayLeft,
+        state: { ...s, beatIndex: beatsOf(act).indexOf(b) },
         people: hearableAt(s, i),
         stops: (b.stops ?? []).length,
       })
@@ -79,39 +82,32 @@ describe('바닥에 임자 없는 문서가 없다', () => {
   })
 })
 
-describe('부족은 참이다 — 그날 다 들을 수는 없다', () => {
+describe('넘침이 참이다 — 그날 만날 사람은 다 만난다', () => {
   it('탐색하는 낮이 실제로 있다 — 이 검사가 헛돌지 않는다', () => {
     expect(DAYS.length).toBeGreaterThan(3)
   })
 
-  // 들을 사람이 아예 없는 낮(불탄 궁을 빠져나가는 걸음 따위)은 고를 것이 없는 것이
-  // 그 장면의 내용이다 — 그런 날은 이름을 적어 둔다.
-  const NO_CHOICE_DAYS = {
-    'chinjeong/walk-out': 0,        // 불탄 경복궁을 걸어 나가는 두 칸 — 들을 사람이 없다
-    'gapsin/gapsin-day': 1,         // 경우궁 — 좁은 집에 개화파 관원 하나
-  }
-
-  it('만날 수 있는 사람이 들을 수 있는 수보다 많다', () => {
+  it('만날 사람이 남아 있으면 그 하루를 나갈 수 없다', () => {
+    // 예전에는 나가는 방에서 E 를 누르면 언제든 하루가 끝났다 — 궁에 들어서자마자
+    // 나가는 방으로 걸어가 그날의 역사를 통째로 건너뛸 수 있었다(선생님 2026-09-26).
+    let checked = 0
     for (const d of DAYS) {
-      const offered = d.people.length + d.stops
-      if (d.key in NO_CHOICE_DAYS) {
-        expect(offered, `${d.key} — 고를 것이 없는 자리다. 값이 달라졌으면 다시 보라`)
-          .toBe(NO_CHOICE_DAYS[d.key])
-        continue
-      }
-      expect(offered, `${d.key} · 예산 ${d.budget} · 만날 사람 ${offered} [${d.people.map(p => p.id).join(',')}]`)
-        .toBeGreaterThan(d.budget)
+      const block = exitBlock(d.state, d.act)
+      if (d.people.length + d.stops === 0) continue   // 들을 사람이 없는 낮은 그대로 나간다
+      expect(block, `${d.key} — 아무것도 안 하고 나갈 수 있다`).toBeTruthy()
+      expect(block.count, d.key).toBeGreaterThan(0)
+      checked++
     }
+    expect(checked).toBeGreaterThan(0)
   })
 
-  it('고를 것이 없는 날은 손에 꼽을 만큼만 있다 — 목록이 조용히 자라지 않게', () => {
-    expect(Object.keys(NO_CHOICE_DAYS).length).toBeLessThanOrEqual(3)
-    const keys = DAYS.map(d => d.key)
-    for (const k of Object.keys(NO_CHOICE_DAYS)) expect(keys, k).toContain(k)
-  })
-
-  it('그래도 한 사람은 들을 수 있다 — 예산이 0 인 낮은 없다', () => {
-    for (const d of DAYS) expect(d.budget, d.key).toBeGreaterThanOrEqual(1)
+  it('남은 일에 「해 칸을 다 씀」이 다시 끼어들지 않는다', () => {
+    for (const d of DAYS) {
+      const block = exitBlock(d.state, d.act)
+      for (const label of block?.labels ?? []) {
+        expect(label, d.key).not.toContain('해 칸')
+      }
+    }
   })
 })
 
@@ -204,8 +200,7 @@ describe('방 id', () => {
     }
   })
 
-  it('하루의 기본값은 DAY_UNITS 다', () => {
-    expect(DAY_UNITS).toBeGreaterThan(0)
-    expect(createState().dayLeft).toBe(DAY_UNITS)
+  it('하루의 예산이라는 것이 없다', () => {
+    expect(createState().dayLeft).toBeUndefined()
   })
 })

@@ -1,16 +1,15 @@
 // 하루의 끝 — 해가 지고, 오늘 한 일과 하지 않은 일이 한 판에 나란히 선다.
 //
-// 선생님(2026-09-25): 「하루의 끝을 보여 줍니다. 해 칸을 다 쓰면 오늘 한 일 / 하지 않은
-// 일을 짧게 보여 주고 다음 날로 넘깁니다. 선택에 무게가 생깁니다.」
+// 선생님(2026-09-25): 「하루의 끝을 보여 줍니다. 오늘 한 일 / 하지 않은 일을 짧게
+// 보여 주고 다음 날로 넘깁니다.」
 //
-// 이 게임이 내내 가르치는 것은 「무엇을 포기했는가」다(core/clock.js 머리말). 그런데
-// 포기한 것이 화면에 한 번도 보이지 않았다 — 하루가 끝나면 배너 한 줄이 지나가고
-// 다음 장면이 시작됐고, 하지 않은 일은 게임을 다 끝낸 뒤 기록(記錄) 복사 안에서야
-// 처음 보였다. 고른 것과 못 고른 것을 그 자리에서 나란히 보여 주지 않으면, 고른 일도
-// 고른 것이 아니다.
+// 2026-09-26 에 뜻이 한 번 바뀌었다. 하루의 셈(해 칸)을 없애고 **남은 일이 있으면
+// 나갈 수 없게** 했으므로(core/clock.js · systems/freedom.js exitBlock), 이 판의
+// 「하지 않은 일」은 이제 학생이 고르지 않은 것이 아니다 — 조작권·봉쇄로 그 자리에
+// 갈 수 없었던 것뿐이다. 대개 비어 있고, 비어 있는 것이 옳다.
 //
-// ⚠ 벌 주는 화면이 아니다. 「하지 않은 일」에 붉은 글씨도, 점수도, 「실패」도 없다.
-//   임금의 하루가 짧았다는 사실을 적는 자리다.
+// ⚠ 벌 주는 화면이 아니다. 붉은 글씨도, 점수도, 「실패」도 없다. 오늘 임금이 한 일을
+//   적어 두는 자리다.
 const CSS = `
 .dayend{position:fixed;inset:0;z-index:55;background:#0d0f11;display:flex;flex-direction:column;
   align-items:center;justify-content:safe center;gap:14px;padding:26px;text-align:center;overflow:auto}
@@ -57,7 +56,7 @@ export function dayEndHtml(report) {
       <div class="col did"><b>오늘 한 일 ${did.length}</b>${items(did) || '<div class="none">하나도 하지 않았다</div>'}</div>
       <div class="col"><b>하지 않은 일 ${missed.length}</b>${items(missed) || '<div class="none">남겨 둔 것이 없다</div>'}</div>
     </div>
-    <div class="tail">${report.tail ?? '하지 않은 일도 기록에 남는다. 임금의 하루는 짧고, 고르지 않은 것은 듣지 못한 것이 된다.'}</div>
+    <div class="tail">${report.tail ?? '하지 못한 일은 임금이 고른 것이 아니다 — 그 자리에 갈 수 없었거나, 기록이 남지 않은 일이다.'}</div>
     <button class="go">${report.buttonLabel ?? '다음 날로'}</button>`
 }
 

@@ -3,7 +3,6 @@
 // acts.js 에 선언으로 적고, 이 파일이 상태 전이를 맡고, main.js 는 비트 종류별
 // 핸들러를 await 으로 이어 붙이는 얇은 진행자가 된다.
 import { RANK } from '../core/control.js'
-import { DAY_UNITS } from '../core/clock.js'
 import { pickUp, markRead } from './codex.js'
 
 export function beatsOf(act) {
@@ -28,7 +27,6 @@ export function enterAct(state, act, actIndex) {
     beatIndex: 0,
     palace: act.palace,
     control: act.control,
-    dayLeft: DAY_UNITS,
     room: null,
   }
 }
@@ -53,7 +51,6 @@ export function applyBeat(state, beat) {
   let next = state
   if (beat.palace && beat.palace !== next.palace) next = { ...next, palace: beat.palace }
   if (beat.control && beat.control !== next.control) next = { ...next, control: beat.control }
-  if (beat.dayUnits != null && beat.dayUnits !== next.dayLeft) next = { ...next, dayLeft: beat.dayUnits }
   if (beat.flag) next = { ...next, flags: { ...next.flags, [beat.flag]: true } }
   return next
 }

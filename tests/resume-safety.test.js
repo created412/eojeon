@@ -252,12 +252,12 @@ describe('3단계 — 나들이는 이어하기 뒤에 두 번 열리지 않는�
     expect(stops.length, '나들이가 하나도 없다 — 이 시험이 빈 배열을 돌고 있다').toBeGreaterThan(0)
 
     for (const st of stops) {
-      let state = { ...createState(), room: st.room, dayLeft: 6 }
+      let state = { ...createState(), room: st.room }
       expect(stopAt([st], st.room, state)?.id, st.id).toBe(st.id)
 
-      // 다녀온다 — pressE() 가 하는 것과 같은 순서: 값을 치르고 표시를 남긴다.
-      // 값은 자리마다 다르지 않다. 한 번 듣는 것이 하나다(core/clock.js).
-      expect(costOf(st.placeId), st.id).toBe(1)
+      // 다녀온다 — pressE() 가 하는 것과 같은 순서다. 값은 이제 0 이지만(2026-09-26,
+      // core/clock.js) 「치르고 나서 표시를 남긴다」는 순서 자체는 그대로 지킨다.
+      expect(costOf(st.placeId), st.id).toBe(0)
       const paid = spend(state)
       expect(paid.ok, st.id).toBe(true)
       state = markStopDone(paid.state, st.id)
@@ -266,13 +266,14 @@ describe('3단계 — 나들이는 이어하기 뒤에 두 번 열리지 않는�
       const saved = JSON.parse(JSON.stringify(state))
       expect(isStopDone(saved, st.id), st.id).toBe(true)
       expect(stopAt([st], st.room, saved), st.id).toBeNull()
-      expect(saved.dayLeft, st.id).toBe(6 - 1)
+      // 남은 칸을 세던 줄이 여기 있었다 — 하루의 셈을 없앴다(core/clock.js 2026-09-26).
+      expect(saved.dayLeft, st.id).toBeUndefined()
     }
   })
 
   it('표시가 없으면 두 번 열린다 — 위 시험이 헛것이 아님을 보인다', () => {
     const st = ACTS.flatMap(a => stopsOfAct(a))[0]
-    const state = { ...createState(), room: st.room, dayLeft: 6 }
+    const state = { ...createState(), room: st.room }
     const paidButUnmarked = spend(state, st.placeId).state   // markStopDone 을 빠뜨린 경우
     expect(stopAt([st], st.room, paidButUnmarked)?.id).toBe(st.id)   // 또 열린다
   })

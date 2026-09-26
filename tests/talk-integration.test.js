@@ -75,20 +75,21 @@ describe('사람에게 말을 걸면 그 문서가 온다', () => {
     }
   })
 
-  it('그날 들을 것을 다 들었으면 더 못 듣는다', () => {
-    const state = { ...createState(), palace: act.palace, dayLeft: 0 }
+  // 2026-09-26 — 「다 들었으면 더 못 듣는다」가 뒤집혔다. 하루의 셈을 없앴으므로
+  // (core/clock.js) 못 듣는 자리가 없다. 다 듣기 전에는 그 하루를 못 나간다.
+  it('몇 번을 듣든 거절하지 않는다 — 값이 없다', () => {
+    const state = { ...createState(), palace: act.palace }
     const r = pickUpPacket({ palaceDef, cardIds: npcCardIds(person), taken: new Set(), state })
-    expect(r.ok).toBe(false)
-    expect(r.reason).toBe('no-time')
+    expect(r.ok).toBe(true)
+    expect(r.state.dayLeft).toBeUndefined()
   })
 
-  it('이미 받은 문서는 두 번 받지 않는다 — 값도 두 번 내지 않는다', () => {
-    const state = { ...createState(), palace: act.palace, dayLeft: 2 }
+  it('이미 받은 문서는 두 번 받지 않는다', () => {
+    const state = { ...createState(), palace: act.palace }
     const taken = new Set(npcCardIds(person))
     const r = pickUpPacket({ palaceDef, cardIds: npcCardIds(person), taken, state })
     expect(r.ok).toBe(false)
     expect(r.reason).toBe('none-pending')
-    expect(state.dayLeft).toBe(2)
   })
 
   // 버그 A — 이어하기 직후의 taken 은 held 로만 다시 채워진다. 불에 잃은 카드는
@@ -141,16 +142,17 @@ describe('나가는 방과 나들이', () => {
     expect(second.type).not.toBe('stop')
   })
 
-  it('그날 들을 것이 남지 않았으면 못 나간다 — 다녀온 표시도 안 붙는다', () => {
-    const state = baseState({ room: 'seonjeongjeon', dayLeft: 0 })
+  it('나들이는 언제나 나갈 수 있다 — 값이 없다(2026-09-26)', () => {
+    const state = baseState({ room: 'seonjeongjeon' })
     const action = press({ playerX: 9999, playerZ: 9999, state, stops })
-    expect(action.type).toBe('no-time')
+    expect(action.type).toBe('stop')
+    // 원본 상태는 그대로 두고 새 상태에 표시를 찍는다.
     expect(state.flags['stop.test-outing']).toBeUndefined()
   })
 
   it('나가는 방이 나들이보다 먼저다', () => {
     const clash = [{ ...stops[0], room: day.exit.room }]
-    const state = baseState({ room: day.exit.room, dayLeft: 2 })
+    const state = baseState({ room: day.exit.room })
     const action = press({ playerX: 9999, playerZ: 9999, state, stops: clash })
     expect(action.type).toBe('exit-explore')
   })

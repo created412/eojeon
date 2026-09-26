@@ -61,8 +61,10 @@ describe('나들이 찾기', () => {
 })
 
 describe('힌트와 데이터 검사', () => {
-  it('힌트에 값이 함께 나온다 — 나가기 전에 얼마인지 안다', () => {
-    expect(stopHint(stops[0], 3)).toBe('E — 돈화문을 나서 종로에 간다  ·  해 3칸')
+  it('힌트에 값이 붙지 않는다 — 치를 값이 없다', () => {
+    // 「해 N칸」이 붙던 자리다 — 하루의 셈을 없앴다(core/clock.js 2026-09-26).
+    expect(stopHint(stops[0])).toBe('E — 돈화문을 나서 종로에 간다  ·  E')
+    expect(stopHint(stops[0])).not.toContain('해')
   })
 
   it('막에서 나들이를 모아 준다', () => {

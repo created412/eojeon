@@ -15,7 +15,7 @@ import {
   escortOffsets, escortSpot, APPROACH_MS, DEPART_MS, REBUKE_MS, PROCESSION_MS, visitorSpotFor, audienceLeft,
 } from './systems/audience.js'
 import { createState, serialize, deserialize, SAVE_KEY } from './core/state.js'
-import { spend, isDusk, costOf } from './core/clock.js'
+import { spend } from './core/clock.js'
 import { stopAt, stopHint, markStopPaid, markStopDone, isStopDone, pendingStopId, stopById } from './systems/outing.js'
 import { pickUp, markRead, plunder, isLost } from './systems/codex.js'
 import { recordLoss, LOSS_LABEL, everRead, lossReason } from './systems/loss-log.js'
@@ -61,7 +61,7 @@ import { relocate } from './systems/relocate.js'
 import { createAudio } from './systems/audio.js'
 import { createWebAudioEngine } from './systems/web-audio-engine.js'
 import { createRation } from './ui/ration.js'
-import { hubAt, hubOptions, hubDate, shouldDeferReport, pendingReport, performReport, completeActivity, closeHub, freedomRecord, dayReport } from './systems/freedom.js'
+import { hubAt, hubOptions, hubDate, shouldDeferReport, pendingReport, performReport, completeActivity, closeHub, freedomRecord, dayReport, exitBlock } from './systems/freedom.js'
 // 궁 안의 물건 — 걸어가 E 를 누르면 뜨는 해설(data/artifacts.js). 사료가 아니라서
 // 사초함에 쌓이지 않고, 값(해 칸)도 치르지 않는다(systems/artifacts.js 머리말).
 import { artifactNear, hasSeen, markArtifactSeen, artifactRecord, artifactCount } from './systems/artifacts.js'
@@ -684,13 +684,15 @@ export function boot(root) {
     }
     const exit = currentExit()
     if (exit && flow.state.room === exit.room) {
-      hint.textContent = exit.label
+      // 나갈 수 없는데 「나간다」고 적어 두면 학생은 E 가 고장 난 줄 안다.
+      const left = exitBlock(flow.state, flow.act())
+      hint.textContent = left ? `아직 남은 일이 ${left.count}곳 있다 — ${left.first.label}` : exit.label
       hint.hidden = false
       return
     }
     const stop = stopAt(currentStops(), flow.state.room, flow.state)
     if (stop) {
-      hint.textContent = stopHint(stop, costOf(stop.placeId))
+      hint.textContent = stopHint(stop)
       hint.hidden = false
       return
     }
@@ -698,11 +700,7 @@ export function boot(root) {
     if (found) {
       const m = Math.round(found.dist)
       const title = found.npc.title ? ` ${found.npc.title}` : ''
-      // 마지막 하나를 쓰기 직전에는 그 사실을 알린다. 고르는 것이 이 낮의 내용인데,
-      // 고르고 있다는 것을 모른 채 고르면 그것은 고른 것이 아니다.
-      const last = flow.state.dayLeft === 1 && npcCardIds(found.npc).length > 0
-        ? ' · 오늘 마지막 하나다' : ''
-      hint.textContent = `${found.npc.name}${title} · ${m}m — E 로 말을 건다${last}`
+      hint.textContent = `${found.npc.name}${title} · ${m}m — E 로 말을 건다`
       hint.hidden = false
       return
     }
@@ -1052,6 +1050,16 @@ export function boot(root) {
       hint.hidden = true
       resolveExplore = async () => {
         if (hubBusy || speak.isOpen() || dialog.isOpen() || pendingReport(flow.state, flow.act())) return
+        // **남은 일이 있으면 하루를 닫지 않는다**(systems/freedom.js exitBlock).
+        // 선생님(2026-09-26): 「메인 이벤트를 클리어하지 않으면 다음으로 안넘어가야
+        // 하는데, 지금은 그냥 잘 넘어가버려」. 예전에는 궁에 들어서자마자 나가는
+        // 방으로 걸어가 그날의 역사를 통째로 건너뛸 수 있었다.
+        const left = exitBlock(flow.state, flow.act())
+        if (left) {
+          audio.play('deny')
+          banner(root, `아직 남은 일이 ${left.count}곳 있다 — ${left.first.label}`, 3200)
+          return
+        }
         flow.state = closeHub(flow.state, flow.act())
         // **먼저 끈다.** 아래에서 하루의 끝 판을 기다리는 동안 해가 지거나(frame) E 가
         // 한 번 더 들어와 이 함수가 두 번 도는 일을 막는다 — 그러면 판이 두 장 뜬다.
@@ -1101,7 +1109,7 @@ export function boot(root) {
   function openActivities() {
     if (flow.phase !== 'day' || hubBusy || pause.isOpen() || speak.isOpen() || dialog.isOpen()) return
     const next = nearestActivity()
-    if (!next) { banner(root, '이 궁에서 들을 것은 다 들었다. 마당과 방 안의 물건은 아직 볼 수 있다 — 나가는 곳으로 가면 다음 사건으로 넘어간다.', 4200); return }
+    if (!next) { banner(root, '오늘 할 일은 다 했다. 나가는 곳으로 가면 다음 사건으로 넘어간다 — 마당과 방 안의 물건은 그전에 더 볼 수 있다.', 4200); return }
     chooseActivity(next.id)
   }
 
@@ -1123,7 +1131,7 @@ export function boot(root) {
     if (!hub) return
     activeBeat = hub
     dateLabel = hubDate(flow.act(), hub)
-    guide.set('궁을 걸어 다니며 표지가 선 곳에서 E 를 누르세요. 순서는 마음대로, 건너뛰어도 됩니다. 마당과 방 안의 물건도 E 로 살펴볼 수 있습니다 — 해 칸은 쓰지 않습니다.')
+    guide.set('궁을 걸어 다니며 표지가 선 곳에서 E 를 누르세요. 순서는 마음대로지만, 남은 일을 다 해야 다음 사건으로 넘어갑니다. 마당과 방 안의 물건도 E 로 살펴볼 수 있습니다.')
     audio.setAmbient('hall')
     bgm.set(bgmForBeat(hub))
     ctx.setNpcs(currentNpcs())
@@ -1397,7 +1405,6 @@ export function boot(root) {
     saveGame(flow.state)
     // 나들이에서 돌아오면 다시 낮이다. 다만 해가 다 졌으면 그대로 밤으로 넘어간다
     restoreHub()
-    if (isDusk(flow.state)) { resolveExplore?.(); return }
     // 나들이는 낮 안의 짧은 장면이라 runBeats 를 거치지 않는다 — 돌아온 뒤의 바닥
     // 소리를 여기서 직접 되돌린다. 다시 궁 안이다.
     audio.setAmbient('hall')
@@ -2180,13 +2187,8 @@ export function boot(root) {
           // 낮에만 부른다: 알현·행렬은 같은 placeNpc 로 자리를 직접 몬다(2026-09-25).
           ctx.tickNpcLife(currentNpcs(), now)
           updateHint()
-          // 그날 들을 것을 다 들으면 낮이 끝난다. 아무 말 없이 화면이 넘어가면 학생은
-          // 무엇 때문에 끝났는지 모른다 — 한 줄로 알린다.
-          if (!activeBeat?.free && isDusk(flow.state) && resolveExplore && !dialog.isOpen() && !speak.isOpen() && !hubBusy) {
-            // 배너를 여기서 또 내지 않는다 — 하루의 끝 판(ui/day-end.js)이 무엇 때문에
-            // 끝났는지까지 적는다. 배너와 판이 같은 말을 두 번 하면 둘 다 안 읽힌다.
-            resolveExplore()
-          }
+          // 해가 저절로 지는 일은 이제 없다(core/clock.js — 하루의 셈을 없앴다).
+          // 하루는 할 일을 다 하고 **나가는 방에서 E 를 눌렀을 때** 끝난다.
         }
       } else {
         acc = 0
@@ -2245,8 +2247,9 @@ export function boot(root) {
       dateLabel,
       // 알현에서는 아뢸 것을 고를 수 없다 — 그 표시를 감춘다(ui/hud.js).
       // 문서 없는 낮(free — 운현궁)에도 감춘다: 쓸 일이 없는 여유를 띄우면 무엇을 아껴야 하나 헤맨다.
-      dayLeft: (flow.phase === 'audience' || beatAt(flow.act(), flow.state.beatIndex)?.free) ? null : flow.state.dayLeft,
-      dayTotal: beatAt(flow.act(), flow.state.beatIndex)?.dayUnits ?? null,
+      // 남은 칸을 그리지 않는다 — 셈이 없어졌다(core/clock.js). null 이면 ui/hud.js 가 통째로 감춘다.
+      dayLeft: null,
+      dayTotal: null,
       riceIndex: flow.state.riceIndex,
     })
     flow.get('map')?.update({

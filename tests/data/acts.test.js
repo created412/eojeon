@@ -662,9 +662,11 @@ describe('5막 「갑신」', () => {
     }
   })
 
-  it('경우궁의 낮은 온전한 하루가 아니다 — 정변의 사흘에 온전한 하루는 없다', () => {
+  it('경우궁의 낮은 서행각으로 닫힌다', () => {
+    // 「온전한 하루가 아니다」를 dayUnits 로 재던 자리다 — 하루의 셈을 없앴다
+    // (core/clock.js 2026-09-26). 정변의 사흘이 좁다는 것은 이제 방의 수가 말한다.
     const day = beatsOf(a).find(b => b.kind === 'explore')
-    expect(day.dayUnits).toBeLessThan(6)
+    expect(day.dayUnits).toBeUndefined()
     expect(day.exit.room).toBe('haenggak-w')
   })
 

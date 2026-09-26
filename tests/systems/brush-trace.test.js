@@ -7,6 +7,11 @@ import {
   ILSA_GLYPHS, ILSA_VARIANTS, ILSA_NOTE,
   INK_MS, INK_WARN_MS, INK_PASSED_LINE, inkMsOf, isInkTimed, inkRemaining, inkRatio,
   inkSeconds, inkLabel, inkDried, inkDrying, inkDryNote, inkReport, glyphCountWord,
+  INK_CRIT_MS, INK_SPARE_MS, INK_WET, INK_WARN, INK_CRIT, INK_DRY,
+  INK_WARN_LINE, INK_CRIT_LINE, INK_SPARE_LINE,
+  PAPER_WET, PAPER_DRY, STROKE_WET, STROKE_DRY, GUIDE_ALPHA_WET, GUIDE_ALPHA_DRY,
+  inkLevelAt, inkLevel, inkPressLine, inkSpared, inkPassLine,
+  inkDryness, inkPaperColor, inkStrokeColor, inkGuideAlpha, inkWashColor,
 } from '../../src/systems/brush-trace.js'
 import { actById } from '../../src/data/acts.js'
 import { beatsOf } from '../../src/systems/scenario.js'
@@ -539,5 +544,264 @@ describe('먹 시계가 프레임을 흘리지 않는다', () => {
   it('먹이 말랐을 때 소리를 이 화면이 고르지 않는다 — 부른 쪽에 넘긴다', () => {
     expect(bodyOf(brushSrc, 'dryOut')).toContain('view.onDry?.()')
     expect(brushSrc).not.toContain('audio')
+  })
+})
+
+
+// ── 눈에 보이는 시계 (2026-09-26 선생님) ───────────────────────────────
+//
+// 「척화비 쓸때 타임어택이 잘 눈에 안보여, 타임어택의 묘미를 살려서 다시 만들어봐」
+//
+// 어제 붙인 시계는 종이 아래 7픽셀 띠와 12픽셀 글씨였다. 재는 방식은 맞았는데
+// 학생이 그것을 못 봤다 — 그러면 먹이 마르는 일은 압박이 아니라 영문 모를 초기화가
+// 되고, 이 기능은 압박도 못 주면서 손맛만 깎는다(게임 재제작 실패 패턴).
+//
+// 이 묶음이 붙드는 것은 「예쁜가」가 아니라 넷이다:
+//   ① 단계가 남은 시간 하나에서 나온다 — 색·글·띠가 어긋나지 않는다
+//   ② 종이가 마르되 **안내점을 덮지 않는다** — 안내점은 학생이 따라 그리는 그것이다
+//   ③ 여유 있게 끝낸 글자에 말이 붙는다 — 시간이 벌로만 쓰이지 않는다
+//   ④ 판정 R96 은 칸이 여럿 늘어도 그대로 선다
+describe('먹이 마른다 — 눈에 보이게 (2026-09-26)', () => {
+  it('조절 손잡이가 넷 다 상수로 나와 있다 — 22초·6초·3초·여유 8초', () => {
+    expect(INK_MS).toBe(22000)
+    expect(INK_CRIT_MS).toBeLessThan(INK_WARN_MS)
+    expect(INK_CRIT_MS).toBeGreaterThan(0)
+    expect(INK_SPARE_MS).toBeGreaterThan(INK_WARN_MS)
+    expect(INK_SPARE_MS).toBeLessThan(INK_MS)
+  })
+
+  it('남은 시간 하나가 단계를 정한다 — 경계에 닿는 쪽이 새 단계다', () => {
+    expect(inkLevelAt(22000)).toBe(INK_WET)
+    expect(inkLevelAt(INK_WARN_MS + 1)).toBe(INK_WET)
+    expect(inkLevelAt(INK_WARN_MS)).toBe(INK_WARN)
+    expect(inkLevelAt(INK_CRIT_MS + 1)).toBe(INK_WARN)
+    expect(inkLevelAt(INK_CRIT_MS)).toBe(INK_CRIT)
+    expect(inkLevelAt(1)).toBe(INK_CRIT)
+    expect(inkLevelAt(0)).toBe(INK_DRY)
+    expect(inkLevelAt(-5)).toBe(INK_DRY)
+    // 네 단계가 서로 다른 이름이다 — 둘이 같은 낱말이면 CSS 에서 한 단계가 사라진다
+    expect(new Set([INK_WET, INK_WARN, INK_CRIT, INK_DRY]).size).toBe(4)
+  })
+
+  it('첫 획을 긋기 전에는 3초짜리 먹이라도 단계가 오르지 않는다', () => {
+    // 이 한 줄이 없으면 ink 를 짧게 준 비트에서 화면이 열리는 순간부터 빨간 글씨가
+    // 떠 있다 — 아직 마르기 시작하지도 않았는데.
+    expect(inkLevel(null, 999999, 3000)).toBe(INK_WET)
+    expect(inkLevel(0, 0, 22000)).toBe(INK_WET)
+    expect(inkLevel(0, 17000, 22000)).toBe(INK_WARN)   // 5초 남음
+    expect(inkLevel(0, 20000, 22000)).toBe(INK_CRIT)   // 2초 남음
+    expect(inkLevel(0, 22000, 22000)).toBe(INK_DRY)
+  })
+
+  it('마르는 중이라는 판정이 예전과 똑같이 선다 — 단계로 다시 썼어도', () => {
+    expect(inkDrying(null, 999999, 22000)).toBe(false)
+    expect(inkDrying(0, 15000, 22000)).toBe(false)
+    expect(inkDrying(0, 17000, 22000)).toBe(true)
+    expect(inkDrying(0, 22000, 22000)).toBe(true)
+  })
+
+  it('단계마다 한 줄이 붙고, 그 줄이 짧다 — 3초 남은 학생에게 읽을 것을 주지 않는다', () => {
+    expect(inkPressLine(null, 0, 22000)).toBe('')
+    expect(inkPressLine(0, 10000, 22000)).toBe('')          // 12초 남음
+    expect(inkPressLine(0, 17000, 22000)).toBe(INK_WARN_LINE)
+    expect(inkPressLine(0, 20000, 22000)).toBe(INK_CRIT_LINE)
+    expect(INK_WARN_LINE).toBe('먹이 마른다')
+    expect(INK_CRIT_LINE).not.toBe(INK_WARN_LINE)
+    for (const line of [INK_WARN_LINE, INK_CRIT_LINE]) {
+      expect(line.length, line).toBeLessThanOrEqual(12)
+      expect(line, line).not.toMatch(/[A-Za-z]/)
+      // 꾸짖지 않는다 — 일어나는 일은 먹이 마르는 것이다
+      expect(line, line).not.toMatch(/실패|틀렸|벌|빨리|서둘/)
+    }
+  })
+
+  it('종이가 마른다 — 시간을 안 재는 화면에서는 끝까지 안 마른다', () => {
+    expect(inkDryness(null, 999999, 22000)).toBe(0)
+    expect(inkDryness(0, 11000, 22000)).toBeCloseTo(0.5, 5)
+    expect(inkDryness(0, 22000, 22000)).toBe(1)
+    // 「안 잰다」가 「다 말랐다」로 읽히면 4막 친필의 종이가 열리자마자 메말라 있다
+    expect(inkDryness(null, 0, 0)).toBe(0)
+    expect(inkDryness(0, 5000, 0)).toBe(0)
+  })
+
+  it('바탕은 가라앉고 먹빛은 갈색으로 뜬다 — 양 끝이 정확히 상수다', () => {
+    expect(inkPaperColor(0)).toBe(PAPER_WET)
+    expect(inkPaperColor(1)).toBe(PAPER_DRY)
+    expect(inkStrokeColor(0)).toBe(STROKE_WET)
+    expect(inkStrokeColor(1)).toBe(STROKE_DRY)
+    // 중간도 캔버스가 받는 #rrggbb 모양 그대로다(NaN 을 넘기면 조용히 검정이 된다)
+    for (const t of [0.25, 0.5, 0.75]) {
+      expect(inkPaperColor(t), String(t)).toMatch(/^#[0-9a-f]{6}$/)
+      expect(inkStrokeColor(t), String(t)).toMatch(/^#[0-9a-f]{6}$/)
+    }
+    // 마를수록 바탕은 어두워지고 먹은 밝아진다 — 두 방향이 반대라야 「마른 먹」으로 읽힌다
+    const lum = (hex) => parseInt(hex.slice(1, 3), 16) + parseInt(hex.slice(3, 5), 16) + parseInt(hex.slice(5, 7), 16)
+    expect(lum(inkPaperColor(1))).toBeLessThan(lum(inkPaperColor(0)))
+    expect(lum(inkStrokeColor(1))).toBeGreaterThan(lum(inkStrokeColor(0)))
+    expect(inkPaperColor(-1)).toBe(PAPER_WET)
+    expect(inkPaperColor(9)).toBe(PAPER_DRY)
+  })
+
+  // ⚠ 이 검사가 이 판의 심장이다 — 「보기 좋게 만들다 따라 쓸 것을 지운다」는
+  // 이 장면에서 밟을 수 있는 가장 나쁜 맞바꿈이다.
+  it('마를수록 안내점이 오히려 또렷해진다 — 종이가 안내점을 덮는 일이 없다', () => {
+    expect(inkGuideAlpha(0)).toBeCloseTo(GUIDE_ALPHA_WET, 5)
+    expect(inkGuideAlpha(1)).toBeCloseTo(GUIDE_ALPHA_DRY, 5)
+    expect(GUIDE_ALPHA_DRY).toBeGreaterThan(GUIDE_ALPHA_WET)
+    let last = -1
+    for (let t = 0; t <= 1.0001; t += 0.1) {
+      const a = inkGuideAlpha(t)
+      expect(a, String(t)).toBeGreaterThanOrEqual(last)
+      expect(a, String(t)).toBeLessThanOrEqual(1)
+      last = a
+    }
+  })
+
+  it('종이에 앉는 남은 초는 물자국만큼만 진하다 — 획과 안내점을 이기지 않는다', () => {
+    for (const level of [INK_WET, INK_WARN, INK_CRIT]) {
+      const wash = inkWashColor(level)
+      expect(wash, level).toMatch(/^rgba\(\d+,\d+,\d+,0\.\d+\)$/)
+      const alpha = Number(wash.match(/,([0-9.]+)\)$/)[1])
+      // 안내점(0.28)보다 옅게 — 숫자가 안내점보다 진해지면 그것은 물자국이 아니라 방해다
+      expect(alpha, level).toBeLessThan(GUIDE_ALPHA_WET)
+    }
+    // 단계가 오르면 조금 더 진해진다 — 숫자를 안 읽는 학생에게도 종이가 말한다
+    const a = (lv) => Number(inkWashColor(lv).match(/,([0-9.]+)\)$/)[1])
+    expect(a(INK_WARN)).toBeGreaterThan(a(INK_WET))
+    expect(a(INK_CRIT)).toBeGreaterThan(a(INK_WARN))
+  })
+
+  it('여유 있게 끝낸 글자에는 「한 번에 썼다」가 붙는다', () => {
+    expect(inkSpared(0, 0, 22000)).toBe(true)
+    expect(inkSpared(0, 22000 - INK_SPARE_MS, 22000)).toBe(true)        // 딱 8초 남음
+    expect(inkSpared(0, 22000 - INK_SPARE_MS + 1, 22000)).toBe(false)   // 8초에서 1밀리초 모자람
+    expect(inkSpared(0, 21000, 22000)).toBe(false)                      // 1초 남음
+    expect(inkPassLine(0, 5000, 22000)).toBe(INK_SPARE_LINE)
+    expect(inkPassLine(0, 21000, 22000)).toBe(INK_PASSED_LINE)
+    expect(INK_SPARE_LINE).toContain('한 번에 썼다')
+    expect(INK_SPARE_LINE).not.toMatch(/[A-Za-z]/)
+    // 아슬아슬하게 넘긴 학생에게도 꾸짖는 말이 안 붙는다 — 그 학생도 글자를 다 썼다
+    for (const line of [INK_SPARE_LINE, INK_PASSED_LINE]) {
+      expect(line, line).not.toMatch(/실패|틀렸|간신히|아쉽/)
+    }
+  })
+})
+
+describe('큰 시계가 붓 아래가 아니라 종이 옆에 선다 (2026-09-26)', () => {
+  const F1_BEAT = beatsOf(actById('yangyo')).find(b => b.kind === 'brush')
+
+  it('시간을 재는 화면에만 큰 숫자가 생긴다', () => {
+    const timed = writingHtml(brushView(F1_BEAT))
+    // 종이·띠·큰 숫자가 한 덩이다 — 눈이 종이에서 떠나지 않는 거리에 시계가 있다
+    expect(timed).toContain('class="desk"')
+    expect(timed).toContain('class="sheet"')
+    expect(timed).toContain('class="clocknum"')
+    expect(timed).toContain('class="clockunit"')
+    expect(timed).toContain('class="clocknote"')
+    // 첫 획을 긋기 전에는 가득 찬 초가 적혀 있다 — 0 이 아니다
+    expect(timed).toContain('>' + INK_MS / 1000 + '<')
+    // 종이는 여전히 캔버스 하나다(두 장이 생기면 querySelector 가 엉뚱한 것을 잡는다)
+    expect(timed.match(/<canvas/g)).toHaveLength(1)
+    // 예전 칸들이 사라지지 않았다 — 띠와 한 줄 안내는 그대로 있다
+    expect(timed).toContain('class="ink"')
+    expect(timed).toContain('class="inkfill"')
+    expect(timed).toContain('먹 — 첫 획을 그으면 마르기 시작한다')
+  })
+
+  it('시간을 안 재는 화면(4막 친필)에는 시계의 흔적이 한 조각도 없다', () => {
+    const untimed = writingHtml(brushView(F2_BEAT))
+    for (const c of ['class="ink"', 'inkfill', 'desk', 'sheet', 'clocknum', 'clockunit', 'clocknote', '먹', '초']) {
+      expect(untimed.includes(c), '안 재는 화면에 「' + c + '」가 있다').toBe(false)
+    }
+    // 그래도 종이는 있다 — 시계를 지우면서 캔버스를 지우는 일이 없게
+    expect(untimed.match(/<canvas/g)).toHaveLength(1)
+    expect(untimed).toContain('class="paper"')
+  })
+
+  // 판정 R96 — 칸이 여섯 개 늘었다. 그 여섯 칸에 실리는 글은 「남은 초」와
+  // 「먹이 마른다」뿐이다. 반전을 한 조각이라도 끌어오면 여기서 운다.
+  it('큰 시계를 붙여도 쓰기 전 화면에 반전이 새지 않는다', () => {
+    const view = { ...brushView(F2_BEAT), ink: { ms: 22000 } }
+    const before = writingHtml(view) + view.glyphs.join('')
+    expect(before).toContain('class="clocknum"')      // 실제로 큰 시계가 붙은 판을 보고 있다
+    expect(before).toContain('class="desk"')
+    for (const w of ['『갑신일록』', '김옥균', '망명', '논쟁', '의심', '갈린다', '그중 하나']) {
+      expect(before.includes(w), '쓰기 전 화면에 「' + w + '」가 있다').toBe(false)
+    }
+    expect(before).not.toContain(ILSA_NOTE)
+    for (const v of ILSA_VARIANTS) expect(before).not.toContain(v.text)
+  })
+
+  it('붓을 놓은 뒤 한 줄은 그대로다 — 먹을 몇 번 갈았는가', () => {
+    const view = brushView(F1_BEAT)
+    expect(finishHtml(view, 0)).toContain('먹을 한 번도 다시 갈지 않고 넉 자를 썼다.')
+    expect(finishHtml(view, 2)).toContain('먹을 2번 다시 갈아 넉 자를 썼다.')
+    expect(finishHtml(view, 2)).toContain('class="inkreport"')
+    // 마무리 판에는 큰 시계가 따라오지 않는다 — 붓을 놓았으면 잴 것이 없다
+    expect(finishHtml(view, 2)).not.toContain('clocknum')
+    expect(finishHtml(view, 2)).not.toContain('class="desk"')
+  })
+})
+
+describe('시계가 눈에 보이게 배선되어 있다 (2026-09-26)', () => {
+  const brushSrc = readFileSync(join(process.cwd(), 'src', 'ui', 'brush.js'), 'utf8')
+
+  it('단계 이름을 화면이 제 손으로 적지 않는다 — 순수 함수에서 가져온다', () => {
+    // 여기서 warn·crit 을 손으로 적기 시작하면 상수를 고치는 날 CSS 와 갈린다
+    expect(brushSrc).toContain('INK_WARN')
+    expect(brushSrc).toContain('INK_CRIT')
+    expect(bodyOf(brushSrc, 'drawInk')).toContain('inkLevel(')
+    expect(bodyOf(brushSrc, 'drawInk')).not.toMatch(/toggle\(\s*['"]warn['"]/)
+  })
+
+  it('큰 숫자와 단계 한 줄을 매 눈금마다 고쳐 쓴다', () => {
+    const body = bodyOf(brushSrc, 'drawInk')
+    expect(body).toContain('clockNum')
+    expect(body).toContain('inkPressLine(')
+    expect(body).toContain('paint()')        // 종이 자신이 마른다
+  })
+
+  it('종이를 칠하는 순서가 안내점을 지키게 되어 있다 — 물자국이 가장 먼저다', () => {
+    const body = bodyOf(brushSrc, 'paint')
+    const wash = body.indexOf('inkWashColor')
+    const guide = body.indexOf('inkGuideAlpha')
+    const stroke = body.indexOf('inkStrokeColor')
+    expect(wash, 'paint 가 물자국을 안 그린다').toBeGreaterThan(-1)
+    expect(guide, 'paint 가 안내점 불투명도를 안 쓴다').toBeGreaterThan(-1)
+    expect(wash, '남은 초가 안내점 위에 올라간다 — 따라 쓸 것을 덮는다').toBeLessThan(guide)
+    expect(guide, '안내점이 획 위에 올라간다').toBeLessThan(stroke)
+    expect(body).toContain('inkPaperColor(')
+  })
+
+  it('여유 있게 끝낸 글자에 한 줄이 붙는다 — 통과가 침묵으로 지나가지 않는다', () => {
+    const body = bodyOf(brushSrc, 'passInk')
+    expect(body).toContain('inkPassLine(')
+    expect(body).toContain("classList.add('pass')")
+    expect(body).toContain('stopInk()')      // 숫자를 남은 채로 얼려 둔다
+  })
+
+  it('움직임을 줄여 달라고 한 학생에게는 숨쉬는 띠를 끈다', () => {
+    expect(brushSrc).toContain('@media (prefers-reduced-motion: reduce)')
+    // 그 규칙이 실제로 띠의 animation 을 끈다
+    const at = brushSrc.indexOf('@media (prefers-reduced-motion: reduce)')
+    expect(brushSrc.slice(at, at + 220)).toMatch(/animation:\s*none/)
+    // 재는 방식은 그대로다 — 보이는 것만 초 단위 계단이 된다
+    expect(bodyOf(brushSrc, 'drawInk')).toContain('stepped')
+  })
+
+  it('품위를 지킨다 — 흔들지 않고, 소리 내지 않고, 넓은 면을 번쩍이지 않는다', () => {
+    expect(brushSrc).not.toContain('audio')
+    expect(brushSrc).not.toMatch(/shake|vibrate/)
+    // 숨쉬는 것은 12픽셀 띠 하나뿐이다 — animation 을 거는 자리를 센다
+    const rules = brushSrc.match(/animation:\s*brushbreath/g) ?? []
+    expect(rules.length, '숨쉬는 자리가 둘(경고·임박)을 넘는다').toBeLessThanOrEqual(2)
+    const beats = [...brushSrc.matchAll(/animation:\s*brushbreath\s+([0-9]*\.?[0-9]+)s/g)]
+    expect(beats.length, '숨쉬는 띠의 주기를 하나도 못 읽었다').toBeGreaterThan(0)
+    for (const m of beats) {
+      // 광과민성 — 한 주기가 0.7초 미만이면 너무 빠르다
+      expect(Number(m[1]), '띠가 너무 빨리 뛴다: ' + m[0]).toBeGreaterThanOrEqual(0.7)
+    }
+    // 종이 전체를 껌뻑이게 만드는 규칙이 없다
+    expect(brushSrc).not.toMatch(/\.paper\{[^}]*animation/)
   })
 })

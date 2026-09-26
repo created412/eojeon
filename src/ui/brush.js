@@ -1,7 +1,8 @@
 import {
   coverage, isTraced, HIT_RADIUS, DONE_RATIO, CHEOKHWABI_REST, CHEOKHWABI_PARTIAL_NOTE,
-  inkMsOf, isInkTimed, inkRatio, inkLabel, inkSeconds, inkDried, inkDrying, inkDryNote,
-  inkReport, INK_PASSED_LINE,
+  inkMsOf, isInkTimed, inkRatio, inkLabel, inkSeconds, inkDried, inkDryNote, inkReport,
+  inkLevel, inkPressLine, inkPassLine, inkDryness, inkPaperColor, inkStrokeColor,
+  inkGuideAlpha, inkWashColor, INK_WARN, INK_CRIT,
 } from '../systems/brush-trace.js'
 import { BRUSH_GUIDES } from './brush-guides-data.js'
 
@@ -33,14 +34,56 @@ const CSS = `
 /* 먹 — 마르기까지. 띠의 너비는 매 프레임 JS 가 직접 정한다(transition 을 걸지 않는다):
    남은 시간을 보여 주는 띠에 0.3초 뒤늦은 움직임을 붙이면 「0초」와 화면이 어긋나고,
    prefers-reduced-motion 을 켠 학생에게 끌 수단도 없어진다. 줄이는 쪽은 JS 가
-   초 단위로만 고쳐 그린다(createBrush 의 drawInk). */
-.brush .ink{width:${S}px;max-width:88vw;display:flex;flex-direction:column;gap:5px;text-align:left}
+   초 단위로만 고쳐 그린다(createBrush 의 drawInk).
+
+   2026-09-26 — 「타임어택이 잘 눈에 안보여」. 7픽셀 띠와 12픽셀 글씨를 종이 아래에
+   두었으니 당연했다. 이제 종이와 시계가 **한 줄에 나란히** 선다: 왼쪽에 종이, 그
+   바로 오른쪽에 66픽셀 숫자. 좁은 화면에서는 flex-wrap 이 시계를 종이 아래로
+   내리는데, 그래도 종이에서 한 손가락 거리다. 그리고 종이 자신이 마른다(paint). */
+.brush .ink{max-width:92vw;display:flex;flex-direction:column;gap:8px}
+.brush .desk{display:flex;align-items:flex-start;justify-content:center;gap:16px;flex-wrap:wrap}
+.brush .sheet{display:flex;flex-direction:column;gap:6px;text-align:left}
 .brush .inkword{font-size:12px;color:#8f8a7c;letter-spacing:2px}
-.brush .inkbar{height:7px;background:#23282c;border:1px solid #3a4248;border-radius:4px;overflow:hidden}
+/* 띠를 12픽셀로 키우고 종이 바로 밑에 붙인다 — 종이와 띠가 한 덩이로 보여야
+   「저 띠가 이 종이의 남은 먹」임이 설명 없이 읽힌다. */
+.brush .inkbar{height:12px;background:#23282c;border:1px solid #3a4248;border-radius:4px;overflow:hidden}
 .brush .inkfill{height:100%;width:100%;background:#6a5230}
-.brush .ink.dry .inkfill{background:#b8562f}
-.brush .ink.dry .inkword{color:#e0a23a}
-.brush .inknote{font-size:12px;color:#c9a06a;letter-spacing:1px;min-height:1.3em}
+/* 시계. 숫자는 눈이 종이에서 떠나지 않을 거리에, 글자 크기로 이긴다. */
+.brush .clock{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:96px;padding-top:2px}
+.brush .clockface{display:flex;align-items:baseline;gap:4px}
+.brush .clocknum{font-size:66px;line-height:.9;color:#e8e2d4;letter-spacing:-2px;
+  font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.brush .clockunit{font-size:16px;color:#8f8a7c;letter-spacing:2px}
+/* 자리를 미리 비워 둔다(min-height) — 6초에 한 줄이 생기면서 종이가 위로 밀리면
+   학생의 손이 긋던 획이 어긋난다. 압박을 주려다 손맛을 깎는 자리다. */
+.brush .clocknote{font-size:14px;color:#c9a06a;letter-spacing:1px;line-height:1.5;min-height:2.6em;max-width:104px}
+/* ── 단계 (6초 · 3초) ──────────────────────────────────────────────
+   숫자 빛깔 · 종이 테두리 · 띠의 숨. 흔들지 않고, 소리를 내지 않고, 넓은 면을
+   번쩍이지 않는다 — 숨쉬는 것은 12픽셀 띠 하나뿐이고 1초에 한 번을 넘지 않는다. */
+.brush .ink.warn .clocknum{color:#e0a23a}
+.brush .ink.warn .clockunit{color:#c9a06a}
+.brush .ink.warn .inkword{color:#e0a23a}
+.brush .ink.warn .paper{border-color:#b8562f}
+.brush .ink.warn .inkfill{background:#b8562f;animation:brushbreath 1.1s ease-in-out infinite}
+.brush .ink.crit .clocknum{color:#d4552a}
+.brush .ink.crit .clockunit{color:#d4552a}
+.brush .ink.crit .clocknote{color:#e0a23a}
+.brush .ink.crit .inkword{color:#d4552a}
+.brush .ink.crit .paper{border-color:#d4552a;box-shadow:0 0 0 3px rgba(212,85,42,.5)}
+.brush .ink.crit .inkfill{background:#d4552a;animation:brushbreath .8s ease-in-out infinite}
+/* 마르기 전에 끝냈을 때. 경고색을 쓰지 않는다 — 여기만 다른 계열의 빛깔이라
+   학생이 「이건 다른 소식이다」를 색으로 먼저 안다. */
+.brush .ink.pass .clocknum{color:#a9ba8d}
+.brush .ink.pass .inkword{color:#a9ba8d;font-size:13px}
+.brush .ink.pass .inkfill{background:#6f7f55}
+@keyframes brushbreath{0%,100%{opacity:1}50%{opacity:.52}}
+/* 움직임을 줄여 달라고 한 학생: 숨을 끈다. 숫자와 빛깔의 단계는 그대로 바뀐다 —
+   재는 시간도 그대로다. 보이는 방식만 초 단위 계단이 된다(drawInk 의 stepped). */
+@media (prefers-reduced-motion: reduce){
+  .brush .ink.warn .inkfill,.brush .ink.crit .inkfill{animation:none}
+}
+.brush .inknote{font-size:13px;color:#c9a06a;letter-spacing:1px;min-height:1.3em;
+  max-width:480px;margin:0 auto;line-height:1.6}
 .brush .inkreport{font-size:14px;color:#b9b2a1;max-width:560px;line-height:1.8}
 `
 
@@ -108,17 +151,31 @@ export function writingHtml(view) {
   // 실리는 글은 「먹이 마르기까지 몇 초」뿐이다: 반전은 한 조각도 지나가지 않는다.
   // 그래서 판정 R96 은 이 칸이 늘어도 그대로 선다 — 아래 검사가 그것을 못 박는다.
   const inkMs = inkMsOf(view)
-  const ink = inkMs > 0 ? `
+  const paper = `<canvas class="paper" width="${S}" height="${S}"></canvas>`
+  // 시간을 재는 화면에서는 종이가 시계 안으로 들어간다 — 종이·띠·큰 숫자가 한
+  // 덩이가 되어야 「이 종이의 먹이 마르는 중」임이 한눈에 읽힌다(2026-09-26).
+  // 안 재는 화면(4막 친필)에서는 종이만 예전 그대로 놓인다: 그 장면에는 시계가 없고,
+  // 여기에 빈 껍데기라도 만들어 두면 「먹」이라는 낱말이 그 화면에 나간다.
+  const paperBlock = inkMs > 0 ? `
           <div class="ink">
-            <div class="inkword">${inkLabel(null, 0, inkMs)}</div>
-            <div class="inkbar"><div class="inkfill"></div></div>
+            <div class="desk">
+              <div class="sheet">
+                ${paper}
+                <div class="inkbar"><div class="inkfill"></div></div>
+                <div class="inkword">${inkLabel(null, 0, inkMs)}</div>
+              </div>
+              <div class="clock">
+                <div class="clockface"><span class="clocknum">${inkSeconds(null, 0, inkMs)}</span><span class="clockunit">초</span></div>
+                <div class="clocknote"></div>
+              </div>
+            </div>
             <div class="inknote"></div>
-          </div>` : ''
+          </div>` : paper
   return `
           <h2>${view.title ?? ''}</h2>
           ${view.givenText ? `<div class="meaning">척화비에 새길 비문을 쓰고 있습니다. ${view.givenText} (${view.givenGloss ?? ''})은 이미 새겨져 있습니다.<br>이어지는 마지막 ${view.glyphs?.length ?? 0}글자 「${(view.glyphs ?? []).join('')}」를 안내선을 따라 써 주세요.</div>` : ''}
           <div class="line"></div>
-          <canvas class="paper" width="${S}" height="${S}"></canvas>${ink}
+          ${paperBlock}
           <div class="count"></div>
           ${note ? `<div class="partial">${note}</div>` : ''}
           <div class="meaning">${view.meaning ?? ''}</div>
@@ -206,6 +263,12 @@ export function createBrush(root) {
         const inkFill = el.querySelector('.inkfill')
         const inkWord = el.querySelector('.inkword')
         const inkNote = el.querySelector('.inknote')
+        const clockNum = el.querySelector('.clocknum')
+        const clockNote = el.querySelector('.clocknote')
+        // 종이가 얼마나 말랐는가 — 0 은 가득, 1 은 다 말랐다. paint() 가 이 값으로
+        // 바탕·먹빛·안내점을 고른다. 시간을 안 재는 화면에서는 끝까지 0 이다.
+        let dryness = 0
+        let level = ''
         // 움직임을 줄여 달라고 한 학생에게는 띠를 매 프레임 흘리지 않고 초 단위로만
         // 고쳐 그린다. 재는 시간은 똑같다 — 보이는 방식만 계단이 된다.
         const stepped = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true
@@ -225,13 +288,21 @@ export function createBrush(root) {
 
         function drawInk(now) {
           if (!inkEl) return
-          const ratio = inkRatio(inkStartedAt, now, inkMs)
           const second = inkSeconds(inkStartedAt, now, inkMs)
           if (stepped && second === shownSecond) return
           shownSecond = second
-          inkFill.style.width = `${ratio * 100}%`
+          dryness = inkDryness(inkStartedAt, now, inkMs)
+          level = inkLevel(inkStartedAt, now, inkMs)
+          inkFill.style.width = `${inkRatio(inkStartedAt, now, inkMs) * 100}%`
           inkWord.textContent = inkLabel(inkStartedAt, now, inkMs)
-          inkEl.classList.toggle('dry', inkDrying(inkStartedAt, now, inkMs))
+          clockNum.textContent = String(second)
+          clockNote.textContent = inkPressLine(inkStartedAt, now, inkMs)
+          inkEl.classList.toggle(INK_WARN, level === INK_WARN)
+          inkEl.classList.toggle(INK_CRIT, level === INK_CRIT)
+          // 종이 자신이 마른다. 캔버스는 CSS 가 아니라 붓질이 그리므로, 시계가 도는
+          // 동안에는 여기서 다시 칠해야 바탕이 함께 가라앉는다. 움직임을 줄여 달라고
+          // 한 학생에게는 위의 이른 반환이 이것을 초 단위 계단으로 만든다.
+          paint()
         }
 
         // 마르면 그 글자만 처음부터 다시 쓴다. 지는 일은 없고 횟수 제한도 없다 —
@@ -263,21 +334,38 @@ export function createBrush(root) {
           inkFrame = requestAnimationFrame(tickInk)
         }
 
+        // 남은 시간을 그대로 얼려 둔다 — 숫자가 9 에서 멈춘 채 빛깔만 바뀌면 그것이
+        // 곧 「9초를 남기고 썼다」는 상장이다. 0 으로 되돌리면 잘한 일이 사라진다.
         function passInk() {
           stopInk()
           if (!inkEl) return
-          inkEl.classList.remove('dry')
-          inkWord.textContent = INK_PASSED_LINE
+          inkEl.classList.remove(INK_WARN)
+          inkEl.classList.remove(INK_CRIT)
+          inkEl.classList.add('pass')
+          inkWord.textContent = inkPassLine(inkStartedAt, nowMs(), inkMs)
+          clockNote.textContent = ''
         }
 
         function paint() {
-          g.fillStyle = '#efe6cf'
+          // 마를수록 바탕이 메마르고, 먹빛이 검정에서 갈색으로 뜨고, 안내점은 오히려
+          // 또렷해진다. 순서가 약속이다 — 물자국(남은 초)을 가장 먼저 칠하고 그 위에
+          // 안내점, 그 위에 학생의 획. 안내점이 숫자에 덮이는 일이 생길 수 없다.
+          g.fillStyle = inkPaperColor(dryness)
           g.fillRect(0, 0, S, S)
+          if (inkMs > 0 && shownSecond >= 0) {
+            g.save()
+            g.fillStyle = inkWashColor(level)
+            g.font = `${Math.round(S * 0.58)}px ${HANJA_FONT}`
+            g.textAlign = 'center'
+            g.textBaseline = 'middle'
+            g.fillText(String(shownSecond), S / 2, S / 2)
+            g.restore()
+          }
           // 안내점
-          g.fillStyle = 'rgba(138,106,68,0.28)'
+          g.fillStyle = `rgba(138,106,68,${inkGuideAlpha(dryness).toFixed(3)})`
           for (const p of guides) g.fillRect(p.x * S - 1, p.y * S - 1, 3, 3)
           // 학생의 획
-          g.strokeStyle = '#1b1a17'
+          g.strokeStyle = inkStrokeColor(dryness)
           g.lineWidth = 11
           g.lineCap = 'round'
           g.lineJoin = 'round'
@@ -300,7 +388,10 @@ export function createBrush(root) {
           stopInk()
           inkStartedAt = null
           shownSecond = -1
+          dryness = 0
           if (inkNote) inkNote.textContent = ''
+          // 마무리 빛깔은 손으로 지운다 — drawInk 는 단계(warn·crit)만 맡는다.
+          inkEl?.classList.remove('pass')
           drawInk(nowMs())
           lineEl.innerHTML = (view.givenText ? `${view.givenText} ` : '') + view.glyphs
             .map((ch, i) => (i === index ? `<b>${ch}</b>` : ch))

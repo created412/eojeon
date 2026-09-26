@@ -83,7 +83,7 @@ export function dryRun(act, state, actIndex = 0) {
 }
 
 // 조건이 붙은 비트가 정하면 안 되는 것들.
-// palace·control·dayUnits — 정적으로 막을 걸어가는 도구들(controlTimeline·palaceTimeline·
+// palace·control — 정적으로 막을 걸어가는 도구들(controlTimeline·palaceTimeline·
 //   place-cost 의 exploreDays)이 실제 플레이와 어긋나기 때문이다.
 // grantCard·cardIds — [리뷰 I4] 이 둘은 historyOf() 의 sources 를 직접 바꾼다.
 //   조건부 비트가 카드를 쥐여 주면 두 경로의 사초함이 갈리고, 그것은
@@ -92,7 +92,7 @@ export function dryRun(act, state, actIndex = 0) {
 //   (같은 모양의 구멍을 tests 쪽 hasWayForward 에서 방금 닫았다. 이것이 그 형제다.)
 // visitors — 알현 비트가 문서를 건네는 자리다(scenario.js grantedIdsOf). grantCard 와
 //   똑같은 이유로 조건부 비트에 달리면 안 된다: 한쪽 경로만 그 문서를 갖게 된다.
-const GUARDED_FIELDS = ['palace', 'control', 'dayUnits', 'grantCard', 'cardIds', 'visitors']
+const GUARDED_FIELDS = ['palace', 'control', 'grantCard', 'cardIds', 'visitors']
 
 // 이 kind 들은 필드 하나가 아니라 kind 자체가 historyOf() 의 sources 를 바꾼다
 // (codex.js 의 plunder()/survive() 를 통해서 — 위 dryRun 이 흉내 내는 바로 그 효과다).

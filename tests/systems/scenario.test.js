@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { createState } from '../../src/core/state.js'
-import { DAY_UNITS } from '../../src/core/clock.js'
 import {
   beatsOf, beatAt, isActOver, enterAct, applyBeat, advance,
   controlTimeline, palaceTimeline, peakControl, endControl, isBeatActive,
@@ -37,7 +36,7 @@ describe('비트 시나리오', () => {
     expect(s.beatIndex).toBe(0)
     expect(s.palace).toBe('gyeongbok')
     expect(s.control).toBe('B')
-    expect(s.dayLeft).toBe(DAY_UNITS)
+    expect(s.dayLeft).toBeUndefined()   // 하루의 셈은 없다(core/clock.js 2026-09-26)
   })
 
   it('막에 들어가도 사초함과 결정 기록은 그대로다', () => {
@@ -58,9 +57,12 @@ describe('비트 시나리오', () => {
     expect(s.control).toBe('B')
   })
 
-  it('dayUnits 가 있으면 낮을 다시 채운다', () => {
-    const s0 = { ...enterAct(createState(), act, 0), dayLeft: 0 }
-    expect(applyBeat(s0, beatAt(act, 2)).dayLeft).toBe(4)
+  // 「dayUnits 가 있으면 낮을 다시 채운다」가 여기 있었다 — 하루의 셈을 없앴다
+  // (core/clock.js 2026-09-26). 비트는 더 이상 낮을 채우지 않는다.
+  it('비트가 남은 칸을 채우지 않는다 — 그런 칸이 없다', () => {
+    let state = enterAct(createState(), act, 2)
+    for (const beat of act.beats) state = applyBeat(state, beat)
+    expect(state.dayLeft).toBeUndefined()
   })
 
   it('원본 상태를 건드리지 않는다', () => {

@@ -74,12 +74,13 @@ describe('1~5막 이어달리기 — 한 번도 막히지 않고 지나간다', 
 
   // 하루 칸수 — 어느 막 어느 지점에서도 음수로 내려가지 않는다. 음수가 되면
   // isDusk 가 늘 참이 되어 그 막의 낮이 시작하자마자 밤이 된다.
-  it('하루 칸수가 어느 저장 지점에서도 0 밑으로 내려가지 않는다', () => {
+  // 하루 칸수를 세던 검사가 여기 있었다. 2026-09-26 에 그 셈 자체를 없앴다
+  // (core/clock.js — 해 칸이 떨어져 1876년 최익현의 상소를 못 본 채 3막이 끝났다).
+  it('어느 저장 지점에도 하루 칸수가 실려 있지 않다', () => {
     for (const [who, caught] of STUDENTS) {
       const { saves } = playThrough(createState(), { caught })
       for (const s of saves) {
-        const st = reopen(s.json)
-        expect(st.dayLeft, `${who} · ${s.at}`).toBeGreaterThanOrEqual(0)
+        expect(reopen(s.json).dayLeft, `${who} · ${s.at}`).toBeUndefined()
       }
     }
   })
@@ -174,14 +175,16 @@ describe('어느 저장 지점에서 끊어도 이어달리기가 같은 곳에 
     expect(resumed.played.some(p => p.includes('다시 열림')), '그 화면을 다시 열어 주지 않았다').toBe(true)
   })
 
-  it('값을 두 번 내지는 않는다 — 이어해도 해가 다시 줄지 않는다', () => {
+  it('이어해도 다녀온 나들이가 되살아나지 않는다', () => {
+    // 옛 이름은 「값을 두 번 내지는 않는다」였다 — 치를 값이 없어진 지금도 지켜야 할
+    // 것은 남는다: 다녀온 나들이는 이어하기 뒤에 다시 열리지 않는다(판정 R62).
     const full = playThrough(createState(), { caught: true })
     const paid = full.saves.find(s => s.at.endsWith('값을 치름'))
     const saved = reopen(paid.json)
-    const before = saved.dayLeft
     const resumed = playThrough(saved, { caught: true, resumed: true, pauseAfter: 'imo/imo-day' })
-    // 나들이를 다시 열어 준 뒤에도 해는 그대로다(다시 열 때 spend 를 타지 않는다)
-    expect(resumed.state.dayLeft).toBeLessThanOrEqual(before)
+    for (const id of Object.keys(saved.stops ?? {})) {
+      expect(resumed.state.stops?.[id], id).toBeTruthy()
+    }
   })
 })
 
@@ -230,13 +233,12 @@ describe('완주 도중에 배선이 끊긴 비트 종류가 없다', () => {
     it('나들이에 나가는 순간 「치렀다」만 찍힌다 — 화면은 아직 못 봤다', () => {
       const act = ACTS.find(a => stopsOfAct(a).length > 0)
       const stop = stopsOfAct(act)[0]
-      const state = { ...createState(), palace: act.palace, control: act.control, dayLeft: 6, room: stop.room }
+      const state = { ...createState(), palace: act.palace, control: act.control, room: stop.room }
       const action = pressE({
         dialogOpen: false, exit: null, stops: [stop], room: stop.room,
         palaceDef: PALACES[act.palace], playerX: 0, playerZ: 0, taken: new Set(), state,
       })
       expect(action.type).toBe('stop')
-      expect(action.state.dayLeft, '해가 실제로 줄었다').toBeLessThan(state.dayLeft)
       expect(isStopDone(action.state, stop.id), '값을 두 번 내지 않는다').toBe(true)
       expect(pendingStopId(action.state), '화면을 보기 전에는 「아직 못 봤다」가 남아 있어야 한다')
         .toBe(stop.id)
