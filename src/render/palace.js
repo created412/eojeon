@@ -214,23 +214,7 @@ export function buildHall(THREE, tex, { w, d, h = 7, bays = 5, burnt = false, la
 //
 // 그림을 사실적으로 그리지 않는다. 이 게임이 단청·흉배에서 써 온 것과 같은
 // 추상화 수준으로 — 붉은 해, 흰 달, 다섯 봉우리의 실루엣.
-// 발(簾) — 수렴청정의 그 발. 가는 대나무를 엮어 늘어뜨린 것이라 **너머가 흐릿하게
-// 비친다.** 뒤에 앉은 사람이 보이되 얼굴은 안 보이는 것이 이 물건의 요점이다.
-function baltex(THREE) {
-  const c = document.createElement('canvas')
-  c.width = 64; c.height = 128
-  const g = c.getContext('2d')
-  g.clearRect(0, 0, 64, 128)
-  for (let y = 0; y < 128; y += 4) {
-    g.fillStyle = 'rgba(40,30,16,0.86)'
-    g.fillRect(0, y, 64, 3)                 // 대오리
-  }
-  g.fillStyle = 'rgba(90,70,40,0.9)'
-  for (const x of [6, 32, 58]) g.fillRect(x - 1, 0, 2, 128)   // 엮은 실
-  const t = new THREE.CanvasTexture(c)
-  t.colorSpace = THREE.SRGBColorSpace
-  return t
-}
+// 발(簾)의 결을 그리던 baltex() 가 여기 있었다 — 조대비와 함께 걷어 냈다(2026-09-26).
 
 function ilwolobongdo(THREE) {
   const c = document.createElement('canvas')
@@ -345,21 +329,9 @@ function buildThrone(THREE, tex, { w, d }) {
   dan.userData.noOcclude = true   // 어좌 위에 붙은 것이다 — 가림 판정이 지우면 어좌만 뜬다
   g.add(dan)
 
-  // 발(簾) — 어좌 **앞**에 천장에서 늘어뜨린다. 발 뒤에 조대비가 앉고 임금이 그
-  // 앞에 앉는다. 이것은 **세계에 붙박인 물건**이다.
-  //
-  // 예전에는 화면 위쪽을 덮는 판(DOM)이었다. 그래서 임금이 어디로 걸어가든 발이
-  // 화면에 그대로 붙어 따라다녔다 — 궁을 나가도 발이 있었다(선생님 지적 1번).
-  // 발은 인정전에 걸린 물건이지 학생의 눈에 붙은 것이 아니다.
-  const bal = new THREE.Mesh(
-    new THREE.PlaneGeometry(7.2, 2.6),
-    new THREE.MeshLambertMaterial({ map: baltex(THREE), transparent: true, side: THREE.DoubleSide })
-  )
-  bal.position.set(0, BASE_H + 3.5, z0 + 2.2)
-  bal.name = 'sullyeom'
-  bal.visible = false          // 수렴청정 동안에만 내린다 (scene.setVeil)
-  bal.userData.noOcclude = true
-  g.add(bal)
+  // 수렴청정의 발(簾)이 어좌 앞에 걸려 있었다. 선생님(2026-09-26)이 조대비를 걷어 내라
+  // 하시면서 발도 함께 사라졌다 — 드리울 사람이 없다. 발이라는 물건 자체는 방 안 물건
+  // 카드로 남는다(data/artifacts.js 의 'yeom' — 수렴청정이 무엇이었는지 거기서 읽는다).
 
   // 어좌 앞의 등불 하나. 정전 안은 해가 직접 들지 않아 어두운데, 이 게임에서 가장
   // 중요한 자리가 바로 여기다 — 임금과 그 앞에 선 사람의 얼굴이 보여야 한다.

@@ -196,7 +196,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     const attire = want.attire ?? 'royal'
     if (kingLook && want.stage === kingLook.stage && want.height === kingLook.height && attire === kingLook.attire) return
     if (king) { kingFacing.remove(king.pivot); disposePerson(king.pivot) }
-    king = buildPerson(THREE, { ...RANK_SPECS.king, ageStage: want.stage, height: want.height, attire })
+    king = buildPerson(THREE, { ...RANK_SPECS.king, ageStage: want.stage, height: want.height, attire, idleKey: 'king' })
     kingFacing.add(king.pivot)
     kingLook = { stage: want.stage, height: want.height, attire }
   }
@@ -225,7 +225,9 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
       // hatStyle 은 골격으로 사람을 쌓던 시절의 지정이다. 지금은 그림 자체에
       // 사모·익선관이 이미 그려져 있어 여기서 고를 것이 없다(npcs.js 의 값은 남겨 둔다).
       const spec = RANK_SPECS[n.rank] ?? RANK_SPECS.mid
-      const built = n.id === 'mother' ? buildMother(THREE) : buildPerson(THREE, { ...spec, ageStage: 'adult' })
+      // idleKey — 서 있는 자세의 박자를 이 사람의 이름에서 뽑는다(systems/idle-pose.js).
+      // 이름을 주지 않으면 uuid 를 쓰는데, 그것은 새로 고칠 때마다 달라진다.
+      const built = n.id === 'mother' ? buildMother(THREE) : buildPerson(THREE, { ...spec, ageStage: 'adult', idleKey: n.id })
       const anchor = new THREE.Group()
       anchor.position.set(n.x, 1.9, n.z)
       anchor.add(built.pivot)
@@ -491,14 +493,8 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     })
   }
 
-  // 수렴청정의 발을 내리고 걷는다. 발은 궁에 걸린 물건이라 궁을 다시 지으면
-  // 새로 찾는다 — 그래서 상태를 들고 있다가 setPalace 뒤에 다시 걸어 준다.
-  let veilOn = false
-  function applyVeil() {
-    const bal = palaceGroup?.getObjectByName('sullyeom')
-    if (bal) bal.visible = veilOn
-  }
-  function setVeil(on) { veilOn = !!on; applyVeil() }
+  // 수렴청정의 발을 내리고 걷던 setVeil() 이 여기 있었다. 선생님(2026-09-26)이
+  // 조대비를 걷어 내라 하시면서 발도 함께 사라졌다 — 발을 드리울 사람이 없다.
 
   // 지금이 몇 해인가 — 마당 물건 가운데 fromYear 가 있는 것(척화비)이 이 값을 본다.
   let sceneYear = null
@@ -526,7 +522,6 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     atmosphere.setPalace(def)
     gateGuards.setPalace(def)
     palaceStaff.setPalace(def)
-    applyVeil()   // 궁을 다시 지었으니 발을 다시 걸어 준다
     // 첫 프레임 렌더 전에도 가림 판정을 정확히 하려면 월드 행렬이 미리 계산돼 있어야
     // 한다 — renderer.render() 가 매 프레임 다시 해 주지만, 그건 이 함수가 끝난 다음이다.
     palaceGroup.updateMatrixWorld(true)
@@ -576,7 +571,9 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     audio?.stepped(t, { walking, running: running?.() === true })
     // 카메라를 넘긴다 — 판이 카메라를 마주 보고, 걷는 방향과 카메라가 이루는
     // 각도가 앞·비스듬·옆·뒤 중 어느 그림을 쓸지 정한다(sprite-person.js).
-    updateSway(king.pivot, dt, { walking, running: running?.() === true })
+    // 임금도 서 있는 동안 숨을 쉰다. 예전에는 걷지 않는 순간의 임금이 어좌 앞의
+    // 밀랍 인형이었다 — 학생이 가장 오래 보는 몸이 그것이었다(선생님 2026-09-26).
+    updateSway(king.pivot, dt, { walking, running: running?.() === true, reducedMotion })
     lastPX = player.position.x
     lastPZ = player.position.z
   }
@@ -623,18 +620,25 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
       const want = e.yaw != null ? e.yaw
         : (Math.hypot(dx, dz) > 0.05 ? Math.atan2(dx, dz) : e.anchor.rotation.y)
       e.anchor.rotation.y = turnToward(e.anchor.rotation.y, want, dt)
-      updateSway(e.pivot, dt, { walking: e.walking })
+      // 이 순회는 국면을 가리지 않는다 — 알현·행렬·대화 중에도 돈다. 그래서 서 있는
+      // 자세(숨·무게 옮김·고개)를 updateSway 안에 둔 것이 그대로 모든 장면에 흐른다.
+      updateSway(e.pivot, dt, { walking: e.walking, reducedMotion })
       // 읍은 걸음 자세 **뒤에** 얹는다 — updateSway 가 허리를 쉬는 자세로 되돌리므로.
       applyBow(e)
     }
+    // 문 앞의 수문장(render/gate-guards.js). 자리를 떠나지 않으니 어느 국면에서든
+    // 자세만 얹는다 — 장면이 이들의 자리를 몰지 않으므로 싸울 일이 없다.
+    gateGuards.tick(dt, { reducedMotion })
     // 궁을 오가는 사람들(render/palace-staff.js).
-    // 지우는 자리가 셋이다 —
+    // 지우는 자리가 둘이다 —
     //   · danger    불·난군의 장면. 거기에 내관이 서류를 들고 지나가면 그림이 거짓말을 한다.
-    //   · audience  알현. 정전 한가운데에서 아뢰는 장면인데, 같은 방을 가로지르는
-    //               사람이 있으면 아뢰는 이와 몸이 겹친다(이들은 알현을 모른다).
     //   · openingView 타이틀 — 궁을 멀리서 보여 주는 화면이다.
+    // 알현은 지우지 않고 **세운다**(frozen). 예전에는 여기서도 지웠다 — 정전을
+    // 가로지르는 사람이 아뢰는 이와 겹치기 때문이다. 그런데 그러면 알현하는 동안
+    // 궁이 텅 비어, 선생님이 보신 「움직이지 않는 궁」이 아예 「아무도 없는 궁」이
+    // 되었다. 걸음만 멈추면 겹칠 일도 없고 궁은 여전히 사람이 사는 곳이다.
     palaceStaff.tick(t, dt, player.position,
-      { reducedMotion, hidden: danger || audience || openingView })
+      { reducedMotion, hidden: danger || openingView, frozen: audience })
 
     // 가림도 이 프레임의 카메라 위치로 잰다 — 위에서 이미 세워 두었다. player 는 지붕 밑을 걸어 다닐 수 있으니 방을 옮길 때만이
     // 아니라 매 프레임 다시 잰다.
@@ -660,7 +664,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
 
   return {
     THREE, scene, camera, renderer, player, fire,
-    setPalace, setPickupMarkers, pickGround, resize, render, stats, setVeil,
+    setPalace, setPickupMarkers, pickGround, resize, render, stats,
     setKingAge, setNpcs, placeNpc, tickNpcLife, setProps, setMood, setCinematic, setReducedMotion, setYear,
     worldAxis, setOpeningView, rotateView, resetView,
     setInteractionCues,

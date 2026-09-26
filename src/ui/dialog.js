@@ -14,34 +14,41 @@ const CSS = `
   align-items:center;justify-content:center;padding:20px}
 /* 사료 카드는 한지 위에 앉는다 — 학생이 손에 쥐는 것은 문서이지 흰 카드가 아니다.
    var(--hanji) 가 없으면 이 줄만 무효가 되고 예전의 단색이 그대로 남는다(ui/paper-css.js). */
-.card{max-width:560px;width:100%;max-height:80vh;overflow:auto;background:#e8e2d4;color:#23201a;
+.card{max-width:min(660px,94vw);width:100%;max-height:86vh;overflow:auto;background:#e8e2d4;color:var(--ink-strong,#23201a);
   background-image:var(--hanji);background-size:cover;background-position:center;
-  border-radius:3px;border:1px solid #6b5a3e;padding:24px 26px;line-height:1.7;
+  border-radius:3px;border:1px solid #6b5a3e;padding:26px 30px;line-height:var(--read-lh-body,1.7);
+  word-break:keep-all;
   box-shadow:0 12px 40px #000a, inset 0 0 70px #b39a6a2b}
-.card h3{margin:0 0 4px;font-size:20px;letter-spacing:1px;color:#2b2317}
-.card .origin{font-size:13px;color:#5e5849;margin-bottom:14px}
-.card .excerpt{border-left:3px solid #8a6a44;padding:8px 0 8px 16px;margin:0 0 16px;
-  font-size:15.5px;line-height:1.85;white-space:pre-wrap;word-break:keep-all}
-.card .gloss{font-size:13px;color:#6b6558;margin:0 0 14px;line-height:1.6}
-.card .meaning{font-size:14px;color:#3b362c}
-.codex .sub{font-size:13px;color:#5e5849;margin:-8px 0 14px}
-.card .staged{margin-top:16px;border:1px dashed #8a6a44;padding:8px 10px;font-size:13px;color:#5e5849}
-.card .rendered{margin-top:16px;padding:6px 10px;font-size:12px;color:#7a7462}
+.card h3{margin:0 0 6px;font-family:var(--face-display,serif);font-size:var(--read-title,20px);
+  line-height:var(--read-lh-title,1.4);letter-spacing:var(--read-track,1px);color:#2b2317}
+.card .origin{font-size:var(--read-small,13px);color:var(--ink-quiet,#5e5849);margin-bottom:16px;
+  line-height:var(--read-lh-small,1.6)}
+.card .excerpt{border-left:3px solid #8a6a44;padding:10px 0 10px 18px;margin:0 0 18px;
+  font-size:var(--read-body,15.5px);line-height:var(--read-lh-body,1.85);white-space:pre-wrap;word-break:keep-all}
+.card .gloss{font-size:var(--read-small,13px);color:var(--ink-quiet,#6b6558);margin:0 0 16px;
+  line-height:var(--read-lh-small,1.6)}
+.card .meaning{font-size:var(--read-lead,14px);line-height:var(--read-lh-body,1.7);color:#332e23}
+.codex .sub{font-size:var(--read-small,13px);color:var(--ink-quiet,#5e5849);margin:-8px 0 14px}
+.card .staged{margin-top:18px;border:1px dashed #8a6a44;padding:11px 14px;
+  font-size:var(--read-small,13px);line-height:var(--read-lh-small,1.6);color:var(--ink-quiet,#5e5849)}
+.card .rendered{margin-top:18px;padding:7px 12px;font-size:var(--read-small,12px);color:var(--ink-quiet,#7a7462)}
 /* 종이 위의 단추다 — 회색 판을 얹으면 문서가 아니라 웹 양식으로 보인다. */
-.card .close{margin-top:20px;width:100%;padding:11px;border:1px solid #8a6a44;
-  background:#00000008;color:#5e4a2c;border-radius:2px;font-size:14px;letter-spacing:2px;cursor:pointer}
+.card .close{margin-top:22px;width:100%;padding:13px;border:1px solid #8a6a44;
+  background:#00000008;color:#5e4a2c;border-radius:2px;font-size:var(--read-label,14px);letter-spacing:2px;cursor:pointer}
 .card .close:hover{background:#8a6a4418}
 .codex h3{margin:0 0 12px}
 .codex .grp{margin-bottom:14px}
-.codex .grp b{font-size:13px;color:#6b6558;display:block;margin-bottom:4px}
-.codex .row{padding:6px 2px;border-bottom:1px solid #6b5a3e33;font-size:14px}
-.codex .row.gone{color:#a09884;text-decoration:line-through}
-.codex .row .tag{float:right;font-size:11px;color:#a0522d;text-decoration:none}
-.card .talktitle{font-size:13px;color:#5e5849;margin-bottom:14px}
-.card .talkline{margin:0 0 10px;font-size:15px;line-height:1.7;color:#23201a}
+.codex .grp b{font-size:var(--read-label,13px);color:var(--ink-quiet,#6b6558);display:block;margin-bottom:6px}
+.codex .row{padding:7px 2px;border-bottom:1px solid #6b5a3e33;font-size:var(--read-small,14px)}
+.codex .row.gone{color:#8d8571;text-decoration:line-through}
+.codex .row .tag{float:right;font-size:var(--read-caption,11px);color:#9b4a25;text-decoration:none}
+.card .talktitle{font-size:var(--read-small,13px);color:var(--ink-quiet,#5e5849);margin-bottom:16px}
+.card .talkline{margin:0 0 12px;font-size:var(--read-body,15px);line-height:var(--read-lh-body,1.7);color:var(--ink-strong,#23201a)}
 /* 물건 카드는 사료 카드와 한눈에 갈려야 한다 — 사초함에 쌓이는 것이 아니기 때문이다.
    같은 한지 위에 앉지만 제목 옆에 「물건」이라 적고 본문에 인용 줄(excerpt)을 두지 않는다. */
-.card.lore h3 small{font-size:11px;color:#6b6558;letter-spacing:3px;margin-left:8px;vertical-align:middle}
+.card.lore h3 small{font-size:var(--read-caption,11px);color:var(--ink-quiet,#6b6558);letter-spacing:.18em;
+  margin-left:10px;vertical-align:middle}
+@media(max-width:760px){.card{padding:20px 17px}}
 `
 
 // 등급이 하는 말은 두 가지가 다르다 —

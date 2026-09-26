@@ -28,7 +28,7 @@ export function bgmForBeat(beat, actIndex = 0) {
   if (beat.kind === 'rush' || beat.kind === 'escape') return { track: 'tension', level: 'full' }
   if (beat.kind === 'procession' || beat.kind === 'move') return { track: 'march', level: 'full' }
   if (beat.kind === 'council') return { track: 'council', level: 'bed' }
-  if (beat.kind === 'orders') return { track: 'council', level: 'bed' }
+  if (beat.kind === 'orders' || beat.kind === 'funding') return { track: 'council', level: 'bed' }
   if (READING.has(beat.kind)) return { track: act, level: 'bed' }
   if (beat.kind === 'audience') return { track: act, level: 'bed' }
   return { track: act, level: 'full' }       // explore — 학생이 궁을 걷는 동안

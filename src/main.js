@@ -36,7 +36,6 @@ import { createBgm, bgmForBeat } from './systems/bgm.js'
 import { INQUIRIES, clozeBlanks } from './data/inquiries.js'
 import { installPaperVars } from './ui/paper-css.js'
 import { createCouncil } from './ui/council-ui.js'
-import { createSullyeom } from './ui/veil-screen.js'
 import { createActEnd } from './ui/act-end.js'
 import { createNoteScreen } from './ui/note-screen.js'
 import { createMoveScreen } from './ui/move-screen.js'
@@ -44,6 +43,7 @@ import { createDispatchMap } from './ui/dispatch-map.js'
 import { createLossScreen } from './ui/loss-screen.js'
 import { createOrders } from './ui/orders-ui.js'
 import { createBrush } from './ui/brush.js'
+import { createFunding } from './ui/funding.js'
 import { createEscape } from './ui/escape-screen.js'
 import { createEdict } from './ui/edict-screen.js'
 import { createPause } from './ui/pause.js'
@@ -270,6 +270,13 @@ export function pickUpPacket({ palaceDef, cardIds, taken, state, act = Infinity 
 // 이미 고른 조항 id 를 '+' 로 이어붙인 것이다(아래 boot() 의 playOrders 참고).
 // DOM 도 flow 도 모른다 — buildRecordText() 와 함께 Node 에서 그대로 구동해 검증한다.
 export function describeDecision(act, decision) {
+  // 「돈을 만든다」(1막) — 고른 것이 아니라 **학생이 민 셈**이 기록에 남는다.
+  // choiceId 는 'funding:levy6+mint6' 꼴이고, 읽을 수 있는 한 줄은 reason 에 들어 있다
+  // (ui/funding.js 의 result.summary). 여기서는 물음만 얹는다.
+  if (decision.choiceId.startsWith('funding:')) {
+    const beat = beatsOf(act).find(b => b.kind === 'funding')
+    return { question: beat?.question ?? '이 비용을 어디서 만드는가', text: decision.reason || '(셈을 남기지 않음)' }
+  }
   if (decision.choiceId.startsWith('orders:')) {
     const beat = beatsOf(act).find(b => b.kind === 'orders')
     const picked = decision.choiceId.slice('orders:'.length)
@@ -505,7 +512,6 @@ export function boot(root) {
     },
   })
   const council = createCouncil(root)
-  const sullyeom = createSullyeom(root)
   const actEnd = createActEnd(root)
   const pause = createPause(root)
   // 배경 음악(systems/bgm.js) — 대사·독백이 나오는 동안에는 줄인다.
@@ -521,6 +527,7 @@ export function boot(root) {
   const lossScreen = createLossScreen(root)
   const orders = createOrders(root)
   const brush = createBrush(root)
+  const funding = createFunding(root)
   const escape = createEscape(root)
   const edict = createEdict(root)
   const ration = createRation(root)
@@ -966,12 +973,7 @@ export function boot(root) {
   // 모든 막에 그대로 찍고 있었다 — 2·3막에는 틀린 문장이었다.
   function showActEnd(reason) {
     const ended = flow.act()
-    // 1막에서만 「발」 화면(veil-screen.js) 전체를 겪었다 — 그 화면 자체는 여전히
-    // 설명하지 않는다. 수렴청정이 무엇이었는지는 1막이 끝난 뒤 이 한 줄로 회수한다
-    // (가독성 검수 C2).
-    const extra = flow.actIndex === 0
-      ? ['垂 드리우다 · 簾 발 · 聽 듣다 · 政 정치 — 발을 드리우고 그 뒤에서 정치를 듣는 것. 당신이 게임 내내 위쪽이 가려진 채 걸은 이유다.']
-      : []
+    const extra = []
     bgm.sting('actend')        // 막이 닫히는 자리 — 대금 종지와 정주 한 번
     return actEnd.show({
       title: `${flow.actIndex + 1} 막 「${ended.title}」 끝`,
@@ -1484,6 +1486,26 @@ export function boot(root) {
   }
 
 
+  // 「돈을 만든다」(1막 끝) — 예전의 고르는 어전회의를 대신한다(ui/funding.js).
+  // 학생이 두 지레를 밀어 백 칸을 채우고, 그 셈이 끝난 뒤에 아버지가 뒤집는다.
+  // 고른 값 대신 **학생이 한 셈 한 줄**(result.summary)을 기록에 남긴다 — 예전의
+  // 「이유 쓰기」 자리를 그것이 대신한다(buildRecordText 의 describeDecision 참고).
+  async function playFunding(beat) {
+    flow.setPhase('beat')
+    hint.hidden = true
+    const result = await funding.open({ ...beat, onPush: () => audio.play('pick') })
+    audio.play(councilSound('levy'))
+    flow.state = {
+      ...flow.state,
+      decisions: [...flow.state.decisions, {
+        actIndex: flow.actIndex,
+        choiceId: `funding:levy${result.levy}+mint${result.mint}`,
+        reason: result.summary,
+      }],
+    }
+    return flow.state
+  }
+
   // 친필 비트(F1) — 양이침범은 제시하고 나머지 여덟 글자를 직접 따라 쓴다. 실패할 수 없는 장면이라
   // 다 쓰면 그 카드를 자기 손으로 읽은 것으로 친다 — 지급 자체는 여기서 하지 않는다.
   // playBeat() 이 비트 종류와 무관하게 한 자리에서 한다(applyGrant).
@@ -1647,7 +1669,6 @@ export function boot(root) {
       flow.state = { ...flow.state, room: room.id, blocked: null }
       flow.setPhase('council')
       dialog.close()
-      // 수렴청정의 발은 어전회의 위에도 그대로 남을 수 있다 — beat.veil 이 이를 정한다
       hint.hidden = true
       saveGame(flow.state)   // 막이 넘어가는 시점
       audio.play('open')
@@ -1738,8 +1759,6 @@ export function boot(root) {
     ctx.setYear?.(yearAtBeat(flow.act(), flow.state.beatIndex))
     ctx.setKingAge({ ...kingLookAt(yearAtBeat(flow.act(), flow.state.beatIndex)),
       attire: kingAttireAt(flow.act(), flow.state.beatIndex, flow.state.palace) })
-    if (beat.veil === true) { ctx.setVeil(true); sullyeom.show() }
-    if (beat.veil === false) { ctx.setVeil(false); sullyeom.hide() }
     switch (beat.kind) {
       case 'note':    flow.setPhase('beat'); await noteScreen.show(beat); return flow.state
       case 'explore': return await playExplore(beat)
@@ -1750,6 +1769,7 @@ export function boot(root) {
       case 'dispatch': return await playDispatch(beat)
       case 'plunder': return await playPlunder(beat)
       case 'orders':  return await playOrders(beat)
+      case 'funding': return await playFunding(beat)
       case 'brush':   return await playBrush(beat)
       case 'rush':    return await playRush(beat)
       case 'hold':    return await playHold(beat)
@@ -1864,18 +1884,9 @@ export function boot(root) {
     await runBeats()
   }
 
-  // 저장된 곳까지 발이 올라가 있었는지, 지나온 비트들을 되짚어 안다 — 새로 실행된
-  // 이 세션은 sullyeom 을 아직 한 번도 부르지 않았기 때문이다
-  function veilAtBeat(act, beatIndex) {
-    let veil = false
-    for (let i = 0; i < beatIndex; i++) {
-      const b = beatAt(act, i)
-      if (!isBeatActive(flow.state, b)) continue
-      if (b?.veil === true) veil = true
-      else if (b?.veil === false) veil = false
-    }
-    return veil
-  }
+  // 발(簾)을 되짚던 veilAtBeat() 가 여기 있었다. 선생님(2026-09-26)이 조대비를
+  // 걷어 내라 하시면서 발도 함께 사라졌다(data/artifacts.js 의 「발」 카드가 수렴청정을
+  // 설명하는 자리로 남는다).
 
   // 이어하기가 나들이 한가운데를 지날 때 — 무엇이 옳은가.
   //
@@ -1914,7 +1925,6 @@ export function boot(root) {
       await finishAct()
       return
     }
-    if (veilAtBeat(flow.act(), flow.state.beatIndex)) { ctx.setVeil(true); sullyeom.show() }
     // 나들이 한가운데서 끊긴 세션 — 낮 안으로 돌아가기 전에 못 본 화면부터 다시 연다
     await resumePendingStop()
     // CRITICAL 1 을 고치며 딸려 온 함정 — runBeats() 는 이제 advance() 뒤에만 저장하므로,

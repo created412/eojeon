@@ -29,7 +29,7 @@ export const MIRRORED_KINDS = new Set([
   'note', 'explore', 'dispatch',                                       // 상태에 남기는 것이 없다
   'audience', 'procession',                                             // 알현·행렬 — 문서는 applyGrant 가 준다(아래 공통 경로)
   'council', 'orders', 'plunder', 'brush', 'move', 'rush',   // 1~3단계
-  'hold', 'edict', 'escape', 'outing',                                  // 3단계가 더한 것
+  'hold', 'edict', 'escape', 'outing', 'funding',                                  // 3단계가 더한 것
 ])
 
 // caught — 촉박(rush)을 놓쳤는가. 이 게임의 조건 비트는 전부 여기서 갈린다
@@ -39,6 +39,9 @@ export function firstChoiceDecider(beat, state, caught = true) {
   switch (beat.kind) {
     case 'council':
       return { ...state, decisions: [...state.decisions, { actIndex: state.actIndex, choiceId: beat.council.choices[0].id, reason: '시험' }] }
+    // 「돈을 만든다」 — 고른 값이 아니라 학생이 민 셈이 남는다(main.js playFunding).
+    case 'funding':
+      return { ...state, decisions: [...state.decisions, { actIndex: state.actIndex, choiceId: 'funding:levy0+mint0', reason: '시험' }] }
     case 'orders': {
       const picked = (beat.clauses ?? []).slice(0, 1).map(c => c.id)
       const flags = { ...state.flags }

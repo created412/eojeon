@@ -85,10 +85,11 @@ describe('CRITICAL 1 — advance() 뒤에 저장하면 이어하기가 끝난 �
 // 리뷰가 짚은 그 증상(결정이 두 번 쌓인다)이 재현된다.
 describe('대조군 — advance() 앞에서 저장하면(예전 버그) 실제로 어전회의가 중복된다', () => {
   it('council 비트 직후 · advance 전에 저장하고 이어하면 같은 회의가 다시 열려 결정이 두 번 남는다', () => {
-    const act = ACTS[0]
+    // 1막의 어전회의가 셈판으로 바뀌어(2026-09-26) 여기서는 2막의 회의로 본다.
+    const act = ACTS[1]
     const councilBeat = beatsOf(act).find(b => b.kind === 'council')
     const seed = { ...createState(), palace: act.palace, control: act.control }
-    const started = enterAct(seed, act, 0)
+    const started = enterAct(seed, act, 1)
 
     let state = started
     while (!isActOver(state, act)) {

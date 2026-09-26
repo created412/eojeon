@@ -1,26 +1,33 @@
+import { installTypeVars } from './type-css.js'
+
 const CSS = `
 .edict{position:fixed;inset:0;z-index:56;background:#0d0e10;display:flex;flex-direction:column;
   align-items:center;justify-content:safe center;gap:14px;padding:26px;text-align:center;overflow:auto}
-.edict h2{margin:0;font-size:15px;color:#8f8a7c;letter-spacing:6px;font-weight:400}
-.edict p{margin:0;font-size:18px;color:#e8e2d4;line-height:1.8;max-width:620px}
-.edict .rows{width:100%;max-width:560px;border:1px solid #2a2f34;border-radius:3px;overflow:hidden;flex-shrink:0}
-.edict .r{display:flex;gap:12px;padding:9px 12px;font-size:13px;color:#b9b2a1;
-  border-bottom:1px solid #1c2024;text-align:left;line-height:1.6}
+.edict h2{margin:0;font-size:var(--read-lead,15px);color:#c9c1ad;letter-spacing:.4em;font-weight:400;
+  font-family:var(--face-display,serif)}
+.edict p{margin:0;font-size:var(--read-body,18px);color:var(--paper-strong,#e8e2d4);
+  line-height:var(--read-lh-body,1.8);max-width:min(100%,var(--read-measure,620px));word-break:keep-all;text-wrap:balance}
+.edict .rows{width:100%;max-width:660px;border:1px solid #2a2f34;border-radius:3px;overflow:hidden;flex-shrink:0}
+.edict .r{display:flex;gap:14px;padding:11px 14px;font-size:var(--read-small,13px);color:#c9c2b1;
+  border-bottom:1px solid #1c2024;text-align:left;line-height:var(--read-lh-small,1.6);word-break:keep-all}
 .edict .r:last-child{border-bottom:0}
-.edict .r .d{flex:none;width:78px;color:#8f8a7c;letter-spacing:1px}
-.edict .r.mark{background:#1a1512;color:#e8e2d4}
-.edict .r.mark .d{color:#e0a23a}
-.edict .paper{max-width:600px;background:#e8e2d4;color:#23201a;border-radius:4px;
-  padding:22px 24px;line-height:1.9;font-size:17px;text-align:left;white-space:pre-wrap}
-.edict .paper .origin{font-size:13px;color:#5e5849;margin-top:12px;white-space:normal}
-.edict .rendered{font-size:12px;color:#7a7462;margin-top:10px;white-space:normal}
-.edict .origin{font-size:12px;color:#6b6558;max-width:560px;line-height:1.7}
-.edict .gloss{max-width:560px;border:1px solid #2a2f34;border-radius:3px;padding:9px 13px;
-  font-size:13px;color:#b9b2a1;line-height:1.8;text-align:left}
-.edict .unknown{border:1px solid #3a4248;border-radius:3px;padding:10px 14px;max-width:560px;
-  font-size:13px;color:#8f8a7c;line-height:1.7}
-.edict button{margin-top:6px;padding:13px 32px;background:#3a2d20;border:1px solid #6a5230;
-  color:#e0a23a;border-radius:3px;font-size:15px;cursor:pointer}
+.edict .r .d{flex:none;width:88px;color:var(--paper-quiet,#8f8a7c);letter-spacing:normal}
+.edict .r.mark{background:#1a1512;color:var(--paper-strong,#e8e2d4)}
+.edict .r.mark .d{color:#e8b45c}
+.edict .paper{max-width:min(100%,700px);background:#e8e2d4;color:var(--ink-strong,#23201a);border-radius:4px;
+  padding:24px 26px;line-height:var(--read-lh-body,1.9);font-size:var(--read-body,17px);text-align:left;
+  white-space:pre-wrap;word-break:keep-all}
+.edict .paper .origin{font-size:var(--read-small,13px);color:var(--ink-quiet,#5e5849);margin-top:14px;white-space:normal}
+.edict .rendered{font-size:var(--read-small,12px);color:var(--ink-quiet,#7a7462);margin-top:10px;white-space:normal}
+.edict .origin{font-size:var(--read-small,12px);color:var(--paper-quiet,#6b6558);
+  max-width:min(100%,var(--read-measure,560px));line-height:var(--read-lh-small,1.7);word-break:keep-all}
+.edict .gloss{max-width:min(100%,660px);border:1px solid #2a2f34;border-radius:3px;padding:12px 15px;
+  font-size:var(--read-small,13px);color:#c9c2b1;line-height:var(--read-lh-small,1.8);text-align:left;word-break:keep-all}
+.edict .unknown{border:1px solid #3a4248;border-radius:3px;padding:12px 16px;max-width:min(100%,660px);
+  font-size:var(--read-small,13px);color:var(--paper-quiet,#8f8a7c);line-height:var(--read-lh-small,1.7);
+  text-align:left;word-break:keep-all}
+.edict button{margin-top:6px;padding:14px 34px;background:#3a2d20;border:1px solid #6a5230;
+  color:#e0a23a;border-radius:3px;font-size:var(--read-label,15px);cursor:pointer}
 .edict button[disabled]{opacity:.4;cursor:not-allowed}
 /* ── 어보(御寶)를 찍는 자리 ────────────────────────────────────────────
    선생님(2026-09-25): 「손으로 하는 일을 늘립니다 … 교지에 인장 찍기.」
@@ -31,14 +38,17 @@ const CSS = `
 .edict .stamp:focus-visible{outline:3px solid #e0a23a;outline-offset:3px}
 .edict .stamp .ink{position:absolute;inset:8px;border:5px solid #a3231f;border-radius:2px;
   display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;place-items:center;
-  color:#a3231f;font-size:24px;line-height:1;font-family:"Batang","Gungsuh","SimSun",serif;
+  color:#a3231f;font-size:24px;line-height:1;font-family:var(--face-hanja,"Batang","Gungsuh","SimSun",serif);
   opacity:0;transform:scale(.94) rotate(-2deg)}
 /* 인장의 넉 자는 오른쪽 위 → 오른쪽 아래 → 왼쪽 위 → 왼쪽 아래로 읽는다.
    격자는 왼쪽 위부터 채우므로 글자를 之·施·寶·命 순으로 적어 넣는다 — 그래야
    화면에서는 施命之寶 로 읽힌다. (한때 한 줄로 늘어놓아 「寶之命施」로 보였다.) */
 .edict .stamp .ink i{font-style:normal}
-.edict .stamp .tip{position:absolute;left:0;right:0;bottom:-24px;font-size:12px;color:#8f8a7c;letter-spacing:1px}
-.edict .sealnote{font-size:12px;color:#6b6558;max-width:560px;line-height:1.7;margin-top:26px}
+.edict .stamp .tip{position:absolute;left:0;right:0;bottom:-28px;font-size:var(--read-small,12px);
+  color:var(--paper-quiet,#8f8a7c);letter-spacing:normal}
+.edict .sealnote{font-size:var(--read-small,12px);color:var(--paper-quiet,#6b6558);
+  max-width:min(100%,var(--read-measure,560px));line-height:var(--read-lh-small,1.7);margin-top:34px;
+  word-break:keep-all;text-wrap:balance}
 @media(prefers-reduced-motion:reduce){.edict .stamp .ink{transition:none!important}}
 `
 
@@ -68,6 +78,7 @@ export const SEAL_NOTE =
 let styled = false
 function ensureStyle() {
   if (styled) return
+  installTypeVars()
   const style = document.createElement('style')
   style.textContent = CSS
   document.head.appendChild(style)

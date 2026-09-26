@@ -44,7 +44,10 @@ const CSS = `
 .eojeon .cinema-danger{border-radius:7px;background:#512b29f2;bottom:28px;width:min(510px,64vw);border:1px solid #e4ba8959;border-top:3px solid #e4b278;padding:15px 20px;text-shadow:none}.eojeon .cinema-danger small{font-size:10px}
 .eojeon:has(.note,.howto,.move,.veil,.speak,.pause,.codex,.hold) .cinema-keyboard{display:none}
 .eojeon .speak .panel{background:#123733f2;border:1px solid #c3c39959;border-radius:9px;bottom:30px;padding:22px 28px}.eojeon .speak .name{background:#e0c79b;color:#203a31;border-radius:3px;border:0;letter-spacing:0}.eojeon .speak .line{font-size:17px}
-.eojeon .note .sheet{background-color:#f0ecd9f5;border-top:3px solid #477a66;border-radius:7px}.eojeon .note button{background:#25584c;color:#f3e5bf;border-color:#477a66;border-radius:4px}
+.eojeon .note .sheet{background-color:#f0ecd9f5;border-top:3px solid #477a66;border-radius:7px}
+/* .note button 전부를 칠하면 그림의 「크게 보기」 단추까지 초록으로 덮여, 사진 위에
+   띠가 하나 얹힌다. 화면을 넘기는 단추만 고른다(.note-next). */
+.eojeon .note button.note-next{background:#25584c;color:#f3e5bf;border-color:#477a66;border-radius:4px}
 .eojeon .council{background:linear-gradient(90deg,#123734f5,#123734d9 55%,#12373444)}.eojeon .council h2{color:#dfcba0}.eojeon .council button.opt{background:#ece6d2;border-radius:5px;border-left:4px solid #92b095;box-shadow:0 3px 10px #081c2033}.eojeon .council button.opt:hover{border-left-color:#e2be70;background:#fbf3da}.eojeon .council .go{background:#dcc79a;color:#213d34;border:1px solid #ecdcb7;border-radius:4px}
 @media(min-width:761px) and (max-height:780px){.eojeon .opening{padding-top:85px;padding-bottom:165px}.eojeon .opening .opening-name{font-size:72px}.eojeon .opening .opening-years{margin:8px 0 16px}.opening-invitation{font-size:23px;margin-bottom:10px}.eojeon .opening .opening-buttons{margin-top:18px}.eojeon .opening .opening-chapters{bottom:55px;padding-top:14px}.eojeon .opening .opening-footer{bottom:15px}}
 @media(max-width:1000px){.opening-edition{display:none}.eojeon .opening .opening-vista{right:5vw;top:44%}.cinema-chapter{display:none}.cinema-keyboard span:last-child{display:none}}

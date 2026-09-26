@@ -198,6 +198,7 @@ describe('ambientForBeat — 어느 화면에 무엇을 깔 것인가', () => {
     brush: null,          // 친필 — 붓소리 말고는 조용한 것이 맞다
     outing: null,         // 나들이(회수 화면)
     edict: null,          // 국상
+    funding: null,        // 돈을 만든다 — 셈판이다, 궁 안의 소리를 깔지 않는다
   }
 
   it('게임이 재생하는 모든 비트 종류가 이 표에 적혀 있다 — 새 종류가 조용히 새지 않는다', () => {
@@ -224,7 +225,7 @@ describe('ambientForBeat — 어느 화면에 무엇을 깔 것인가', () => {
   })
 
   it('글·문서·회의 화면에는 아무것도 깔지 않는다', () => {
-    for (const kind of ['note', 'council', 'orders', 'move', 'dispatch', 'plunder', 'brush', 'outing', 'edict']) {
+    for (const kind of ['note', 'council', 'orders', 'move', 'dispatch', 'plunder', 'brush', 'outing', 'edict', 'funding']) {
       expect(ambientForBeat({ kind }), kind).toBe(null)
     }
     expect(ambientForBeat(null)).toBe(null)

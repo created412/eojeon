@@ -336,11 +336,6 @@ export const NPCS = [
   { id: 'kimjwageun', name: '김좌근', title: '영의정', palace: 'unhyeon', x: 0, z: 13, rank: 'senior', hatStyle: 'samo', actsVisible: [], lines: ['「대왕대비전의 명을 받들어 모시러 왔습니다.」'] },
   // 목소리로만 나오는 궁의 여성들 — 알현 방문자(from:'voice')로만 쓴다. 좌표는 쓰이지 않는다.
   {
-    id: 'jodaebi', name: '대왕대비 조씨', title: '발 뒤에서', palace: 'changdeok', x: 0, z: 46,
-    rank: 'mid', voice: true, actsVisible: [],
-    lines: ['발 뒤에서 늙은 목소리가 들린다.'],
-  },
-  {
     id: 'wangbi', name: '왕비 민씨', title: '', palace: 'changdeok', x: 0, z: 46,
     rank: 'mid', voice: true, actsVisible: [],
     lines: ['대조전 쪽에서 왕비의 전갈이 온다.'],

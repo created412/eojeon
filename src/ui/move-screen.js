@@ -1,3 +1,4 @@
+import { installTypeVars } from './type-css.js'
 // class 이름 "note" 는 쓰지 않는다 — note-screen.js 가 전역으로 심어 둔
 // bare .note{position:fixed;inset:0;...} 규칙과 이름이 겹치면, 이 화면 것도 그
 // position:fixed;inset:0 을 그대로 물려받아 화면 전체를 덮는 보이지 않는 판이
@@ -8,22 +9,27 @@ const CSS = `
   align-items:center;justify-content:safe center;gap:14px;padding:28px;text-align:center;overflow:auto;
   animation:movein .5s ease-out}
 @keyframes movein{from{opacity:0}to{opacity:1}}
-.move .year{font-size:13px;color:#8f8a7c;letter-spacing:5px}
-.move .lunar{font-size:12px;color:#6b6558;letter-spacing:2px;margin-top:-6px}
-.move .solar{font-size:12px;color:#6b6558;letter-spacing:2px;margin-top:-4px}
-.move .path{font-size:30px;color:#e8e2d4;letter-spacing:4px}
-.move .path b{font-weight:400;color:#e0a23a}
-.move .cause{font-size:16px;color:#b9b2a1}
-.move .self{font-size:13px;color:#8f8a7c;letter-spacing:2px}
-.move .gloss{margin-top:6px;border:1px dashed #6a5230;color:#8f8a7c;font-size:12px;
-  padding:8px 12px;border-radius:3px;max-width:480px;line-height:1.6;white-space:pre-line}
-.move button{margin-top:10px;padding:12px 30px;background:#3a2d20;border:1px solid #6a5230;
-  color:#e0a23a;border-radius:3px;font-size:15px;cursor:pointer}
+/* 해와 달만 벌어진다 — 그 아래 설명 줄에서는 자간을 걷어 냈다(ui/type-css.js §2). */
+.move .year{font-size:var(--read-small,13px);color:#c9c1ad;letter-spacing:.34em;font-family:var(--face-display,serif)}
+.move .lunar{font-size:var(--read-small,12px);color:var(--paper-quiet,#6b6558);letter-spacing:normal;margin-top:-4px}
+.move .solar{font-size:var(--read-small,12px);color:var(--paper-quiet,#6b6558);letter-spacing:normal;margin-top:-2px}
+/* 이 한 줄이 이 화면의 표제다 — 「창덕궁 → 경복궁」. 자간이 허락되는 자리. */
+.move .path{font-size:clamp(26px,4vw,34px);color:#f0ead9;letter-spacing:.14em;font-family:var(--face-display,serif)}
+.move .path b{font-weight:400;color:#e8b45c}
+.move .cause{font-size:var(--read-body,16px);color:#cdc6b5;line-height:var(--read-lh-body,1.7);
+  max-width:min(100%,var(--read-measure,560px));word-break:keep-all;text-wrap:balance}
+.move .self{font-size:var(--read-small,13px);color:var(--paper-quiet,#8f8a7c);letter-spacing:normal}
+.move .gloss{margin-top:8px;border:1px dashed #6a5230;color:var(--paper-quiet,#8f8a7c);
+  font-size:var(--read-small,12px);padding:12px 16px;border-radius:3px;max-width:min(100%,560px);
+  line-height:var(--read-lh-small,1.6);white-space:pre-line;text-align:left;word-break:keep-all}
+.move button{margin-top:10px;padding:13px 32px;background:#3a2d20;border:1px solid #6a5230;
+  color:#e0a23a;border-radius:3px;font-size:var(--read-label,15px);cursor:pointer}
 `
 
 let styled = false
 function ensureStyle() {
   if (styled) return
+  installTypeVars()
   const style = document.createElement('style')
   style.textContent = CSS
   document.head.appendChild(style)

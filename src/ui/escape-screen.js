@@ -1,31 +1,37 @@
+import { installTypeVars } from './type-css.js'
 const CSS = `
 .escape{position:fixed;inset:0;z-index:56;background:#0f1113;display:flex;flex-direction:column;
   align-items:center;justify-content:safe center;gap:14px;padding:26px;text-align:center;overflow:auto}
-.escape h2{margin:0;font-size:15px;color:#8f8a7c;letter-spacing:5px;font-weight:400}
-.escape p{margin:0;font-size:18px;color:#e8e2d4;line-height:1.8;max-width:600px}
-.escape .q{font-size:20px;color:#e8e2d4;letter-spacing:1px}
-.escape .list{display:flex;flex-direction:column;gap:9px;width:100%;max-width:520px}
-.escape button.opt{padding:14px 16px;text-align:left;background:#23282c;color:#e8e2d4;
-  border:1px solid #3a4248;border-radius:3px;font-size:15px;cursor:pointer}
+.escape h2{margin:0;font-size:var(--read-lead,15px);color:#c9c1ad;letter-spacing:.34em;font-weight:400;
+  font-family:var(--face-display,serif)}
+.escape p{margin:0;font-size:var(--read-body,18px);color:var(--paper-strong,#e8e2d4);
+  line-height:var(--read-lh-body,1.8);max-width:min(100%,var(--read-measure,600px));word-break:keep-all;text-wrap:balance}
+.escape .q{font-size:var(--read-lead,20px);color:var(--paper-strong,#e8e2d4);letter-spacing:normal}
+.escape .list{display:flex;flex-direction:column;gap:10px;width:100%;max-width:min(100%,620px)}
+.escape button.opt{padding:15px 18px;text-align:left;background:#23282c;color:var(--paper-strong,#e8e2d4);
+  border:1px solid #3a4248;border-radius:3px;font-size:var(--read-small,15px);
+  line-height:var(--read-lh-small,1.6);word-break:keep-all;cursor:pointer}
 .escape button.opt:hover{background:#2f363c;border-color:#5a646c}
-.escape button.opt small{display:block;margin-top:5px;color:#8f8a7c;font-size:12px}
-.escape .step{font-size:12px;color:#8f8a7c;letter-spacing:3px}
-.escape .fact{max-width:600px;background:#e8e2d4;color:#23201a;border-radius:4px;
-  padding:20px 22px;line-height:1.8;text-align:left}
-.escape .fact .you{color:#6b6558;font-size:13px;margin-bottom:10px}
-.escape .fact .origin{font-size:13px;color:#5e5849;margin-top:8px}
-.escape .fact .second{margin-top:14px;border-top:1px solid #cfc7b4;padding-top:12px;font-size:15px}
-.escape .staged{max-width:600px;border:1px dashed #8a6a44;border-radius:4px;padding:16px 18px;
-  text-align:left;color:#b9b2a1;font-size:15px;line-height:1.8;background:#191b1e}
-.escape .staged .tag{display:block;color:#d2503a;font-size:12px;letter-spacing:2px;margin-bottom:8px}
-.escape .staged .origin{font-size:12px;color:#8f8a7c;margin-top:8px}
-.escape button.go{padding:12px 30px;background:#3a2d20;border:1px solid #6a5230;color:#e0a23a;
-  border-radius:3px;font-size:15px;cursor:pointer}
+.escape button.opt small{display:block;margin-top:6px;color:var(--paper-quiet,#8f8a7c);font-size:var(--read-caption,12px)}
+.escape .step{font-size:var(--read-small,12px);color:var(--paper-quiet,#8f8a7c);letter-spacing:.16em}
+.escape .fact{max-width:min(100%,660px);background:#e8e2d4;color:var(--ink-strong,#23201a);border-radius:4px;
+  padding:22px 24px;line-height:var(--read-lh-body,1.8);font-size:var(--read-body,16px);text-align:left;word-break:keep-all}
+.escape .fact .you{color:var(--ink-quiet,#6b6558);font-size:var(--read-small,13px);margin-bottom:12px}
+.escape .fact .origin{font-size:var(--read-small,13px);color:var(--ink-quiet,#5e5849);margin-top:10px}
+.escape .fact .second{margin-top:16px;border-top:1px solid #cfc7b4;padding-top:14px;font-size:var(--read-small,15px)}
+.escape .staged{max-width:min(100%,660px);border:1px dashed #8a6a44;border-radius:4px;padding:18px 20px;
+  text-align:left;color:#cdc6b5;font-size:var(--read-small,15px);line-height:var(--read-lh-body,1.8);
+  background:#191b1e;word-break:keep-all}
+.escape .staged .tag{display:block;color:#e0674c;font-size:var(--read-caption,12px);letter-spacing:.14em;margin-bottom:8px}
+.escape .staged .origin{font-size:var(--read-caption,12px);color:var(--paper-quiet,#8f8a7c);margin-top:10px}
+.escape button.go{padding:13px 32px;background:#3a2d20;border:1px solid #6a5230;color:#e0a23a;
+  border-radius:3px;font-size:var(--read-label,15px);cursor:pointer}
 `
 
 let styled = false
 function ensureStyle() {
   if (styled) return
+  installTypeVars()
   const style = document.createElement('style')
   style.textContent = CSS
   document.head.appendChild(style)

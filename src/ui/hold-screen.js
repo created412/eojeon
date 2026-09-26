@@ -1,3 +1,4 @@
+import { installTypeVars } from './type-css.js'
 // 조작권 D 장면 — 눌러도 임금이 한 걸음도 못 움직인다(설계서 §7 5막 비트 2·3).
 //
 // **안 움직이게 만드는 코드는 여기 없다.** 그것은 systems/movement.js 의 step() 이
@@ -24,25 +25,30 @@ const CSS = `
 .hold{position:fixed;inset:0;z-index:45;display:flex;flex-direction:column;
   align-items:center;justify-content:flex-end;gap:14px;padding:0 26px 64px;text-align:center;
   pointer-events:none;background:linear-gradient(#0f111300 40%,#0f1113cc 78%,#0f1113ee)}
-.hold h2{margin:0;font-size:14px;color:#8f8a7c;letter-spacing:6px;font-weight:400}
-.hold p{margin:0;font-size:19px;color:#e8e2d4;line-height:1.8;max-width:600px}
-.hold p.hold-calm{font-size:15px;color:#e0a23a;letter-spacing:1px}
+.hold h2{margin:0;font-size:var(--read-lead,14px);color:#c9c1ad;letter-spacing:.4em;font-weight:400;
+  font-family:var(--face-display,serif)}
+.hold p{margin:0;font-size:var(--read-body,19px);color:var(--paper-strong,#e8e2d4);
+  line-height:var(--read-lh-body,1.8);max-width:min(100%,var(--read-measure,600px));word-break:keep-all;text-wrap:balance}
+.hold p.hold-calm{font-size:var(--read-small,15px);color:#e8b45c;letter-spacing:normal}
 .hold .hold-keys{display:flex;gap:8px;margin-top:4px}
 .hold .hold-keys i{width:40px;height:40px;border:1px solid #3a4248;border-radius:4px;color:#98a2aa;
   font-style:normal;font-size:15px;display:flex;align-items:center;justify-content:center;
   transition:border-color .18s, color .18s, transform .18s}
 .hold .hold-keys i.hold-hit{border-color:#d2503a;color:#d2503a;transform:translateY(2px)}
-.hold .hold-said{font-size:15px;color:#8f8a7c;letter-spacing:2px;min-height:22px}
-.hold .hold-staged{border:1px dashed #6a5230;color:#8f8a7c;font-size:12px;padding:7px 12px;
-  border-radius:3px;max-width:520px;line-height:1.6}
-.hold .hold-origin{font-size:12px;color:#6b6558;max-width:520px}
-.hold button{pointer-events:auto;margin-top:4px;padding:12px 30px;background:#3a2d20;
-  border:1px solid #6a5230;color:#e0a23a;border-radius:3px;font-size:15px;cursor:pointer}
+.hold .hold-said{font-size:var(--read-small,15px);color:var(--paper-quiet,#8f8a7c);letter-spacing:normal;min-height:24px}
+.hold .hold-staged{border:1px dashed #6a5230;color:var(--paper-quiet,#8f8a7c);font-size:var(--read-small,12px);
+  padding:11px 15px;border-radius:3px;max-width:min(100%,560px);line-height:var(--read-lh-small,1.6);
+  text-align:left;word-break:keep-all}
+.hold .hold-origin{font-size:var(--read-small,12px);color:var(--paper-quiet,#6b6558);
+  max-width:min(100%,var(--read-measure,520px));line-height:var(--read-lh-small,1.7);word-break:keep-all;text-wrap:balance}
+.hold button{pointer-events:auto;margin-top:4px;padding:13px 32px;background:#3a2d20;
+  border:1px solid #6a5230;color:#e0a23a;border-radius:3px;font-size:var(--read-label,15px);cursor:pointer}
 `
 
 let styled = false
 function ensureStyle() {
   if (styled) return
+  installTypeVars()
   const style = document.createElement('style')
   style.textContent = CSS
   document.head.appendChild(style)

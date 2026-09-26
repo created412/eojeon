@@ -1,21 +1,26 @@
+import { installTypeVars } from './type-css.js'
 import { SCENE_ART } from './scene-art-data.js'
 
 const CSS = `
 .loss{position:fixed;inset:0;z-index:54;background:#0f1113;display:flex;flex-direction:column;
   align-items:center;justify-content:safe center;gap:14px;padding:28px;padding-top:max(28px,96px);text-align:center;overflow:auto}
-.loss h2{margin:0;font-size:16px;color:#d2503a;letter-spacing:4px;font-weight:400}
-.loss p{margin:0;font-size:18px;color:#e8e2d4;line-height:1.8;max-width:600px}
-.loss .cards{display:flex;flex-direction:column;gap:6px;width:100%;max-width:480px;margin-top:6px}
-.loss .card-row{padding:10px 14px;border:1px solid #4a3a2a;border-radius:3px;color:#a09884;
-  text-decoration:line-through;text-align:left;font-size:14px}
-.loss .card-row span{float:right;font-size:11px;color:#d2503a;text-decoration:none}
-.loss .origin{font-size:12px;color:#6b6558}
-.loss .footer{font-size:13px;color:#8f8a7c;max-width:520px;line-height:1.7}
+.loss h2{margin:0;font-size:var(--read-lead,16px);color:#e0674c;letter-spacing:.28em;font-weight:400;
+  font-family:var(--face-display,serif)}
+.loss p{margin:0;font-size:var(--read-body,18px);color:var(--paper-strong,#e8e2d4);
+  line-height:var(--read-lh-body,1.8);max-width:min(100%,var(--read-measure,600px));word-break:keep-all;text-wrap:balance}
+.loss .cards{display:flex;flex-direction:column;gap:7px;width:100%;max-width:min(100%,560px);margin-top:6px}
+.loss .card-row{padding:11px 15px;border:1px solid #4a3a2a;border-radius:3px;color:#a8a08b;
+  text-decoration:line-through;text-align:left;font-size:var(--read-small,14px);word-break:keep-all}
+.loss .card-row span{float:right;font-size:var(--read-caption,11px);color:#e0674c;text-decoration:none}
+.loss .origin{font-size:var(--read-small,12px);color:var(--paper-quiet,#6b6558);
+  max-width:min(100%,var(--read-measure,560px));line-height:var(--read-lh-small,1.7);word-break:keep-all}
+.loss .footer{font-size:var(--read-small,13px);color:var(--paper-quiet,#8f8a7c);
+  max-width:min(100%,var(--read-measure,520px));line-height:var(--read-lh-small,1.7);word-break:keep-all;text-wrap:balance}
 .loss figure{margin:0;width:100%;max-width:640px}
 .loss figure img{display:block;width:100%;max-height:38vh;object-fit:cover;border-radius:3px;filter:saturate(.85)}
-.loss figure figcaption{font-size:11px;color:#8f8a7c;margin-top:4px;text-align:right}
-.loss button{margin-top:8px;padding:12px 30px;background:#3a2d20;border:1px solid #6a5230;
-  color:#e0a23a;border-radius:3px;font-size:15px;cursor:pointer}
+.loss figure figcaption{font-size:var(--read-caption,11px);color:var(--paper-quiet,#8f8a7c);margin-top:6px;text-align:right}
+.loss button{margin-top:8px;padding:13px 32px;background:#3a2d20;border:1px solid #6a5230;
+  color:#e0a23a;border-radius:3px;font-size:var(--read-label,15px);cursor:pointer}
 `
 
 let styled = false
@@ -29,6 +34,7 @@ function artFigure(key) {
 }
 function ensureStyle() {
   if (styled) return
+  installTypeVars()
   const style = document.createElement('style')
   style.textContent = CSS
   document.head.appendChild(style)

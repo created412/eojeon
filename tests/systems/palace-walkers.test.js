@@ -179,6 +179,52 @@ describe('걸음', () => {
     const me = w.tick({ now: 41000, reducedMotion: true, king: start }).find(o => o.id === id)
     expect(me.bow).toBeGreaterThan(0)
   })
+
+  // 알현 — 예전에는 궁인을 통째로 지웠다(render/scene.js hidden). 그러면 아뢰는
+  // 장면 내내 궁이 텅 비어, 선생님이 보신 「움직이지 않는 궁」이 「아무도 없는 궁」이
+  // 되었다. 이제 선 자리에서 멈추게만 한다.
+  describe('알현 동안에는 선 자리에서 멈춘다(frozen)', () => {
+    // 프레임이 굵어도 멈춤은 멈춤이다. 처음에는 세운 시계에 **자른** 시간을 더해,
+    // 프레임이 120ms 보다 느린 기계에서 멈춰 선 궁인이 야금야금 미끄러졌다.
+    it.each([100, 400])('프레임이 %dms 로 굵어도 자리가 한 뼘도 안 움직인다', step => {
+      const w = life()
+      const id = w.ids()[0]
+      let me
+      for (let ms = 0; ms <= 12000; ms += 100) me = w.tick({ now: ms }).find(o => o.id === id)
+      const at = { x: me.x, z: me.z }
+      for (let ms = 12000 + step; ms <= 40000; ms += step) {
+        me = w.tick({ now: ms, frozen: true }).find(o => o.id === id)
+        expect(Math.hypot(me.x - at.x, me.z - at.z), `${ms}ms`).toBeLessThan(0.001)
+      }
+    })
+
+    it('멈춘 동안 자리가 한 뼘도 안 움직이고 걸음도 없다', () => {
+      const w = life()
+      const id = w.ids()[0]
+      // 먼저 한참 걷게 두어 길 한가운데에 세운다 — 첫 자리에서 멈추는 것과 구별하려면
+      // 출발점이 아닌 곳에서 멈춰 보아야 한다.
+      let me
+      for (let ms = 0; ms <= 12000; ms += 100) me = w.tick({ now: ms }).find(o => o.id === id)
+      const at = { x: me.x, z: me.z }
+      for (let ms = 12100; ms <= 30000; ms += 100) {
+        me = w.tick({ now: ms, frozen: true }).find(o => o.id === id)
+        expect(Math.hypot(me.x - at.x, me.z - at.z), `${ms}ms`).toBeLessThan(0.001)
+        expect(me.walking).toBe(false)
+      }
+    })
+
+    it('멈춤이 풀리면 멈춘 그 자리에서 잇는다 — 저만치로 튀지 않는다', () => {
+      const w = life()
+      const id = w.ids()[0]
+      let me
+      for (let ms = 0; ms <= 12000; ms += 100) me = w.tick({ now: ms }).find(o => o.id === id)
+      const at = { x: me.x, z: me.z }
+      for (let ms = 12100; ms <= 30000; ms += 100) me = w.tick({ now: ms, frozen: true }).find(o => o.id === id)
+      // 18초를 멈춰 있었어도, 다시 걸을 때 한 프레임에 가는 거리는 걸음 하나만큼이다.
+      const after = w.tick({ now: 30100, frozen: false }).find(o => o.id === id)
+      expect(Math.hypot(after.x - at.x, after.z - at.z)).toBeLessThan(WALKER_SPEED * 0.2)
+    })
+  })
 })
 
 describe('길 위의 한 점', () => {

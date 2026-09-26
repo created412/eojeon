@@ -1,4 +1,5 @@
 import { FEEDBACK_MEDIA } from '../ui/feedback-media-data.js'
+import { idleSeed } from '../systems/idle-pose.js'
 
 // The supplied raster has an opaque background. Clip the display geometry to
 // the figure instead of showing a rectangular studio backdrop in the palace.
@@ -28,6 +29,14 @@ export function buildMother(THREE) {
     pivot.quaternion.copy(rotation.invert()).multiply(camera.quaternion)
     pivot.updateMatrixWorld(true)
   }
+  // 선생님(2026-09-26): 「전부 움직이고 있어야해.」 어머니는 뼈가 없는 판 하나라
+  // 허리를 굽힐 수도, 무게를 옮길 수도 없다 — 굽힘(scene.js applyBow)이 이 인물을
+  // 지나가는 까닭도 그것이다. 할 수 있는 것은 숨 하나뿐이니 그것만 둔다:
+  // glb-person.js updateSway 가 idleFlat 을 보고 판의 세로 배율만 아주 조금 오간다.
+  // userData.person 을 만들지 않는 것은 뜻이 있다 — 그것을 만들면 applyBow 가
+  // 어머니를 아들에게 읍하게 만든다(1863 운현궁에서 그것은 애초에 틀린 그림이다).
+  pivot.userData.idleFlat = mesh
+  pivot.userData.idleSeed = idleSeed('mother')
   pivot.userData.disposeFigure = () => { geometry.dispose(); material.dispose(); texture.dispose(); shadowGeometry.dispose(); shadowMaterial.dispose() }
   return { pivot, mesh, topY: h - 1.8 }
 }

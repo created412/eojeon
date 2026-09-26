@@ -8,7 +8,8 @@ import { costOf } from '../../src/core/clock.js'
 import { PLACES } from '../../src/ui/ganghwa-map.js'
 
 const KINDS = [
-  'note', 'explore', 'council', 'orders', 'move', 'rush', 'plunder', 'salvage', 'brush', 'dispatch',
+  'note', 'explore', 'council', 'orders', 'move', 'rush', 'plunder', 'brush', 'dispatch',
+  'funding',  // 「돈을 만든다」 — 2026-09-26, 고르는 어전회의를 대신한다
   // 3단계
   'outing',   // G 회수 — 종로와 무위영 (Task 6)
   'escape',   // 변장과 맡길 사람 (Task 8)
@@ -848,10 +849,13 @@ describe('1막 앞머리 — 운현궁의 명복', () => {
   })
 })
 
-it('1막 알현 — 발 뒤의 조 대비가 먼저 말하고, 김좌근이 물러간다', () => {
+it('1막 알현 — 아버지가 먼저 말하고, 김좌근이 물러간다', () => {
+  // 선생님(2026-09-26): 「조대비는 주요 스토리에 아무 영향없이 나왔다가 사라지잖아.
+  // 조대비 자체를 없애버려.」 — 발 뒤의 목소리가 사라지고 아버지가 첫 말을 받는다.
   const a = beatsOf(ACTS[0]).find(b => b.id === 'audience')
-  expect(a.visitors[0]).toMatchObject({ npc: 'jodaebi', from: 'voice' })
+  expect(a.visitors[0]).toMatchObject({ npc: 'heungseon', from: 'beside' })
   expect(a.visitors.some(v => v.npc === 'kimjwageun')).toBe(true)
+  expect(JSON.stringify(ACTS)).not.toContain('jodaebi')
 })
 
 // 2026-09-26 — 「2막 — 고종의 사사로운 삶」 블록이 여기 있었다. 완화군 출생(1868)·

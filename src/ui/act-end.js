@@ -3,6 +3,7 @@ import { evaluateChoices } from '../systems/council.js'
 import { lostWithReason, everRead } from '../systems/loss-log.js'
 import { ACTS, FUTURE_COUNCIL } from '../data/acts.js'
 import { freedomRecord } from '../systems/freedom.js'
+import { installTypeVars } from './type-css.js'
 
 // 마지막 화면의 「몇 년부터 몇 년까지, 몇 해를 지났다」를 ACTS 에서 뽑는다.
 // 손으로 적어 두면 막이 하나 붙는 순간 조용히 거짓말이 된다 — 실제로 그랬다:
@@ -54,37 +55,45 @@ export function finalLead(state, acts = ACTS) {
 const CSS = `
 .actend{position:fixed;inset:0;background:#0f1113;z-index:52;display:flex;flex-direction:column;
   align-items:center;justify-content:safe center;gap:16px;padding:28px;text-align:center;overflow:auto}
-.actend h2{margin:0;font-size:15px;color:#8f8a7c;letter-spacing:4px;font-weight:400}
-.actend p{margin:0;font-size:20px;color:#e8e2d4;line-height:1.8;max-width:620px}
-.actend .read{font-size:12px;color:#8f8a7c;letter-spacing:2px}
+/* 자간은 표제 한 줄에만 남는다 — 아래 이름표·꼬리말에서는 걷어 냈다(ui/type-css.js §2). */
+.actend h2{margin:0;font-size:var(--read-lead,15px);color:#c9c1ad;letter-spacing:.3em;font-weight:400;
+  font-family:var(--face-display,serif)}
+.actend p{margin:0;font-size:var(--read-body,20px);color:var(--paper-strong,#e8e2d4);
+  line-height:var(--read-lh-body,1.8);max-width:min(100%,var(--read-measure,620px));word-break:keep-all;text-wrap:balance}
+.actend .read{font-size:var(--read-small,12px);color:var(--paper-quiet,#8f8a7c);letter-spacing:normal}
 /* 학생이 쓴 한 줄은 사관이 받아 적은 것이다 — 종이 위에 얹는다. 이 화면에서
    학생이 자기 글을 만나는 유일한 자리이고, 활동지로 옮겨 적을 그 문장이다. */
-.actend .reason{font-size:16px;color:#23201a;line-height:1.9;max-width:560px;white-space:pre-wrap;
+.actend .reason{font-size:var(--read-body,16px);color:var(--ink-strong,#23201a);
+  line-height:var(--read-lh-body,1.9);max-width:min(100%,var(--read-measure,560px));white-space:pre-wrap;
   background:#e9dfc6;background-image:var(--hanji);background-size:cover;background-position:center;
-  border:1px solid #6b5a3e;border-radius:2px;padding:20px 24px;text-align:left;word-break:keep-all;
+  border:1px solid #6b5a3e;border-radius:2px;padding:22px 26px;text-align:left;word-break:keep-all;
   box-shadow:0 10px 30px #0009, inset 0 0 50px #b39a6a2b}
-.actend button{margin-top:8px;padding:12px 28px;background:#3a2d20;border:1px solid #6a5230;
-  color:#e0a23a;border-radius:3px;font-size:15px;cursor:pointer}
+.actend button{margin-top:8px;padding:13px 30px;background:#3a2d20;border:1px solid #6a5230;
+  color:#e0a23a;border-radius:3px;font-size:var(--read-label,15px);cursor:pointer}
 `
 
 const FINAL_CSS = `
-.actend.final{justify-content:flex-start;gap:12px;padding:36px 22px;overflow:auto;z-index:58}
-.actend.final h2{font-size:17px;color:#e8e2d4;letter-spacing:6px}
-.actend .sub{font-size:14px;color:#8f8a7c;text-align:center;max-width:620px;line-height:1.8}
-.actend .box{width:100%;max-width:560px;background:#15181b;border:1px solid #2a3035;border-radius:3px;
-  padding:14px 16px}
-.actend .box b{display:block;font-size:12px;color:#8f8a7c;letter-spacing:2px;margin-bottom:8px}
-.actend .row{font-size:14px;color:#e8e2d4;padding:4px 0;border-bottom:1px solid #22272b}
+.actend.final{justify-content:flex-start;gap:14px;padding:36px 22px;overflow:auto;z-index:58}
+.actend.final h2{font-size:var(--read-title,17px);color:#f0ead9;letter-spacing:.34em}
+.actend .sub{font-size:var(--read-small,14px);color:var(--paper-quiet,#8f8a7c);text-align:left;
+  max-width:min(100%,var(--read-measure,620px));line-height:var(--read-lh-small,1.8);word-break:keep-all;text-wrap:balance}
+.actend .box{width:100%;max-width:min(100%,660px);background:#15181b;border:1px solid #2a3035;border-radius:3px;
+  padding:16px 18px}
+.actend .box b{display:block;font-size:var(--read-label,12px);color:var(--paper-quiet,#8f8a7c);
+  letter-spacing:.02em;margin-bottom:10px}
+.actend .row{font-size:var(--read-small,14px);color:var(--paper-strong,#e8e2d4);padding:5px 0;border-bottom:1px solid #22272b}
 .actend .row.gone{color:#a09884;text-decoration:line-through}
-.actend .row .tag{float:right;font-size:11px;color:#a0522d;text-decoration:none}
-.actend .row.locked{color:#5f6971}
-.actend .row.locked small{display:block;color:#8f8a7c;font-size:11px;text-decoration:none}
-.actend .foot{font-size:13px;color:#8f8a7c;text-align:center;max-width:560px;line-height:1.9}
+.actend .row .tag{float:right;font-size:var(--read-caption,11px);color:#cf7a4e;text-decoration:none}
+.actend .row.locked{color:#78838b}
+.actend .row.locked small{display:block;color:var(--paper-quiet,#8f8a7c);font-size:var(--read-caption,11px);text-decoration:none}
+.actend .foot{font-size:var(--read-small,13px);color:var(--paper-quiet,#8f8a7c);text-align:left;
+  max-width:min(100%,var(--read-measure,560px));line-height:var(--read-lh-small,1.9);word-break:keep-all;text-wrap:balance}
 `
 
 let styled = false
 function ensureStyle() {
   if (styled) return
+  installTypeVars()
   const style = document.createElement('style')
   style.textContent = CSS + FINAL_CSS
   document.head.appendChild(style)

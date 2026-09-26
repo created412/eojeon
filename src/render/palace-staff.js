@@ -45,7 +45,7 @@ export function createPalaceStaff(THREE, scene) {
     for (const w of list) {
       if (!ids.has(w.id)) continue
       const spec = RANK_SPECS[w.rank] ?? RANK_SPECS.mid
-      const built = buildPerson(THREE, { ...spec, ageStage: 'adult' })
+      const built = buildPerson(THREE, { ...spec, ageStage: 'adult', idleKey: w.id })
       const anchor = new THREE.Group()
       anchor.position.set(0, 1.9, 0)
       anchor.add(built.pivot)
@@ -75,11 +75,13 @@ export function createPalaceStaff(THREE, scene) {
    * 한 프레임. now·dt 는 ms, king 은 임금의 자리.
    * hidden — 불·난군처럼 궁이 궁이 아닌 장면에서는 이들을 지운다. 그런 장면에
    * 내관이 서류를 들고 지나가면 그림이 거짓말을 한다.
+   * frozen — 알현. 예전에는 이때도 지웠지만, 그러면 아뢰는 장면 내내 궁이 텅 빈다.
+   * 선 자리에서 멈추게만 한다(systems/palace-walkers.js frozen) — 숨은 쉰다.
    */
-  function tick(now, dt, king, { reducedMotion = false, hidden = false } = {}) {
+  function tick(now, dt, king, { reducedMotion = false, hidden = false, frozen = false } = {}) {
     group.visible = !hidden
     if (hidden || bodies.size === 0) return
-    for (const w of walkers.tick({ now, king, reducedMotion })) {
+    for (const w of walkers.tick({ now, king, reducedMotion, frozen })) {
       const body = bodies.get(w.id)
       if (!body) continue
       body.anchor.position.x = w.x
@@ -90,7 +92,7 @@ export function createPalaceStaff(THREE, scene) {
       const want = w.yaw != null ? w.yaw
         : (Math.hypot(dx, dz) > 0.05 ? Math.atan2(dx, dz) : body.anchor.rotation.y)
       body.anchor.rotation.y = turnToward(body.anchor.rotation.y, want, dt)
-      updateSway(body.pivot, dt, { walking: w.walking })
+      updateSway(body.pivot, dt, { walking: w.walking, reducedMotion })
       applyBow(body, w.bow)
     }
   }

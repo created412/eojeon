@@ -2,6 +2,7 @@ import { HISTORICAL_MEDIA } from './historical-media-data.js'
 import { PORTRAITS } from './portraits-data.js'
 import { FEEDBACK_MEDIA } from './feedback-media-data.js'
 import { MOTHER_CLIP } from '../render/mother-person.js'
+import { installTypeVars } from './type-css.js'
 
 // The relation is part of the visible caption: a contextual image must never
 // masquerade as the manuscript quoted by the game.
@@ -81,24 +82,35 @@ export function mediaFigure(media,{portrait=false}={}) {
  </figure>`
 }
 
+// 2026-09-26 선생님: 「'기록을 보다'는 너무 좋은데 왼쪽의 글씨가 가독성 있게 들어오지
+// 않아. 글자크기도 작고 폰트도 개판이고, 이 부분의 전면 수정이 필요해.」
+// 두 가지를 고쳤다. ① 설명 글자의 바닥을 올렸다(10~12px 은 프로젝터에서 안 보인다 —
+// 크기는 ui/type-css.js 의 변수를 받아 쓴다). ② 칸을 다시 나눴다: 글이 좁은 칸에서
+// 작게 앉고 사진만 크던 것을, 글이 넓은 칸을 갖고 사진이 곁에 서는 쪽으로 돌렸다.
 const CSS=`
 .historical-figure{margin:0;min-width:0;padding:16px;background:#eee7d6;border:1px solid #b8a47e66;color:#342f25;text-align:left;box-sizing:border-box}
-.historical-figure .media-heading{font-size:10px;letter-spacing:.2em;color:#736144;margin-bottom:12px}
+.historical-figure .media-heading{font-size:var(--read-caption,10px);letter-spacing:.1em;color:#6a5738;margin-bottom:12px}
 .historical-figure .historical-image{display:block;width:100%;height:260px;object-fit:contain;filter:none}
 .historical-figure .media-zoom{display:block;position:relative;width:100%;margin:0;padding:0;min-width:0;border:0;border-radius:0;background:#d9d0bc44;cursor:zoom-in;color:inherit;letter-spacing:0}
 .historical-figure .media-zoom:hover{background:#c5b68f44}
-.historical-figure .media-enlarge{position:absolute;right:6px;bottom:6px;background:#18232bdc;color:#f1e2c3;padding:5px 8px;font:10px system-ui;border-radius:2px}
-.historical-figure figcaption{margin-top:12px;font:12px/1.65 system-ui,'Malgun Gothic',sans-serif;word-break:keep-all}
-.historical-figure figcaption strong{display:block;font-weight:600}
-.historical-figure .media-relation{display:block;margin-top:5px;color:#655c4d;font-size:11px}
-.historical-figure small{display:block;font-size:10px;color:#756953;margin-top:8px}
-.historical-figure .media-links{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:5px}
-.historical-figure a{font-size:10px;color:#65502b;text-underline-offset:3px;pointer-events:auto}
-.eojeon .veil .card.has-media{max-width:1080px;padding:30px}
-.card.has-media .source-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(260px,1fr);gap:28px;align-items:start}
+.historical-figure .media-enlarge{position:absolute;right:6px;bottom:6px;background:#18232bdc;color:#f1e2c3;padding:5px 9px;font-size:var(--read-caption,10px);border-radius:2px}
+.historical-figure figcaption{margin-top:12px;font-family:var(--face-body,system-ui,'Malgun Gothic',sans-serif);
+ font-size:var(--read-caption,12px);line-height:var(--read-lh-small,1.65);word-break:keep-all;letter-spacing:normal}
+/* color 는 건드리지 않는다 — 이 제목은 종이 위(어두운 먹)에도, 어두운 말판·확대창 위
+   (밝은 글자)에도 그대로 실려야 한다. 물려받게 두는 것이 두 곳 다 맞는 유일한 길이다. */
+.historical-figure figcaption strong{display:block;font-weight:600;font-size:var(--read-small,12px);
+ line-height:var(--read-lh-small,1.65);text-wrap:balance}
+.historical-figure .media-relation{display:block;margin-top:6px;color:var(--ink-quiet,#655c4d);font-size:var(--read-caption,11px)}
+.historical-figure small{display:block;font-size:var(--read-caption,10px);color:var(--ink-quiet,#756953);margin-top:8px}
+.historical-figure .media-links{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:7px}
+.historical-figure a{font-size:var(--read-caption,10px);color:#5b4622;text-underline-offset:3px;pointer-events:auto}
+.eojeon .veil .card.has-media{max-width:min(1060px,94vw);padding:30px}
+.card.has-media .source-layout{display:grid;grid-template-columns:minmax(0,1fr) clamp(260px,30%,380px);gap:30px;align-items:start}
 .card .source-copy{min-width:0}
-.eojeon .note .sheet.has-media{max-width:970px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(240px,1fr);gap:28px;align-items:center;text-align:left;flex-shrink:0}
-.note .note-copy{display:flex;flex-direction:column;gap:14px;min-width:0}
+/* 글 칸이 먼저다 — 1fr 을 글에 주고, 사진은 정해진 폭으로 곁에 선다. 예전에는 사진 칸이
+   1fr 로 함께 늘어나 글 칸이 좁아졌고, 그 좁은 칸에서 17px 글이 앉아 있었다. */
+.eojeon .note .sheet.has-media{max-width:min(960px,94vw);display:grid;grid-template-columns:minmax(0,1fr) clamp(270px,34%,350px);gap:32px;align-items:center;text-align:left;flex-shrink:0}
+.note .note-copy{display:flex;flex-direction:column;gap:16px;min-width:0}
 .eojeon .speak .conversation{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);width:min(1220px,92vw);display:grid;grid-template-columns:minmax(0,1fr) clamp(220px,24vw,310px);gap:20px;align-items:end}
 .eojeon .speak .conversation .panel{position:relative;left:auto;bottom:auto;transform:none;width:100%;min-height:174px;max-height:65vh;overflow:auto;box-sizing:border-box;padding-top:40px;border-radius:4px}
 .eojeon .speak .conversation .name{top:0;left:0;border-radius:3px 0 3px 0}
@@ -147,6 +159,7 @@ const CSS=`
 }
 `
 export function installHistoricalMedia() {
+ installTypeVars()
  if(document.getElementById('historical-media-style'))return
  const style=document.createElement('style');style.id='historical-media-style';style.textContent=CSS;document.head.appendChild(style)
 }

@@ -14,10 +14,22 @@ const act0 = ACTS[0]   // '즉위' — council 비트 하나
 const act1 = ACTS[1]   // '양요' — council-byeongin · orders 는 없다(훈령은 3막)
 
 describe('describeDecision — 결정 하나를 질문·고른 문구로 되짚는다', () => {
+  // 2026-09-26 — 1막의 고르는 어전회의가 「돈을 만든다」 셈판으로 바뀌었다. 고른 값
+  // 대신 학생이 민 셈 한 줄(reason)이 기록에 남는다(ui/funding.js 의 summary).
+  it('돈을 만든 셈은 물음과 학생이 민 한 줄을 그대로 돌려준다', () => {
+    const { question, text } = describeDecision(act0,
+      { actIndex: 0, choiceId: 'funding:levy6+mint6', reason: '원납전을 6차례 걷고, 당백전을 6칸 찍었다.' })
+    expect(question).toBe('이 비용을 어디서 만드는가')
+    expect(text).toContain('원납전을 6차례')
+  })
+
   it('어전회의 결정은 그 비트의 question·choice.text 를 그대로 돌려준다', () => {
-    const { question, text } = describeDecision(act0, { actIndex: 0, choiceId: 'coin', reason: '' })
-    expect(question).toBe('경복궁을 다시 짓는 비용을 어디서 걷는가')
-    expect(text).toBe('당백전을 발행한다')
+    const act = ACTS[1]   // 2막 병인양요 어전회의
+    const beat = ACTS[1].beats.find(b => b.kind === 'council')
+    const choice = beat.council.choices[1]
+    const { question, text } = describeDecision(act, { actIndex: 1, choiceId: choice.id, reason: '' })
+    expect(question).toBe(beat.council.question)
+    expect(text).toBe(choice.text)
   })
 
   it('훈령 결정은 orders: 접두어를 벗기고 고른 조항들을 이어붙인다', () => {
@@ -61,10 +73,10 @@ describe('buildRecordText — 「내 기록 복사」에 실제로 들어가는 
 
   it('결정과 남긴 말이 막 제목과 함께 나온다', () => {
     let s = createState()
-    s = { ...s, decisions: [...s.decisions, { actIndex: 0, choiceId: 'coin', reason: '급한 대로' }] }
+    s = { ...s, decisions: [...s.decisions, { actIndex: 0, choiceId: 'funding:levy6+mint6', reason: '급한 대로' }] }
     const text = buildRecordText(s, ACTS)
     expect(text).toContain('[1막 「즉위」]')
-    expect(text).toContain('선택 — 당백전을 발행한다')
+    expect(text).toContain('선택 — 급한 대로')
     expect(text).toContain('남긴 말 — 급한 대로')
   })
 

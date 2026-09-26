@@ -15,8 +15,8 @@ function atHub(actIndex, id) {
 }
 
 describe('역사 경계 안의 거점 선택', () => {
-  it('75비트를 보존하고 8개의 탐색 거점만 연다', () => {
-    expect(ACTS.flatMap(a => a.beats)).toHaveLength(75)
+  it('74비트를 보존하고 8개의 탐색 거점만 연다', () => {
+    expect(ACTS.flatMap(a => a.beats)).toHaveLength(74)
     expect(ACTS.flatMap(a => a.beats.map((_, i) => hubAt(a, i))).filter(Boolean)).toHaveLength(8)
   })
   it('다른 막과 다음 시기의 보고를 현재 거점에서 열지 못한다', () => {

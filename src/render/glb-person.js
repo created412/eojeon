@@ -25,6 +25,9 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'
 // 함께 복제한다.
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
 import { MODELS } from './models-data.js'
+// 서 있는 사람의 숨·무게 옮김·고개. 값은 저쪽(DOM 도 three 도 모르는 순수 모듈)이
+// 내고, 뼈를 돌리는 일만 여기서 한다 — 선생님 2026-09-26 「전부 움직이고 있어야해.」
+import { idlePose, idleSeed } from '../systems/idle-pose.js'
 
 // 인물이 세계에서 차지하는 키. 앞선 두 판이 쓰던 값을 그대로 잇는다 —
 // 이 값을 바꾸면 궁궐·문·기둥과의 비례가 함께 틀어진다.
@@ -229,6 +232,10 @@ export function buildPerson(THREE, spec = {}) {
 
   const state = { feet, model: null, bones: null, THREE }
   pivot.userData.person = state
+  // 숨의 박자는 **이름에서** 나온다. pivot.uuid 로도 되지만 그것은 새로 고칠 때마다
+  // 달라진다 — 같은 궁을 두 번 보면 같은 사람이 같은 박자로 숨쉬어야 한다.
+  // 이름을 못 받은 몸(수문장처럼 목록에 없는 사람)은 부르는 쪽이 자리 번호를 준다.
+  pivot.userData.idleSeed = idleSeed(spec.idleKey ?? pivot.uuid)
 
   const attach = () => {
     const src = loaded.get(key)
@@ -246,6 +253,12 @@ export function buildPerson(THREE, spec = {}) {
       if (!b) continue
       b.userData.restQuat = b.quaternion.clone()
       b.userData.swingAxis = measureSwingAxis(THREE, obj, b)
+      // 앞뒤 축 하나로는 「무게를 옮긴다」와 「고개를 돌린다」를 그릴 수 없다.
+      // 옆으로 기우는 것은 **앞뒤 축(Z)** 을 중심으로 도는 일이고, 고개를 돌리는 것은
+      // **위 축(Y)** 을 중심으로 도는 일이다. 붙일 때 한 번 재 두면 프레임마다
+      // 쓰기만 하면 된다(측정은 새 객체를 만든다 — 프레임에서는 절대 부르지 않는다).
+      b.userData.leanAxis = measureLocalAxis(THREE, obj, b, 0, 0, 1)
+      b.userData.turnAxis = measureLocalAxis(THREE, obj, b, 0, 1, 0)
     }
   }
   if (loaded.has(key)) attach()
@@ -318,12 +331,18 @@ const ARM_SWING = 0.5
 // 뼈 하나의 「앞뒤로 흔드는 축」 — 모델 기준 좌우축(X)을 그 뼈의 지역 좌표로 옮긴 것.
 // 사람이 다리를 앞으로 내는 것은 골반의 좌우축을 중심으로 도는 일이다.
 export function measureSwingAxis(THREE, root, bone) {
+  return measureLocalAxis(THREE, root, bone, 1, 0, 0)
+}
+
+// 모델 기준의 축 하나를 그 뼈의 지역 좌표로 옮긴다. 앞뒤 흔들기(X)·옆으로 기움(Z)·
+// 고개 돌리기(Y)가 모두 같은 셈이라 한 함수로 둔다.
+export function measureLocalAxis(THREE, root, bone, x, y, z) {
   const rootQ = new THREE.Quaternion()
   const boneQ = new THREE.Quaternion()
   root.getWorldQuaternion(rootQ)
   bone.getWorldQuaternion(boneQ)
   const rel = boneQ.invert().multiply(rootQ)          // 모델 좌표 → 뼈 지역 좌표
-  return new THREE.Vector3(1, 0, 0).applyQuaternion(rel).normalize()
+  return new THREE.Vector3(x, y, z).applyQuaternion(rel).normalize()
 }
 
 // 자리 하나를 돌려 쓴다 — 매 프레임 새로 만들지 않는다.
@@ -333,28 +352,47 @@ export function measureSwingAxis(THREE, root, bone) {
 // 화면에서 임금이 손톱만 한 얼룩이 되어 어좌 앞에 붙어 있었다. 시험은 3D 를 안 보고,
 // 미리보기는 걷지 않는 자세만 찍어서 둘 다 초록불이었다.
 let _q = null
+// 서 있는 자세를 담아 두는 그릇 하나. 프레임마다 새로 만들지 않는다.
+const _idle = {}
 
-function poseWalk(THREE, bones, phase, amount) {
+// 걸음과 숨을 **한 번에** 얹는다. 두 함수로 나누어 차례로 부르면 뒤에 부른 쪽이
+// 앞의 것을 덮는다(applyBow 가 허리를 덮는 것과 같은 일이 몸 전체에서 일어난다).
+// 그래서 뼈마다 각을 합쳐 한 번만 쓴다.
+//   idleW — 서 있는 자세의 몫(0~1). 걸음이 커지면 0 으로 줄어든다: 걷는 사람이
+//   무게를 옮기고 고개를 돌리면 다리가 둘 다 앞으로 나간 꼴이 된다.
+function poseBody(THREE, bones, phase, amount, idle, idleW) {
   if (!_q) _q = new THREE.Quaternion()
   const swing = Math.sin(phase) * amount
   const lift = Math.max(0, Math.sin(phase)) * amount
-  const set = (b, angle) => {
+  const w = idle ? idleW : 0
+  // extra — 앞뒤 축 말고 하나 더 돌릴 것이 있으면(옆으로 기움·고개 돌리기) 그 축의
+  // 이름과 각을 준다. 두 번째 회전은 필요할 때만 곱한다.
+  const set = (b, angle, extraKey, extraAngle) => {
     const rest = b?.userData.restQuat
     const axis = b?.userData.swingAxis
     if (!rest || !axis) return
     _q.setFromAxisAngle(axis, angle)
     b.quaternion.copy(rest).multiply(_q)
+    if (!extraKey || !(Math.abs(extraAngle) > 1e-5)) return
+    const axis2 = b.userData[extraKey]
+    if (!axis2) return
+    _q.setFromAxisAngle(axis2, extraAngle)
+    b.quaternion.multiply(_q)
   }
-  set(bones.legL, swing * LEG_SWING)
-  set(bones.legR, -swing * LEG_SWING)
+  set(bones.legL, swing * LEG_SWING + (idle ? idle.legL * w : 0))
+  set(bones.legR, -swing * LEG_SWING + (idle ? idle.legR * w : 0))
   set(bones.kneeL, -Math.max(0, -swing) * KNEE_BEND)   // 뒤로 간 다리가 무릎을 접는다
   set(bones.kneeR, -Math.max(0, swing) * KNEE_BEND)
-  set(bones.armL, -swing * ARM_SWING)
-  set(bones.armR, swing * ARM_SWING)
+  set(bones.armL, -swing * ARM_SWING + (idle ? idle.armL * w : 0))
+  set(bones.armR, swing * ARM_SWING + (idle ? idle.armR * w : 0))
   set(bones.elbowL, -Math.abs(swing) * 0.4)
   set(bones.elbowR, -Math.abs(swing) * 0.4)
-  set(bones.spine, Math.abs(swing) * 0.05)             // 걸을 때 상체가 아주 조금 앞으로
-  set(bones.head, -lift * 0.05)
+  // 걸을 때 상체가 아주 조금 앞으로 + 서 있을 때의 숨. 옆으로 기우는 것은 무게를
+  // 옮기는 그 몫이다(leanAxis).
+  set(bones.spine, Math.abs(swing) * 0.05 + (idle ? idle.spine * w : 0),
+    'leanAxis', idle ? idle.lean * w : 0)
+  set(bones.head, -lift * 0.05 + (idle ? idle.headNod * w : 0),
+    'turnAxis', idle ? idle.headYaw * w : 0)
 }
 
 // 한 걸음마다 몸이 위아래로 까딱인다. 한 다리로 서는 순간 몸이 조금 올라가는 그것이다.
@@ -363,14 +401,43 @@ const BOB = 0.055
 
 let worldPos = null
 
+// 걸음이 이만큼 커지면 서 있는 자세는 완전히 물러난다. WALK_AMT(0.42)에서 0 이 되게
+// 맞춘 수다 — 걷기 시작하는 그 순간에 숨이 갑자기 꺼지지 않고 함께 잦아든다.
+const IDLE_FADE = 1 / 0.42
+
+// 판 하나로 선 인물(render/mother-person.js)의 숨. 뼈가 없고, pivot 의 회전은
+// 빌보드가 매 프레임 덮어쓴다 — 건드릴 수 있는 것은 판의 세로 배율 하나뿐이다.
+// 그래도 「아무 일도 일어나지 않는 판」보다는 낫다.
+function swayFlat(pivot, dtMs, reducedMotion) {
+  const mesh = pivot.userData?.idleFlat
+  if (!mesh) return
+  if (reducedMotion) { mesh.scale.y = 1; return }
+  const t = (pivot.userData.idleClock ?? 0) + dtMs
+  pivot.userData.idleClock = t
+  idlePose(t, pivot.userData.idleSeed, _idle)
+  mesh.scale.y = _idle.scaleY
+}
+
 /**
  * 매 프레임 부른다.
  *   walking / running  걸음 동작을 돌릴지, 얼마나 빠르게
+ *   reducedMotion      정지 선호 — 서성임도 걸음도 숨도 없다. 사람은 그냥 서 있는다.
  *   camera             빌보드 시절의 인자. 3D 메시는 카메라를 안 본다 — 무시한다.
  */
-export function updateSway(pivot, dtMs, { walking = false, running = false } = {}) {
+export function updateSway(pivot, dtMs, { walking = false, running = false, reducedMotion = false } = {}) {
   const s = pivot.userData?.person
-  if (!s || !s.model) return
+  if (!s || !s.model) return swayFlat(pivot, dtMs, reducedMotion)
+
+  // 정지 선호(prefers-reduced-motion)에서는 쉬는 자세로 되돌리고 나간다. 굽힘
+  // (scene.js applyBow)은 이 뒤에 얹히므로 읍은 그대로 남는다 — 그것은 움직임이
+  // 아니라 자세다.
+  if (reducedMotion) {
+    pivot.userData.swayAmt = 0
+    if (s.bones) poseBody(s.THREE, s.bones, 0, 0, null, 0)
+    s.feet.position.y = -FOOT_DROP
+    s.model.scale.y = s.model.scale.x
+    return
+  }
 
   // 걸음의 위상. 시간으로 돈다 — 프레임 수를 세지 않는다.
   const speed = walking ? (running ? 0.0135 : 0.0085) : 0.0022
@@ -383,12 +450,22 @@ export function updateSway(pivot, dtMs, { walking = false, running = false } = {
   const amt = cur + (want - cur) * Math.min(1, dtMs / 120)
   pivot.userData.swayAmt = amt
 
-  if (s.bones) poseWalk(s.THREE, s.bones, phase, amt)
+  // 서 있는 자세의 시계는 걸음의 위상과 따로 간다 — 숨은 0.24Hz 고 걸음은 그보다
+  // 다섯 배 빠르다. 한 시계로 둘을 돌리면 어느 한쪽이 거짓이 된다.
+  const clock = (pivot.userData.idleClock ?? 0) + dtMs
+  pivot.userData.idleClock = clock
+  const idleW = Math.max(0, 1 - amt * IDLE_FADE)
+  const idle = idleW > 0 ? idlePose(clock, pivot.userData.idleSeed, _idle) : null
+
+  if (s.bones) poseBody(s.THREE, s.bones, phase, amt, idle, idleW)
 
   // 걸음의 까딱임. 다리가 안 보이는 인물에게 「걷고 있다」를 알리는 것은 이쪽이다.
   s.feet.position.y = -FOOT_DROP + Math.abs(Math.sin(phase)) * BOB * amt
 
-  // 서 있을 때의 숨 — 발은 바닥에 붙어 있어야 하므로 세로로만 아주 작게.
-  const breathe = 1 + Math.sin(phase * (walking ? 2 : 1)) * (walking ? 0.006 : 0.004)
+  // 가슴이 부푸는 것 — 발은 바닥에 붙어 있어야 하므로 세로로만 아주 작게. 걸을 때는
+  // 걸음의 박자를 타고(두 걸음에 한 번), 서 있을 때는 숨의 박자를 탄다.
+  const breathe = amt > 0.02
+    ? 1 + Math.sin(phase * 2) * 0.006
+    : (idle ? idle.scaleY : 1)
   s.model.scale.y = s.model.scale.x * breathe
 }

@@ -116,16 +116,30 @@ export function createWalkers() {
     /**
      * 한 프레임. now 는 ms, king 은 임금의 자리(없으면 읍하지 않는다).
      * reducedMotion 이면 걸음을 멈추고 길의 첫 자리에 선다 — 읍은 남긴다(자세다).
+     * frozen 이면 **선 자리에서 그대로 멈춘다.** 알현이 그것을 청한다: 정전을
+     * 가로지르는 사람은 아뢰는 이와 몸이 겹치지만, 그렇다고 궁인을 통째로 지우면
+     * (예전에 그렇게 했다) 알현하는 동안 궁이 텅 빈다. 자리에 서 있기만 하면 궁은
+     * 여전히 사람이 사는 곳이고, 걸어와 부딪히는 일도 없다.
+     * ⚠ 멈춤은 「그 사람의 시계를 세우는 것」으로 한다(bow.held) — now 를 그냥
+     * 흘려 보내면 알현이 끝나는 순간 궁인이 저만치로 튄다. 읍하는 동안 시계를
+     * 세우는 그 방법을 그대로 쓴다.
      * 돌려주는 것: [{ id, x, z, yaw, walking, bow }] — render/scene.js 의 약속과 같다.
      */
-    tick({ now = 0, king = null, reducedMotion = false } = {}) {
+    tick({ now = 0, king = null, reducedMotion = false, frozen = false } = {}) {
       const out = []
       for (const [id, entry] of paths) {
         const { path, walker, offset } = entry
         const pauseMs = walker.pause ?? WALKER_PAUSE_MS
         let bow = bows.get(id)
         if (!bow) { bow = { p: 0, bowing: false, last: now, held: 0, at: pointAt(path, 0) }; bows.set(id, bow) }
-        const dt = Math.min(Math.max(now - bow.last, 0), MAX_STEP_MS)
+        // 흐른 시간은 두 가지로 쓴다. 굽히는 각(bow.p)에는 **자른** 시간을 쓴다 —
+        // 탭을 오래 벗어났다 돌아오면서 밀린 시간을 한 번에 먹으면 허리가 툭 접힌다.
+        // 시계를 세우는 데에는 **자르지 않은** 시간을 쓴다: 자른 값을 더하면 세운
+        // 시계가 야금야금 앞으로 흐른다. 프레임이 120ms 보다 느린 기계에서는(태블릿,
+        // 그리고 화면을 찍는 헤드리스 브라우저) 멈춰 선 궁인이 알현 내내 1~2m 를
+        // 미끄러져 갔다 — 자리를 재는 도구를 만들어 보고서야 알았다.
+        const raw = Math.max(now - bow.last, 0)
+        const dt = Math.min(raw, MAX_STEP_MS)
         bow.last = now
 
         // 읍 — 신하와 같은 문턱을 쓴다(systems/palace-life.js). 재는 자리는 지난
@@ -136,7 +150,7 @@ export function createWalkers() {
         const depth = ease(bow.p)
         // 굽히는 동안에는 **그 사람의 시계가 선다** — 임금이 지나가면 서 있던 자리에서
         // 다시 걷는다. 시계가 계속 갔다면 임금이 물러난 순간 저만치로 튄다.
-        if (depth > 0 || reducedMotion) bow.held += dt
+        if (depth > 0 || reducedMotion || frozen) bow.held += raw
 
         // 한 바퀴: 출발 자리에서 잠시 서 있다가, 길을 통째로 걷는다. 길 자체가 이미
         // 갔다 오는 왕복이라(walkerPath) 한 바퀴를 돌면 제자리로 돌아와 있다.
@@ -151,7 +165,7 @@ export function createWalkers() {
         out.push({ id, x: at.x, z: at.z,
           // 굽히는 동안에는 걸음을 멈추고 임금을 마주 본다(yaw=null 은 「임금을 본다」).
           yaw: depth > 0 ? null : at.yaw,
-          walking: walking && depth === 0 && !reducedMotion,
+          walking: walking && depth === 0 && !reducedMotion && !frozen,
           bow: depth })
       }
       return out
