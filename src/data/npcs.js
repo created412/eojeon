@@ -335,10 +335,18 @@ export const NPCS = [
   // 알현·행렬에만 나온다(actsVisible 비어 있음).
   { id: 'kimjwageun', name: '김좌근', title: '영의정', palace: 'unhyeon', x: 0, z: 13, rank: 'senior', hatStyle: 'samo', actsVisible: [], lines: ['「대왕대비전의 명을 받들어 모시러 왔습니다.」'] },
   // 목소리로만 나오는 궁의 여성들 — 알현 방문자(from:'voice')로만 쓴다. 좌표는 쓰이지 않는다.
+  // 선생님(2026-09-26) 개편안 — 「같은 사람이 다시 오게 한다」. 왕비는 2막 가례에서
+  // 한 번 나오고 4막 탈출에서 다시 나올 뿐, 그 사이 열여섯 해 동안 궁에 없는 사람이었다.
+  // 이제 2막(가례 뒤)과 4막의 창덕궁에 **문 너머 목소리로** 선다 — 몸을 세우지 않는
+  // 것(voice)은 그대로다. 왕비의 처소에 임금이 걸어 들어가는 그림은 애초에 틀렸다.
   {
-    id: 'wangbi', name: '왕비 민씨', title: '', palace: 'changdeok', x: 0, z: 46,
-    rank: 'mid', voice: true, actsVisible: [],
-    lines: ['대조전 쪽에서 왕비의 전갈이 온다.'],
+    id: 'wangbi', name: '왕비 민씨', title: '문 너머 목소리', palace: 'changdeok', x: 0, z: 46,
+    rank: 'mid', voice: true, actsVisible: [1, 3], fromYear: 1866,
+    lines: [
+      '대조전 쪽에서 왕비의 전갈이 온다.',
+      '「전하께서 오늘 무엇을 들으셨는지, 저도 알고 싶습니다.」',
+      '문은 열리지 않는다. 궁의 법도가 그렇다.',
+    ],
   },
   // 김옥균 — 5막 정변 전 알현에만 나온다(2026-09-13 5막 보강).
   {

@@ -27,6 +27,7 @@ import { step, axisToward } from './systems/movement.js'
 import { beatAt, beatsOf, isActOver, enterAct, applyBeat, advance, isBeatActive, applyGrant, visitorCardIds, yearAtBeat } from './systems/scenario.js'
 import { kingLookAt, kingAttireAt } from './systems/king-age.js'
 import { advancePrices, riceSeriesUpTo, riceLabel } from './systems/prices.js'
+import { fatherLine } from './systems/father.js'
 import { createMinimap } from './ui/minimap.js'
 import { createDialog } from './ui/dialog.js'
 import { createSpeak } from './ui/speak.js'
@@ -44,6 +45,9 @@ import { createLossScreen } from './ui/loss-screen.js'
 import { createOrders } from './ui/orders-ui.js'
 import { createBrush } from './ui/brush.js'
 import { createFunding } from './ui/funding.js'
+import { createActQuestion } from './ui/act-question.js'
+import { createCodexQuiz } from './ui/codex-quiz.js'
+import { quizView } from './systems/codex-quiz.js'
 import { createEscape } from './ui/escape-screen.js'
 import { createEdict } from './ui/edict-screen.js'
 import { createPause } from './ui/pause.js'
@@ -528,6 +532,8 @@ export function boot(root) {
   const orders = createOrders(root)
   const brush = createBrush(root)
   const funding = createFunding(root)
+  const actQuestion = createActQuestion(root)
+  const codexQuiz = createCodexQuiz(root)
   const escape = createEscape(root)
   const edict = createEdict(root)
   const ration = createRation(root)
@@ -1729,6 +1735,14 @@ export function boot(root) {
   // 나들이(stop)는 runBeats 를 거치지 않고 runStop() 에서 곧장 이 함수로 들어온다 —
   // 그래서 지급이 runBeats 가 아니라 여기 있어야 한다.
   async function playBeat(beat) {
+    // 개편안 D — 「막마다 진짜 손잡이 하나」(선생님 2026-09-26). 이 막에서 학생이
+    // 실제로 쥐는 자리에 닿으면, 그 화면을 열기 **직전에** 한 번 말한다.
+    // 「당신은 이 막에서 이것을 쥔다」를 모른 채 쥐면 쥔 것이 아니다.
+    const handle = flow.act()?.handle
+    if (handle && beat.id === handle.beat) {
+      banner(root, handle.line.replace(/\*\*/g, ''), 4200)
+      await new Promise(done => setTimeout(done, 1600))
+    }
     const after = await playBeatScreen(beat)
     // 「이 비트가 무엇을 주는가」를 여기서 되묻지 않는다. 한때 이 자리에
     // `if (!beat.grantCard) return after` 가 있었고, 그 한 줄이 규칙의 두 번째 사본이었다 —
@@ -1784,6 +1798,26 @@ export function boot(root) {
   // 막이 끝난 뒤: 이 막의 끝 화면(읽은 문서·「내 기록 복사」)을 먼저 보여준다 — 마지막
   // 막이라고 건너뛰지 않는다, 그 화면의 복사 단추가 이 막까지의 전체 기록을 담기 때문이다.
   // 그다음 막이 남아 있으면 다음 막으로, 마지막이면 1차시 전체를 정리하는 마침 화면으로 간다.
+  // 막을 닫는 질문 화면에 곁들이는 「이 막에서 당신이 본 것」. 답이 아니라 **증거**다 —
+  // 학생이 실제로 지난 자리만 적는다(읽은 문서·한 셈·본 물건 수).
+  function actEvidence() {
+    const act = flow.act()
+    const ids = new Set(act.beats.map(b => b.id))
+    const out = []
+    const read = everRead(flow.state).map(id => sourceById(id)).filter(Boolean)
+      .filter(c => (c.act ?? 0) === flow.actIndex + 1)
+    if (read.length) out.push(`읽은 문서 — ${read.map(c => c.title).join(' · ')}`)
+    const mine = flow.state.decisions.filter(d => d.actIndex === flow.actIndex && d.reason)
+    for (const d of mine) out.push(`당신이 한 것 — ${d.reason}`)
+    const hub = Object.entries(flow.state.freedom?.hubs ?? {})
+      .filter(([key, log]) => key.startsWith(`${act.id}/`) && log.done?.length)
+      .flatMap(([, log]) => log.done.map(x => x.label))
+    if (hub.length) out.push(`찾아간 곳 — ${hub.join(' · ')}`)
+    const seen = artifactCount(flow.state)
+    if (seen) out.push(`살펴본 물건 — ${seen}가지`)
+    return out
+  }
+
   async function finishAct() {
     // 막이 끝난 화면은 글 화면이다 — 바닥 소리를 끈다.
     audio.setAmbient(null)
@@ -1791,6 +1825,27 @@ export function boot(root) {
     // 이 막에서 남긴 여러 결정(어전회의·훈령) 중 가장 나중 것의 「남긴 말」을 보여준다
     const decision = [...flow.state.decisions].reverse().find(d => d.actIndex === flow.actIndex)
     const reason = decision?.reason ?? ''
+
+    // 개편안 B-1 — 그 막에 모은 사초로만 답할 수 있는 질문 하나(ui/codex-quiz.js).
+    // 못 모은 학생을 막지 않는다: 무엇을 어디서 놓쳤는지 말해 주고 해설은 그대로 보여 준다.
+    const quiz = quizView(flow.act(), flow.state)
+    if (quiz) {
+      const answered = await codexQuiz.open(quiz)
+      flow.state = {
+        ...flow.state,
+        codexAnswers: { ...flow.state.codexAnswers, [flow.act().id]: answered },
+      }
+      saveGame(flow.state)
+    }
+
+    // 개편안 A — 막을 열 때의 질문으로 돌아온다. 이 막에서 학생이 **실제로 본 것**을
+    // 곁에 놓되, 답은 말하지 않는다.
+    const q = flow.act().question
+    if (q) {
+      await actQuestion.open({ mode: 'close', act: flow.actIndex + 1, actLabel: q.label,
+        year: q.year, question: q.text, image: q.image, evidence: actEvidence() })
+    }
+
     await showActEnd(reason)
     if (flow.isLast()) {
       flow.setPhase('done')
@@ -1878,8 +1933,15 @@ export function boot(root) {
     flow.state = advancePrices(flow.state, actIndex + 1)
     dateLabel = flow.act().dateLabel
     bindPalaceAndSpawn()
-    // 막마다 「이 막에서 할 일」 한 장 — 무엇이 일어나고 무엇을 하는지 먼저 말한다(data/guide.js).
     guide.hide()
+    // 개편안 A — 막의 질문이 **맨 앞에** 선다. 「이 막에서 할 일」(조작 안내)보다 먼저다:
+    // 무엇을 누르는지 알기 전에 무엇을 궁금해할지부터 정해 놓는 자리다.
+    const q = ACTS[actIndex].question
+    if (q) {
+      await actQuestion.open({ mode: 'open', act: actIndex + 1, actLabel: q.label,
+        year: q.year, question: q.text, image: q.image })
+    }
+    // 막마다 「이 막에서 할 일」 한 장 — 무엇이 일어나고 무엇을 하는지 말한다(data/guide.js).
     await noteScreen.show(actGuideView(ACTS[actIndex], actIndex))
     await runBeats()
   }
@@ -2225,6 +2287,9 @@ export function boot(root) {
       dayLeft: null,
       dayTotal: null,
       riceIndex: flow.state.riceIndex,
+      // 아버지가 곁에 서 계신가, 물러나셨는가, 돌아오셨는가 — 이 게임의 스무 해를
+      // 한 칸으로 줄이면 그것이다(systems/father.js · 개편안 C).
+      fatherLine: fatherLine(ACTS, flow.state.actIndex, flow.state.beatIndex),
     })
     flow.get('map')?.update({
       playerX: ctx.player.position.x,

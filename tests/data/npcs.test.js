@@ -115,7 +115,7 @@ describe('신하 데이터 정합성', () => {
       mother: [0],          // 운현궁 안채 — 목소리로만
       kimjwageun: [],       // 운현궁에 모시러 온 영의정 — 알현·행렬에만
       minchisang: [],       // 함께 온 도승지 — 알현·행렬에만
-      wangbi: [],           // 왕비 민씨 — 목소리로만(2막)
+      wangbi: [1, 3],       // 왕비 민씨 — 문 너머 목소리(2·4막, 1866 가례 뒤부터)
       kimokgyun: [],        // 김옥균 — 5막 정변 전 알현
     })
   })
@@ -126,7 +126,9 @@ describe('신하 데이터 정합성', () => {
   // 그해의 사람 셋이 생겼다(수신사 수행원·영남 유생·홍재학).
   it('1882년 창덕궁(4막)에 1866년의 신하가 서 있지 않다', () => {
     const there = npcsAt(baseOf, 'changdeok', 3).map(n => n.id).sort()
-    expect(there).toEqual(['hongjaehak', 'susinsa', 'yeongnam'])
+    // 왕비는 2026-09-26 개편으로 2·4막에 문 너머 목소리로 선다 — 1866년의 신하가
+    // 아니라 그 궁에 사는 사람이다.
+    expect(there).toEqual(['hongjaehak', 'susinsa', 'wangbi', 'yeongnam'])
     for (const old of ['seungji', 'gungyo', 'pabal', 'geomseo', 'heungseon']) {
       expect(there, `${old} 가 1882년에 서 있다`).not.toContain(old)
     }
