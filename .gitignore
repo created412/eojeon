@@ -4,3 +4,7 @@ tools/_contact.png
 .superpowers/
 assets/models/*.glb
 assets/models/opt/
+
+# 임시 촬영·조사 스크립트 — 저장소 뿌리에 점 파일로 만들었다가 지운다(에이전트 작업 중 실수로 실리지 않게)
+.*.mjs
+.dbg.mjs

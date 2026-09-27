@@ -71,13 +71,13 @@ describe('buildRecordText — 「내 기록 복사」에 실제로 들어가는 
     expect(text).toContain('읽은 문서 0장 — (없음)')
   })
 
-  it('결정과 남긴 말이 막 제목과 함께 나온다', () => {
+  it('결정과 적어 둔 것이 막 제목과 함께 나온다', () => {
     let s = createState()
     s = { ...s, decisions: [...s.decisions, { actIndex: 0, choiceId: 'funding:levy6+mint6', reason: '급한 대로' }] }
     const text = buildRecordText(s, ACTS)
     expect(text).toContain('[1막 「즉위」]')
     expect(text).toContain('선택 — 급한 대로')
-    expect(text).toContain('남긴 말 — 급한 대로')
+    expect(text).toContain('적어 둔 것 — 급한 대로')
   })
 
   // 2단계 Important 1 — 아홉 장을 읽고 그중 몇 장을 불이나 약탈로 잃어도, 기록은
@@ -138,7 +138,7 @@ describe('얼어붙은 어전회의의 기록 — 영어 낱말이 학생 활동
     const text = buildRecordText(s, ACTS)
     expect(text).toContain(`[${imoIndex + 1}막 「임오」]`)
     expect(text).toContain('선택 — 아무것도 고르지 못했다')
-    expect(text).toContain('남긴 말 — 아무 말도 못 했다')
+    expect(text).toContain('적어 둔 것 — 아무 말도 못 했다')
     expect(text).not.toContain('frozen')
   })
 })

@@ -29,7 +29,7 @@ export const MIRRORED_KINDS = new Set([
   'note', 'explore', 'dispatch',                                       // 상태에 남기는 것이 없다
   'audience', 'procession',                                             // 알현·행렬 — 문서는 applyGrant 가 준다(아래 공통 경로)
   'council', 'orders', 'plunder', 'brush', 'move', 'rush',   // 1~3단계
-  'hold', 'edict', 'escape', 'outing', 'funding',                                  // 3단계가 더한 것
+  'hold', 'edict', 'escape', 'outing', 'funding', 'alone',                                  // 3단계가 더한 것
 ])
 
 // caught — 촉박(rush)을 놓쳤는가. 이 게임의 조건 비트는 전부 여기서 갈린다

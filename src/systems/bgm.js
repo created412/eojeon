@@ -19,7 +19,8 @@ const ACT_TRACK = ['act1', 'act2', 'act3', 'act4', 'act5']
 // 글·문서를 읽는 화면. 소리를 끊지 않고 절반으로 낮춘다.
 const READING = new Set(['note', 'dispatch', 'outing', 'edict', 'orders'])
 // 음악이 아예 없는 자리.
-const SILENT = new Set(['brush', 'plunder', 'hold'])
+// 혼자 서 있는 몇 초(alone)도 음악이 없다 — 비어 있는 것이 그 장면의 내용이다.
+const SILENT = new Set(['brush', 'plunder', 'hold', 'alone'])
 
 export function bgmForBeat(beat, actIndex = 0) {
   const act = ACT_TRACK[actIndex] ?? 'act1'

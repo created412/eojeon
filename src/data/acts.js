@@ -408,6 +408,38 @@ export const ACTS = [
         id: 'council-byeongin',
         kind: 'council',
         council: {
+        // 개편안 — 「선택 후 이유 쓰기」를 걷어 낸 자리(선생님 2026-09-27).
+        // 신하의 말마다 그 말이 딛고 선 기록이 있다. 학생은 제 사초함에서 그것을 찾아
+        // 말 밑에 놓는다. 못 놓아도 회의는 열린다 — 임금은 근거 없이도 정할 수 있다.
+        claims: [
+          { id: 'letter', who: '흥선대원군', portrait: 'regent',
+            text: '「저들과 화친할 일은 없다. 저들은 처음부터 무력을 예고하였다.」',
+            gloss: '화친 — 싸움을 그만두고 사이좋게 지내기로 하는 것.',
+            wants: ['bellonet'],
+            notes: { bellonet: '저들이 보낸 글에 그대로 적혀 있다 — 「조선 왕국 최후의 날이 될 것이다.」 이 말은 그 글을 딛고 선다.' } },
+          { id: 'wait', who: '승정원 승지', portrait: 'senior',
+            text: '「강화도의 형세가 아직 다 올라오지 않았습니다. 손에 있는 것은 장계 한 장뿐입니다.」',
+            wants: ['yangheonsu'],
+            notes: { yangheonsu: '그 한 장은 이미 「저들이 죽은 자를 끌고 물러갔습니다」라고 적고 있다 — 기다리자는 말과 어긋난다.' } },
+          { id: 'again', who: '훈련도감 군교', portrait: 'messenger',
+            text: '「이 배들이 처음이 아닙니다. 올해 평양에서도 같은 일이 있었습니다.」',
+            wants: ['sherman'],
+            notes: { sherman: '평안도에서 올린 보고가 그 일을 적어 두었다. 다섯 해 뒤 그 일이 미국 함대의 구실이 된다.' } },
+          { id: 'books', who: '규장각 검서관', portrait: 'mid',
+            text: '「강화부가 저들의 손에 들어갔습니다. 외규장각에 나누어 둔 책들이 그 안에 있습니다.」',
+            wants: ['oegyujanggak'],
+            notes: { oegyujanggak: '목록이 무엇이 거기 있었는지 적어 준다 — 어람용 의궤와 어책, 어필이다.' } },
+        ],
+        forecasts: [
+          { id: 'shut', text: '문은 더 굳게 닫힌다',
+            echo: '다섯 해 뒤 척화비가 전국 곳곳에 섰다.' },
+          { id: 'again', text: '곧 다시 배가 온다',
+            echo: '다섯 해 뒤 미국 함대가 같은 물길로 들어왔다(신미양요, 1871).' },
+          { id: 'split', text: '조정이 갈라진다',
+            echo: '조정 안에서 「문을 열어 보자」는 말은 이때 오히려 꺼내기 어려워졌다.' },
+          { id: 'lose', text: '지켜도 잃는 것이 있다',
+            echo: '프랑스 함대는 물러가면서 외규장각의 297책과 은괴 열아홉 상자를 배에 실었다.' },
+        ],
           question: '프랑스 함대가 강화도에 있다. 맞설 것인가, 물러설 것인가',
           choices: [
             { id: 'fight',  text: '물러서지 않는다. 군사를 보내 지킨다',            requires: [] },
@@ -713,6 +745,25 @@ export const ACTS = [
       // 1868년 일본이 보낸 서계를 조선은 받지 않았고, 그 문제는 친정 뒤까지 풀리지 않았다.
       // 강화도 조약(1876)의 조문을 읽기 전에 반드시 이 문서를 먼저 읽는다.
       {
+        // 개편안 C — 「아버지를 물러나게 한 **직후 화면을 비워 둔다**. 곁에 아무도 없이
+        // 혼자 어전에 서는 몇 초.」(선생님 2026-09-26) 바로 앞 화면(doors-open)이 글로
+        // 말한 것을, 이 자리는 **보여 준다**: 궁은 그대로인데 아무도 없다.
+        //
+        // 글 화면이 아니다(ui/alone.js) — 한지를 펴지 않고, 3D 궁 위에 한 줄씩 떠오른다.
+        // 이 게임에서 임금이 혼자 서는 자리는 여기 하나뿐이다.
+        id: 'alone-in-hall',
+        kind: 'alone',
+        room: 'sajeongjeon',
+        lines: [
+          '어제까지 아버지가 서 계시던 자리를 본다.',
+          '아무도 없다.',
+          '이 방에서 정하는 사람은, 오늘부터 당신뿐이다.',
+        ],
+        label: '걸음을 옮긴다',
+        origin: '1873년 11월 고종의 친정 선포 · 이 장면의 연출은 재구성입니다',
+        grade: 'staged',
+      },
+      {
         id: 'seogye-audience',
         kind: 'audience',
         room: 'sajeongjeon',
@@ -875,6 +926,35 @@ export const ACTS = [
         id: 'council-treaty',
         kind: 'council',
         council: {
+        claims: [
+          { id: 'jaju', who: '신헌', portrait: 'senior',
+            text: '「제1관에 조선은 자주의 나라라 적혀 있습니다. 저들이 우리를 높인 것입니다.」',
+            gloss: '자주(自主) — 남의 간섭을 받지 않고 스스로 정한다는 말.',
+            wants: ['ganghwa1'],
+            notes: { ganghwa1: '조항은 그렇게 적혀 있다. 다만 그 말이 끊으려는 것은 청과의 오랜 관계다 — 누구를 위한 「자주」인지는 조항이 말해 주지 않는다.' } },
+          { id: 'survey', who: '훈련도감 군교', portrait: 'messenger',
+            text: '「저들이 우리 바닷가를 마음대로 재겠다 합니다. 뱃길을 아는 자가 그 바다의 주인입니다.」',
+            wants: ['ganghwa7'],
+            notes: { ganghwa7: '제7관이 그 권한을 적어 두었다 — 「일본국 항해자가 자유로이 해안을 측량하도록 허가한다」.' } },
+          { id: 'court', who: '승정원 승지', portrait: 'senior',
+            text: '「저들이 우리 땅에서 죄를 지어도 우리 관원이 심판하지 못한다 합니다.」',
+            wants: ['ganghwa10'],
+            notes: { ganghwa10: '제10관이 그렇게 적는다. 이런 조항을 뒷날 영사 재판권이라 부른다.' } },
+          { id: 'anti', who: '최익현', portrait: 'senior',
+            text: '「저들이 왜인이라고는 하나 실은 서양 오랑캐입니다. 화친은 나라를 파는 일입니다.」',
+            wants: ['choe-ikhyeon'],
+            notes: { 'choe-ikhyeon': '상소가 그렇게 적는다. 이 사람은 세 해 전 아버지를 물러나게 한 바로 그 상소를 올린 사람이기도 하다.' } },
+        ],
+        forecasts: [
+          { id: 'open', text: '항구가 열리고 물건이 드나든다',
+            echo: '부산에 이어 원산·인천이 열렸다.' },
+          { id: 'rice', text: '쌀이 빠져나간다',
+            echo: '여섯 달 뒤 조일 무역 규칙은 관세를 두지 않았고, 곡물이 일본으로 나가기 시작했다.' },
+          { id: 'more', text: '다른 나라도 같은 것을 요구한다',
+            echo: '1882년 미국을 시작으로 여러 나라와 비슷한 조약을 맺었다.' },
+          { id: 'anger', text: '나라 안이 둘로 갈라진다',
+            echo: '개항에 반대하는 상소가 이어졌고, 다섯 해 뒤 영남 만인소가 올라왔다.' },
+        ],
           question: '조약을 받아들일 것인가',
           choices: [
             { id: 'accept',    text: '받아들인다. 좋은 조건이다',                        requires: [] },
@@ -1273,6 +1353,36 @@ export const ACTS = [
         frozenChoiceLabel: '아무것도 고르지 못했다',
         reasonPrompt: '아무것도 정하지 못한 밤에, 무엇을 생각하셨습니까',
         council: {
+        claims: [
+          { id: 'pay', who: '무위영 군교', portrait: 'messenger',
+            text: '「열세 달을 기다린 급료였습니다. 그 가마에 겨와 모래가 섞여 있었습니다.」',
+            wants: ['muwiyeong'],
+            notes: { muwiyeong: '급료로 나온 쌀에 무엇이 섞여 있었는지 교과서가 적어 둔다. 난이 그 자리에서 시작되었다.' } },
+          { id: 'grain', who: '승정원 승지', portrait: 'senior',
+            text: '「쌀값이 오른 까닭은 조약에 있습니다. 세금 없이 곡식이 나가고 있습니다.」',
+            wants: ['joil-trade'],
+            notes: { 'joil-trade': '무역 규칙은 관세를 두지 않았고 곡물이 나가는 것을 막지 않았다 — 여섯 해 전에 맺은 글이 지금 쌀값으로 돌아온다.' } },
+          { id: 'sadae', who: '영남 유생', portrait: 'senior',
+            text: '「이 모든 일은 저 책 한 권에서 비롯되었습니다. 미국과 손잡으라니요.」',
+            wants: ['joseon-chaeryak', 'yeongnam-manin'],
+            notes: {
+              'joseon-chaeryak': '수신사가 가져온 그 책이 미국과 손잡으라 권한다 — 이 말은 그 책을 겨누고 있다.',
+              'yeongnam-manin': '만 명이 이름을 적은 상소가 바로 그 반대를 적었다.' } },
+          { id: 'qing', who: '규장각 검서관', portrait: 'mid',
+            text: '「청에 도움을 청하면 난은 가라앉을 것입니다. 다만 그 뒤가 문제입니다.」',
+            wants: ['sokbang'],
+            notes: { sokbang: '난이 가라앉은 뒤 청과 맺은 장정이 조선을 「속방(屬邦)」이라 적었다 — 도움의 값이 그 두 글자다.' } },
+        ],
+        forecasts: [
+          { id: 'father', text: '아버지가 다시 나랏일을 맡는다',
+            echo: '난이 끝난 뒤 흥선대원군이 다시 정권을 잡았다 — 그리고 한 달 만에 청군에 끌려갔다.' },
+          { id: 'qing', text: '청군이 들어온다',
+            echo: '조선 정부의 요청으로 청군이 들어왔고, 그 뒤로 청의 간섭이 이어졌다.' },
+          { id: 'japan', text: '일본이 값을 물린다',
+            echo: '제물포 조약으로 50만 원을 물게 되었다.' },
+          { id: 'again', text: '이런 일이 또 일어난다',
+            echo: '두 해 뒤 갑신정변이 일어났다.' },
+        ],
           question: '난이 끝난 뒤, 무엇을 할 것인가',
           choices: [
             { id: 'appease', text: '일어선 군인들을 달랜다', requires: [] },
@@ -1599,6 +1709,24 @@ export const ACTS = [
         kind: 'council',
         historical: true,
         council: {
+        claims: [
+          { id: 'reform', who: '개화당 관원', portrait: 'mid',
+            text: '「정강을 이미 적어 붙였습니다. 문벌을 없애고 청에 조공하는 헛된 예를 끊겠습니다.」',
+            wants: ['reform14'],
+            notes: { reform14: '열네 조가 그렇게 적혀 있다. 그 가운데 몇 조가 실제로 시행되었는지는 사흘이라는 시간이 말해 준다.' } },
+          { id: 'money', who: '승정원 승지', portrait: 'senior',
+            text: '「저들이 일본의 힘을 빌렸다 합니다. 그 빚이 무엇으로 갚아질지 신은 모르겠습니다.」',
+            wants: ['gapsin-memoir'],
+            notes: { 'gapsin-memoir': '김옥균이 남긴 말이 자금 이야기를 그대로 적는다 — 다만 그 기록은 그가 망명한 뒤에 쓴 것이다.' } },
+        ],
+        forecasts: [
+          { id: 'qing', text: '청군이 곧 들어온다',
+            echo: '청군은 사흘째에 창덕궁으로 들어왔다.' },
+          { id: 'short', text: '이 정부는 오래가지 못한다',
+            echo: '개화당 정부는 사흘 만에 끝났다.' },
+          { id: 'seed', text: '끝나도 남는 것이 있다',
+            echo: '열네 조에 적힌 것들은 열 해 뒤 갑오개혁에서 다시 나온다.' },
+        ],
           question: '창덕궁으로 돌아갈 것인가',
           choices: [
             { id: 'return', text: '여기는 좁고 답답하다. 창덕궁으로 돌아가겠다', requires: [] },

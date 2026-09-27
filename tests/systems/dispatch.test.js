@@ -4,6 +4,7 @@ import {
   arrivalOrder, happenedOrder, shouldOfferOrdering, isInHappenedOrder,
   arrivalMatchesHappened, pendingOlderThanArrived, happenedLabel, travelLabel,
   orderingVerdict, firstOutOfOrderPair, earliestHappened, orderingHintLevel, orderingHint,
+  travelShortLabel, belongsAt, allPlaced,
 } from '../../src/systems/dispatch.js'
 import { ACTS } from '../../src/data/acts.js'
 import { beatsOf } from '../../src/systems/scenario.js'
@@ -379,6 +380,94 @@ describe('게임 안의 장계 비트 셋 — 실제 데이터로 돌려본다',
         expect(d).toBe(original)                    // 베껴 만든 카드가 아니라 그 장계 그대로다
         expect(travelLabel(d)).toContain(`${original.lagDays}일`)
       }
+    }
+  })
+})
+
+// ── 지도에 놓기 (2026-09-27) ───────────────────────────────────────────────
+// 선생님: 「장계 순서 펴 보는 거랑 지도에서 장계의 위치 찾아보는 걸 하나로 합치는
+// 게 좋을 것 같아.」 그래서 학생은 장계를 **지도 위에** 놓는다. 그 절반을 맡는
+// 셈이 여기 있다 — 「몇 점인가」가 아니라 「이 장계가 적고 있는 자리인가」다.
+describe('장계를 지도에서 찾아 놓는다', () => {
+  const here = [
+    { id: 'a', placeName: '강화 앞바다', at: 'ganghwaSea', sentDay: 0, lagDays: 4 },
+    { id: 'b', placeName: '강화부',      at: 'ganghwabu',  sentDay: 2, lagDays: 1 },
+    { id: 'c', placeName: '평양',        at: 'pyeongyang', sentDay: 0, lagDays: 6 },
+  ]
+
+  it('장계가 적고 있는 자리에 놓였을 때만 제자리다', () => {
+    expect(belongsAt(here[0], 'ganghwaSea')).toBe(true)
+    expect(belongsAt(here[0], 'ganghwabu')).toBe(false)
+    expect(belongsAt(null, 'ganghwabu')).toBe(false)
+    expect(belongsAt(here[1], undefined)).toBe(false)
+  })
+
+  it('닿은 장계가 다 제자리에 놓여야 다 놓인 것이다 — 아직 안 온 것은 셈에 없다', () => {
+    const placed = new Map()
+    expect(allPlaced(here, 4, placed)).toBe(false)
+    placed.set('a', 'ganghwaSea')
+    expect(allPlaced(here, 4, placed)).toBe(false)
+    placed.set('b', 'ganghwabu')
+    // 평양 장계는 아직 닿지 않았다(0+6 > 4) — 놓을 것이 아니므로 다 놓인 것이다
+    expect(allPlaced(here, 4, placed)).toBe(true)
+    // 엿새째에는 평양도 닿아 있으니 아직 다 놓인 것이 아니다
+    expect(allPlaced(here, 6, placed)).toBe(false)
+    placed.set('c', 'pyeongyang')
+    expect(allPlaced(here, 6, placed)).toBe(true)
+  })
+
+  it('엉뚱한 자리에 놓은 것은 놓은 것으로 치지 않는다', () => {
+    const placed = new Map([['a', 'ganghwabu'], ['b', 'ganghwabu']])
+    expect(allPlaced(here, 4, placed)).toBe(false)
+  })
+
+  it('닿은 장계가 하나도 없으면 놓을 것도 없다', () => {
+    expect(allPlaced(here, 0, new Map())).toBe(true)
+  })
+
+  it('보통 객체로 적어 준 것도 받는다 — 화면이 Map 을 쓰든 말든 이 셈은 같다', () => {
+    expect(allPlaced(here, 4, { a: 'ganghwaSea', b: 'ganghwabu' })).toBe(true)
+  })
+})
+
+// 지도 표지 곁에 붙는 짧은 날수. travelLabel 과 **같은 값**을 말해야 한다 —
+// 지명표의 「4일」과 장계의 「닿는 데 4일이 걸렸다」가 어긋나면 학생은 어느 쪽을
+// 믿을지 알 수 없다.
+describe('지도에 붙는 짧은 날수', () => {
+  it('며칠 걸렸는지를 한 칸으로 말한다', () => {
+    expect(travelShortLabel({ lagDays: 4 })).toBe('4일')
+    expect(travelShortLabel({ lagDays: 1 })).toBe('1일')
+  })
+
+  it('그날 닿은 장계는 「그날」이다 — 「0일」이라고 적지 않는다', () => {
+    expect(travelShortLabel({ lagDays: 0 })).toBe('그날')
+  })
+
+  it('긴 꼴과 값이 어긋나지 않는다', () => {
+    for (const lagDays of [0, 1, 2, 4, 6]) {
+      const d = { lagDays }
+      if (lagDays === 0) expect(travelLabel(d)).toContain('그날')
+      else expect(travelLabel(d)).toContain(travelShortLabel(d))
+    }
+  })
+
+  it('게임 안의 장계 셋에서도 두 꼴이 같은 날수를 말한다', () => {
+    for (const b of ACTS.flatMap(a => beatsOf(a)).filter(x => x.kind === 'dispatch')) {
+      for (const d of arrivedAt(b.dispatches, b.day)) {
+        expect(travelLabel(d), d.id).toContain(travelShortLabel(d).replace('그날', '그날'))
+      }
+    }
+  })
+
+  it('세 비트의 장계가 저마다 지도에 놓일 자리를 적고 있다', () => {
+    for (const b of ACTS.flatMap(a => beatsOf(a)).filter(x => x.kind === 'dispatch')) {
+      for (const d of arrivedAt(b.dispatches, b.day)) {
+        expect(typeof d.at, `${b.id}/${d.id}`).toBe('string')
+        expect(belongsAt(d, d.at)).toBe(true)
+      }
+      // 한 자리에 두 장계가 겹치면 지도에서 가려지는 장계가 생긴다
+      const spots = arrivedAt(b.dispatches, b.day).map(d => d.at)
+      expect(new Set(spots).size, b.id).toBe(spots.length)
     }
   })
 })

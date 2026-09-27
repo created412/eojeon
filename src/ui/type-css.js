@@ -21,16 +21,52 @@
 // 2. **자간은 제목에만** 건다(.type-display). 한글 문단에 자간을 주면 낱말 덩어리가
 //    풀어져 오히려 늦게 읽힌다. 「해 가 진 다」 같은 짧은 표제는 그 벌어짐이 뜻이므로 남긴다.
 // 3. 본문 한글은 **잘 다듬어진 고딕**으로 읽는다. 바탕(Batang)은 큰 표제와 한자에만 쓴다.
-//    바깥 요청이 0인 게임이라 웹폰트를 내려받을 수 없다 — 윈도·맥·크롬북에 실제로
-//    깔려 있는 것만 고른다.
+//    그 고딕은 **파일 안에 싣는다** — 아래 「얼굴을 싣는다」를 보라.
 // 4. 작은 글씨(출처·고지·설명)에도 **바닥이 있다**. 교실 프로젝터의 뒷줄에서도
 //    읽혀야 한다 — 망설여지면 큰 쪽으로 간다.
-const CSS = `
+//
+// ── 얼굴을 싣는다 (2026-09-27) ─────────────────────────────────────────
+// 어제까지 이 파일이 한 일은 **이름을 부르는 것**뿐이었다. `"Pretendard","Apple SD
+// Gothic Neo","Malgun Gothic",…` 이라고 적어 두고 「Pretendard 는 학교 크롬북·개인
+// PC에 흔히 깔려 있다」고 스스로 믿었다. 아니었다. 교실 컴퓨터에 Pretendard 는
+// 없고, 그 목록은 언제나 **맑은 고딕**에서 멈췄다. 크기만 커진 맑은 고딕이었다.
+//
+//     2026-09-27 선생님: 「폰트의 문제인데 그냥 글자 크기를 키워버렸어.」
+//
+// 그래서 얼굴을 싣는다. 종이(paper-data.js)와 음악(bgm-data.js)을 base64 로 실은 것과
+// 같은 방식이다 — 학생의 브라우저는 여전히 **아무것도 내려받지 않는다**.
+// 무엇을 어떻게 깎았는지는 tools/pack-font.py 맨 위에 적어 두었다(라이선스도 거기다).
+import { FONTS, FONT_FAMILY } from './font-data.js'
+
+// @font-face — 글꼴이 안 실린 빌드에서도 이 줄이 통째로 비고, 그러면 아래 목록의
+// 다음 얼굴이 받는다. paper-css.js 가 종이 없이도 화면을 지키는 것과 같은 꼴이다.
+//
+// font-display 를 **swap** 으로 둔 까닭: 이 글꼴은 data URI 라 내려받을 것이 없지만,
+// 「없음」과 「곧 옴」은 다르다. block 으로 두면 브라우저가 글꼴을 풀 동안(느린 교실
+// 컴퓨터에서 woff2 331KB 를 푸는 데 백 밀리초쯤) **글자를 안 보여 준다** — 첫 화면이
+// 한순간 빈 종이가 된다. swap 은 그 한두 프레임을 맑은 고딕으로 메우고 곧바로 갈아
+// 끼운다. 한 프레임의 옛 얼굴이 한 프레임의 빈 화면보다 낫다.
+const FONT_FACE = FONTS.map(f => `
+@font-face{
+  font-family:"${FONT_FAMILY}";
+  src:url(${f.src}) format("woff2");
+  font-weight:${f.weight};
+  font-style:normal;
+  font-display:swap;
+}`).join('')
+
+const CSS = FONT_FACE + `
 :root{
-  /* 얼굴 — 웹폰트를 못 받으므로 실제로 깔려 있는 것만 적는다.
-     Pretendard 는 학교 크롬북·개인 PC에 흔히 깔려 있고, 없으면 맥의 Apple SD Gothic Neo,
-     윈도의 맑은 고딕으로 내려간다. 마지막은 system-ui — 어디에도 없는 경우는 없다. */
-  --face-body:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕","Noto Sans KR",system-ui,sans-serif;
+  /* 얼굴 — 맨 앞은 우리가 파일 안에 실은 것이다. 그 뒤는 대비책이다.
+     ⚠ 뒤쪽 이름을 걷어 내지 마라. 실은 글꼴에는 **한자가 한 자도 없다**(Pretendard
+        는 CJK 표의문자를 담지 않는다). 屬邦·施命之寶 같은 한자와, 상용 한글 2,350자
+        밖의 드문 글자(학생이 자유 서술 칸에 쓸 수도 있다)는 이 뒤쪽 얼굴들이 받는다 —
+        CSS 는 글자 하나하나마다 목록을 훑으므로 한 글자만 뒤로 넘어간다.
+        뒤쪽을 지우면 그 자리가 네모(tofu)가 된다. */
+  --face-body:"${FONT_FAMILY}","Pretendard","Apple SD Gothic Neo","Malgun Gothic","맑은 고딕","Noto Sans KR",system-ui,sans-serif;
+  /* 표제와 한자는 일부러 명조(세리프)다 — 1863년의 종이를 흉내 내는 자리다.
+     이쪽은 아직 시스템 글꼴이다. 싣는다면 한자를 담은 명조여야 하는데, 그건
+     본문 두 벌(331KB)에 더해 또 한 벌을 싣는 일이라 이번에는 하지 않았다. */
   --face-display:Batang,"바탕","Apple SD Gothic Neo",Georgia,serif;
   --face-hanja:Batang,"Gungsuh","궁서","SimSun",serif;
 
@@ -93,14 +129,22 @@ let installed = false
 
 // paper-css.js 의 installPaperVars() 와 같은 자리에 선다: 화면이 뜨기 전에 한 번 불러
 // 두면, 그 뒤로는 어느 화면이든 var(--read-body) 한 줄만 적으면 된다.
-export function installTypeVars(doc = document) {
-  if (installed && doc === document) return
+//
+// `document` 를 맨이름으로 부르지 않고 `globalThis.document` 로 부르는 까닭: 이 저장소의
+// 시험은 DOM 없이 돈다(vitest.config.js 의 environment 는 'node'). 맨이름으로 부르면
+// 그곳에 document 라는 이름 자체가 없어 ReferenceError 로 터지고, 그래서 이 함수는
+// 여태 **한 번도 시험된 적이 없었다.** 브라우저에서는 globalThis.document === document
+// 이므로 하는 일은 똑같다 — 다만 이제 흉내 낸 종이를 넘겨 실제로 확인할 수 있다
+// (tests/ui/font.test.js). 얼굴을 싣는 코드가 여기 있으니 시험이 닿아야 한다.
+export function installTypeVars(doc = globalThis.document) {
+  const real = globalThis.document
+  if (installed && doc === real) return
   if (!doc?.head) return
-  if (doc.getElementById('eojeon-type-style')) { installed = true; return }
+  if (doc.getElementById('eojeon-type-style')) { if (doc === real) installed = true; return }
   const style = doc.createElement('style')
   style.id = 'eojeon-type-style'
   style.textContent = CSS
   // 맨 앞에 넣는다 — 이것은 바탕값이고, 화면마다의 CSS 가 그 위에 얹혀야 한다.
   doc.head.insertBefore(style, doc.head.firstChild)
-  if (doc === document) installed = true
+  if (doc === real) installed = true
 }

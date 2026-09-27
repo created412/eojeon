@@ -6,7 +6,7 @@ import { stageEvent } from './systems/event-staging.js'
 import { createInput, isTyping } from './input/input.js'
 import { PALACES, pickupNear, roomLabel, roomAt, baseOf } from './data/palaces.js'
 import { objectiveRoute } from './systems/route.js'
-import { guideForBeat, actGuideView } from './data/guide.js'
+import { guideForBeat, GAME_INTRO, ACT_GUIDE } from './data/guide.js'
 import { createGuideStrip } from './ui/guide-strip.js'
 import { npcsAt, npcNear, npcHandledCardIds, npcCardIds, npcById, portraitKeyOf } from './data/npcs.js'
 import {
@@ -46,6 +46,9 @@ import { createOrders } from './ui/orders-ui.js'
 import { createBrush } from './ui/brush.js'
 import { createFunding } from './ui/funding.js'
 import { createActQuestion } from './ui/act-question.js'
+import { createActMap } from './ui/act-map.js'
+import { actMapView } from './systems/act-map.js'
+import { createAlone } from './ui/alone.js'
 import { createCodexQuiz } from './ui/codex-quiz.js'
 import { quizView } from './systems/codex-quiz.js'
 import { createEscape } from './ui/escape-screen.js'
@@ -328,7 +331,11 @@ export function buildRecordText(state, acts) {
     return [
       `[${d.actIndex + 1}막 「${act.title}」] ${question}`,
       `선택 — ${text}`,
-      `남긴 말 — ${d.reason || '(없음)'}`,
+      // 2026-09-27 — 「남긴 말」이 아니다. 이유 쓰기 칸을 걷어 낸 뒤(ui/council-ui.js)
+      // 이 자리에 오는 것은 학생이 **한 일**을 적은 문장이다: 어느 기록을 근거로
+      // 삼았고 무엇이 일어나리라 보았는가(systems/council-evidence.js recordSentence),
+      // 또는 백 칸을 어떻게 채웠는가(ui/funding.js summary).
+      `적어 둔 것 — ${d.reason || '(없음)'}`,
     ].join('\n')
   })
   return [
@@ -405,6 +412,9 @@ export function ambientForBeat(beat) {
   // 궁 안 소리를 그대로 둔다: 궁은 여전히 살아 있고 임금만 못 움직인다는 것이
   // 이 장면이므로, 바닥 소리가 계속 도는 편이 내용과 맞는다.
   if (beat.kind === 'hold') return 'hall'
+  // 혼자 서 있는 몇 초 — 궁은 그대로 살아 있고 사람만 없다. 무음으로 두면
+  // 「고장 났다」로 읽힌다(hold 와 같은 까닭).
+  if (beat.kind === 'alone') return 'hall'
   // 알현도 궁 안이다 — 임금이 못 움직이는 것은 'hold' 와 같지만, 궁은 살아 있다.
   if (beat.kind === 'audience') return 'hall'
   if (beat.kind === 'procession') return 'hall'   // 궁 안을 걸어 나가는 장면이다
@@ -533,6 +543,8 @@ export function boot(root) {
   const brush = createBrush(root)
   const funding = createFunding(root)
   const actQuestion = createActQuestion(root)
+  const actMapScreen = createActMap(root)
+  const alone = createAlone(root)
   const codexQuiz = createCodexQuiz(root)
   const escape = createEscape(root)
   const edict = createEdict(root)
@@ -986,7 +998,7 @@ export function boot(root) {
       lines: extra,
       // everRead() 로 센다 — sources.read 만 쓰면 불타거나 약탈당한 문서가
       // "안 읽음"으로 보인다(2단계 Important 1)
-      read: `읽은 문서 ${everRead(flow.state).length}장 · 남긴 말 ${reason ? '있음' : '없음'}`,
+      read: `읽은 문서 ${everRead(flow.state).length}장 · 적어 둔 것 ${reason ? '있음' : '없음'}`,
       reason,
       onCopy: () => copyRecord(),
     })
@@ -1492,6 +1504,25 @@ export function boot(root) {
   }
 
 
+  // 혼자 서 있는 몇 초(3막) — 아버지가 물러난 **직후**다. 화면을 덮지 않는다:
+  // 궁은 그대로 보이고, 그 안에 임금 혼자 서 있고, 아래쪽에 한 줄씩 떠오른다.
+  // 신하를 통째로 걷어 내는 자리이기도 하다 — 「아무도 없다」가 글이 아니라 그림이어야 한다.
+  async function playAlone(beat) {
+    flow.setPhase('beat')        // 걷지 못한다. 서 있는 것이 이 장면의 내용이다.
+    hint.hidden = true
+    guide.hide()
+    dialog.close()
+    ctx.setNpcs([])
+    const def = PALACES[flow.state.palace]
+    const room = def.rooms.find(r => r.id === beat.room) ?? def.rooms[0]
+    const spot = kingSpot(room)
+    ctx.player.position.set(spot.x, ctx.player.position.y, spot.z)
+    flow.state = { ...flow.state, room: room.id }
+    audio.setAmbient('hall')
+    await alone.show({ lines: beat.lines, label: beat.label })
+    return flow.state
+  }
+
   // 「돈을 만든다」(1막 끝) — 예전의 고르는 어전회의를 대신한다(ui/funding.js).
   // 학생이 두 지레를 밀어 백 칸을 채우고, 그 셈이 끝난 뒤에 아버지가 뒤집는다.
   // 고른 값 대신 **학생이 한 셈 한 줄**(result.summary)을 기록에 남긴다 — 예전의
@@ -1783,6 +1814,7 @@ export function boot(root) {
       case 'dispatch': return await playDispatch(beat)
       case 'plunder': return await playPlunder(beat)
       case 'orders':  return await playOrders(beat)
+      case 'alone':   return await playAlone(beat)
       case 'funding': return await playFunding(beat)
       case 'brush':   return await playBrush(beat)
       case 'rush':    return await playRush(beat)
@@ -1822,7 +1854,7 @@ export function boot(root) {
     // 막이 끝난 화면은 글 화면이다 — 바닥 소리를 끈다.
     audio.setAmbient(null)
     guide.hide()
-    // 이 막에서 남긴 여러 결정(어전회의·훈령) 중 가장 나중 것의 「남긴 말」을 보여준다
+    // 이 막에서 남긴 여러 결정(어전회의·훈령) 중 가장 나중 것의 「적어 둔 것」을 보여준다
     const decision = [...flow.state.decisions].reverse().find(d => d.actIndex === flow.actIndex)
     const reason = decision?.reason ?? ''
 
@@ -1941,8 +1973,16 @@ export function boot(root) {
       await actQuestion.open({ mode: 'open', act: actIndex + 1, actLabel: q.label,
         year: q.year, question: q.text, image: q.image })
     }
-    // 막마다 「이 막에서 할 일」 한 장 — 무엇이 일어나고 무엇을 하는지 말한다(data/guide.js).
-    await noteScreen.show(actGuideView(ACTS[actIndex], actIndex))
+    // 막마다 「이 막의 여정」 한 장. 예전에는 여덟 문단짜리 글이었다 —
+    // 선생님(2026-09-27): 「이렇게 글로만 있으니까 1막이 어떤 구성이고 어떻게
+    // 진행해야 하는지 안 보여.」 그래서 **막의 비트에서 걸음을 뽑아 그린다**
+    // (systems/act-map.js). 손으로 하는 걸음은 눈에 띄게 서고, 그 막에서 학생이
+    // 쥔 것(act.handle)이 그 자리에 붙는다. 데이터에서 뽑으므로 장면을 고치면
+    // 지도도 함께 바뀐다 — 손으로 적어 두면 언젠가 조용한 거짓말이 된다.
+    await actMapScreen.open(actMapView(ACTS[actIndex], actIndex, {
+      intro: actIndex === 0 ? GAME_INTRO.slice(0, 2) : [],
+      todo: ACT_GUIDE[ACTS[actIndex].id]?.[0] ?? '',
+    }))
     await runBeats()
   }
 

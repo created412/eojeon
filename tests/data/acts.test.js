@@ -10,6 +10,7 @@ import { PLACES } from '../../src/ui/ganghwa-map.js'
 const KINDS = [
   'note', 'explore', 'council', 'orders', 'move', 'rush', 'plunder', 'brush', 'dispatch',
   'funding',  // 「돈을 만든다」 — 2026-09-26, 고르는 어전회의를 대신한다
+  'alone',    // 혼자 서 있는 몇 초 — 2026-09-27, 아버지가 물러난 직후
   // 3단계
   'outing',   // G 회수 — 종로와 무위영 (Task 6)
   'escape',   // 변장과 맡길 사람 (Task 8)

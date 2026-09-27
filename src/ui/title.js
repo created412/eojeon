@@ -239,8 +239,19 @@ export function createTitle(root) {
       const credit = document.createElement('div')
       credit.className = 'opening-credit'
       credit.textContent = '배경 음악: 선생님이 직접 만든 「Beneath the Bronze Bell」 한 곡에서 떴습니다 — 다섯 막의 음악은 그 곡의 연속된 다섯 악장입니다.'
+      // 글꼴의 출처 — 음악·그림과 같은 자리에 적는다. 이것은 예의가 아니라 **조건**이다:
+      // SIL Open Font License 1.1 은 사본마다 저작권 표시와 라이선스가 함께 가기를
+      // 요구한다(조건 2). 이 게임은 eojeon.pages.dev 와 GitHub 로 나가므로 그 사본이
+      // 곧 재배포다. 라이선스 전문은 assets/fonts/LICENSE 에 있고, 여기 있는 이 한 줄이
+      // 「글꼴을 실었다」는 사실을 학생·선생님이 볼 수 있는 유일한 자리다.
+      // 이름을 Pretendard 라 부르지 않고 「깎아 실었다」고 적는 까닭은 조건 3 이다 —
+      // 고친 판은 Reserved Font Name 을 제 이름으로 쓸 수 없다(tools/pack-font.py).
+      const fontCredit = document.createElement('div')
+      fontCredit.className = 'opening-credit'
+      fontCredit.textContent = '본문 글꼴: Pretendard(Kil Hyung-jin)를 이 게임이 쓰는 글자만 남겨 깎아 파일 안에 실었습니다 — SIL Open Font License 1.1.'
       el.appendChild(footer)
       el.appendChild(credit)
+      el.appendChild(fontCredit)
 
       root.appendChild(el)
       addEventListener('keydown', onKey)

@@ -208,6 +208,34 @@ export function travelLabel(d) {
   return d.lagDays === 0 ? '보낸 날 그날 닿았다' : `닿는 데 ${d.lagDays}일이 걸렸다`
 }
 
+// 지도 위 표지에 붙는 짧은 꼴 — 「4일」·「그날」. travelLabel 과 같은 값을 말하되
+// 지명 곁에 한 칸으로 들어갈 만큼만 줄인다(지명표가 두 줄로 터지면 섬이 가린다).
+//
+// 왜 화면이 아니라 여기 있는가: 화면 파일에는 lagDays 산술이 한 줄도 없어야 한다
+// (tests/ui/hands-on.test.js 가 그것을 지킨다). 날수를 말하는 자리는 언제나 이 파일이다.
+// ⚠ 정수 며칠뿐이다. 이 파일에 시각은 없다(맨 위 주석).
+export function travelShortLabel(d) {
+  return d.lagDays === 0 ? '그날' : `${d.lagDays}일`
+}
+
+// ── 어디서 올라온 장계인가 ────────────────────────────────────────────────
+// 2026-09-27 선생님: 「장계 순서 펴 보는 거랑 지도에서 장계의 위치 찾아보는 걸
+// 하나로 합치는 게 좋을 것 같아.」 그래서 학생은 장계를 **지도 위에 놓는다** —
+// 어느 자리에서 올라온 장계인지를 지도에서 찾아 짚는 일이 놓아 보기와 한 몸이 되었다.
+//
+// 이 두 함수가 그 절반을 맡는다. 셈이 아니라 대조다 — 장계가 적고 있는 자리(at)와
+// 학생이 지도에서 누른 자리가 같은가. 「몇 점인가」는 여기에도 없다.
+export function belongsAt(d, at) {
+  return Boolean(d) && d.at === at
+}
+
+// 닿은 장계가 모두 제자리에 놓였는가. placedAt 은 id → 지도에서 누른 자리.
+export function allPlaced(list, day, placedAt) {
+  const arrived = arrivedAt(list, day)
+  if (arrived.length === 0) return true
+  return arrived.every(d => belongsAt(d, placedAt?.get?.(d.id) ?? placedAt?.[d.id]))
+}
+
 // 놓아 본 뒤에 나가는 판정. 네 갈래를 다 적는다 — 어느 갈래에서도 「오답」이라는
 // 말이 나오지 않는다. 못 짚었을 때 설명하는 것은 학생이 아니라 거리다.
 //

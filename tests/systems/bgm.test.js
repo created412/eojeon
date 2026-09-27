@@ -20,7 +20,8 @@ it('막마다 제 곡이 있고, 읽는 화면은 낮게, 침묵할 자리는 �
 // 게임에 실제로 있는 모든 비트를 먹여 본다 — 이름 오타가 조용한 무음이 되지 않게.
 it('모든 비트가 실린 곡(또는 뜻한 침묵)으로 이어진다', async () => {
   const { ACTS } = await import('../../src/data/acts.js')
-  const silent = new Set(['brush', 'plunder', 'hold'])
+  // 혼자 서 있는 몇 초(alone)도 뜻한 침묵이다 — 비어 있는 것이 그 장면의 내용이다.
+  const silent = new Set(['brush', 'plunder', 'hold', 'alone'])
   ACTS.forEach((act, i) => {
     for (const beat of act.beats) {
       const { track } = bgmForBeat(beat, i)
