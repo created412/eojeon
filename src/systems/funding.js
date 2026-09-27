@@ -163,6 +163,66 @@ export function goalMet(state) {
   return filledBlocks(state) >= GOAL_BLOCKS
 }
 
+// ── 결승선이 달아난다 (2026-09-27) ─────────────────────────────────────────
+// 2026-09-26 에 이 판을 지레 둘로 다시 만들었는데, 선생님이 또 같은 말씀을 하셨다 —
+// 더 재미있게. 띄워 놓고 보니 까닭이 화면에 그대로 있었다: 채운 막대가 **줄어드는**
+// 그림이었다. 학생이 당백전을 미는데 제 막대가 뒤로 물러나는 것은, 겪는 일로 치면
+// 「내 돈이 사라졌다」다. 그런 일은 일어나지 않는다. 실제로 일어나는 일은 이것이다 —
+// **내 돈은 그대로인데, 사려던 것의 값이 올랐다.**
+//
+// 그래서 같은 셈을 뒤집어 놓는다. 여태 화면은 `채운칸 = 돈 ÷ 물가` 를 100칸에 견주었다.
+// 이제 `가진 돈` 을 `벽값 = 100칸 × 물가` 에 견준다. 부등식은 글자 하나 안 바뀐다 —
+//     돈 ÷ 물가 ≥ 100  ⟺  돈 ≥ 100 × 물가
+// 그래서 goalMet() 도, blocks() 도, 시험 마흔 몇 개도 손대지 않는다. 바뀌는 것은
+// **어느 쪽이 움직이는가**뿐이다: 막대는 절대 물러나지 않고, 결승선이 달아난다.
+//
+// ⚠ 이 갈래가 가리는 것이 하나 있다. 돈으로 보면 한 칸 찍을 때마다 이득이 +9 로
+//    일정하지만(34 들어오고 25 밀리고), 칸으로 보면 찍을수록 이득이 준다. 줄어드는
+//    쪽이 이 화면이 가르치려는 것이다(tests/systems/funding.test.js 「찍을수록 한 칸이
+//    채우는 몫이 줄어든다」). 그래서 칸 수를 적은 goalLabel() 을 막대 위에 그대로 둔다 —
+//    달아나는 결승선은 손에 남기는 그림이고, 칸 수는 그 그림이 가린 것을 지키는 눈금이다.
+
+// 벽을 다 쌓는 데 드는 돈. 물가가 오르면 함께 오른다.
+export function needCoin(state) {
+  return GOAL_BLOCKS * priceMultiple(state)
+}
+
+// 자의 끝. **두 지레를 끝까지 민 사람이 쥐는 돈**이다. 자를 고정해 두어야 결승선이
+// 「달아나는 것」으로 보인다 — 자가 매번 다시 맞춰지면 모든 것이 제자리걸음이 된다.
+//
+// 처음에는 자의 끝을 「물가가 끝까지 올랐을 때의 벽값」(450)으로 두었다가 화면을 찍어
+// 보고 고쳤다. 그 자는 가질 수 있는 돈(578)보다 짧아서, 끝까지 민 학생의 막대가 자
+// 끝에 붙어 버렸다. 그러면 막대는 멈추고 금만 가니 **거리가 도로 좁아진다** — 다 밀수록
+// 따라잡히는 것처럼 보인다. 가르치려는 것과 정반대다. 자는 막대보다 길어야 한다.
+export const SCALE_COIN = levyCoin({ levy: LEVY_MAX, mint: 0 }) + MINT_COIN * MINT_MAX
+
+// 자 위의 자리(0~1). 가진 돈은 자를 넘길 수 있다 — 넘기면 이미 이긴 것이므로 끝에 세운다.
+export function coinAt(state) {
+  return Math.min(1, coinTotal(state) / SCALE_COIN)
+}
+
+export function levyAt(state) {
+  return Math.min(1, levyCoin(state) / SCALE_COIN)
+}
+
+export function mintAt(state) {
+  return Math.min(1, mintCoin(state) / SCALE_COIN)
+}
+
+export function needAt(state) {
+  return Math.min(1, needCoin(state) / SCALE_COIN)
+}
+
+// 결승선이 처음 서 있던 자리. 이 금과 지금 금 사이가 곧 물가가 밀어낸 거리다.
+export const NEED_START_AT = GOAL_BLOCKS / SCALE_COIN
+
+// 결승선이 얼마나 밀렸는지 한 줄. 배수는 priceTimes() 와 같은 수를 쓴다 —
+// 화면 두 곳이 서로 다른 수를 말하면 학생이 먼저 알아챈다.
+export function needLine(state) {
+  if (priceMultiple(state) <= 1.001) return '벽을 다 쌓는 데 드는 돈 ─ 아직 처음 그대로다.'
+  return `벽을 다 쌓는 데 드는 돈이 처음의 ${priceTimes(state)}배가 되었다 ─ 결승선이 그만큼 물러났다.`
+}
+
 export function goalLabel(state) {
   const filled = Math.floor(filledBlocks(state))
   return `중건에 드는 일감 ${GOAL_BLOCKS}칸 가운데 ${Math.min(filled, GOAL_BLOCKS)}칸`
@@ -185,6 +245,16 @@ export function minsimLabel(state) {
 
 export function minsimBar(state) {
   return minsim(state) / MINSIM_START
+}
+
+// 고을 그림이 갈리는 자리. 화면은 고을을 두 얼굴로 보여 준다 — 아직 견디는 고을과,
+// 사람이 떠나기 시작한 고을. 그 경계를 민심 말이 「술렁인다」에서 「원망이 돈다」로
+// 넘어가는 바로 그 자리에 둔다(MINSIM_WORDS 의 66). 그림과 말이 서로 다른 때에
+// 바뀌면 학생이 먼저 알아챈다 — 이 판에서 제일 조용하게 신뢰를 잃는 방식이다.
+export const VILLAGE_TURN_MINSIM = 66
+
+export function villageIsFailing(state) {
+  return minsim(state) < VILLAGE_TURN_MINSIM
 }
 
 // 「4.00배」가 아니라 「4배」로 읽히게 한다 — 꼬리의 0 은 정밀한 숫자라는 인상만 준다.

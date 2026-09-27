@@ -10,6 +10,8 @@ import {
   minsim, minsimLabel, minsimBar, priceMultiple, priceTimes, priceLabel, riceCoins,
   levyCoin, mintCoin, coinTotal, blocks, levyWorth, levyWorthLine,
   filledBlocks, goalMet, goalLabel, nudgeFor, summaryLine, comparison,
+  needCoin, SCALE_COIN, coinAt, levyAt, needAt, NEED_START_AT, needLine,
+  villageIsFailing, VILLAGE_TURN_MINSIM,
 } from '../../src/systems/funding.js'
 
 // 1막 마지막 자리의 셈판(2026-09-26 선생님: 「원납전과 당백전을 선택하고 선택한 이유를
@@ -287,5 +289,96 @@ describe('역사에 거짓을 보태지 않는다', () => {
 
   it('DOM 을 건드리지 않는다 — 화면 없이 시험할 수 있다', () => {
     expect(src).not.toMatch(/document|window|addEventListener/)
+  })
+})
+
+// ── 결승선이 달아난다 (2026-09-27) ─────────────────────────────────────────
+// 선생님이 같은 판을 두고 두 번째로 「더 재미있게」라고 하셨다. 띄워 보니 까닭이
+// 화면에 있었다 — 당백전을 미는데 **제 막대가 뒤로 물러났다**. 겪는 일로 치면
+// 「내 돈이 사라졌다」인데, 그런 일은 일어나지 않는다. 일어나는 일은 그 반대다:
+// 내 돈은 그대로인데 사려던 것의 값이 오른다.
+//
+// 그래서 같은 부등식을 뒤집어 놓았다. 아래는 그 뒤집기가 **셈을 바꾸지 않았다**는 것과,
+// 뒤집은 보람(막대가 안 물러난다 · 금이 달아난다)을 함께 못 박는다.
+describe('결승선이 달아난다', () => {
+  it('부등식이 예전과 똑같다 — 보이는 쪽만 뒤집었지 셈은 안 바꿨다', () => {
+    // 돈 ÷ 물가 ≥ 100  ⟺  돈 ≥ 100 × 물가. 이것이 깨지면 뒤집기가 규칙을 바꾼 것이다.
+    for (let levy = 0; levy <= LEVY_MAX; levy++) {
+      for (let mint = 0; mint <= MINT_MAX; mint++) {
+        const s = at(levy, mint)
+        expect(coinTotal(s) >= needCoin(s), `levy ${levy} · mint ${mint}`).toBe(goalMet(s))
+      }
+    }
+  })
+
+  it('돈 막대는 한 번도 물러나지 않는다 — 이번에 고친 바로 그것이다', () => {
+    for (let levy = 0; levy <= LEVY_MAX; levy++) {
+      for (let mint = 1; mint <= MINT_MAX; mint++) {
+        const prev = at(levy, mint - 1)
+        const now = at(levy, mint)
+        // 당백전을 찍어도 원납전으로 만든 돈은 그대로다. 예전 막대는 여기서 줄었다.
+        expect(levyAt(now), `levy ${levy} · mint ${mint}`).toBe(levyAt(prev))
+        expect(coinAt(now)).toBeGreaterThan(coinAt(prev))
+      }
+    }
+  })
+
+  it('당백전을 찍을수록 결승선이 오른쪽으로 간다', () => {
+    for (let mint = 1; mint <= MINT_MAX; mint++) {
+      expect(needAt(at(0, mint))).toBeGreaterThan(needAt(at(0, mint - 1)))
+    }
+    // 원납전은 결승선을 건드리지 않는다 — 물가를 안 올리기 때문이다.
+    for (let levy = 1; levy <= LEVY_MAX; levy++) {
+      expect(needAt(at(levy, 0))).toBe(NEED_START_AT)
+    }
+  })
+
+  it('자가 막대보다 길다 — 끝에서 막대가 자에 붙으면 거리가 도로 좁아진다', () => {
+    // 화면을 찍어 보고 잡은 버그다. 자를 「물가가 끝까지 올랐을 때의 벽값」으로 두었더니
+    // 가질 수 있는 돈보다 짧아, 다 민 학생의 막대가 멈추고 금만 갔다 — 다 밀수록
+    // 따라잡히는 것처럼 보였다. 가르치려는 것과 정반대다.
+    expect(coinTotal(at(LEVY_MAX, MINT_MAX))).toBeLessThanOrEqual(SCALE_COIN)
+    // 자 끝에 눌리지 않았다는 것 — 마지막 한 칸도 막대를 밀어낸다.
+    expect(coinAt(at(LEVY_MAX, MINT_MAX))).toBeGreaterThan(coinAt(at(LEVY_MAX, MINT_MAX - 1)))
+    expect(needAt(at(0, MINT_MAX))).toBeLessThanOrEqual(1)
+  })
+
+  it('밀어낸 거리를 적은 줄이 물가 배수와 같은 수를 쓴다', () => {
+    // 화면 두 곳이 서로 다른 배수를 말하면 학생이 먼저 알아챈다.
+    expect(needLine(at(6, 0))).not.toMatch(/배/)
+    expect(needLine(at(6, 10))).toContain(`${priceTimes(at(6, 10))}배`)
+    expect(needLine(at(6, 10))).toContain('결승선')
+  })
+
+  // 2026-09-27 선생님: 「힉스필드 등을 활용하여 제대로 된 게임의 형태를 만들어봐.」
+  // 민심이 「원망이 돈다」는 낱말에서 **비어 가는 고을 그림**으로 바뀌었다. 그림과 낱말은
+  // 같은 눈금을 두 방식으로 말하는 것이라, 서로 다른 때에 바뀌면 화면이 거짓말을 한다.
+  it('고을 그림과 민심 말이 같은 자리에서 바뀐다', () => {
+    for (let levy = 0; levy <= LEVY_MAX; levy++) {
+      const s = at(levy, 0)
+      const word = minsimLabel(s)
+      if (villageIsFailing(s)) {
+        // 사람이 떠나는 그림이 걸렸는데 말은 「조용하다」면 학생이 먼저 알아챈다.
+        expect(word, `levy ${levy}`).not.toBe('조용하다')
+        expect(word, `levy ${levy}`).not.toBe('술렁인다')
+      } else {
+        expect(['조용하다', '술렁인다'], `levy ${levy}`).toContain(word)
+      }
+    }
+  })
+
+  it('고을 그림은 걷기 전에는 성하다 — 아무것도 안 했는데 비어 있으면 벌하는 것이다', () => {
+    expect(villageIsFailing(at(0, 0))).toBe(false)
+    // 당백전만 찍어서는 고을이 비지 않는다. 물가는 오르지만 걷어 간 것은 없다.
+    expect(villageIsFailing(at(0, MINT_MAX))).toBe(false)
+    // 끝까지 걷으면 반드시 빈다 — 그림이 안 바뀌면 이 고침이 통째로 헛것이다.
+    expect(villageIsFailing(at(LEVY_MAX, 0))).toBe(true)
+    expect(VILLAGE_TURN_MINSIM).toBeGreaterThan(WEARY_MINSIM)
+  })
+
+  it('절대 수치가 새지 않는다 — 자도 칸과 배수로만 만든다', () => {
+    // 이 판의 못 하나(맨 위 ⚠): 냥도 총액도 쌀 한 섬 값도 적지 않는다.
+    expect(needLine(at(6, 10))).not.toMatch(/냥|원|석|섬/)
+    expect(SCALE_COIN).toBe(levyCoin(at(LEVY_MAX, 0)) + MINT_COIN * MINT_MAX)
   })
 })

@@ -1,11 +1,14 @@
 import { PORTRAITS } from './portraits-data.js'
+import { SCENE_ART } from './scene-art-data.js'
 import { installTypeVars } from './type-css.js'
 import {
   GOAL_BLOCKS, LEVY_MAX, MINT_MAX, RICE_BASE_COINS,
+  villageIsFailing,
   RECON_NOTE, GOAL_NOTE, WONNAP_GLOSS, DANGBAEK_GLOSS,
   initialBoard, setLevy, setMint, stepLevy, stepMint,
   blocks, filledBlocks, goalMet, goalLabel,
   minsimLabel, minsimBar, priceLabel, priceTimes, riceCoins, levyCoin, levyWorthLine,
+  levyAt, mintAt, needAt, NEED_START_AT, needLine,
   nudgeFor, summaryLine, comparison,
 } from '../systems/funding.js'
 
@@ -82,31 +85,52 @@ const CSS = `
   padding:6px 0 7px;display:flex;flex-direction:column;gap:9px;
   border-bottom:1px solid #3a2d20;box-shadow:0 7px 9px -7px #12100d}
 
-/* 채울 것 — 막대 하나가 곧 100칸이다. 두 몫을 나란히 쌓아, 당백전을 찍을 때
-   원납전 몫이 눈앞에서 줄어드는 것이 보이게 한다. 그것이 이 화면의 심지다. */
+/* 채울 것 — 막대는 「가진 돈」이고, 붉은 금은 「벽을 다 쌓는 데 드는 돈」이다.
+   당백전을 밀면 막대가 늘고 그 금이 함께 오른쪽으로 달아난다. **막대는 절대
+   물러나지 않는다** — 왜 뒤집었는지는 systems/funding.js 「결승선이 달아난다」에 있다. */
 .funding .goal-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
   font-size:14px;color:#b9b2a1;letter-spacing:1px}
 .funding .goal-head strong{color:#e0a23a;font-weight:400}
-.funding .goal-bar{position:relative;display:flex;height:32px;border:1px solid #6a5230;border-radius:3px;
+.funding .goal-bar{position:relative;display:flex;height:34px;border:1px solid #6a5230;border-radius:3px;
   background:#1d1710;overflow:hidden}
-.funding .goal-fill{height:100%;transition:width .18s ease-out}
+/* 쌓는 층을 못박아 둔다: 돈 막대(1) 위에 금과 빗금(2), 그 아래 아직 안 열린 땅(0).
+   z-index 를 안 적으면 DOM 순서대로 덮여, 금을 넘어선 막대가 가려진다. */
+.funding .goal-fill{position:relative;z-index:1;height:100%;transition:width .18s ease-out}
 /* 두 몫은 색과 무늬를 둘 다 다르게 한다 — 색만 다르면 색을 잘 못 가리는 학생에게는
    한 덩어리로 보인다(ration.js 낟알판과 같은 규칙). */
 .funding .goal-fill.levy{background:repeating-linear-gradient(135deg,#6f5733,#6f5733 7px,#5e4a2b 7px,#5e4a2b 14px)}
 .funding .goal-fill.mint{background:#e0a23a}
 .funding .goal-bar.full{border-color:#e0a23a;box-shadow:0 0 0 1px #e0a23a55}
-/* 걷을 때 원납전이 닿았던 자리. 당백전을 찍으면 몫이 이 금 아래로 물러난다 —
-   「돈은 늘었는데 걷어 둔 돈은 줄었다」가 글이 아니라 자국으로 남는다. */
-.funding .goal-ghost{position:absolute;top:0;bottom:0;border-right:2px dashed #d2503a;
-  background:repeating-linear-gradient(45deg,#d2503a66 0 4px,#d2503a11 4px 9px);
-  transition:left .18s ease-out,width .18s ease-out}
+/* 결승선 너머 — 아직 일어나지 않은 물가의 땅이다. 당백전을 찍어야 열린다.
+   이것이 없으면 원납전만 민 학생에게는 「거의 빈 막대」로 보인다. 자는 고정이므로
+   그 빈 곳은 못 채운 몫이 아니라 **아직 치르지 않은 값**이다.
+   처음에 이 땅을 바탕색보다 아주 조금만 어둡게 두었더니, 원납전만 민 화면에서 그냥
+   「거의 빈 막대」로 보였다(92칸을 채우고도 20%처럼 읽힌다). 눈에 띄게 갈라 놓는다 —
+   가로줄 무늬는 「아직 손대지 않은 곳」이지 「못 채운 곳」이 아니다. */
+.funding .goal-beyond{position:absolute;z-index:0;top:0;bottom:0;right:0;
+  background:repeating-linear-gradient(90deg,#0c0a06 0 5px,#151109 5px 10px);
+  border-left:1px solid #3a2d20;transition:left .18s ease-out;pointer-events:none}
+/* 물가가 결승선을 밀어낸 거리. 예전에 이 빗금은 「줄어든 몫」이었다 —
+   같은 빗금에 같은 뜻이고, 움직이는 쪽만 바뀌었다.
+   위 모서리에 자처럼 얇게 눕힌다. 처음에 막대 높이만큼 채웠더니 빗금이 돈 막대를
+   덮어, 「번 돈의 절반이 못 쓸 돈」처럼 보였다 — 가리려던 것이 아니라 잰 거리다. */
+.funding .goal-ghost{position:absolute;z-index:2;top:0;height:7px;
+  background:repeating-linear-gradient(45deg,#d2503a 0 3px,#d2503a33 3px 7px);
+  transition:left .18s ease-out,width .18s ease-out;pointer-events:none}
+/* 결승선. 처음 자리는 흐린 점선으로 남기고, 지금 자리는 또렷한 붉은 금이다. */
+.funding .goal-line{position:absolute;z-index:3;top:0;bottom:0;width:0;border-left:2px solid #d2503a;
+  transition:left .18s ease-out;pointer-events:none}
+.funding .goal-line.start{z-index:2;border-left:1px dashed #8a7a5e}
+.funding .goal-need{font-size:var(--read-small,15px);color:#e0704f;min-height:18px;
+  font-family:var(--face-body,system-ui,sans-serif);letter-spacing:normal;word-break:keep-all}
 .funding .goal-keys{display:flex;justify-content:center;gap:16px;font-size:var(--read-caption,13px);
   color:var(--paper-quiet,#b3aa95);flex-wrap:wrap;font-family:var(--face-body,system-ui,sans-serif)}
 .funding .goal-keys i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px}
 .funding .goal-keys i.levy{background:#6f5733}
 .funding .goal-keys i.mint{background:#e0a23a}
-.funding .goal-keys i.ghost{border-radius:0;height:12px;border-right:2px dashed #d2503a;
-  background:repeating-linear-gradient(45deg,#d2503a66 0 4px,#d2503a11 4px 9px)}
+.funding .goal-keys i.line{border-radius:0;width:0;height:12px;border-left:2px solid #d2503a}
+.funding .goal-keys i.ghost{border-radius:0;height:7px;
+  background:repeating-linear-gradient(45deg,#d2503a 0 3px,#d2503a33 3px 7px)}
 .funding .goal-worth{font-size:var(--read-small,15px);color:#e0704f;min-height:18px;
   font-family:var(--face-body,system-ui,sans-serif);letter-spacing:normal;word-break:keep-all}
 
@@ -127,6 +151,30 @@ const CSS = `
 .funding .minsim-bar{height:14px;border:1px solid #3a4248;border-radius:2px;background:#15181a;overflow:hidden}
 .funding .minsim-bar span{display:block;height:100%;background:#5c7f6a;transition:width .18s ease-out}
 .funding .minsim-word{font-size:16px;color:#e8e2d4;letter-spacing:1px}
+
+/* 장면 그림 — 2026-09-27 선생님: 「제대로 된 게임의 형태를 만들어봐.」
+   그전까지 민심은 「원망이 돈다」는 **낱말**이었고 채울 것은 빈 막대였다. 낱말과 막대는
+   읽는 것이지 겪는 것이 아니다. 이제 지레를 밀면 고을 그림이 바뀌고 공사장이 올라간다 —
+   학생이 보는 것은 숫자가 아니라 **응답하는 장소**다.
+   ⚠ 캡션을 지우지 마라. 전부 Higgsfield 로 그린 재구성 그림이고, 그 사실이 화면에
+      남아야 한다(assets/scene-art · tools/pack-scene-art.py 의 같은 규율). */
+.funding .scene{margin:0;border:1px solid #3a2d20;border-radius:3px;overflow:hidden;background:#0f0c08}
+/* height 를 100% 로 두면 안 된다 — 부모 높이가 auto 라 그림이 칸을 다 먹고, 그 아래
+   캡션이 overflow:hidden 에 잘려 **재구성 고지가 화면에서 사라진다.** 한 번 그렇게
+   찍어 놓고 「캡션이 왜 안 보이지」로 한참 헤맸다. 높이는 aspect-ratio 가 정한다. */
+.funding .scene img{display:block;width:100%;object-fit:cover;
+  /* 그림이 갈릴 때 탁 끊기지 않게 — 고을이 「바뀐다」로 보여야지 「깜빡인다」면 안 된다 */
+  transition:opacity .22s ease-out}
+.funding .scene figcaption{padding:5px 8px;font-size:var(--read-caption,12px);
+  color:var(--paper-quiet,#9a9280);line-height:1.5;text-align:left;
+  font-family:var(--face-body,system-ui,sans-serif);letter-spacing:normal;word-break:keep-all}
+/* 공사장은 이 판의 목표다 — 가장 크게 둔다. 막대는 그 아래 눈금으로 내려간다.
+   다만 한 판이 화면을 넘기면 지레에 손이 안 간다. 처음에 3/1.35 로 두었더니 판이
+   1980px 이 되어 교실 화면에서 지레가 안 보였다 — 목표보다 먼저 지켜야 할 것이다. */
+.funding .scene.site img{aspect-ratio:3/0.92;object-position:center 58%}
+.funding .gauge .scene img{aspect-ratio:3/1.35}
+.funding .lever-scene img{aspect-ratio:3/1.1}
+@media(max-height:900px){.funding .scene.site img{aspect-ratio:3/0.62}}
 
 /* 밀고 난 뒤 판이 내미는 한 줄. 문구는 systems/funding.js 가 만든다. */
 .funding .nudge{min-height:42px;display:flex;align-items:center;justify-content:center;
@@ -268,9 +316,39 @@ export function createFunding(root) {
 
         // 지레 하나의 속. role="slider" 를 쓰는 까닭은 「화살표키로 밀린다」를
         // 스스로 말해 주기 때문이다 — 끌기만으로 되는 지레는 이 교실에서 못 쓴다.
+        // 그림 한 장을 갈아 끼운다. 같은 그림이면 아무것도 하지 않는다 — 밀 때마다
+        // src 를 다시 넣으면 그림이 매번 깜빡이고, 그러면 「바뀌었다」가 안 보인다.
+        // 그림이 안 실린 빌드에서는 그림 자리를 통째로 감춘다(글과 막대는 그대로다).
+        function showScene(fig, img, cap, key) {
+          const art = SCENE_ART[key]
+          if (!fig || !img) return
+          if (!art) { fig.style.display = 'none'; return }
+          if (img.dataset.key === key) return
+          img.dataset.key = key
+          img.src = art.src
+          img.alt = art.alt
+          if (cap) cap.textContent = art.caption
+        }
+
+        // 지레마다 그 일이 실제로 벌어지는 자리를 머리에 얹는다 — 걷는 곳과 찍는 곳.
+        // 그림이 안 실린 빌드에서는 이 줄이 통째로 비고, 지레는 예전 그대로 선다.
+        // 지레마다 **그 일을 하는 자리**를 얹는다 — 아전이 장부를 펴 놓은 고을 마당과,
+        // 쇳물을 붓는 주전소. 위쪽 게이지 둘은 그 일이 남긴 **결과**다(쌀가게·고을).
+        // 하는 일과 남는 자국을 화면에서 갈라 놓는 것이 이 판의 뼈대다.
+        //
+        // 한쪽에만 그림을 걸어 보았더니 두 지레의 손잡이 높이가 어긋나 고장으로 보였다 —
+        // 나란히 놓는 두 칸은 같은 것을 갖거나 둘 다 없어야 한다.
+        function leverScene(kind) {
+          const art = SCENE_ART[kind === 'levy' ? 'village-levied' : 'mint-house']
+          if (!art) return ''
+          return `<figure class="scene lever-scene">
+            <img src="${art.src}" alt="${art.alt}"><figcaption>${art.caption}</figcaption></figure>`
+        }
+
         function leverHtml(kind, text, max) {
           return `
             <div class="lever">
+              ${leverScene(kind)}
               <div class="lever-head">${text.name}<small>${text.gloss}</small></div>
               <div class="lever-blurb">${text.blurb}</div>
               <div class="lever-track" data-kind="${kind}" role="slider" tabindex="0"
@@ -293,30 +371,46 @@ export function createFunding(root) {
             <p class="ask">${v.question}</p>
             <div class="board">
               <div class="board-top">
+              <figure class="scene site" data-site-fig>
+                <img data-site alt="">
+                <figcaption data-site-cap></figcaption>
+              </figure>
               <div class="goal-head">
                 <span data-goal-label></span>
                 <strong data-done-mark></strong>
               </div>
-              <div class="goal-bar" role="img" aria-label="중건에 드는 일감을 채운 막대">
+              <div class="goal-bar" role="img" aria-label="가진 돈과, 벽을 다 쌓는 데 드는 돈">
                 <span class="goal-fill levy" style="width:0%"></span>
                 <span class="goal-fill mint" style="width:0%"></span>
+                <span class="goal-beyond" data-beyond style="left:0"></span>
                 <span class="goal-ghost" data-ghost style="left:0;width:0;display:none"></span>
+                <span class="goal-line start" data-line-start style="left:0"></span>
+                <span class="goal-line" data-line style="left:0"></span>
               </div>
+              <div class="goal-need" data-need></div>
               <div class="goal-worth" data-worth></div>
               <div class="goal-keys">
-                <span><i class="levy"></i>원납전으로 채운 몫</span>
-                <span><i class="mint"></i>당백전으로 채운 몫</span>
-                <span data-ghost-key style="display:none"><i class="ghost"></i>원납전에서 값어치가 줄어든 만큼</span>
+                <span><i class="levy"></i>원납전으로 만든 돈</span>
+                <span><i class="mint"></i>당백전으로 만든 돈</span>
+                <span><i class="line"></i>벽을 다 쌓는 데 드는 돈</span>
+                <span data-ghost-key style="display:none"><i class="ghost"></i>물가가 결승선을 밀어낸 만큼</span>
               </div>
               <div class="gauges">
                 <div class="gauge">
                   <h3>물 가</h3>
+                  ${SCENE_ART.market ? `<figure class="scene">
+                    <img src="${SCENE_ART.market.src}" alt="${SCENE_ART.market.alt}">
+                    <figcaption>${SCENE_ART.market.caption}</figcaption></figure>` : ''}
                   <div class="price-line" data-price></div>
                   <div class="rice-row then"><span class="rice-coins">${coinsHtml(RICE_BASE_COINS)}</span><span class="rice-eq">= 쌀 한 섬 (처음)</span></div>
                   <div class="rice-row"><span class="rice-coins" data-coins></span><span class="rice-eq">= 쌀 한 섬 (지금)</span></div>
                 </div>
                 <div class="gauge">
-                  <h3>민 심</h3>
+                  <h3>고 을</h3>
+                  <figure class="scene" data-village-fig>
+                    <img data-village alt="">
+                    <figcaption data-village-cap></figcaption>
+                  </figure>
                   <div class="minsim-word" data-minsim></div>
                   <div class="minsim-bar" role="img" aria-label="민심"><span data-minsim-bar style="width:100%"></span></div>
                 </div>
@@ -341,6 +435,10 @@ export function createFunding(root) {
             bar: el.querySelector('.goal-bar'),
             fillLevy: el.querySelector('.goal-fill.levy'),
             fillMint: el.querySelector('.goal-fill.mint'),
+            beyond: el.querySelector('[data-beyond]'),
+            line: el.querySelector('[data-line]'),
+            lineStart: el.querySelector('[data-line-start]'),
+            need: el.querySelector('[data-need]'),
             ghost: el.querySelector('[data-ghost]'),
             ghostKey: el.querySelector('[data-ghost-key]'),
             worth: el.querySelector('[data-worth]'),
@@ -348,6 +446,12 @@ export function createFunding(root) {
             coins: el.querySelector('[data-coins]'),
             minsim: el.querySelector('[data-minsim]'),
             minsimBar: el.querySelector('[data-minsim-bar]'),
+            village: el.querySelector('[data-village]'),
+            villageCap: el.querySelector('[data-village-cap]'),
+            villageFig: el.querySelector('[data-village-fig]'),
+            site: el.querySelector('[data-site]'),
+            siteCap: el.querySelector('[data-site-cap]'),
+            siteFig: el.querySelector('[data-site-fig]'),
             nudge: el.querySelector('.nudge'),
             doneLine: el.querySelector('[data-done-line]'),
             go: el.querySelector('.go'),
@@ -358,22 +462,52 @@ export function createFunding(root) {
             const met = goalMet(state)
             parts.goalLabel.textContent = goalLabel(state)
             parts.doneMark.textContent = met ? '일감이 다 찼다' : ''
-            parts.fillLevy.style.width = pct(b.levy)
-            parts.fillMint.style.width = pct(Math.min(b.mint, GOAL_BLOCKS - Math.min(b.levy, GOAL_BLOCKS)))
+            // 막대는 **가진 돈**이다. 이 두 줄에 물가가 들어오지 않는 것이 이번에 바꾼
+            // 전부다 — 당백전을 밀어도 이미 그린 자리는 한 픽셀도 물러나지 않는다.
+            const at = n => `${n * 100}%`
+            parts.fillLevy.style.width = at(levyAt(state))
+            parts.fillMint.style.width = at(mintAt(state))
             parts.bar.classList.toggle('full', met)
-            // 걷을 때의 값어치는 물가가 1일 때의 칸 수 — 곧 명목 그대로다.
+
+            // 달아나는 결승선. 처음 자리는 늘 같은 데 있고(NEED_START_AT), 지금 자리는
+            // 물가를 따라 오른쪽으로 간다. 그 사이의 빗금이 곧 물가가 밀어낸 거리다.
+            const need = needAt(state)
+            parts.line.style.left = at(need)
+            parts.lineStart.style.left = at(NEED_START_AT)
+            parts.beyond.style.left = at(need)
+            const pushed = need - NEED_START_AT > 0.001
+            // 빗금이 없는 동안에는 빗금 풀이도 내놓지 않는다 — 없는 것을 설명하지 않는다
+            parts.ghost.style.display = pushed ? 'block' : 'none'
+            parts.ghostKey.style.display = pushed ? '' : 'none'
+            parts.ghost.style.left = at(NEED_START_AT)
+            parts.ghost.style.width = at(Math.max(0, need - NEED_START_AT))
+            parts.need.textContent = needLine(state)
+
+            // 걷어 둔 원납전이 지금 몇 칸어치인가. 달아나는 금이 가리는 것을 여기서 지킨다 —
+            // 금만 보면 「돈은 그대로인데 목표가 멀어졌다」까지고, 이 줄이 「그래서 먼저
+            // 걷은 돈의 값어치가 줄었다」를 잇는다. 이 판의 심지는 여전히 그쪽이다.
             const then = levyCoin(state)
             const shrunk = then > 0 && then - b.levy > 0.5
-            // 빗금이 없는 동안에는 빗금 풀이도 내놓지 않는다 — 없는 것을 설명하지 않는다
-            parts.ghost.style.display = shrunk ? 'block' : 'none'
-            parts.ghostKey.style.display = shrunk ? '' : 'none'
-            parts.ghost.style.left = pct(b.levy)
-            parts.ghost.style.width = `${Math.max(0, Math.min(then, GOAL_BLOCKS) - Math.min(b.levy, GOAL_BLOCKS)) * 100 / GOAL_BLOCKS}%`
             parts.worth.textContent = shrunk ? levyWorthLine(state) : ''
             parts.price.textContent = priceLabel(state)
             parts.coins.innerHTML = coinsHtml(riceCoins(state))
             parts.minsim.textContent = minsimLabel(state)
             parts.minsimBar.style.width = `${minsimBar(state) * 100}%`
+
+            // 고을이 바뀐다 — 아직 견디는 고을과, 사람이 떠나기 시작한 고을.
+            //
+            // 걷는 장면(village-levied)은 여기 쓰지 않는다. 그건 원납전 지레가 늘 걸고
+            // 있어서, 게이지에 또 걸면 한 화면에 같은 그림이 두 번 뜬다 — 한 번 그렇게
+            // 찍어 놓고 보니 영락없는 고장이었다. 자르는 자리를 달리해 속여 보려 했지만,
+            // 칸이 그림보다 옆으로 넓어 object-position 의 가로값은 아무 일도 하지 않는다
+            // (cover 는 위아래를 자른다). 속이는 대신 갈라 놓는다: **지레는 하는 일,
+            // 게이지는 그 고을의 형편.**
+            showScene(parts.villageFig, parts.village, parts.villageCap,
+              villageIsFailing(state) ? 'village-empty' : 'village-calm')
+
+            // 공사장이 올라간다. 한 칸도 못 채웠으면 주춧돌만 남은 터다.
+            showScene(parts.siteFig, parts.site, parts.siteCap,
+              filledBlocks(state) < 1 ? 'palace-site' : 'palace-rising')
             if (nudgeText !== undefined) parts.nudge.textContent = nudgeText
             // 붙잡지 않는다 — 못 채운 채로도 멈출 수 있다는 것을 먼저 적어 둔다.
             parts.doneLine.textContent = met

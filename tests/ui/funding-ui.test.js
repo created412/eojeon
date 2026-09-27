@@ -198,3 +198,33 @@ describe('클래스 이름과 좁은 화면', () => {
     expect(ui).toContain('.funding .gauge,.funding .lever{flex:0 0 auto}')
   })
 })
+
+// ── 장면 그림 (2026-09-27) ────────────────────────────────────────────────
+// 선생님: 「힉스필드 등을 활용하여 제대로 된 게임의 형태를 만들어봐.」 계기판이던 판에
+// 장소가 들어왔다 — 공사장·쌀가게·고을·주전소. 전부 Higgsfield 로 그린 **재구성 그림**이라,
+// 그 사실이 화면에서 사라지면 학생은 이것을 기록화로 읽는다. 그것이 이 판이 지키는 선이다.
+describe('장면 그림 — 그림이 들어와도 재구성이라는 사실은 남는다', () => {
+  it('그림을 거는 자리마다 캡션이 함께 간다', () => {
+    // .scene 안에 <img> 를 넣는 자리는 반드시 <figcaption> 을 함께 낸다.
+    const figures = ui.match(/<figure class="scene[^"]*"[\s\S]*?<\/figure>/g) ?? []
+    expect(figures.length, '장면 그림 자리를 못 찾았다').toBeGreaterThanOrEqual(2)
+    for (const f of figures) {
+      expect(f, `캡션 없는 그림 자리: ${f.slice(0, 60)}`).toContain('figcaption')
+    }
+    // 갈아 끼우는 그림(고을·공사장)도 캡션을 함께 갈아 끼운다.
+    expect(ui).toContain('cap.textContent = art.caption')
+  })
+
+  it('그림이 안 실린 빌드에서도 판이 선다 — 그림은 덤이지 뼈대가 아니다', () => {
+    // SCENE_ART 에 열쇠가 없으면 그 자리를 감추거나 통째로 비운다. 글·막대·지레는 남는다.
+    expect(ui).toContain("fig.style.display = 'none'")
+    expect(ui).toMatch(/if \(!art\) return ''/)
+  })
+
+  it('같은 그림을 한 화면에 두 번 걸지 않는다 — 학생 눈에는 고장으로 보인다', () => {
+    // 지레는 「하는 일」(걷는 마당·주전소), 게이지는 「그 고을의 형편」(성한 고을·빈 고을).
+    // village-levied 가 게이지 쪽으로 넘어가면 원납전 지레와 겹친다.
+    const paint = ui.slice(ui.indexOf('showScene(parts.villageFig'))
+    expect(paint.slice(0, 200)).not.toContain('village-levied')
+  })
+})

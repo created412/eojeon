@@ -56,6 +56,7 @@ import { createEdict } from './ui/edict-screen.js'
 import { createPause } from './ui/pause.js'
 import { createTitle } from './ui/title.js'
 import { createControlsHint, isCoarse } from './ui/controls-hint.js'
+import { installOrientGate } from './ui/orient.js'
 import { createHold } from './ui/hold-screen.js'
 import { CHEOKHWABI_GLYPHS } from './systems/brush-trace.js'
 import { banner } from './ui/banner.js'
@@ -488,6 +489,9 @@ export function canPause(phase, hold = false) {
 
 export function boot(root) {
   installCinematicStyle(root)
+  // 세로로 들고 들어온 학생에게 가로로 돌려 달라고 말한다. 가로면 아무 일도 하지
+  // 않는다 — PC 에서는 아예 뜨지 않는다(판정은 ui/orient.js 의 shouldAskRotate).
+  installOrientGate(root)
   const canvas = document.createElement('canvas')
   // 손가락 끌기를 브라우저가 화면 이동·확대로 가로채지 않게 한다 — 끌기는 시점 돌리기, 탭은 걷기다.
   canvas.style.touchAction = 'none'
