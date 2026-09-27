@@ -64,6 +64,18 @@ const CSS = `
   .note{padding:18px 14px}
   .note .sheet{padding:26px 20px 24px}
 }
+/* ── 가로로 누운 손전화 (2026-09-27) ──────────────────────────────────────
+   844×390 가로에서 재 보니 이 판이 창의 1.4배가 되어 **「다음」이 화면 밖에 있었다.**
+   스크롤하면 닿지만 학생에게는 그 표시가 없다 — 「독립군의 별」에서 이미 한 번 겪은
+   그 증상이다(그때도 원인은 터치가 아니라 배치였고, 학생들은 「안 눌린다」고 했다).
+   글 화면에서 「다음」이 안 보이면 수업이 그 자리에서 멈춘다.
+   그래서 짧은 화면에서는 종이를 좁히고, 「다음」을 바닥에 붙여 늘 보이게 한다. */
+@media(max-height:560px){
+  .note{padding:10px 12px;gap:8px;justify-content:flex-start}
+  .note .sheet{padding:15px 18px 13px;gap:9px}
+  .note .sheet::after{inset:4px}
+  .note .note-next{position:sticky;bottom:0;z-index:2;box-shadow:0 0 0 10px #0f1113}
+}
 `
 
 let styled = false

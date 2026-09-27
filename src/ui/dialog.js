@@ -49,6 +49,16 @@ const CSS = `
 .card.lore h3 small{font-size:var(--read-caption,11px);color:var(--ink-quiet,#6b6558);letter-spacing:.18em;
   margin-left:10px;vertical-align:middle}
 @media(max-width:760px){.card{padding:20px 17px}}
+/* ── 가로로 누운 손전화 (2026-09-27) ──────────────────────────────────────
+   844x390 가로에서 재 보니 사료 카드의 **「닫기」가 화면 밖**에 있었다. 카드는
+   max-height 86vh 안에서 스스로 스크롤하는데, 닫는 단추가 그 아래에 묻힌다.
+   사료를 열고 못 닫으면 학생은 거기서 갇힌다 — E 키가 없는 기기에서는 유일한 길이다.
+   짧은 화면에서는 카드를 넓히고 「닫기」를 바닥에 붙인다. */
+@media(max-height:560px){
+  .veil{padding:8px}
+  .card{max-height:96vh;padding:14px 16px}
+  .card .close{position:sticky;bottom:0;margin-top:12px;background:#e8e2d4;z-index:2}
+}
 `
 
 // 등급이 하는 말은 두 가지가 다르다 —

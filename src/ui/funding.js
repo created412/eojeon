@@ -176,6 +176,85 @@ const CSS = `
 .funding .lever-scene img{aspect-ratio:3/1.1}
 @media(max-height:900px){.funding .scene.site img{aspect-ratio:3/0.62}}
 
+/* ── 가로 화면은 두 칸으로 (2026-09-27) ──────────────────────────────────
+   선생님: 「모바일도 가능하게 해. 가로버전으로 할 수 있게.」
+   재 보니 가로 폰에서 이 판이 창의 3.6배, 태블릿에서 2배였다 — **지레가 첫 화면에
+   없었다.** 그림을 줄이고 여백을 죄어도 1.7배가 한계였다. 까닭은 배치다: 공사장 →
+   막대 → 게이지 둘 → 지레 둘을 **세로로 쌓으니** 가로로 누운 화면에서 넘칠 수밖에 없다.
+   가로는 옆이 넓고 위아래가 좁다. 그러면 옆으로 벌려야 한다 —
+     왼쪽: 무엇을 채우는가(공사장·막대·물가·고을)
+     오른쪽: 무엇으로 채우는가(두 지레)
+   보는 것과 하는 것이 한 화면에 나란히 놓인다. 세로 화면과 PC 는 그대로 위아래로 쌓는다.
+   .board-top 의 sticky 는 여기서 푼다 — 다 보이는데 붙여 둘 까닭이 없고, 붙여 두면
+   오른쪽 칸이 그 밑으로 말려 들어간다. */
+@media(min-width:700px) and (max-height:900px){
+  .funding .board{width:min(1240px,97vw);display:grid;gap:12px;align-items:start;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .funding .board-top{position:static;border-bottom:0;box-shadow:none;padding:0}
+  .funding .gauges{gap:9px}
+  /* 오른쪽 칸을 붙여 둔다. 가로 화면에서는 왼쪽(보는 것)이 길어 스크롤이 생기는데,
+     그때 지레까지 같이 밀려 올라가면 **조작할 것이 화면에서 사라진다** — 재 보니
+     실제로 그랬다(폰에서 지레 단추 넷 중 둘이 창 밖). 보는 것은 흐르고, 하는 것은
+     제자리에 있어야 한다. 「독립군의 별」에서 통한 것과 같은 수다. */
+  .funding .levers{flex-direction:column;gap:9px;position:sticky;top:4px}
+}
+
+/* ── 가로로 누운 태블릿 (2026-09-27) ──────────────────────────────────────
+   1180x820 가로에서 재 보니 판이 창의 2배(1644px)라 지레가 첫 화면에 없었다. 교실에서
+   제일 많이 쓰는 기기가 이것이다 — 여기서 지레가 안 보이면 그림을 넣은 보람이 없다.
+   그림을 반쯤 낮추고 여백을 죈다. 그림은 남되 지레가 한 화면에 들어오게. */
+@media(max-height:900px){
+  .funding{padding:12px 14px;gap:8px}
+  .funding .scene.site img{aspect-ratio:3/0.5}
+  .funding .gauge .scene img{aspect-ratio:3/0.85}
+  .funding .lever-scene img{aspect-ratio:3/0.6}
+  .funding .board-top{padding:4px 0 6px;gap:7px}
+  .funding .gauges{gap:9px}
+  /* 지레는 가로 화면에서 늘 나란히 눕는다 — 세로로 쌓으면 그것만으로 한 화면을 넘긴다. */
+  .funding .levers{flex-direction:row;flex-wrap:nowrap;gap:9px}
+  .funding .lever{flex:1 1 0;min-width:0}
+  .funding .gauge,.funding .lever{padding:8px 11px}
+  .funding p{font-size:15px;line-height:1.55}
+  .funding .ask{font-size:18px}
+}
+
+/* ── 가로로 누운 손전화 (2026-09-27) ──────────────────────────────────────
+   844x390 가로에서 재 보니 이 판이 창의 **3.6배**(1644px/453px)가 되어 지레 네 단추와
+   멈춤 단추가 **전부 화면 밖**에 있었다. 그림을 넣어 판을 키운 값이다. 스크롤하면 닿지만
+   학생에게는 그 표시가 없다 — 「독립군의 별」에서 겪은 그 증상이고, 이 판에서는 조작
+   자체가 지레에 있으니 곧 「아무것도 못 하는 화면」이다.
+
+   그래서 짧은 화면에서는 그림을 접는다. 손맛보다 **할 수 있는 것**이 먼저다.
+   다만 공사장만은 얇게 남긴다 — 이 판의 목표가 무엇인지 말해 주는 유일한 그림이라,
+   그것까지 지우면 다시 계기판이 된다. 태블릿·PC 배치는 그대로다.
+   ⚠ 재구성 고지(.recon)와 출처(.origin)는 짧은 화면에서도 절대 감추지 않는다 —
+      화면이 좁다는 것은 출처를 지워도 된다는 뜻이 아니다. */
+@media(max-height:560px){
+  .funding{padding:8px 12px;gap:7px;justify-content:flex-start}
+  .funding .scene.site img{aspect-ratio:3/0.3}
+  .funding .gauge .scene,.funding .lever-scene{display:none}
+  .funding .board-top{padding:3px 0 5px;gap:6px}
+  .funding .gauges,.funding .levers{gap:8px}
+  .funding .gauge,.funding .lever{padding:7px 10px}
+  .funding .rice-row.then{display:none}
+  .funding .nudge{min-height:26px}
+  .funding p{font-size:13px;line-height:1.5}
+  .funding .ask{font-size:15px}
+  .funding .recon{font-size:11px;line-height:1.45}
+  .funding .lever-blurb{font-size:13px}
+  /* 오른쪽 칸의 두 지레를 나란히 눕힌다. 세로로 쌓으면 그것만으로 한 화면을 넘긴다.
+     이름과 글자풀이는 남기고 한 줄 설명은 접는다 — 지레가 무엇인지는 이름이 말한다. */
+  .funding .levers{flex-direction:row;flex-wrap:nowrap;gap:7px}
+  .funding .lever{flex:1 1 0;min-width:0;padding:6px 8px}
+  .funding .lever-blurb{display:none}
+  .funding .lever-head{font-size:15px}
+  .funding .lever-head small{font-size:10.5px}
+  .funding .lever-count{font-size:11.5px}
+  .funding .lever-btns button{padding:9px 4px;font-size:12.5px}
+  /* 언제나 보이는 단추 하나 — 스크롤을 모르는 학생도 여기서 빠져나갈 수 있다. */
+  .funding .go{position:sticky;bottom:0;z-index:3;box-shadow:0 0 0 9px #12100d}
+}
+
 /* 밀고 난 뒤 판이 내미는 한 줄. 문구는 systems/funding.js 가 만든다. */
 .funding .nudge{min-height:42px;display:flex;align-items:center;justify-content:center;
   font-size:var(--read-small,16px);color:#d9b876;line-height:var(--read-lh-body,1.7);
@@ -260,6 +339,32 @@ const CSS = `
 @media(prefers-reduced-motion:reduce){
   .funding .goal-fill,.funding .lever-fill,.funding .minsim-bar span{transition:none}
 }
+/* ── 가로 화면 마무리 (2026-09-27) ────────────────────────────────────────
+   위의 가로 규칙을 여기서 한 번 더 적는다. 까닭은 순서다 — .funding .levers 의
+   바탕 규칙(flex-wrap:wrap)이 저 위 규칙들보다 **아래에** 있어서, 앞에서 적은
+   nowrap 이 먹지 않았다. 그래서 좁은 칸에서 지레 둘이 줄바꿈으로 세로로 쌓였고,
+   아래 지레의 단추 둘이 창 밖으로 나갔다(844x390 에서 실측). CSS 는 순서가 곧 힘이다.
+
+   지레는 가로 화면에서 **바닥에 붙인다**. 왼쪽(보는 것)이 길어 스크롤이 생기는데
+   그때 조작부까지 밀려 올라가면 학생에게는 「아무것도 못 하는 화면」이 된다.
+   보는 것은 흐르고, 하는 것은 제자리에 있어야 한다. */
+@media(min-width:700px) and (max-height:900px){
+  .funding .levers{flex-direction:row;flex-wrap:nowrap;gap:8px;position:sticky;top:4px}
+  .funding .lever{flex:1 1 0;min-width:0}
+}
+/* 마치는 단추도 바닥에 붙인다. 앞서 손전화 층에만 적었더니 태블릿(820px)에서는
+   이 단추가 창 밖에 남았다 — 교실에서 제일 많이 쓰는 기기가 그것이다. */
+@media(max-height:900px){
+  .funding .go{position:sticky;bottom:0;z-index:4;box-shadow:0 0 0 9px #12100d}
+}
+@media(min-width:700px) and (max-height:560px){
+  .funding .lever{padding:6px 8px}
+  .funding .lever-blurb{display:none}
+  .funding .lever-head{font-size:15px}
+  .funding .lever-btns{gap:5px}
+  .funding .lever-btns button{padding:9px 3px;font-size:12px}
+}
+
 `
 
 let styled = false
