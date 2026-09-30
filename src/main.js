@@ -51,6 +51,8 @@ import { untilCleared } from './systems/minigame.js'
 import { createActQuestion } from './ui/act-question.js'
 import { createActMap } from './ui/act-map.js'
 import { actMapView } from './systems/act-map.js'
+import { createActBackground } from './ui/act-background.js'
+import { backgroundFor } from './data/act-background.js'
 import { createAlone } from './ui/alone.js'
 import { createCodexQuiz } from './ui/codex-quiz.js'
 import { quizView } from './systems/codex-quiz.js'
@@ -552,6 +554,7 @@ export function boot(root) {
   const again = createAgain(root)
   const actQuestion = createActQuestion(root)
   const actMapScreen = createActMap(root)
+  const actBackground = createActBackground(root)
   const alone = createAlone(root)
   const codexQuiz = createCodexQuiz(root)
   const escape = createEscape(root)
@@ -2109,10 +2112,25 @@ export function boot(root) {
     // (systems/act-map.js). 손으로 하는 걸음은 눈에 띄게 서고, 그 막에서 학생이
     // 쥔 것(act.handle)이 그 자리에 붙는다. 데이터에서 뽑으므로 장면을 고치면
     // 지도도 함께 바뀐다 — 손으로 적어 두면 언젠가 조용한 거짓말이 된다.
-    await actMapScreen.open(actMapView(ACTS[actIndex], actIndex, {
-      intro: actIndex === 0 ? GAME_INTRO.slice(0, 2) : [],
-      todo: ACT_GUIDE[ACTS[actIndex].id]?.[0] ?? '',
-    }))
+    // 선생님(2026-09-30): 「이 그림 대신 1막의 역사적 내용을 … 배경지식을 설명해
+    // 주면 좋을 것 같아.」 여정 지도는 **무엇을 하는가**는 말해도 **왜 이 일이
+    // 벌어졌는가**는 말하지 않았다. 배경이 적혀 있는 막은 배경을 먼저 읽는다.
+    //
+    // 아직 배경을 쓰지 않은 막은 예전의 여정 지도를 그대로 쓴다 — 한 막을 고치면서
+    // 나머지 넷을 빈 화면으로 만들지 않는다.
+    const background = backgroundFor(ACTS[actIndex].id)
+    if (background) {
+      await actBackground.open({
+        ...background,
+        dateLabel: ACTS[actIndex].beats?.[0]?.dateLabel ?? '',
+        buttonLabel: `${actIndex + 1}막을 시작한다`,
+      })
+    } else {
+      await actMapScreen.open(actMapView(ACTS[actIndex], actIndex, {
+        intro: actIndex === 0 ? GAME_INTRO.slice(0, 2) : [],
+        todo: ACT_GUIDE[ACTS[actIndex].id]?.[0] ?? '',
+      }))
+    }
     await runBeats()
   }
 
