@@ -10,10 +10,11 @@ import { guideForBeat, GAME_INTRO, ACT_GUIDE } from './data/guide.js'
 import { createGuideStrip } from './ui/guide-strip.js'
 import { npcsAt, npcNear, npcHandledCardIds, npcCardIds, npcById, portraitKeyOf } from './data/npcs.js'
 import {
-  roomOf, kingSpot, besideSpot, visitorSpot, doorSpot, walkAt, yawToward,
+  roomOf, kingSpot, besideSpot, visitorSpot, doorSpot, walkAt, yawToward, pathAt, pathLength, processionPath,
   besideIds, visitorsOf, castOf, rebukeOf, entersOf, departIds, propOf,
   escortOffsets, escortSpot, APPROACH_MS, DEPART_MS, REBUKE_MS, PROCESSION_MS, visitorSpotFor, audienceLeft,
 } from './systems/audience.js'
+import { boardAt, kingVisibleAt, carryLiftAt, BOARD_MS, CARRY_BEYOND, CAMERA_TRAIL } from './systems/boarding.js'
 import { createState, serialize, deserialize, SAVE_KEY } from './core/state.js'
 import { spend } from './core/clock.js'
 import { stopAt, stopHint, markStopPaid, markStopDone, isStopDone, pendingStopId, stopById } from './systems/outing.js'
@@ -45,6 +46,8 @@ import { createLossScreen } from './ui/loss-screen.js'
 import { createOrders } from './ui/orders-ui.js'
 import { createBrush } from './ui/brush.js'
 import { createFunding } from './ui/funding.js'
+import { createAgain } from './ui/again.js'
+import { untilCleared } from './systems/minigame.js'
 import { createActQuestion } from './ui/act-question.js'
 import { createActMap } from './ui/act-map.js'
 import { actMapView } from './systems/act-map.js'
@@ -60,14 +63,13 @@ import { installOrientGate } from './ui/orient.js'
 import { createHold } from './ui/hold-screen.js'
 import { CHEOKHWABI_GLYPHS } from './systems/brush-trace.js'
 import { banner } from './ui/banner.js'
-import { copyText, openManualCopy, COPY_OK, COPY_FAILED } from './ui/copy.js'
 import { startRush } from './systems/rush-scene.js'
 import { rushDurationMs, fireSourcesAt, isTouchDevice } from './systems/fire-rush.js'
 import { relocate } from './systems/relocate.js'
 import { createAudio } from './systems/audio.js'
 import { createWebAudioEngine } from './systems/web-audio-engine.js'
 import { createRation } from './ui/ration.js'
-import { hubAt, hubOptions, hubDate, shouldDeferReport, pendingReport, performReport, completeActivity, closeHub, freedomRecord, dayReport, exitBlock } from './systems/freedom.js'
+import { hubAt, hubOptions, hubDate, shouldDeferReport, pendingReport, performReport, completeActivity, closeHub, freedomRecord, dayReport, exitBlock, objectiveLine, towardParticle } from './systems/freedom.js'
 // 궁 안의 물건 — 걸어가 E 를 누르면 뜨는 해설(data/artifacts.js). 사료가 아니라서
 // 사초함에 쌓이지 않고, 값(해 칸)도 치르지 않는다(systems/artifacts.js 머리말).
 import { artifactNear, hasSeen, markArtifactSeen, artifactRecord, artifactCount } from './systems/artifacts.js'
@@ -546,6 +548,8 @@ export function boot(root) {
   const orders = createOrders(root)
   const brush = createBrush(root)
   const funding = createFunding(root)
+  // 손으로 하는 장면을 못 해냈을 때 사이에 서는 화면(선생님 2026-09-30 「조여」).
+  const again = createAgain(root)
   const actQuestion = createActQuestion(root)
   const actMapScreen = createActMap(root)
   const alone = createAlone(root)
@@ -640,12 +644,23 @@ export function boot(root) {
   // 표지도 사람을 가리켜야 한다.
   function peopleRemaining() {
     const act = flow.actIndex + 1
-    return currentNpcs()
+    return livingNpcs()
       .filter(n => n.voice || n.id === 'mother' || npcCardIds(n).some(id =>
         !flow.taken.has(id) && !isLost(flow.state, id) && !isFutureCard(id, act)))
       // 몸이 없는 어머니도 찾아갈 문간은 보여야 한다. 문서가 없다고 표식까지 빼면
       // 학생은 빈 안채 앞에 우연히 서기 전까지 대화할 곳이 있는지 알 수 없다.
-      .map(n => ({ x: n.x, z: n.z, label: n.voice ? `${n.name} · 문 너머 목소리` : n.name,
+      // 선생님 지적 #16: 「누구는 이름표가 있고 누구는 없다.」
+      //
+      // 이 표지는 **이름표가 아니라 할 일 표지**다 — 「아직 들을 것이 남은 사람」
+      // 위에만 뜬다(render/scene.js). 규칙은 처음부터 일관됐지만, 뜨는 글이 이름뿐이라
+      // 학생에게는 누구는 이름이 있고 누구는 없는 것으로 보였다. 규칙이 안 보이면
+      // 없는 것과 같다.
+      //
+      // 그래서 **왜 떠 있는지**를 이름 옆에 적는다. 그러면 표지가 없는 사람은
+      // 「이름표를 못 받은 사람」이 아니라 「이미 다 들은 사람」으로 읽힌다.
+      // 전원에게 달면 이 신호 자체가 사라지고, 전원에게서 빼면 갈 곳을 잃는다.
+      .map(n => ({ x: n.x, z: n.z,
+        label: n.voice ? `${n.name} · 문 너머 목소리` : `${n.name} · 아뢸 것이 있다`,
         kind: n.voice ? 'voice' : 'person' }))
   }
 
@@ -668,6 +683,27 @@ export function boot(root) {
   // 서로 다른 자리에서 어긋나지 않게 한다.
   function currentNpcs() {
     return npcsAt(baseOf, flow.state.palace, flow.actIndex, yearAtBeat(flow.act(), flow.state.beatIndex))
+  }
+
+  // 신하가 **지금 실제로 서 있는** 자리. tickNpcLife() 가 프레임마다 여기에 적는다.
+  const npcSpots = new Map()          // id -> { x, z }
+
+  // 선생님 지적 #16: 「누구는 움직이고 누구는 움직이지 않아. 전부 움직이고 있어야 해.」
+  //
+  // 재 보니 신하는 **이미 서성이고 있었다**(systems/palace-life.js). 다만 1m 남짓이라,
+  // 마당을 가로지르는 사람들(palace-staff) 곁에 서면 붙박인 것처럼 보였다.
+  //
+  // 더 크게 움직이지 못한 까닭은 하나뿐이었다: 말이 걸리는지 재는 곳(npcNear)과
+  // 머리 위 표지(markerPoints)가 **데이터 좌표**를 보고 있었다. 몸이 멀어지면
+  // 「사람 앞에 섰는데 E 가 안 먹는」 어긋남이 생기므로 몸을 묶어 둔 것이다.
+  //
+  // 그래서 묶는 대신 **세 곳이 같은 자리를 보게** 한다. 이 함수를 지나면 몸도,
+  // 말 걸리는 자리도, 표지도 전부 살아 있는 자리다. 그래야 서성임을 키울 수 있다.
+  function livingNpcs() {
+    return currentNpcs().map(n => {
+      const at = npcSpots.get(n.id)
+      return at ? { ...n, x: at.x, z: at.z } : n
+    })
   }
 
   // 현재 비트가 'explore' 이고 exit 를 정해 두었으면 그것을 돌려준다.
@@ -706,8 +742,9 @@ export function boot(root) {
     const exit = currentExit()
     if (exit && flow.state.room === exit.room) {
       // 나갈 수 없는데 「나간다」고 적어 두면 학생은 E 가 고장 난 줄 안다.
+      // 지적 #16 — 몇 곳 남았는지만 말하지 않고, 어디로 가서 무엇을 할지 말한다.
       const left = exitBlock(flow.state, flow.act())
-      hint.textContent = left ? `아직 남은 일이 ${left.count}곳 있다 — ${left.first.label}` : exit.label
+      hint.textContent = left ? `아직 남았다 — ${dayObjective() ?? left.first.label}` : exit.label
       hint.hidden = false
       return
     }
@@ -717,7 +754,7 @@ export function boot(root) {
       hint.hidden = false
       return
     }
-    const found = npcNear(currentNpcs(), ctx.player.position.x, ctx.player.position.z)
+    const found = npcNear(livingNpcs(), ctx.player.position.x, ctx.player.position.z)
     if (found) {
       const m = Math.round(found.dist)
       const title = found.npc.title ? ` ${found.npc.title}` : ''
@@ -803,7 +840,7 @@ export function boot(root) {
           state: markRead(pickUp(paid.state, selected.cardId), selected.cardId) } : { type: 'no-time' }
       }
     }
-    const found = npcNear(currentNpcs(), ctx.player.position.x, ctx.player.position.z)
+    const found = npcNear(livingNpcs(), ctx.player.position.x, ctx.player.position.z)
     // 아직 안 본 물건이 가장 가까이 있으면 그것을 본다. **안 본 것만** 가로챈다 —
     // 한 번 본 뒤에는 조용해져야 한다: 일월오봉도는 인정전에 있고 인정전은 대개
     // 이 비트의 나가는 방이다. 늘 가로채면 학생이 그 방에서 나갈 수 없다.
@@ -969,24 +1006,16 @@ export function boot(root) {
     if (e.code === 'KeyE') onPressE()
   }
 
-  // 「내 기록 복사」— 실제 글은 buildRecordText() (모듈 최상위, 순수 함수)가 짓는다.
-  // 어느 막 끝 화면에서 부르든 그 시점까지의 전체 기록이다(버그 B — 3막 끝에서 눌러도
-  // 1·2·3막이 모두 나와야 한다).
+  // ── 「내 기록 복사」를 걷어낸 자리 ────────────────────────────────────
   //
-  // 복사 경로 자체는 ui/copy.js 로 옮겼다. 예전에는 여기서 execCommand('copy') 를
-  // try/catch 로 감싸고 그 아래에서 무조건 「복사했습니다」를 띄웠다 — execCommand 는
-  // 막혔을 때 던지지 않고 false 를 돌려주는 쪽이 흔하므로, 그 배너는 이 게임에서
-  // 유일하게 거짓말을 할 수 있는 문장이었다. 학생의 산출물이 밖으로 나가는 길은
-  // 여기 하나뿐이고, 회수할 다른 경로가 없었다. 이제 성패를 보고 갈라, 실패하면
-  // 글을 화면에 띄워 학생이 직접 긁어 가게 한다.
-  function copyRecord() {
-    const text = buildRecordText(flow.state, ACTS)
-    copyText(text).then(ok => {
-      if (ok) { banner(root, COPY_OK); return }
-      banner(root, COPY_FAILED)
-      openManualCopy(root, text)
-    })
-  }
+  // 선생님(2026-09-29) 지적 #22: 「내 기록 복사」 제거. 막 끝 화면과 마지막 화면에
+  // 있던 그 단추를 걷어냈고, 클립보드로 나가는 길(ui/copy.js)도 더는 부르지 않는다.
+  //
+  // ⚠ 글을 **짓는** 셈(buildRecordText, 이 파일 최상위의 순수 함수)은 남겼다.
+  //   그것이 세특의 밑감이고, 선생님이 없애라고 하신 것은 학생 화면의 단추다.
+  //   그 글을 어디에 둘지(멈춤 화면? 교사용 화면? 아예 삭제?)는 여쭙는 중이다.
+  //   지금은 어느 화면도 이 함수를 부르지 않는다 — tests/record-text.test.js 가
+  //   셈만 붙들고 있다.
 
   // 막이 끝난 화면. 「내 기록 복사」는 1단계의 판정을 그대로 잇는다 —
   // 생방 결정(playCouncil)과 이어하기(resumeAct → finishAct) 둘 다 여기를 지난다.
@@ -1004,7 +1033,6 @@ export function boot(root) {
       // "안 읽음"으로 보인다(2단계 Important 1)
       read: `읽은 문서 ${everRead(flow.state).length}장 · 적어 둔 것 ${reason ? '있음' : '없음'}`,
       reason,
-      onCopy: () => copyRecord(),
     })
   }
 
@@ -1037,6 +1065,9 @@ export function boot(root) {
   // quiet — 궁을 갈아 끼우되 문소리는 아직 내지 않는다. 이어(移御) 비트가 쓴다(palaceDoor 참고).
   function bindPalaceAndSpawn(quiet = false) {
     flow.syncPalace(flow.state.palace)
+    // 살아 있는 자리를 비운다. 궁이 바뀌었는데 옛 궁의 자리가 남아 있으면,
+    // 첫 프레임에 표지가 엉뚱한 데를 가리키고 말이 안 걸린다.
+    npcSpots.clear()
     ctx.setPickupMarkers(markerPoints())
     // 신하도 궁·막이 바뀔 때마다 다시 세운다 — setNpcs() 자체가 목록이 실제로
     // 같으면 아무것도 다시 짓지 않는다(render/scene.js).
@@ -1072,8 +1103,15 @@ export function boot(root) {
         // 방으로 걸어가 그날의 역사를 통째로 건너뛸 수 있었다.
         const left = exitBlock(flow.state, flow.act())
         if (left) {
+          // 선생님 지적 #17: 「다 못하면 해가 안 짐.」 규칙은 이미 있었지만 학생이
+          // 보는 것은 잠깐 떴다 사라지는 띠 한 줄이었다 — 그러면 「E 가 안 먹는다」로
+          // 읽힌다. 하루를 닫는 판과 **같은 모양**으로 가로막아, 저기까지 가야
+          // 해가 진다는 것을 눈으로 알게 한다.
           audio.play('deny')
-          banner(root, `아직 남은 일이 ${left.count}곳 있다 — ${left.first.label}`, 3200)
+          hubBusy = true
+          await dayEnd.showHeld({ left: left.labels.map(label => ({ label })),
+            lead: dayObjective() ?? left.first.label })
+          hubBusy = false
           return
         }
         flow.state = closeHub(flow.state, flow.act())
@@ -1113,6 +1151,19 @@ export function boot(root) {
   // 남은 일 가운데 **가장 가까운 곳으로 걸어간다**. 어디로 갈지는 학생이 걸으면서 정한다.
   function remainingActivities() {
     return hubOptions(flow.state, flow.act()).filter(o => !o.done && !o.blocked && !o.disabled && o.point)
+  }
+
+  // 지금 할 일 한 줄 — 「사정전으로 가 최익현에게 말을 건다」(지적 #16).
+  // 셈은 systems/freedom.js 가 하고, 여기서는 지금 궁과 가까운 곳만 넘긴다.
+  // 남은 일이 없으면 null — 그때는 나갈 곳을 이름으로 말한다(exitObjective).
+  function dayObjective() {
+    return objectiveLine(remainingActivities(), PALACES[flow.state.palace], nearestActivity())
+  }
+
+  function exitObjective() {
+    const exit = currentExit()
+    const room = exit && PALACES[flow.state.palace].rooms.find(r => r.id === exit.room)
+    return room ? `할 일은 다 했다 — ${room.name}${towardParticle(room.name)} 간다` : '할 일은 다 했다'
   }
 
   function nearestActivity() {
@@ -1182,7 +1233,8 @@ export function boot(root) {
   // 이 비트가 왜 탐색을 대신하는지는 systems/audience.js 머리말에 적어 두었다.
   let audienceBeat = null      // 지금 도는 알현·행렬 비트(아니면 null)
   let audienceWalk = null      // 지금 걸어 들어오거나 물러나는 사람
-  let procession = null        // 지금 걷고 있는 행렬 { t0, ms, from, to, escort, resolve }
+  let procession = null        // 지금 걷고 있는 행렬 { t0, ms, path, from, to, escort, resolve }
+  let boarding = null          // 가마에 오르는 중 { t0, ms, king0, beside, spec, carryTo, escort, resolve }
   let resolveAudience = null   // 마지막 E 를 기다리는 콜백
   let lastRebukeAt = -Infinity
   // 아룀이 다 끝나 문이 열렸는가. 열리기 전에는 전각 안만 걷고, 열린 뒤에는 문으로 걸어 나가면 끝난다.
@@ -1257,11 +1309,18 @@ export function boot(root) {
     ctx.setPickupMarkers([])
     ctx.setNpcs(castOf(beat).map(npcById).filter(Boolean))
 
-    const start = kingSpot(from)
+    // 임금을 꽂아 넣지 않는다 — 선생님(2026-09-29) 지적 #18 「순간이동」.
+    //
+    // 예전에는 여기서 position.set(kingSpot(from)) 을 했다. 마당에 서 있던 학생이
+    // 눈 깜빡할 사이에 사랑채 앞으로 옮겨져 있었으니 순간이동으로 보이는 것이 맞다.
+    // 행렬은 **지금 선 자리에서** 시작한다. 그 자리가 곧 길의 첫 점이다.
+    const start = { x: ctx.player.position.x, z: ctx.player.position.z }
     const end = { x: to.x, z: to.z }
-    ctx.player.position.set(start.x, ctx.player.position.y, start.z)
-    flow.state = { ...flow.state, room: from.id }
+    flow.state = { ...flow.state, room: roomAt(def, start.x, start.z)?.id ?? from.id }
     flow.setPhase('audience')
+
+    // 직선이 아니라 꺾인 길 — 전각을 뚫고 지나가지 않는다(지적 #18 「기둥에 부딪힌다」).
+    const path = processionPath(def, start, end, to.id, flow.state.control)
 
     const escort = escortOffsets(beat)
     for (const e of escort) ctx.placeNpc(e.npc, { x: start.x + e.dx, z: start.z + e.dz, yaw: 0 })
@@ -1275,17 +1334,26 @@ export function boot(root) {
       caption?.dispose()
       caption = banner(root, text, (clip?.ms ?? Math.max(3000, text.length * 100)) + 500)
     } })
-    const processionMs = Math.max(PROCESSION_MS, lines.reduce((sum, text) => sum + (voice.clipFor('gojong-narrator', text)?.ms ?? 3000) + 250, 0))
+    // 꺾인 길은 직선보다 멀다. 같은 시간에 걸으면 걸음이 부자연스럽게 빨라지므로
+    // 늘어난 길만큼 시간도 늘린다(1.8배까지 — 수업 한 시간 안에서 볼 장면이다).
+    const straight = Math.max(0.1, Math.hypot(end.x - start.x, end.z - start.z))
+    const detour = Math.min(1.8, Math.max(1, pathLength(path) / straight))
+    const processionMs = Math.max(PROCESSION_MS * detour,
+      lines.reduce((sum, text) => sum + (voice.clipFor('gojong-narrator', text)?.ms ?? 3000) + 250, 0))
 
     audio.play('door', { gain: ROOM_DOOR_GAIN })
     await new Promise(resolve => {
-      procession = { t0: performance.now(), ms: processionMs, from: start, to: end, escort, resolve }
+      procession = { t0: performance.now(), ms: processionMs, path, from: start, to: end, escort, resolve }
     })
 
     flow.state = { ...flow.state, room: to.id }
     hint.textContent = beat.exit?.label ?? 'E — 다음으로'
     hint.hidden = false
     await new Promise(res => { resolveAudience = res })
+    hint.hidden = true
+
+    // 가마에 오른다 — 눌렀으니 실제로 오른다(지적 #18). beat.board 가 적힌 행렬만.
+    if (beat.board) await playBoarding(beat, def)
 
     narration.stop()
     caption?.dispose()
@@ -1298,6 +1366,43 @@ export function boot(root) {
     for (const n of currentNpcs()) ctx.placeNpc(n.id, { x: n.x, z: n.z, yaw: null, hidden: false })
     flow.setPhase('beat')
     return flow.state
+  }
+
+  // 가마에 오르는 순간 — 열두 살 명복이 임금이 되는 문턱. 시간을 세는 일은
+  // systems/boarding.js 가 하고, 여기서는 그 값으로 임금·가마·교군을 놓는다.
+  //
+  // 선생님(2026-09-29) 지적 #18: 「E — 가마에 오른다」를 눌러도 아무 일이 없었다.
+  async function playBoarding(beat, def) {
+    const spec = (def.yard?.props ?? []).find(p => p.id === (beat.board.prop ?? 'gama'))
+    if (!spec) return                        // 가마가 없는 궁이면 조용히 지나간다
+    const gate = roomOf(def, beat.to)
+    const king0 = { x: ctx.player.position.x, z: ctx.player.position.z }
+    // 가마 옆 — 안이 아니라 옆에 선다. 그 자리에서 발을 걷고 든다.
+    const beside = { x: spec.x - 1.5, z: spec.z - 0.4 }
+    const carryTo = { x: spec.x, z: (gate?.z ?? spec.z) + CARRY_BEYOND }
+    const lines = beat.board.lines ?? []
+    let caption = null
+    const ms = Math.max(BOARD_MS, lines.length * 2600)
+
+    // ⚠ 자막 타이머를 반드시 거둔다. 장면이 먼저 끝나면 남은 타이머가 사라진 화면에
+    //   배너를 띄운다 — tests/early-life-regressions.test.js 가 행렬에서 잡아낸 바로 그 버그다.
+    const timers = []
+    audio.play('door', { gain: ROOM_DOOR_GAIN })
+    // 떠나는 가마를 보려면 대문 **반대편**에서 봐야 한다(render/scene.js setViewAngle).
+    ctx.setViewAngle(yawToward(carryTo, { x: spec.x, z: spec.z }))
+    for (const [i, text] of lines.entries()) {
+      timers.push(setTimeout(() => { caption?.dispose(); caption = banner(root, text, 2600) }, i * 2600 + 300))
+    }
+    await new Promise(resolve => {
+      boarding = { t0: performance.now(), ms, king0, beside, spec, carryTo, escort: escortOffsets(beat), resolve }
+    })
+    for (const t of timers) clearTimeout(t)
+    caption?.dispose()
+    boarding = null
+    ctx.setViewAngle(null)      // 학생이 돌려 둔 각을 도로 살린다
+    ctx.setKingHidden(false)
+    // 가마를 제자리로 돌려 둔다 — 다음에 이 궁에 들어올 때 대문 밖에 나가 있으면 안 된다.
+    ctx.moveProp(spec.id, { x: spec.x, z: spec.z, y: 0, yaw: spec.yaw ?? 0 })
   }
 
   async function playAudience(beat) {
@@ -1527,6 +1632,17 @@ export function boot(root) {
     return flow.state
   }
 
+  // 「돈을 만든다」에서 못 채웠을 때 거드는 말. 판마다 하나씩 는다(againView).
+  //
+  // ⚠ 거드는 말이 **어느 배합을 밀라고 시키지 않는다.** 이 판에는 이기는 배합이
+  //   없고(systems/funding.js 머리말) 그것이 이 장면이 가르치는 바다. 그래서
+  //   「무엇이 움직이는가」를 가리킬 뿐, 답을 주지 않는다.
+  const FUNDING_AGAIN = {
+    reason: '백 칸을 다 채우지 못했다.',
+    hint: '두 지레를 다 써 보라. 한 쪽만으로는 벽에 닿기 어렵다.',
+    strong: '당백전을 밀면 돈은 단번에 늘지만, 결승선도 함께 오른쪽으로 물러난다 — 그 둘을 견주며 밀어야 한다.',
+  }
+
   // 「돈을 만든다」(1막 끝) — 예전의 고르는 어전회의를 대신한다(ui/funding.js).
   // 학생이 두 지레를 밀어 백 칸을 채우고, 그 셈이 끝난 뒤에 아버지가 뒤집는다.
   // 고른 값 대신 **학생이 한 셈 한 줄**(result.summary)을 기록에 남긴다 — 예전의
@@ -1534,7 +1650,18 @@ export function boot(root) {
   async function playFunding(beat) {
     flow.setPhase('beat')
     hint.hidden = true
-    const result = await funding.open({ ...beat, onPush: () => audio.play('pick') })
+    // 선생님(2026-09-30) 「조여」 — 백 칸을 채워야 넘어간다. 못 채우면 판이 닫히고
+    // 「아직」이 뜬 뒤 **처음부터** 다시 열린다(systems/minigame.js untilCleared).
+    // 판은 매번 새로 열리므로 지레도 처음 자리로 돌아간다.
+    let result = null
+    await untilCleared(
+      async () => {
+        result = await funding.open({ ...beat, onPush: () => audio.play('pick') })
+        return { cleared: result.goalMet, reason: FUNDING_AGAIN.reason }
+      },
+      view => again.show(view),
+      FUNDING_AGAIN,
+    )
     audio.play(councilSound('levy'))
     flow.state = {
       ...flow.state,
@@ -1885,11 +2012,10 @@ export function boot(root) {
     await showActEnd(reason)
     if (flow.isLast()) {
       flow.setPhase('done')
-      // clearSave() 를 여기서 부르지 않는다(2단계 Important 2) — 예전엔 곧바로 지운
-      // 뒤 복사 단추도 없는 화면을 보여줘, 다음 단추를 한 번 누르면 학생의 유일한
-      // 기록 통로가 영영 사라졌다. 이제 이 화면 자체가 복사 단추를 낸다(onCopy) —
-      // 저장은 학생이 「처음부터」를 직접 고를 때(pause.onRestart)만 지운다.
-      await actEnd.showFinal(flow.state, () => copyRecord())   // 마지막 화면이다. 이 Promise 는 풀리지 않는다
+      // clearSave() 를 여기서 부르지 않는다(2단계 Important 2) — 저장을 남겨 두면
+      // 학생이 이 화면을 닫아 버렸어도 되돌아올 수 있다. 저장은 학생이
+      // 「처음부터」를 직접 고를 때(pause.onRestart)만 지운다.
+      await actEnd.showFinal(flow.state)   // 마지막 화면이다. 이 Promise 는 풀리지 않는다
       return
     }
     flow.nextAct()
@@ -2158,11 +2284,15 @@ export function boot(root) {
     if (procession) {
       const pr = procession
       const u = (now - pr.t0) / pr.ms
-      const p = walkAt(pr.from, pr.to, u)
+      const p = pathAt(pr.path, u) ?? walkAt(pr.from, pr.to, u)
       ctx.player.position.x = p.x
       ctx.player.position.z = p.z
       flow.state = { ...flow.state, room: roomAt(PALACES[flow.state.palace], p.x, p.z)?.id ?? null }
-      const yaw = yawToward(pr.from, pr.to)
+      // 바라보는 쪽은 **지금 걷는 쪽**이다. 길이 꺾이므로 처음과 끝을 이은 각을
+      // 쓰면 꺾인 뒤에도 옛 방향을 보며 옆걸음으로 걷는다(지적 #18).
+      const ahead = pathAt(pr.path, Math.min(1, u + 0.02)) ?? pr.to
+      const yaw = Math.hypot(ahead.x - p.x, ahead.z - p.z) > 0.01
+        ? yawToward(p, ahead) : yawToward(pr.from, pr.to)
       const def = PALACES[flow.state.palace]
       // 자리를 차례로 잡는다 — 앞사람이 이미 선 자리는 다음 사람이 피한다(겹침 방지).
       const taken = [{ x: p.x, z: p.z }]
@@ -2176,6 +2306,42 @@ export function boot(root) {
         for (const e of pr.escort) ctx.placeNpc(e.npc, { walking: false })
         pr.resolve()
       }
+    }
+
+    // 가마에 오른다 — 걷고, 들고, 실려 나간다(systems/boarding.js 가 마디를 센다).
+    if (boarding) {
+      const bd = boarding
+      const u = Math.min(1, (now - bd.t0) / bd.ms)
+      const { phase, k } = boardAt(u)
+      if (phase === 'walk') {
+        const p = walkAt(bd.king0, bd.beside, k)
+        ctx.player.position.x = p.x
+        ctx.player.position.z = p.z
+      }
+      ctx.setKingHidden(!kingVisibleAt(u))
+      if (phase === 'carry') {
+        // 가마가 대문을 나선다. 교군(곁을 걷던 사람들)이 가마를 따라간다.
+        const p = walkAt({ x: bd.spec.x, z: bd.spec.z }, bd.carryTo, k)
+        ctx.moveProp(bd.spec.id, { x: p.x, z: p.z, y: carryLiftAt(u) })
+        // ⚠ 카메라는 임금을 따라다닌다(render/scene.js). 임금을 감춘 채 세워 두면
+        //   가마만 화면 밖으로 나가고 학생은 **빈 마당**을 본다 — 실제로 그렇게 찍혔다.
+        //   임금은 그 가마 안에 있으니 자리를 함께 옮기는 것이 그림으로도 사실이다.
+        //   카메라가 바라보는 점이 이 자리이므로(camera.lookAt), 가마보다 한 발 **뒤**를
+        //   보게 두면 떠나는 가마가 화면 위쪽에 남는다. 꼭 같은 자리에 두면 가마가
+        //   바라보는 점에 겹쳐 화면에서 사라진다.
+        const dx = bd.carryTo.x - bd.spec.x, dz = bd.carryTo.z - bd.spec.z
+        const len = Math.max(0.001, Math.hypot(dx, dz))
+        ctx.player.position.x = p.x - (dx / len) * CAMERA_TRAIL
+        ctx.player.position.z = p.z - (dz / len) * CAMERA_TRAIL
+        const yaw = yawToward({ x: bd.spec.x, z: bd.spec.z }, bd.carryTo)
+        const taken = [p]
+        for (const e of (bd.escort ?? [])) {
+          const at = escortSpot(PALACES[flow.state.palace], p, e, 0.8, taken)
+          taken.push(at)
+          ctx.placeNpc(e.npc, { x: at.x, z: at.z, yaw, walking: k < 1, smooth: true })
+        }
+      }
+      if (u >= 1) { boarding = null; bd.resolve() }
     }
 
     // 알현 중에 임금이 움직이려 하면 곁에 선 사람이 막는다. 걸음은 여기서 일어나지
@@ -2265,7 +2431,10 @@ export function boot(root) {
         if (flow.phase === 'day') {
           // 궁의 하루 — 신하가 제자리 주변을 서성이고, 임금이 다가오면 읍한다.
           // 낮에만 부른다: 알현·행렬은 같은 placeNpc 로 자리를 직접 몬다(2026-09-25).
-          ctx.tickNpcLife(currentNpcs(), now)
+          // 돌려받은 자리를 적어 둔다 — 말이 걸리는지 재는 곳과 표지가 이것을 본다.
+          for (const st of ctx.tickNpcLife(currentNpcs(), now) ?? []) {
+            npcSpots.set(st.id, { x: st.x, z: st.z })
+          }
           updateHint()
           // 해가 저절로 지는 일은 이제 없다(core/clock.js — 하루의 셈을 없앴다).
           // 하루는 할 일을 다 하고 **나가는 방에서 E 를 눌렀을 때** 끝난다.
@@ -2314,10 +2483,10 @@ export function boot(root) {
     hud.update({
       hidden: flow.phase === 'council' || flow.phase === 'done',
       phase: flow.phase,
+      // 지적 #16 — 「남은 일 3곳」이 아니라 **누구에게 가서 무엇을 하는지**.
+      // 나갈 곳 이름은 화면이 안다(currentExit) — 그래서 그 갈래만 여기서 잇는다.
       objective: flow.phase === 'day'
-        ? (remainingActivities().length
-            ? `남은 일 ${remainingActivities().length}곳 — 표지를 찾아가 E`
-            : '할 일은 다 했다 — 나가는 곳으로')
+        ? (dayObjective() ?? exitObjective())
         : activeBeat?.exit?.label ?? '신하를 찾아 보고를 듣고 사료를 살펴보십시오.',
       actIndex: flow.actIndex,
       actTitle: flow.act().title,

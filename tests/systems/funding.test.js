@@ -382,3 +382,39 @@ describe('결승선이 달아난다', () => {
     expect(SCALE_COIN).toBe(levyCoin(at(LEVY_MAX, 0)) + MINT_COIN * MINT_MAX)
   })
 })
+
+// ── 조인 뒤에 반드시 물어야 하는 것 ────────────────────────────────────────
+//
+// 선생님(2026-09-30) 「조여」 — 이제 백 칸을 채워야 넘어간다. 가로막는 판을 두는
+// 순간 새 위험이 생긴다: **채울 수 없는 판이면 학생이 영영 갇힌다.** 그래서
+// 「해낼 수 있는가」를 시험이 직접 재 둔다. 이 시험이 우는 날은 수치를 건드려
+// 판이 풀 수 없게 된 날이다.
+describe('갇히는 학생이 없다 — 백 칸은 반드시 채울 수 있다', () => {
+  it('두 지레를 끝까지 밀면 채워진다', () => {
+    expect(goalMet({ levy: LEVY_MAX, mint: MINT_MAX })).toBe(true)
+  })
+
+  it('걷기만 해도, 찍기만 해도 채울 길이 있다', () => {
+    // 한 쪽만 쓰는 학생도 있다. 어느 한 길만 골라도 막다른 골목이 아니어야 한다.
+    const levyOnly = Array.from({ length: LEVY_MAX + 1 }, (_, n) => goalMet({ levy: n, mint: 0 }))
+    const mintOnly = Array.from({ length: MINT_MAX + 1 }, (_, n) => goalMet({ levy: 0, mint: n }))
+    expect(levyOnly.some(Boolean) || mintOnly.some(Boolean),
+      '한 지레만으로는 어느 쪽도 채울 수 없다 — 학생이 갇힐 수 있다').toBe(true)
+  })
+
+  it('채워지는 배합이 하나가 아니다 — 외워야 하는 답이 아니다', () => {
+    let met = 0
+    for (let levy = 0; levy <= LEVY_MAX; levy++) {
+      for (let mint = 0; mint <= MINT_MAX; mint++) if (goalMet({ levy, mint })) met++
+    }
+    expect(met).toBeGreaterThan(1)
+  })
+
+  it('지레를 도로 당길 수 있다 — 되돌릴 수 없는 한 수가 없다', () => {
+    const pushed = setMint(setLevy(initialBoard(), LEVY_MAX), MINT_MAX)
+    const pulled = setMint(setLevy(pushed, 0), 0)
+    expect(pulled.levy).toBe(0)
+    expect(pulled.mint).toBe(0)
+    expect(filledBlocks(pulled)).toBe(filledBlocks(initialBoard()))
+  })
+})

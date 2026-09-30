@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { NPCS, npcNear } from '../../src/data/npcs.js'
 import { PALACES, roomAt } from '../../src/data/palaces.js'
 import { collides } from '../../src/data/hall-geometry.js'
@@ -198,4 +200,43 @@ it('알현이 신하를 몰고 간 뒤에는 앵커에서 다시 센다(forget)'
   out = run(life, { npcs: [npc], palace, frames: 1, dt: 50, t0: out.now })
   expect(out.states[0].x).toBe(npc.x)
   expect(out.states[0].z).toBe(npc.z)
+})
+
+// ── 서성임을 키운 뒤에 반드시 지켜야 하는 것 ────────────────────────────────
+//
+// 선생님 지적 #16 로 DRIFT_MAX 를 1.1 → 1.9 로 키웠다(2026-09-30). 그 수를 묶어
+// 두었던 까닭은 하나였다: 말이 걸리는 자리(npcNear)와 머리 위 표지(markerPoints)가
+// **데이터 좌표**를 보고 있어서, 몸이 멀어지면 「사람 앞에 섰는데 E 가 안 먹는」
+// 어긋남이 생겼다. 이제 그 두 곳이 살아 있는 자리를 본다(main.js livingNpcs).
+//
+// 이 시험은 그 전제가 무너지는 날 운다 — 누가 livingNpcs 를 도로 currentNpcs 로
+// 바꾸면, 서성임은 넓은 채로 남아 어긋남만 커진다.
+describe('넓어진 서성임이 안전한 전제', () => {
+  const main = readFileSync(join(process.cwd(), 'src', 'main.js'), 'utf8')
+
+  it('말이 걸리는지 재는 곳이 살아 있는 자리를 본다', () => {
+    expect(main).not.toMatch(/npcNear\(currentNpcs\(\)/)
+    expect(main.match(/npcNear\(livingNpcs\(\)/g)?.length ?? 0).toBeGreaterThanOrEqual(2)
+  })
+
+  it('머리 위 표지도 살아 있는 자리를 본다', () => {
+    const at = main.indexOf('function peopleRemaining')
+    const body = main.slice(at, main.indexOf('\n  }', at))
+    expect(body).toContain('livingNpcs()')
+    expect(body).not.toContain('currentNpcs()')
+  })
+
+  it('살아 있는 자리는 프레임마다 다시 적힌다', () => {
+    expect(main).toMatch(/npcSpots\.set\(/)
+    expect(main).toMatch(/ctx\.tickNpcLife\(/)
+  })
+
+  it('궁이 바뀌면 옛 궁의 자리를 버린다', () => {
+    const at = main.indexOf('function bindPalaceAndSpawn')
+    expect(main.slice(at, at + 600)).toContain('npcSpots.clear()')
+  })
+
+  it('넓혔어도 전각을 떠나지 않는다', () => {
+    expect(DRIFT_MAX).toBeLessThanOrEqual(ANCHOR_BOUND)
+  })
 })

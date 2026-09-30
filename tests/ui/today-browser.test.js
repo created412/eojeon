@@ -41,6 +41,19 @@ beforeEach(async () => {
 })
 afterAll(async () => { await browser?.close() })
 
+
+// 낟알판에서 거드는 단추(.skip)를 꺼내는 길. 선생님(2026-09-30) 「조여」 이후로
+// 그 단추는 **한 알이라도 집어 본 뒤에** 나타난다. 그래서 시험도 먼저 한 번 쓸어
+// 본다 — 누른 채 끌면 지나간 자리의 겨와 모래가 집힌다.
+async function sweepTray(page){
+  const box=await page.locator('.tray').boundingBox()
+  await page.mouse.move(box.x+4,box.y+box.height/2)
+  await page.mouse.down()
+  for(let i=1;i<=24;i++)await page.mouse.move(box.x+box.width*i/24,box.y+box.height/2)
+  await page.mouse.up()
+  await page.locator('.skip').waitFor({state:'visible'})
+}
+
 it('390px에서 가마·곡물 그림이 없거나 손상되어도 깨진 이미지를 숨기고 진행한다', async () => {
   await page.evaluate(() => {
     const beat=fixture.ACTS.flatMap(a=>a.beats).flatMap(b=>b.stops??[]).map(s=>s.beat).find(b=>b?.ration)
@@ -52,8 +65,10 @@ it('390px에서 가마·곡물 그림이 없거나 손상되어도 깨진 이미
   expect(await page.locator('.sack img').isVisible()).toBe(false)
   await page.locator('.sack').click()
   // 가마를 열면 낟알판이 먼저 나온다(2026-09-25 선생님: 「쌀에서 겨와 모래 골라내기」).
-  // 이 시험이 보는 것은 깨진 그림 처리이므로, 손으로 고르는 자리는 건너뛰는 길로 지난다 —
-  // 그 단추가 언제나 있다는 것 자체가 이 화면의 약속이다(갇히는 학생을 만들지 않는다).
+  // 이 시험이 보는 것은 깨진 그림 처리이므로, 손으로 고르는 자리는 거드는 길로 지난다.
+  // 한 번 쓸어야 그 단추가 나온다(sweepTray) — 거저 넘어가는 길은 닫혔지만
+  // 갇히는 학생은 여전히 없다는 것이 이 화면의 약속이다.
+  await sweepTray(page)
   await page.locator('.skip').click()
   await page.locator('.to-reveal').click()
   await page.locator('.grain img').evaluate(img=>{img.src='data:image/webp;base64,broken'})
@@ -190,6 +205,7 @@ it.each([true,false])('390px에서 그림 유무(%s)와 무관하게 가마·곡
   // 낟알판과 그 단추들도 390px 안에 들어와야 한다 — 판이 화면을 넘으면 학생은
   // 오른쪽 끝의 겨를 영원히 집을 수 없다. 그림 파일과 무관한 화면이므로 present 와
   // 상관없이 같은 검사를 받는다.
+  await sweepTray(page)
   await checkBounds('.tray-wrap,.tray,.tray-count,.skip')
   await page.locator('.skip').click()
   await checkBounds('.tray-wrap,.wage-line,.to-reveal')

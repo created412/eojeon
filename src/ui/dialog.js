@@ -23,11 +23,32 @@ const CSS = `
   line-height:var(--read-lh-title,1.4);letter-spacing:var(--read-track,1px);color:#2b2317}
 .card .origin{font-size:var(--read-small,13px);color:var(--ink-quiet,#5e5849);margin-bottom:16px;
   line-height:var(--read-lh-small,1.6)}
-.card .excerpt{border-left:3px solid #8a6a44;padding:10px 0 10px 18px;margin:0 0 18px;
-  font-size:var(--read-body,15.5px);line-height:var(--read-lh-body,1.85);white-space:pre-wrap;word-break:keep-all}
-.card .gloss{font-size:var(--read-small,13px);color:var(--ink-quiet,#6b6558);margin:0 0 16px;
-  line-height:var(--read-lh-small,1.6)}
-.card .meaning{font-size:var(--read-lead,14px);line-height:var(--read-lh-body,1.7);color:#332e23}
+/* ── 기록과 해석을 눈으로 가른다 ────────────────────────────────────────
+   선생님(2026-09-30): 「사료는 원문이고 그에 대한 설명이 밑에 있잖아. 둘이
+   구분이 안 간다는 말이었어.」
+
+   이것은 꾸밈 문제가 아니다. 이 게임의 뼈대가 **사료 / 해석 / 재구성**을 나누는
+   것인데, 정작 사료 카드에서 그 둘이 한 덩어리로 읽히고 있었다. 학생이
+   「기록에 그렇게 적혀 있다」와 「우리가 그렇게 읽는다」를 구별하지 못하면,
+   이 카드는 구분을 가르치는 것이 아니라 흐리는 것이 된다.
+
+   그래서 셋을 다르게 한다 — **이름표 · 바탕 · 글꼴**.
+     기록  제목용 글꼴, 짙은 먹, 왼쪽에 굵은 줄, 종이 그대로
+     해석  본문 글꼴, 옅은 먹, 가로줄 아래 한 칸 들어간 자리
+   ⚠ 예전에는 해석이 오히려 **더 컸다**(--read-lead > --read-body). 기록보다
+     우리 말이 커 보이면 학생은 우리 말을 기록으로 읽는다. 뒤집어 둔다. */
+.card .part-label{display:block;font-size:var(--read-caption,11px);letter-spacing:.18em;
+  color:var(--ink-quiet,#6b6558);margin:0 0 6px}
+.card .excerpt{border-left:4px solid #8a6a44;padding:4px 0 6px 18px;margin:0 0 6px;
+  font-family:var(--face-display,serif);color:var(--ink-strong,#23201a);
+  font-size:var(--read-lead,17px);line-height:var(--read-lh-body,1.9);
+  white-space:pre-wrap;word-break:keep-all}
+.card .gloss{font-size:var(--read-small,13px);color:var(--ink-quiet,#6b6558);margin:0 0 18px;
+  padding-left:22px;line-height:var(--read-lh-small,1.6)}
+.card .reading{margin:0 0 4px;padding:14px 16px 2px;border-top:1px solid #8a6a4433;
+  background:#8a6a440d;border-radius:2px}
+.card .meaning{font-size:var(--read-body,15px);line-height:var(--read-lh-body,1.75);
+  color:var(--ink-quiet,#4a453a)}
 .codex .sub{font-size:var(--read-small,13px);color:var(--ink-quiet,#5e5849);margin:-8px 0 14px}
 .card .staged{margin-top:18px;border:1px dashed #8a6a44;padding:11px 14px;
   font-size:var(--read-small,13px);line-height:var(--read-lh-small,1.6);color:var(--ink-quiet,#5e5849)}
@@ -64,6 +85,12 @@ const CSS = `
 // 등급이 하는 말은 두 가지가 다르다 —
 // 'staged' 는 "기록이 없어 지어냈다", 'source'/'textbook' + 우리말 옮김은
 // "기록은 있으나 오늘날 말로 옮겼다". 같은 문구로 뭉뚱그리면 실재하는 기록마저 지어낸 것처럼 읽힌다.
+// 카드 위의 두 이름표. 누가 쓴 글인지를 학생에게 곧바로 말한다.
+// 「해석」이라는 낱말을 그대로 쓴다 — 이 게임이 처음부터 쓰는 말이고(사료·해석·재구성),
+// 여기서 그 말을 만나야 다른 화면의 같은 말도 읽힌다.
+export const RECORD_LABEL = '기록에 적힌 것'
+export const READING_LABEL = '우리가 붙인 해석'
+
 export function noticeFor(card) {
   if (card.grade === 'rumor') return `<div class="staged rumor">${RUMOR_NOTICE}</div>`
   if (card.grade === 'staged') {
@@ -132,9 +159,13 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
         <div class="source-layout"><div class="source-copy">
         <h3>${card.title}</h3>
         <div class="origin">${card.origin}</div>
+        <span class="part-label">${RECORD_LABEL}</span>
         <p class="excerpt">${card.excerpt}</p>
         ${gloss}
-        <div class="meaning">${card.meaning}</div>
+        <div class="reading">
+          <span class="part-label">${READING_LABEL}</span>
+          <div class="meaning">${card.meaning}</div>
+        </div>
         ${notice}
         ${inquiryHtml(card.id)}
         </div>${mediaFigure(media)}</div>

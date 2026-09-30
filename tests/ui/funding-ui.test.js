@@ -96,8 +96,12 @@ describe('돈을 만든다 — 두 지레를 손으로 민다', () => {
 
   it('약속은 한 번만 풀린다 — main.js 의 await funding.open(view) 가 한 번이다', () => {
     expect(ui).toContain('open(view')
-    expect(ui.match(/resolve\(/g)).toHaveLength(1)
     expect(ui).toMatch(/return new Promise\(resolve =>/)
+    // 나가는 길이 둘이 되었다(채웠을 때의 되짚기 · 아직일 때의 되돌아가기).
+    // 그래서 resolve 를 세는 대신 **빗장이 하나**인지를 본다 — 두 길 다 finish() 를
+    // 지나고, finish() 는 done 으로 한 번만 연다.
+    expect(ui.match(/resolve\(/g)).toHaveLength(1)
+    expect(ui).toMatch(/function finish\(\)\s*\{\s*if \(done\) return/)
   })
 
   it('넘겨주는 값이 계약대로다 — acts.js·main.js 가 받아 적을 것들', () => {
@@ -117,11 +121,19 @@ describe('이 화면이 말하지 않는 것', () => {
     expect(ui).not.toMatch(/오답|정답|점수|맞았습니다|틀렸|실점|감점|벌점|승리|패배/)
   })
 
-  it('못 채운 채로도 멈출 수 있다 — 아무도 갇히지 않는다', () => {
-    expect(ui).toContain('giveUpLabel')
-    expect(ui).toContain('여기서 멈추어도 된다')
-    // 채우지 못했다고 다음으로 가는 길을 막지 않는다
+  // 선생님(2026-09-30) 「조여」 — 규칙이 뒤집혔다. 예전에는 못 채워도 넘어갔고,
+  // 이 시험이 그 길을 지키고 있었다. 이제는 채워야 넘어간다. 다만 **갇히지 않는다**는
+  // 것은 그대로 지켜야 한다 — 그래서 그 조건을 새로 적는다.
+  it('채워야 넘어간다 — 못 채우면 되짚기로 가지 않는다', () => {
+    expect(ui).toMatch(/if \(!goalMet\(state\)\) \{ finish\(\); return \}/)
+    expect(ui).toContain('일감이 다 차야 어전에 아뢸 수 있다')
+    expect(ui).not.toContain('여기서 멈추어도 된다')
+  })
+
+  it('가로막되 가두지 않는다 — 단추는 늘 눌린다', () => {
+    // 단추를 끄면 학생은 화면이 고장 난 줄 안다. 누르면 「아직」을 보고 다시 연다.
     expect(ui).not.toMatch(/go\.disabled/)
+    expect(ui).toContain('NOT_YET_LABEL')
   })
 
   it('절대 수치가 새지 않는다 — 냥도 총액도 없다', () => {

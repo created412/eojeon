@@ -41,6 +41,9 @@ function environment() {
     speak: {isOpen: () => false}, dialog: {isOpen: () => false, close() {}}, pause: {isOpen: () => false},
     hubBusy: false,
     hint: {}, audio: {play() {}}, currentNpcs: () => [],
+    // 살아 있는 자리(main.js livingNpcs) — 시험대에서는 서성임이 없으므로
+    // 데이터 좌표를 그대로 돌려준다. 자리가 비어 있을 때의 갈래가 이것이다.
+    npcSpots: new Map(), livingNpcs() { return this.currentNpcs() },
     acc: 12, tapTarget: {x:9,z:9}, dt: 17, FIXED_MS: 16, MAX_STEPS: 5, now: 5000,
     rebuke() {}, lastRoom: null, lastBlockedBannerAt: 0, BLOCKED_BANNER_MS: 3000,
     banner() {}, root: {}, updateHint() {}, resolveExplore: vi.fn(), activeBeat: {free:true},
@@ -165,6 +168,10 @@ it.each(['muted','blocked','audible'])('행렬 %s 재생 중 빠르게 E를 눌�
         made.push(audio);return audio
       }})})
     env.speak.press=()=>false
+    // 가마에 오르는 대목은 여기서 재지 않는다 — 그 장면은 프레임 고리가 돌아야
+    // 끝나고(boarding.resolve), 이 시험대는 고리를 돌리지 않는다. 오르는 일 자체는
+    // tests/systems/boarding.test.js 가 따로 붙든다. 여기서 재는 것은 행렬의 뒷정리다.
+    env.playBoarding=async()=>{}
     const beat={...ACTS[0].beats.find(b=>b.kind==='procession'),lines}
     env.flow.state.palace='unhyeon'
     const done=runFunction('playProcession',env,beat)

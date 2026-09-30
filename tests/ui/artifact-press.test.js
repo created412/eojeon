@@ -44,6 +44,7 @@ function environment(over = {}) {
     dialog: { isOpen: () => false, close() {}, showArtifact(a, lines) { shown.push({ a, lines }) } },
     audio: { play() {} }, banner: () => ({ dispose() {} }), root: {}, saveGame() {}, loreBanner: null,
     selectedOption: () => null, currentNpcs: () => [], currentExit: () => null, currentStops: () => [],
+    npcSpots: new Map(), livingNpcs() { return this.currentNpcs() },
     ...over,
   }
 }

@@ -45,6 +45,12 @@ const CSS = `
 .ration .nudge{min-height:19px;font-size:13px;color:#b9b2a1}
 .ration .wage-line{font-size:15px;color:#e8e2d4;letter-spacing:1px;max-width:560px;line-height:1.8}
 .ration button.skip{margin-top:2px;padding:9px 18px;background:#241b12;border:1px solid #4a3a2a;color:#b9b2a1;font-size:13px}
+/* 아직 안 나타난 동안에도 **자리는 잡아 둔다.**
+   display:none 으로 감췄더니, 첫 알을 집는 순간 단추가 생기면서 낟알판이 위로
+   밀렸다 — 학생이 노리던 알이 손가락 밑에서 달아난다. 집는 장면에서 판이
+   움직이는 것은 그 자체로 고장이다(브라우저 시험이 이것을 잡아냈다).
+   visibility 로 감추면 자리는 남고, 탭 차례와 누르기에서는 빠진다. */
+.ration button.skip[hidden]{display:inline-block;visibility:hidden;pointer-events:none}
 @media(max-width:600px){.ration .tray-wrap{width:96vw}.ration .hand-help{font-size:13px}}
 `
 
@@ -191,7 +197,7 @@ export function createRation(root) {
             <div class="nudge" aria-live="polite"></div>
             <div class="art-note">${MIX_NOTE}</div>
             <div class="origin">${s.origin}</div>
-            <button class="skip">손이 불편하면 건너뛴다</button>`
+            <button class="skip" hidden>손이 불편하다 — 남은 것을 쓸어 담는다</button>`
 
           const canvas = el.querySelector('.tray')
           const count = el.querySelector('.tray-count')
@@ -222,6 +228,14 @@ export function createRation(root) {
             count.textContent = countLabel(tray)
             paintTray(canvas, tray)
             view.onPick?.()
+            // 손을 한 번 써 본 뒤라야 거드는 길이 열린다(선생님 2026-09-30 「조여」).
+            //
+            // 예전에는 이 단추가 판이 열리자마자 보였고, 누르면 겨와 모래가 통째로
+            // 빠지며 곧장 끝났다 — 한 알도 안 집은 학생과 다 집은 학생이 같은 화면을
+            // 봤다. 이제는 **한 알이라도 집어 본 뒤**에 보인다. 한 알은 누구나 집을 수
+            // 있고(끌기만 해도 쓸린다), 그것으로 「이 입력이 내 손에 맞는가」가 판가름
+            // 난다. 손이 불편한 학생을 막지 않으면서 거저 넘어가는 길만 닫는다.
+            assist.hidden = false
             if (isSorted(tray)) picked(true)
           }
           canvas.addEventListener('pointerdown', event => {
@@ -230,7 +244,10 @@ export function createRation(root) {
           })
           canvas.addEventListener('pointermove', event => { if (event.buttons) tryPick(event) })
 
-          el.querySelector('.skip').addEventListener('click', () => {
+          // 거드는 길. 결과는 손으로 다 집은 것과 같지만, 기록에는 그렇게 적힌다
+          // (systems/grain-tray.js wageLine 의 byHand=false — 「골라낸 것으로 친 것」).
+          const assist = el.querySelector('.skip')
+          assist.addEventListener('click', () => {
             tray = pickAll(tray)
             picked(false)
           })

@@ -133,10 +133,18 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
   let reducedMotion = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true
   let cameraShot = { x: 0, y: CAM_HEIGHT, z: CAM_DIST, lookY: CAM_LOOK_Y }
   let orbit = 0, zoom = 1, dragging = false, lastPointerX = 0, snapCamera = true
+  let viewOverride = null   // 한 장면 동안만 고정하는 보는 각(setViewAngle)
   let openingView = false
   function setOpeningView(enabled) { openingView = enabled; snapCamera = true }
   function rotateView(direction) { orbit += Math.sign(direction)*Math.PI/4 }
   function resetView() { orbit=0;zoom=1 }
+  // 한 장면 동안만 보는 각을 고정한다 — 가마가 대문을 나서는 장면이 그렇다.
+  //
+  // 기본 각(orbit 0)에서 카메라는 임금의 **+z 쪽**에 서서 -z 를 본다. 운현궁 대문은
+  // +z 에 있으므로, 가마는 카메라 쪽으로 왔다가 **뒤로** 빠져나간다 — 학생은 떠나는
+  // 가마를 못 보고 빈 마당을 본다(실제로 그렇게 찍혔다). 그 장면에서만 각을 돌려
+  // 뒤에서 보게 한다. null 로 되돌리면 학생이 돌려 둔 각이 그대로 살아난다.
+  function setViewAngle(angle) { viewOverride = angle; snapCamera = true }
   // 마우스는 오른쪽 끌기, 손가락은 한 손가락 끌기로 시점을 돌린다(2026-09-14 태블릿). 손가락은 조금 움직인 뒤에야
   // 돌리기 시작한다 — 탭(걷기)과 섞이지 않게(input/input.js isTap 과 같은 14px).
   let touchStart = null
@@ -316,10 +324,37 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     for (const p of list) {
       const obj = buildProp(THREE, p.id)
       if (!obj) continue
+      obj.userData.propId = p.id      // moveProp() 이 이것으로 찾는다
       obj.position.set(p.x ?? 0, 0, p.z ?? 0)
       obj.rotation.y = p.yaw ?? 0
       propGroup.add(obj)
     }
+  }
+
+  // 물건 하나를 옮긴다 — 가마가 교군에 실려 대문을 나서는 그 장면이다(지적 #18).
+  //
+  // setProps() 를 다시 부르면 목록이 통째로 다시 지어진다(geometry 까지 새로) —
+  // 프레임마다 그러면 가마가 깜빡이고 쓰레기만 쌓인다. placeNpc 를 따로 둔 것과
+  // 같은 까닭이다. 목록의 **몇 번째**가 아니라 id 로 찾는다.
+  //   y  — 들린 높이. 사람이 메고 가는 동안만 0 보다 크다.
+  function moveProp(id, { x = null, z = null, y = null, yaw = null } = {}) {
+    // 가마처럼 **궁에 붙은** 물건은 palaceGroup 안의 마당 물건이고(render/palace.js
+    // buildYard), 장면이 세우는 물건은 propGroup 안에 있다. 둘 다 userData.propId 를
+    // 달고 있으니 두 군데를 다 본다 — 부르는 쪽이 어디 있는지 알 필요가 없게.
+    let obj = propGroup.children.find(o => o.userData?.propId === id)
+    if (!obj) palaceGroup?.traverse(o => { if (!obj && o.userData?.propId === id) obj = o })
+    if (!obj) return false
+    if (x != null) obj.position.x = x
+    if (z != null) obj.position.z = z
+    if (y != null) obj.position.y = y
+    if (yaw != null) obj.rotation.y = yaw
+    return true
+  }
+
+  // 임금을 감춘다 — 가마 안에 든 동안. 가마는 안이 보이지 않는 물건이라
+  // 탄 사람이 밖에 서 있으면 그림이 거짓말을 한다(systems/boarding.js).
+  function setKingHidden(hidden) {
+    player.visible = hidden !== true
   }
 
   // 신하 하나를 옮기고 돌린다 — 알현 장면에서 문을 열고 걸어 들어오는 그 사람이다.
@@ -593,7 +628,10 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     // 아직 원점에 있는 카메라를 본다.
     const danger = cinematic.camera?.mode === 'danger'
     const audience = cinematic.camera?.mode === 'audience'
-    const viewAngle = audience ? 0 : orbit
+    // ⚠ 고정한 각(setViewAngle)이 알현 각보다 먼저다. 예전에는 audience 갈래가
+    //   먼저 0 을 못 박아, 가마 장면에서 각을 돌려도 아무 일이 없었다 — 행렬·가마는
+    //   phase 가 'audience' 라 늘 이 갈래에 걸린다.
+    const viewAngle = viewOverride ?? (audience ? 0 : orbit)
     const distance = (danger ? 10 : audience ? 11 : CAM_DIST) * zoom
     const targetShot = {
       x: player.position.x + Math.sin(viewAngle) * distance + Math.cos(viewAngle) * 1.6,
@@ -665,8 +703,9 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
   return {
     THREE, scene, camera, renderer, player, fire,
     setPalace, setPickupMarkers, pickGround, resize, render, stats,
-    setKingAge, setNpcs, placeNpc, tickNpcLife, setProps, setMood, setCinematic, setReducedMotion, setYear,
-    worldAxis, setOpeningView, rotateView, resetView,
+    setKingAge, setNpcs, placeNpc, tickNpcLife, setProps, moveProp, setKingHidden,
+    setMood, setCinematic, setReducedMotion, setYear,
+    worldAxis, setOpeningView, rotateView, resetView, setViewAngle,
     setInteractionCues,
     setCrisis(stage) { crisisStage = stage },
     dispose() {

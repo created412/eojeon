@@ -17,6 +17,48 @@
 // 「…기록이 남지 않은 일이 / 다.」처럼 한 글자만 다음 줄에 떨어졌다.
 // 크기·먹색·자간은 이제 ui/type-css.js 한 곳에서 온다.
 import { installTypeVars } from './type-css.js'
+import { royalIcon } from './royal-icons.js'
+import { PORTRAITS } from './portraits-data.js'
+import { sourceMedia } from './historical-media.js'
+import { npcById, portraitKeyOf } from '../data/npcs.js'
+
+// ── 한 일을 그림으로 ───────────────────────────────────────────────────────
+//
+// 선생님 지적 #17: 「하루의 끝 — 한 일을 그림으로.」
+//
+// 예전에는 글 목록이었다. 「흥선대원군에게 말을 건다 / 『운요호』를 살펴본다」가
+// 줄줄이 적혀 있으면, 오늘 한 일이 **읽을 것**이지 **본 것**이 되지 않는다.
+//
+// 그림은 **이미 게임 안에 있는 것**으로만 짓는다 — 새 그림을 받아 오지 않는다.
+//   npc:  그 사람의 얼굴(ui/portraits-data.js — 3D 인물을 만든 바로 그 그림)
+//   card: 그 문서에 딸린 사진(ui/historical-media.js)
+//   그 밖: 그림이 없는 일은 표식으로 둔다(나들이·보고)
+// 용량이 한 글자도 늘지 않으면서, 하루가 얼굴과 문서로 남는다.
+//
+// ⚠ 그림이 없으면 **지어내지 않는다.** 표식으로 두고 이름만 적는다.
+export function tileArt(id) {
+  const [kind, rest] = String(id ?? '').split(/:(.+)/)
+  if (kind === 'npc') {
+    const key = portraitKeyOf(npcById(rest))
+    const src = key ? PORTRAITS[key] : null
+    return src ? { kind: 'face', src } : { kind: 'mark', icon: 'compass' }
+  }
+  if (kind === 'card') {
+    const media = sourceMedia(rest)
+    return media?.src ? { kind: 'photo', src: media.src } : { kind: 'mark', icon: 'book' }
+  }
+  if (kind === 'stop') return { kind: 'mark', icon: 'arrow' }
+  return { kind: 'mark', icon: 'palace' }
+}
+
+function tileHtml(it) {
+  const label = typeof it === 'string' ? it : it.label
+  const art = typeof it === 'string' ? { kind: 'mark', icon: 'palace' } : tileArt(it.id)
+  const face = art.kind === 'mark'
+    ? `<span class="mark">${royalIcon(art.icon)}</span>`
+    : `<img class="${art.kind}" src="${art.src}" alt="">`
+  return `<figure class="tile"><div class="frame">${face}</div><figcaption>${label}</figcaption></figure>`
+}
 
 const CSS = `
 .dayend{position:fixed;inset:0;z-index:55;background:#0d0f11;display:flex;flex-direction:column;
@@ -28,6 +70,9 @@ const CSS = `
 /* 표제·날짜·해줄 아래로는 한 칸이다 — 이끄는 줄도, 두 칸도, 꼬리말도 같은 폭·같은
    왼쪽 선에서 시작한다. 예전에는 폭이 저마다 달라 꼬리말이 판 밖에 떠 있었다. */
 .dayend .sun{width:100%;max-width:860px;height:2px;background:linear-gradient(90deg,#e0a23a,#6a5230,#23282c)}
+/* 아직 지지 않은 해 — 저무는 쪽이 아니라 아직 높이 떠 있는 쪽이다.
+   지는 해가 오른쪽으로 사그라든다면, 이쪽은 가운데가 밝은 채로 남는다. */
+.dayend .sun.held{background:linear-gradient(90deg,#23282c,#e0a23a 50%,#23282c)}
 .dayend p{margin:0;font-size:var(--read-body,17px);color:var(--paper-strong,#e8e2d4);
   line-height:var(--read-lh-body,1.8);width:100%;max-width:860px;word-break:keep-all;text-wrap:balance}
 .dayend .cols{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;width:100%;max-width:860px}
@@ -38,6 +83,20 @@ const CSS = `
 .dayend .col.did b{color:#e8b45c}
 .dayend .col .it{font-size:var(--read-small,14px);color:var(--paper-strong,#e8e2d4);
   line-height:var(--read-lh-small,1.7);padding:4px 0;word-break:keep-all}
+
+/* 오늘 한 일 — 얼굴과 문서로 남는다(지적 #17). 칸이 좁아지면 저절로 한 줄에
+   덜 들어가고, 아주 좁으면 한 칸씩 내려간다. */
+.dayend .tiles{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
+.dayend .tile{margin:0;display:flex;flex-direction:column;gap:6px}
+.dayend .tile .frame{aspect-ratio:1;border:1px solid #3a3f45;border-radius:3px;overflow:hidden;
+  background:#171a1e;display:flex;align-items:center;justify-content:center}
+/* 얼굴은 위쪽을, 사진은 가운데를 남긴다 — 얼굴을 가운데로 맞추면 이마가 잘린다. */
+.dayend .tile img{width:100%;height:100%;object-fit:cover;display:block}
+.dayend .tile img.face{object-position:50% 12%}
+.dayend .tile .mark{color:#8f8a7c}
+.dayend .tile figcaption{font-size:var(--read-caption,12px);color:var(--paper-strong,#cfc8b8);
+  line-height:var(--read-lh-small,1.55);word-break:keep-all}
+@media(max-width:420px){.dayend .tiles{grid-template-columns:repeat(auto-fill,minmax(88px,1fr))}}
 .dayend .col .it span{color:var(--paper-quiet,#8f8a7c);font-size:var(--read-caption,12px)}
 .dayend .col .none{font-size:var(--read-small,13px);color:var(--paper-quiet,#6b6558)}
 .dayend .tail{font-size:var(--read-small,13px);color:var(--paper-quiet,#8f8a7c);
@@ -64,6 +123,9 @@ function ensureStyle() {
 export function dayEndHtml(report) {
   const did = report.done ?? []
   const missed = report.missed ?? []
+  // 한 일은 그림으로, 하지 않은 일은 글로 — 일부러 다르다. 하지 않은 일에 그림을
+  // 붙이면 「못 한 것」이 「한 것」과 같은 무게로 보인다.
+  const tiles = list => list.map(tileHtml).join('')
   const items = list => list.map(it => typeof it === 'string'
     ? `<div class="it">${it}</div>`
     : `<div class="it">${it.label} <span>${it.reason ?? ''}</span></div>`).join('')
@@ -73,11 +135,40 @@ export function dayEndHtml(report) {
     <div class="sun"></div>
     <p>${report.lead ?? '임금의 하루가 끝났다.'}</p>
     <div class="cols">
-      <div class="col did"><b>오늘 한 일 ${did.length}</b>${items(did) || '<div class="none">하나도 하지 않았다</div>'}</div>
+      <div class="col did"><b>오늘 한 일 ${did.length}</b>
+        <div class="tiles">${tiles(did) || '<div class="none">하나도 하지 않았다</div>'}</div></div>
       <div class="col"><b>하지 않은 일 ${missed.length}</b>${items(missed) || '<div class="none">남겨 둔 것이 없다</div>'}</div>
     </div>
     <div class="tail">${report.tail ?? '하지 못한 일은 임금이 고른 것이 아니다 — 그 자리에 갈 수 없었거나, 기록이 남지 않은 일이다.'}</div>
     <button class="go">${report.buttonLabel ?? '다음 날로'}</button>`
+}
+
+// ── 해가 아직 지지 않는다 ──────────────────────────────────────────────────
+//
+// 선생님 지적 #17 의 나머지 반: 「다 못하면 해가 안 짐.」
+//
+// 규칙 자체는 이미 있었다(systems/freedom.js exitBlock — 남은 일이 있으면 못 나간다).
+// 그런데 학생이 보는 것은 잠깐 떴다 사라지는 띠 한 줄뿐이었다. 규칙이 **보이지**
+// 않으면 학생은 「E 가 안 먹는다」로 읽는다.
+//
+// 그래서 하루를 닫는 판과 **같은 모양**으로 세운다. 다른 것은 표제와 해줄뿐이다.
+//   해 가 진 다        → 오늘 한 일이 얼굴과 문서로 놓인다
+//   해 가 지 지 않 는 다 → 아직 남은 일이 놓인다
+// 같은 자리에서 같은 모양으로 뜨므로, 학생은 두 번째 판을 보는 순간 첫 번째 판을
+// 떠올린다 — 「저기까지 가야 해가 진다」.
+export function stillDayHtml(view) {
+  const left = view.left ?? []
+  return `
+    <h2>해 가  지 지  않 는 다</h2>
+    <div class="sun held"></div>
+    <p>${view.lead ?? '아직 오늘 할 일이 남았다.'}</p>
+    <div class="cols">
+      <div class="col did"><b>남은 일 ${left.length}</b>${
+        left.map(it => `<div class="it">${typeof it === 'string' ? it : it.label}</div>`).join('')
+        || '<div class="none">남은 것이 없다</div>'}</div>
+    </div>
+    <div class="tail">${view.tail ?? '남은 일을 다 해야 하루가 끝난다.'}</div>
+    <button class="go">${view.buttonLabel ?? '돌아간다'}</button>`
 }
 
 export function createDayEnd(root) {
@@ -93,6 +184,19 @@ export function createDayEnd(root) {
         go.focus?.()
         const done = () => { el.remove(); resolve() }
         go.addEventListener('click', done)
+      })
+    },
+
+    // 아직 못 나간다 — 하루를 닫는 판과 같은 모양으로 가로막는다.
+    showHeld(view) {
+      return new Promise(resolve => {
+        const el = document.createElement('div')
+        el.className = 'dayend'
+        el.innerHTML = stillDayHtml(view)
+        root.appendChild(el)
+        const go = el.querySelector('.go')
+        go.focus?.()
+        go.addEventListener('click', () => { el.remove(); resolve() })
       })
     },
   }

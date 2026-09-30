@@ -16,6 +16,7 @@
 import { THRONE_FROM_BACK, THRONE_DEPTH, ROOM_SHRINK } from '../render/palace.js'
 import { roomAt } from '../data/palaces.js'
 import { collides } from '../data/hall-geometry.js'
+import { objectiveRoute } from './route.js'
 
 // 어좌 앞면에서 임금이 서는 자리까지. 어좌에 올라앉히지 않는 까닭은 하나다 —
 // 카메라가 임금의 뒤 위쪽에 매여 있어(render/scene.js CAM_DIST·CAM_HEIGHT),
@@ -99,6 +100,102 @@ export function walkAt(from, to, u) {
 // from 에 선 사람이 to 를 바라보는 각(Y). render/scene.js 의 왕이 도는 셈과 같다.
 export function yawToward(from, to) {
   return Math.atan2(to.x - from.x, to.z - from.z)
+}
+
+// ── 행렬이 걷는 길 ─────────────────────────────────────────────────────────
+//
+// 선생님(2026-09-29) 지적 #18: 「모시고 가는데 기둥에 부딪히고 순간이동을 한다.」
+//
+// 원인이 둘이었다. 행렬이 walkAt() 으로 **직선**을 걸었다 — 노안당에서 대문까지
+// 곧게 그으면 노안당 건물을 뚫고 지나간다. 그리고 장면이 열릴 때 임금을
+// 제자리에 **꽂아 넣었다**(position.set) — 마당에 서 있던 학생이 눈 깜빡할 사이에
+// 사랑채 앞으로 옮겨져 있으니 「순간이동」으로 보인다.
+//
+// 그래서 길을 꺾어 만들고, 그 길의 첫 점을 **임금이 지금 선 자리**로 둔다.
+// 학생이 걷는 길찾기(systems/route.js)와 같은 격자를 쓴다 — 두 길이 서로 다른
+// 셈을 쓰면 「학생은 못 지나가는데 행렬은 지나가는」 자리가 생긴다.
+
+export function pathLength(points) {
+  const pts = points ?? []
+  let sum = 0
+  for (let i = 1; i < pts.length; i++) sum += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z)
+  return sum
+}
+
+/**
+ * 꺾인 길 위의 자리. u 는 0..1.
+ *
+ * ⚠ 지점 **개수**로 나누지 않고 **길이**로 나눈다. 개수로 나누면 짧은 구간과 긴
+ *   구간을 같은 시간에 걸어, 꺾이는 자리에서 걸음이 갑자기 빨라지거나 느려진다.
+ * 처음과 끝을 느리게 하는 결은 walkAt() 과 같다 — 등속으로 오다 뚝 서면
+ * 사람이 아니라 밀려온 상자로 보인다.
+ */
+export function pathAt(points, u) {
+  const pts = points ?? []
+  if (pts.length === 0) return null
+  if (pts.length === 1) return { x: pts[0].x, z: pts[0].z }
+  const t = Math.max(0, Math.min(1, u))
+  const e = t * t * (3 - 2 * t)
+  const total = pathLength(pts)
+  if (total === 0) return { x: pts[0].x, z: pts[0].z }
+  let want = e * total
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i]
+    const seg = Math.hypot(b.x - a.x, b.z - a.z)
+    if (want <= seg || i === pts.length - 1) {
+      const k = seg === 0 ? 1 : Math.min(1, want / seg)
+      return { x: a.x + (b.x - a.x) * k, z: a.z + (b.z - a.z) * k }
+    }
+    want -= seg
+  }
+  const last = pts[pts.length - 1]
+  return { x: last.x, z: last.z }
+}
+
+// 한 구간을 실제로 걸을 수 있는가 — 촘촘히 짚어 본다. 양 끝이 비어 있어도
+// 가운데가 기둥이면 걸린다(대각선으로 그은 구간이 그렇다).
+function clearSegment(def, a, b, radius) {
+  if (!def) return true
+  const steps = Math.max(2, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.3))
+  for (let i = 0; i <= steps; i++) {
+    const k = i / steps
+    if (collides(def, { x: a.x + (b.x - a.x) * k, z: a.z + (b.z - a.z) * k }, radius)) return false
+  }
+  return true
+}
+
+/**
+ * 임금이 **지금 선 자리**에서 목적지까지, 전각을 피해 꺾어 가는 길.
+ *
+ *   def         궁
+ *   from        임금이 지금 선 자리 — 이 점이 길의 첫 점이다(꽂아 넣지 않는다)
+ *   to          닿아야 하는 자리
+ *   toRoomId    그 자리가 있는 방(격자 길찾기의 목표)
+ *
+ * 길이 안 나오면 직선 두 점이라도 돌려준다 — 장면이 멈추는 것이 더 나쁘다.
+ * routeFn 은 시험이 길찾기를 갈아 끼울 자리다(기본은 systems/route.js).
+ */
+export function processionPath(def, from, to, toRoomId, control = 'A', routeFn = objectiveRoute) {
+  const start = { x: from.x, z: from.z }
+  const end = { x: to.x, z: to.z }
+  const corners = (def && toRoomId ? routeFn(def, toRoomId, start, control, end) : []) ?? []
+  const pts = [start, ...corners.map(p => ({ x: p.x, z: p.z }))]
+  // 길찾기가 목적지로 끝내지 않았으면(방 한가운데로 끝났거나 빈 배열) 끝점을 얹는다.
+  const last = pts[pts.length - 1]
+  if (pts.length === 1 || Math.hypot(last.x - end.x, last.z - end.z) > 0.01) pts.push(end)
+
+  // 구간이 걸리면 ㄱ자로 우회한다 — 격자 길은 가로·세로로 놓이므로 ㄱ자가 그 격자와 맞는다.
+  const RADIUS = 0.6
+  const out = [pts[0]]
+  for (let i = 1; i < pts.length; i++) {
+    const a = out[out.length - 1], b = pts[i]
+    if (clearSegment(def, a, b, RADIUS)) { out.push(b); continue }
+    const elbows = [{ x: a.x, z: b.z }, { x: b.x, z: a.z }]
+      .filter(e => clearSegment(def, a, e, RADIUS) && clearSegment(def, e, b, RADIUS))
+    if (elbows.length > 0) out.push(elbows[0])
+    out.push(b)     // 우회로도 막혔으면 그냥 간다 — 멈추는 것보다는 낫다
+  }
+  return out
 }
 
 // 이 비트에 나오는 사람 — 곁에 선 사람과 찾아오는 사람.

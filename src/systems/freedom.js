@@ -174,6 +174,44 @@ export function exitBlock(state, act) {
   return { count: left.length, first: left[0], labels: left.map(o => o.label) }
 }
 
+// ── 지금 할 일 한 줄 ───────────────────────────────────────────────────────
+//
+// 선생님(2026-09-29) 지적 #16: 화면에 「남은 일 3곳」이라고만 떠 있으면 학생은
+// 무엇을 해야 하는지 모른다. **누구에게 가서 무엇을 하는지**가 보여야 한다.
+//
+// 「남은 일 3곳 — 표지를 찾아가 E」는 조작 안내였다. 「사정전으로 가 최익현에게
+// 말을 건다」는 할 일이다. 셈은 뒤에 작게 붙인다 — 몇 곳 남았는지는 거들 뿐이다.
+
+// 「…으로」인가 「…로」인가. 받침이 없거나 ㄹ 이면 「로」다.
+// 방 이름은 데이터에서 오므로(부용지처럼 받침 없는 이름이 있다) 손으로 적어 둘 수 없다.
+export function towardParticle(name) {
+  const last = (name ?? '').trim().slice(-1)
+  if (!last) return '으로'
+  const code = last.charCodeAt(0)
+  if (code < 0xac00 || code > 0xd7a3) return '으로'   // 한글 음절이 아니면 건드리지 않는다
+  const jong = (code - 0xac00) % 28                    // 0 이면 받침 없음, 8 이면 ㄹ
+  return jong === 0 || jong === 8 ? '로' : '으로'
+}
+
+/**
+ * 지금 할 일 한 줄. 남은 일이 없으면 null 이다 — 그때 무엇을 띄울지는
+ * 화면이 정한다(나가는 곳 이름을 아는 쪽이 화면이다).
+ *
+ *   options  hubOptions() 가 낸 목록
+ *   def      지금 궁 — 방 이름을 여기서 얻는다
+ *   nearest  가까운 곳을 이미 골라 두었으면 그것. 없으면 목록의 첫째.
+ */
+export function objectiveLine(options, def, nearest = null) {
+  const left = (options ?? []).filter(o => !o.done && !o.blocked && !o.disabled)
+  if (left.length === 0) return null
+  const pick = (nearest && left.includes(nearest)) ? nearest : left[0]
+  const room = def?.rooms?.find(r => r.id === pick.room)
+  const where = room ? `${room.name}${towardParticle(room.name)} 가 ` : ''
+  // 한 곳 남았을 때 「남은 일 1곳」은 군더더기다 — 그 한 곳을 이미 이름으로 말했다.
+  const tail = left.length > 1 ? `  (남은 일 ${left.length})` : ''
+  return `${where}${pick.label}${tail}`
+}
+
 export function closeHub(state, act) {
   const hub = hubAt(act, state.beatIndex)
   if (!hub) return state
@@ -198,7 +236,11 @@ export function dayReport(state, act) {
   if (!hub) return null
   const log = logOf(state, act, hub)
   if (!log.closed) return null
-  const done = log.done.map(d => d.label)
+  // 선생님 지적 #17: 「한 일을 그림으로.」 그러려면 **그것이 무엇이었는지**를 이
+  // 판이 알아야 한다. 예전에는 label 만 넘겨 화면이 글자밖에 받지 못했다.
+  // id 를 함께 넘긴다 — 'npc:…' 는 얼굴을, 'card:…' 는 그 문서의 사진을 부를 수 있다.
+  // ⚠ 그림을 고르는 일은 화면(ui/day-end.js)이 한다. 이 파일은 three.js 도 DOM 도 모른다.
+  const done = log.done.map(d => ({ id: d.id, label: d.label }))
   const missed = (log.missed ?? []).map(m => ({ label: m.label, reason: m.reason }))
   if (done.length === 0 && missed.length === 0) return null
   return { title: log.title ?? hubDate(act, hub) ?? act.title, done, missed }

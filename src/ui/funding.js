@@ -37,7 +37,7 @@ import {
 //   origin       출처 한 줄(셈판과 되짚기 양쪽에 나간다)
 //                예) '『고종실록』 · 한국사1 pp.104~107'
 //   doneLabel    100칸이 찬 뒤 단추 글      예) '이만하면 되었다 — 아버지께 아뢴다'
-//   giveUpLabel  못 채운 채 멈추는 단추 글  예) '셈을 여기서 멈춘다'
+//   notYetLabel  아직 못 채웠을 때의 단추 글  예) '아직 일감이 다 차지 않았다'
 //   nextLabel    되짚기의 마지막 단추 글    예) '밤이 깊었다 — 다음으로'
 //   actual       { lines?: string[], line?: string, origin?: string }
 //                교과서가 적은 것. 없으면 systems/funding.js 의 HISTORY_LINES.
@@ -376,6 +376,10 @@ function ensureStyle() {
   styled = true
 }
 
+// 아직 다 못 채웠을 때 단추에 적히는 말. 「멈춘다」가 아니다 — 멈출 수 없기 때문이다
+// (선생님 2026-09-30 「조여」). 누르면 판이 처음부터 다시 열린다.
+export const NOT_YET_LABEL = '아직 일감이 다 차지 않았다'
+
 const DEFAULT_VIEW = {
   title: '경 복 궁 을  다 시  짓 는 다',
   question: '이 비용을 어디서 만드는가',
@@ -395,7 +399,7 @@ const DEFAULT_VIEW = {
   },
   origin: '『고종실록』 · 한국사1 pp.104~107',
   doneLabel: '이만하면 되었다 — 아버지께 아뢴다',
-  giveUpLabel: '셈을 여기서 멈춘다',
+  notYetLabel: NOT_YET_LABEL,
   nextLabel: '밤이 깊었다 — 다음으로',
 }
 
@@ -614,11 +618,15 @@ export function createFunding(root) {
             showScene(parts.siteFig, parts.site, parts.siteCap,
               filledBlocks(state) < 1 ? 'palace-site' : 'palace-rising')
             if (nudgeText !== undefined) parts.nudge.textContent = nudgeText
-            // 붙잡지 않는다 — 못 채운 채로도 멈출 수 있다는 것을 먼저 적어 둔다.
+            // 붙잡는다 — 채워야 어전에 아뢴다(선생님 2026-09-30 「조여」).
+            // 그 사실을 **미리** 적어 둔다. 다 밀어 놓고 나서야 못 넘어간다는 것을
+            // 알게 되면 학생은 속았다고 느낀다.
             parts.doneLine.textContent = met
               ? '일감이 다 찼다. 어전에 아뢸 수 있다.'
-              : '아직 다 차지 않았다 — 여기서 멈추어도 된다.'
-            parts.go.textContent = met ? v.doneLabel : v.giveUpLabel
+              : '일감이 다 차야 어전에 아뢸 수 있다.'
+            // 못 채웠을 때의 글이 「멈춘다」면 학생은 그것이 끝인 줄 안다. 이제는
+            // 끝이 아니라 **다시**이므로, 단추가 그렇게 말해야 한다.
+            parts.go.textContent = met ? v.doneLabel : (v.notYetLabel ?? NOT_YET_LABEL)
             parts.go.classList.toggle('ready', met)
             for (const kind of ['levy', 'mint']) {
               const n = state[kind]
@@ -687,9 +695,19 @@ export function createFunding(root) {
             btn.addEventListener('click', () => nudgeStep(btn.dataset.step, Number(btn.dataset.delta)))
           }
 
-          // 채웠으면 아뢰고, 못 채웠으면 멈춘다. 둘 다 같은 되짚기로 간다 —
-          // 못 채운 것을 벌하지 않는다. 그런 셈도 있었다.
-          parts.go.addEventListener('click', () => reveal())
+          // 선생님(2026-09-30) 「조여」 — 채워야 넘어간다.
+          //
+          // 예전에는 못 채운 채로도 같은 되짚기로 넘어갔다. 그러면 두 지레를 한 번도
+          // 안 밀어 본 학생과 백 칸을 채운 학생이 같은 화면을 본다 — 손으로 하는
+          // 자리가 구경거리가 된다. 이제 못 채우면 되짚기로 가지 않고 판이 닫히며,
+          // main.js 가 「아직」을 띄우고 **처음부터** 다시 연다(systems/minigame.js).
+          //
+          // ⚠ 벌이 아니다. 거들어 주는 말이 판마다 는다(againView) — 그것이 이
+          //   조임을 견딜 수 있게 하는 유일한 장치다.
+          parts.go.addEventListener('click', () => {
+            if (!goalMet(state)) { finish(); return }
+            reveal()
+          })
 
           paint('두 지레를 밀어 보라. 무엇이 움직이는지 여기에 적힌다.')
         }
@@ -720,11 +738,18 @@ export function createFunding(root) {
             <button class="go ready">${v.nextLabel}</button>`
           el.querySelector('.overturn img')?.addEventListener('error', event => { event.target.style.display = 'none' })
           const next = el.querySelector('.go')
-          next.addEventListener('click', () => {
-            el.remove()
-            resolve(result())
-          })
+          next.addEventListener('click', finish)
           next.focus?.()
+        }
+
+        // 이 화면을 나가는 **유일한** 문. 나가는 길이 둘이 되었으므로(채웠을 때의
+        // 되짚기, 아직일 때의 되돌아가기) 빗장도 한 곳에 둔다 — 두 번 눌러도 한 번이다.
+        let done = false
+        function finish() {
+          if (done) return
+          done = true
+          el.remove()
+          resolve(result())
         }
 
         // 넘겨주는 값. 화면에 찍힌 것과 같은 말로 넘긴다 — main.js 가 다시 셈하지 않게.

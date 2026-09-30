@@ -51,6 +51,10 @@ import { installTypeVars } from './type-css.js'
 const DEFAULT_OPEN_LABEL = '생각하며 들어간다'
 const DEFAULT_CLOSE_LABEL = '다음 막으로'
 
+// 접힌 고지에 늘 보이는 한 마디. 「재구성」이라는 낱말이 **접힌 채로도** 보여야
+// 한다 — 눌러야만 보이는 고지는 고지가 아니다(지적 #21).
+export const NOTE_MARK = '※ 재구성 그림'
+
 // 닫는 화면의 머리말. 「이 막에서 당신이 본 것」 — 본 것이지 알아낸 것이 아니다.
 // 이 한 낱말이 화면의 성격을 정한다.
 const SEEN_TITLE = '이 막에서 당신이 본 것'
@@ -69,11 +73,22 @@ const CSS = `
   display:flex;flex-direction:column;align-items:center;justify-content:safe center;
   font-family:var(--face-body,system-ui,sans-serif)}
 
-/* 그림은 판 전체를 채운다. object-fit:cover 라 390px 세로에서도 여백이 생기지 않는다.
-   그림이 없으면 이 판은 아예 만들지 않고, 아래 .actq-dark 의 빛 한 줄만 남는다. */
-.actq-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-  transform:scale(1.06);animation:actq-drift 26s ease-out forwards}
-@keyframes actq-drift{from{transform:scale(1.06)}to{transform:scale(1.14)}}
+/* 그림을 **자르지 않는다** — 선생님(2026-09-29) 지적 #21 「그림이 잘린다」.
+   예전에는 object-fit:cover 한 장이라 화면 비율과 그림 비율이 어긋나는 만큼
+   위아래(또는 좌우)가 잘려 나갔다. 교실 프로젝터(4:3에 가까움)와 손전화 가로
+   (19.5:9)는 비율이 크게 달라, 같은 그림이 기기마다 다른 데가 잘렸다.
+   그림이 이 화면의 절반인데 그 절반을 기기가 제멋대로 자르고 있었다.
+
+   그래서 두 겹으로 깐다:
+     .actq-art-bg  잘려도 되는 **바탕** — 흐리게 깔아 빈 테두리를 메운다
+     .actq-art     그림 **전부**(contain) — 한 귀퉁이도 잘리지 않는다
+   빈 테두리에 먹지를 대는 대신 제 그림을 흐려 까는 까닭은, 먹지를 대면 화면이
+   둘로 쪼개져 보이기 때문이다. 그림이 없으면 둘 다 만들지 않는다. */
+.actq-art-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  filter:blur(26px) saturate(.72) brightness(.55);transform:scale(1.16)}
+.actq-art{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  animation:actq-drift 26s ease-out forwards}
+@keyframes actq-drift{from{transform:scale(1)}to{transform:scale(1.045)}}
 
 /* 그림이 없을 때의 바탕. 가짜 그림을 지어내지 않는다 — 먹빛 위에 빛 두 줄만 긋는다.
    그림 한 장이 아직 없어도 막은 열려야 한다(어느 막의 그림이 비었는지는
@@ -136,16 +151,31 @@ const CSS = `
 .actq-go:hover{background:#3a2d1fe0;border-color:#c89a52}
 .actq-go:focus-visible{outline:2px solid #f0c469;outline-offset:3px}
 
-/* 재구성 고지. 작은 글씨지만 바닥이 있다(ui/type-css.js §4) — 이 화면의 그림은
-   사진이 아니라 그린 것이고, 그 사실이 읽히지 않으면 이 화면은 거짓을 말한 것이 된다. */
-.actq-note{margin:0;font-size:var(--read-small,16px);color:#a79f8e;
+/* 재구성 고지 — 선생님(2026-09-29) 지적 #21: 문장이 길게 깔려 몰입을 깬다.
+   그래서 **문장을 없애지 않고 접는다.** 평소에는 「※ 재구성 그림」 한 마디만
+   보이고, 누르면 온 문장이 펴진다.
+
+   ⚠ 없애지 않는 까닭. 이 게임은 사료 / 해석 / 재구성을 나누는 것을 뼈대로 삼고,
+     그 구분을 시험으로 잠가 두었다. AI 가 그린 그림을 학생이 **기록화로 착각하는
+     것**을 막는 장치이고, 역사 수업에서 이것은 보기 문제가 아니라 참과 거짓의
+     문제다. 접는 것까지가 고칠 수 있는 한계다. */
+.actq-note{margin:0;max-width:min(100%,var(--read-measure,34em))}
+.actq-note summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;
+  gap:6px;padding:4px 10px;border:1px solid #6a6153;border-radius:999px;
+  font-size:var(--read-small,16px);color:#b9b1a0;background:#0d0e10a8;
+  text-shadow:0 1px 6px #000}
+.actq-note summary::-webkit-details-marker{display:none}
+.actq-note summary:hover{border-color:#9a8c6e;color:#e6dcc6}
+.actq-note summary:focus-visible{outline:2px solid #f0c469;outline-offset:3px}
+.actq-note p{margin:8px 0 0;font-size:var(--read-small,16px);color:#a79f8e;
   line-height:var(--read-lh-small,1.72);word-break:keep-all;text-wrap:balance;
-  max-width:min(100%,var(--read-measure,34em));text-shadow:0 1px 6px #000}
+  text-shadow:0 1px 6px #000}
 
 /* 닫는 화면 — 같은 그림을 어둡게 깐다. 같은 자리로 돌아왔다는 것이 눈에 먼저 와야 한다.
    ⚠ 어둡게는 하되 지우지는 않는다. brightness(.4) 로 눌렀더니 5막의 새벽 그림처럼
    본래 어두운 장면은 통째로 먹판이 되어, 「같은 그림이 돌아왔다」가 보이지 않았다. */
-.actq-close .actq-art{filter:brightness(.52) saturate(.8);animation:none;transform:scale(1.08)}
+.actq-close .actq-art{filter:brightness(.52) saturate(.8);animation:none;transform:scale(1.02)}
+.actq-close .actq-art-bg{filter:blur(26px) saturate(.6) brightness(.3)}
 .actq-close .actq-scrim{background:linear-gradient(180deg,#04050799 0%,#040507ad 42%,#040507d9 100%)}
 .actq-close .actq-body{justify-content:flex-start}
 
@@ -207,7 +237,8 @@ export function createActQuestion(root) {
 
         const line = actLine(view)
         el.innerHTML = `
-          ${art ? `<img class="actq-art" src="${art.src}" alt="${art.alt ?? ''}">` : '<div class="actq-dark"></div>'}
+          ${art ? `<img class="actq-art-bg" src="${art.src}" alt="" aria-hidden="true">
+          <img class="actq-art" src="${art.src}" alt="${art.alt ?? ''}">` : '<div class="actq-dark"></div>'}
           <div class="actq-scrim"></div>
           <div class="actq-body">
             ${line ? `<h2 class="actq-act">${line}</h2>` : ''}
@@ -255,10 +286,15 @@ export function createActQuestion(root) {
         body.appendChild(go)
 
         // 그림이 있을 때만 고지를 낸다 — 없는 그림에 대한 고지는 거짓말이다.
+        // 접어 두되 **지우지 않는다**(지적 #21) — 「※ 재구성 그림」은 늘 보인다.
         if (art) {
-          const note = document.createElement('p')
+          const note = document.createElement('details')
           note.className = 'actq-note'
-          note.textContent = view.note ?? art.caption ?? ART_NOTE
+          const mark = document.createElement('summary')
+          mark.textContent = NOTE_MARK
+          const full = document.createElement('p')
+          full.textContent = view.note ?? art.caption ?? ART_NOTE
+          note.append(mark, full)
           body.appendChild(note)
         }
 

@@ -100,13 +100,15 @@ function ensureStyle() {
   styled = true
 }
 
-// view = { title, lines?, read?, reason?, next?, last?, onCopy?() }
+// view = { title, lines?, read?, reason?, next?, last? }
 // ※ lost 는 지운다 — 아무도 채우지 않는 죽은 칸이었다(showActEnd 가 다섯 칸만 골라 넘긴다).
 //   안 쓰는 칸을 남겨 두면 다음 사람이 「채워야 하는데 빠졌다」고 읽는다. 이 막에서
 //   무엇을 잃었는지는 마지막 화면(showFinal)이 lostWithReason() 으로 보여 준다.
 //   tests/full-run.test.js 의 view 조립 검사가 showActEnd 를 함께 본다.
 // reason 은 학생이 쓴 글이다 — textContent 로만 넣는다, innerHTML 에 절대 섞지 않는다.
-// onCopy 가 있으면 「내 기록 복사」 단추를 낸다 — 1단계의 판정을 그대로 잇는다.
+// ※ 「내 기록 복사」 단추는 없다 — 선생님(2026-09-29) 지적 #22 로 걷어냈다.
+//   기록을 짓는 셈(main.js buildRecordText)은 그대로 남아 있다. 그 글을 어디에
+//   둘지(멈춤 화면? 교사용 화면? 아예 없앨지)는 선생님 말씀을 기다리는 중이다.
 export function createActEnd(root) {
   ensureStyle()
 
@@ -130,13 +132,6 @@ export function createActEnd(root) {
           el.append(label, body)
         }
 
-        if (view.onCopy) {
-          const copyBtn = document.createElement('button')
-          copyBtn.textContent = '내 기록 복사'
-          copyBtn.addEventListener('click', () => view.onCopy())
-          el.appendChild(copyBtn)
-        }
-
         root.appendChild(el)
         // 마지막 화면은 남긴다. 게임 오버 화면이 아니라 막의 끝이다 — 전역 제약
         if (view.last) return
@@ -149,10 +144,9 @@ export function createActEnd(root) {
 
     // 1차시(1~3막) 전체가 끝난 뒤 남기는 마지막 화면. D1·D2 가 무엇을 지웠는지,
     // 그래서 다음 막의 어전회의에서 무엇이 열리지 않게 되었는지를 이름으로 되돌려준다
-    // (설계서 9장). onCopy 가 있으면 「내 기록 복사」 단추를 낸다(2단계 Important 2) —
-    // 이 화면이 게임의 유일한 끝이라 다른 데서 다시 복사할 길이 없다. 저장을 지우지
-    // 않은 채로 여기 오므로, 잘못된 창에 붙여넣었어도 다시 눌러 다시 복사할 수 있다.
-    showFinal(state, onCopy) {
+    // (설계서 9장). 복사 단추는 지적 #22 로 걷어냈다 — 저장은 그대로 두므로
+    // 학생이 「처음부터」를 직접 고를 때까지 이 화면은 다시 열 수 있다.
+    showFinal(state) {
       return new Promise(() => {   // 마지막 화면이다. 닫지 않는다.
         const kept = state.sources.held.map(id => sourceById(id)).filter(Boolean)
         const burnt = lostWithReason(state, 'fire').map(id => sourceById(id)).filter(Boolean)
@@ -199,12 +193,6 @@ export function createActEnd(root) {
           el.appendChild(box)
         }
 
-        if (onCopy) {
-          const copyBtn = document.createElement('button')
-          copyBtn.textContent = '내 기록 복사'
-          copyBtn.addEventListener('click', () => onCopy())
-          el.appendChild(copyBtn)
-        }
       })
     },
   }

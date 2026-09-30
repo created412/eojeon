@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { resolveArt, actLine } from '../../src/ui/act-question.js'
+import { resolveArt, actLine, NOTE_MARK } from '../../src/ui/act-question.js'
 import { ACT_QUESTION_ART, ART_NOTE } from '../../src/ui/act-question-data.js'
 
 // 막마다 하나씩 놓이는 질문 화면(2026-09-26 선생님: 「막마다 질문은 전체화면으로,
@@ -111,12 +111,28 @@ describe('학생이 본 것을 적되, 학생 대신 대답하지 않는다', ()
 describe('재구성을 사실로 읽히게 두지 않는다', () => {
   it('그림 밑에 고지가 붙는다', () => {
     expect(src).toContain("note.className = 'actq-note'")
-    expect(src).toMatch(/view\.note \?\? art\.caption \?\? ART_NOTE/)
   })
 
   it('고지 문구가 재구성임을 말한다', () => {
     expect(ART_NOTE).toContain('재구성')
     expect(ART_NOTE).toContain('사진')
+  })
+
+  // 선생님(2026-09-29) 지적 #21 로 고지를 **접었다**. 접는 것과 없애는 것은 다르다 —
+  // 접힌 채로도 「재구성」이라는 낱말이 보여야 고지다. 눌러야만 보이는 고지는 고지가 아니다.
+  it('접어 두어도 「재구성」이 겉에 남는다', () => {
+    expect(NOTE_MARK).toContain('재구성')
+    expect(src).toContain('mark.textContent = NOTE_MARK')
+  })
+
+  it('접은 것이지 지운 것이 아니다 — 온 문장이 여전히 화면에 실린다', () => {
+    expect(src).toMatch(/full\.textContent = view\.note \?\? art\.caption \?\? ART_NOTE/)
+    expect(src).toContain("note.append(mark, full)")
+  })
+
+  it('고지를 열고 닫는 자리가 눌러지는 것이어야 한다', () => {
+    expect(src).toContain("createElement('details')")
+    expect(src).toContain("createElement('summary')")
   })
 
   it('실려 있는 그림마다 제 몫의 고지와 대체글이 있다', () => {

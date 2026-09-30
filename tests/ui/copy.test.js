@@ -136,19 +136,14 @@ describe('복사가 실패하면 글을 화면에 띄워 준다', () => {
   })
 })
 
-// main.js 쪽 배선 — 성공 갈래만 이어 붙이면 이 모듈이 있으나 마나다.
-describe('「내 기록 복사」가 성패를 보고 갈라진다', () => {
+// main.js 쪽 배선은 **더 이상 없다.** 선생님(2026-09-29) 지적 #22 로 「내 기록 복사」
+// 단추를 걷어냈고, 그래서 copyRecord() 도 사라졌다. 이 모듈(ui/copy.js)과 글을 짓는
+// 셈(main.js buildRecordText)은 남겨 두었다 — 없애라고 하신 것은 학생 화면의 단추이고,
+// 그 글을 어디에 둘지는 여쭙는 중이다. 다시 이을 때 이 모듈이 그대로 쓰인다.
+//
+// 아래 하나는 남긴다: 옛 조용한 복사 경로가 되살아나지 않는지를 본다.
+describe('옛 복사 경로가 되살아나지 않는다', () => {
   const main = readFileSync(join('src', 'main.js'), 'utf8')
-
-  it('copyRecord 가 실패하면 다른 배너를 띄우고 글상자를 연다', () => {
-    const at = main.indexOf('function copyRecord')
-    expect(at, 'copyRecord 를 못 찾았다').toBeGreaterThan(-1)
-    const body = main.slice(at, main.indexOf('\n  }', at))
-    expect(body).toContain('copyText(')
-    expect(body).toContain('COPY_OK')
-    expect(body).toContain('COPY_FAILED')
-    expect(body).toContain('openManualCopy(')
-  })
 
   it('main.js 에 조용히 넘어가는 옛 복사 경로가 남아 있지 않다', () => {
     // 주석은 걷어 내고 본다 — 바로 위 주석이 옛 결함을 그 이름으로 설명한다.

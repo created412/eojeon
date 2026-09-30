@@ -44,11 +44,25 @@ describe('4막 무위영 — 겨와 모래를 손으로 골라낸다', () => {
   })
 
   // 손가락이 마음대로 움직이지 않는 학생이 이 화면에서 갇히면 그 자리에서 수업이 멈춘다.
-  it('아무도 갇히지 않는다 — 건너뛸 단추가 있고, 단추이므로 키보드로도 눌린다', () => {
-    expect(ration).toContain('손이 불편하면 건너뛴다')
-    expect(ration).toMatch(/<button class="skip">손이 불편하면 건너뛴다<\/button>/)
+  // 선생님(2026-09-30) 「조여」 — 거저 넘어가는 길을 닫았다. 다만 **갇히지 않는다**는
+  // 것은 그대로다: 거드는 단추는 남아 있고, 한 알만 집으면 열린다. 한 알은 누구나
+  // 집을 수 있다(누른 채 끌기만 해도 쓸린다).
+  it('거드는 길이 남아 있다 — 손이 불편해도 갇히지 않는다', () => {
+    expect(ration).toContain('손이 불편하다 — 남은 것을 쓸어 담는다')
     expect(ration).toContain('pickAll')
     expect(ration).toContain('.ration button:focus-visible')
+  })
+
+  it('거저 넘어갈 수는 없다 — 한 알도 안 집었으면 그 단추가 없다', () => {
+    // 판이 열릴 때는 숨어 있고(hidden), 집는 데 성공한 뒤에 열린다.
+    expect(ration).toMatch(/<button class="skip" hidden>/)
+    expect(ration).toContain('assist.hidden = false')
+    // 그 줄이 「집는 데 성공했을 때」 안에 있어야 한다 — 쌀을 눌러 되돌아가는
+    // 갈래(result.taken 이 거짓)보다 뒤에 있는지를 본다.
+    const at = ration.indexOf('assist.hidden = false')
+    const bail = ration.indexOf('if (!result.taken)')
+    expect(bail).toBeGreaterThan(-1)
+    expect(at).toBeGreaterThan(bail)
   })
 
   it('쌀을 눌러도 벌하지 않는다 — 한 줄 알려 줄 뿐이다', () => {
