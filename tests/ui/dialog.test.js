@@ -82,15 +82,45 @@ describe('사료 카드 — 기록과 해석을 눈으로 가른다', () => {
   it('기록이 해석보다 작아 보이지 않는다', () => {
     // 우리 말이 기록보다 커 보이면 학생은 우리 말을 기록으로 읽는다.
     // 예전에 실제로 그랬다 — meaning 이 --read-lead, excerpt 가 --read-body 였다.
-    const sizeOf = cls => {
-      const block = src.slice(src.indexOf(`.card .${cls}{`))
+    // 기록은 이제 제 낱장 안에 있다(.card .record .excerpt) — 선생님 지적으로
+    // 종이를 따로 떼어 낸 뒤의 자리다.
+    const sizeOf = sel => {
+      const at = src.indexOf(sel + '{')
+      if (at < 0) return undefined
+      const block = src.slice(at)
       return block.slice(0, block.indexOf('}')).match(/font-size:var\((--read-[a-z]+)/)?.[1]
     }
     const RANK = ['--read-caption', '--read-small', '--read-body', '--read-lead', '--read-title']
-    const excerpt = sizeOf('excerpt')
-    const meaning = sizeOf('meaning')
+    const excerpt = sizeOf('.card .record .excerpt')
+    const meaning = sizeOf('.card .meaning')
     expect(excerpt, '기록의 글자 크기를 못 찾았다').toBeTruthy()
     expect(meaning, '해석의 글자 크기를 못 찾았다').toBeTruthy()
     expect(RANK.indexOf(excerpt)).toBeGreaterThanOrEqual(RANK.indexOf(meaning))
+  })
+
+  it('기록이 제 낱장 위에 놓인다 — 카드 바탕과 다른 물건이다', () => {
+    // 선생님(2026-09-30, 두 번째): 「종이 질감 옛날 거로 기록에 적힌 것을 눈에 보이게」
+    // 카드 전체가 이미 한지라, 기록을 **따로 떼어** 놓지 않으면 구분이 안 된다.
+    expect(src).toContain('<div class="record">')
+    const at = src.indexOf('.card .record{')
+    expect(at, '기록 낱장의 결이 없다').toBeGreaterThan(-1)
+    const block = src.slice(at, src.indexOf('.card .record::after'))
+    expect(block, '그림자가 없으면 얹힌 것으로 안 보인다').toContain('box-shadow')
+    expect(block, '얼룩이 없으면 옛 종이로 안 보인다').toContain('radial-gradient')
+    expect(block, '가장자리를 손으로 자른 결이 없다').toContain('clip-path')
+  })
+
+  it('해석은 종이가 아니다 — 그림자도 결도 없다', () => {
+    const at = src.indexOf('.card .reading{')
+    const block = src.slice(at, src.indexOf('}', at))
+    expect(block).not.toContain('box-shadow')
+    expect(block).not.toContain('radial-gradient')
+  })
+
+  it('종이를 그림으로 싣지 않는다 — 용량이 늘지 않는다', () => {
+    const at = src.indexOf('.card .record{')
+    const block = src.slice(at, src.indexOf('.card .reading{'))
+    expect(block).not.toContain('data:image')
+    expect(block).not.toContain('url(')
   })
 })

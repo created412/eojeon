@@ -24,31 +24,60 @@ const CSS = `
 .card .origin{font-size:var(--read-small,13px);color:var(--ink-quiet,#5e5849);margin-bottom:16px;
   line-height:var(--read-lh-small,1.6)}
 /* ── 기록과 해석을 눈으로 가른다 ────────────────────────────────────────
-   선생님(2026-09-30): 「사료는 원문이고 그에 대한 설명이 밑에 있잖아. 둘이
-   구분이 안 간다는 말이었어.」
+   선생님(2026-09-30, 두 번째): 「기록에 적힌 것이랑 해석이 구분이 안 된다고.
+   종이 질감 옛날 거로 기록에 적힌 것을 눈에 보이게 만들어.」
 
-   이것은 꾸밈 문제가 아니다. 이 게임의 뼈대가 **사료 / 해석 / 재구성**을 나누는
-   것인데, 정작 사료 카드에서 그 둘이 한 덩어리로 읽히고 있었다. 학생이
-   「기록에 그렇게 적혀 있다」와 「우리가 그렇게 읽는다」를 구별하지 못하면,
-   이 카드는 구분을 가르치는 것이 아니라 흐리는 것이 된다.
+   첫 번째 손질(이름표·글꼴·옅은 바탕)로는 모자랐다. 까닭이 분명하다 —
+   **카드 전체가 이미 한지 바탕**이다. 종이 위에 종이를 올려 놓았으니 구분이
+   될 리가 없었다. 그래서 이번에는 **물건을 둘로 나눈다**:
 
-   그래서 셋을 다르게 한다 — **이름표 · 바탕 · 글꼴**.
-     기록  제목용 글꼴, 짙은 먹, 왼쪽에 굵은 줄, 종이 그대로
-     해석  본문 글꼴, 옅은 먹, 가로줄 아래 한 칸 들어간 자리
-   ⚠ 예전에는 해석이 오히려 **더 컸다**(--read-lead > --read-body). 기록보다
-     우리 말이 커 보이면 학생은 우리 말을 기록으로 읽는다. 뒤집어 둔다. */
+     기록  카드 위에 **따로 놓인 한 장의 옛 종이**. 더 누렇고, 얼룩이 앉았고,
+           세 번 접힌 자국이 있고, 그림자를 드리우고, 살짝 비뚤다. 붉은 도장이 찍혀 있다.
+     해석  **종이가 아니다.** 질감도 그림자도 없는 납작한 자리에 적은 우리 메모다.
+
+   이제 둘은 「글씨체가 다른 두 문단」이 아니라 **다른 물건**이다.
+   ⚠ 종이는 CSS 로만 짓는다 — 그림을 새로 싣지 않는다(용량이 한 바이트도 안 는다).
+
+   옛 장계 그림(assets/paper/janggye-open.png)의 결을 본떴다: 누런 닥종이,
+   번진 얼룩, 가로 접힌 자국 셋, 모서리의 붉은 인장. */
 .card .part-label{display:block;font-size:var(--read-caption,11px);letter-spacing:.18em;
-  color:var(--ink-quiet,#6b6558);margin:0 0 6px}
-.card .excerpt{border-left:4px solid #8a6a44;padding:4px 0 6px 18px;margin:0 0 6px;
-  font-family:var(--face-display,serif);color:var(--ink-strong,#23201a);
-  font-size:var(--read-lead,17px);line-height:var(--read-lh-body,1.9);
-  white-space:pre-wrap;word-break:keep-all}
-.card .gloss{font-size:var(--read-small,13px);color:var(--ink-quiet,#6b6558);margin:0 0 18px;
-  padding-left:22px;line-height:var(--read-lh-small,1.6)}
-.card .reading{margin:0 0 4px;padding:14px 16px 2px;border-top:1px solid #8a6a4433;
-  background:#8a6a440d;border-radius:2px}
+  color:var(--ink-quiet,#6b5a3e);margin:0 0 6px}
+
+/* 기록 — 카드 위에 놓인 낱장 */
+.card .record{position:relative;margin:0 2px 20px;padding:20px 22px 22px;
+  border-radius:1px;transform:rotate(-.35deg);
+  color:#2a2418;
+  /* 누런 닥종이 + 번진 얼룩 + 가로 접힌 자국 셋 */
+  background-color:#ded0ab;
+  background-image:
+    linear-gradient(180deg,#0000 0 32%,#8a6a4426 32.4%,#0000 33%),
+    linear-gradient(180deg,#0000 0 63%,#8a6a441f 63.4%,#0000 64%),
+    radial-gradient(60% 40% at 18% 22%,#a8854c2e,#0000 70%),
+    radial-gradient(45% 35% at 82% 72%,#9c7c4428,#0000 70%),
+    radial-gradient(30% 25% at 62% 12%,#8a6a4426,#0000 70%);
+  box-shadow:0 6px 16px #3a2d1a33, 0 1px 0 #fff6, inset 0 0 40px #b8985e2b;
+  /* 손으로 자른 가장자리 — 네 변이 조금씩 다르게 들어간다 */
+  clip-path:polygon(0.4% 1.2%,99.3% 0%,100% 98.6%,0.7% 100%)}
+/* 붉은 인장 — 옛 장계 그림의 모서리에 찍혀 있던 그것이다. 글자를 지어 넣지
+   않는다(무슨 도장이었는지 모른다). 눌러 찍은 자국처럼 가장자리만 고르지 않게. */
+.card .record::after{content:'';position:absolute;right:15px;top:13px;width:27px;height:27px;
+  border:2.5px solid #9e2f1cb0;border-radius:2px;background:#9e2f1c1a;
+  box-shadow:inset 0 0 0 3px #ded0ab, inset 0 0 0 5.5px #9e2f1c8c;
+  opacity:.85;transform:rotate(3deg)}
+.card .record .excerpt{margin:0;padding:0;border:none;
+  font-family:var(--face-display,serif);color:#241d12;
+  font-size:var(--read-lead,17.5px);line-height:var(--read-lh-body,1.95);
+  white-space:pre-wrap;word-break:keep-all;max-width:calc(100% - 34px)}
+.card .record .part-label{color:#6b5530}
+
+/* 해석 — 종이가 아니다. 납작하고, 그림자가 없고, 결도 없다. */
+.card .reading{margin:0;padding:14px 16px 12px;border-left:3px solid #6b6558;
+  background:#5e58480f}
+.card .reading .part-label{color:#5e5849}
 .card .meaning{font-size:var(--read-body,15px);line-height:var(--read-lh-body,1.75);
-  color:var(--ink-quiet,#4a453a)}
+  color:#413c31}
+.card .gloss{font-size:var(--read-small,13px);color:var(--ink-quiet,#6b6558);margin:0 0 16px;
+  padding-left:2px;line-height:var(--read-lh-small,1.6)}
 .codex .sub{font-size:var(--read-small,13px);color:var(--ink-quiet,#5e5849);margin:-8px 0 14px}
 .card .staged{margin-top:18px;border:1px dashed #8a6a44;padding:11px 14px;
   font-size:var(--read-small,13px);line-height:var(--read-lh-small,1.6);color:var(--ink-quiet,#5e5849)}
@@ -159,8 +188,10 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
         <div class="source-layout"><div class="source-copy">
         <h3>${card.title}</h3>
         <div class="origin">${card.origin}</div>
-        <span class="part-label">${RECORD_LABEL}</span>
-        <p class="excerpt">${card.excerpt}</p>
+        <div class="record">
+          <span class="part-label">${RECORD_LABEL}</span>
+          <p class="excerpt">${card.excerpt}</p>
+        </div>
         ${gloss}
         <div class="reading">
           <span class="part-label">${READING_LABEL}</span>
