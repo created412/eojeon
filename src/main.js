@@ -45,7 +45,7 @@ import { createDispatchMap } from './ui/dispatch-map.js'
 import { createLossScreen } from './ui/loss-screen.js'
 import { createOrders } from './ui/orders-ui.js'
 import { createBrush } from './ui/brush.js'
-import { createFunding } from './ui/funding.js'
+import { createRebuild } from './ui/rebuild.js'
 import { createAgain } from './ui/again.js'
 import { untilCleared } from './systems/minigame.js'
 import { createActQuestion } from './ui/act-question.js'
@@ -283,9 +283,9 @@ export function pickUpPacket({ palaceDef, cardIds, taken, state, act = Infinity 
 // DOM 도 flow 도 모른다 — buildRecordText() 와 함께 Node 에서 그대로 구동해 검증한다.
 export function describeDecision(act, decision) {
   // 「돈을 만든다」(1막) — 고른 것이 아니라 **학생이 민 셈**이 기록에 남는다.
-  // choiceId 는 'funding:levy6+mint6' 꼴이고, 읽을 수 있는 한 줄은 reason 에 들어 있다
-  // (ui/funding.js 의 result.summary). 여기서는 물음만 얹는다.
-  if (decision.choiceId.startsWith('funding:')) {
+  // choiceId 는 'rebuild:emptied8+mints2' 꼴이고, 읽을 수 있는 한 줄은 reason 에
+  // 들어 있다(ui/rebuild.js 의 result.summary). 여기서는 물음만 얹는다.
+  if (decision.choiceId.startsWith('rebuild:') || decision.choiceId.startsWith('funding:')) {
     const beat = beatsOf(act).find(b => b.kind === 'funding')
     return { question: beat?.question ?? '이 비용을 어디서 만드는가', text: decision.reason || '(셈을 남기지 않음)' }
   }
@@ -339,7 +339,7 @@ export function buildRecordText(state, acts) {
       // 2026-09-27 — 「남긴 말」이 아니다. 이유 쓰기 칸을 걷어 낸 뒤(ui/council-ui.js)
       // 이 자리에 오는 것은 학생이 **한 일**을 적은 문장이다: 어느 기록을 근거로
       // 삼았고 무엇이 일어나리라 보았는가(systems/council-evidence.js recordSentence),
-      // 또는 백 칸을 어떻게 채웠는가(ui/funding.js summary).
+      // 또는 경복궁을 어떻게 올렸는가(ui/rebuild.js summary).
       `적어 둔 것 — ${d.reason || '(없음)'}`,
     ].join('\n')
   })
@@ -549,7 +549,9 @@ export function boot(root) {
   const lossScreen = createLossScreen(root)
   const orders = createOrders(root)
   const brush = createBrush(root)
-  const funding = createFunding(root)
+  // 「경복궁을 짓는다」 — 선생님(2026-09-30)이 세 번째로 퇴짜를 놓아 새로 지은 판.
+  // 예전 판(ui/funding.js)은 지레 둘을 끝까지 밀면 무조건 이겨서, 고를 것이 없었다.
+  const rebuild = createRebuild(root)
   // 손으로 하는 장면을 못 해냈을 때 사이에 서는 화면(선생님 2026-09-30 「조여」).
   const again = createAgain(root)
   const actQuestion = createActQuestion(root)
@@ -1635,20 +1637,8 @@ export function boot(root) {
     return flow.state
   }
 
-  // 「돈을 만든다」에서 못 채웠을 때 거드는 말. 판마다 하나씩 는다(againView).
-  //
-  // ⚠ 거드는 말이 **어느 배합을 밀라고 시키지 않는다.** 이 판에는 이기는 배합이
-  //   없고(systems/funding.js 머리말) 그것이 이 장면이 가르치는 바다. 그래서
-  //   「무엇이 움직이는가」를 가리킬 뿐, 답을 주지 않는다.
-  const FUNDING_AGAIN = {
-    reason: '백 칸을 다 채우지 못했다.',
-    hint: '두 지레를 다 써 보라. 한 쪽만으로는 벽에 닿기 어렵다.',
-    strong: '당백전을 밀면 돈은 단번에 늘지만, 결승선도 함께 오른쪽으로 물러난다 — 그 둘을 견주며 밀어야 한다.',
-  }
-
-  // 「돈을 만든다」(1막 끝) — 예전의 고르는 어전회의를 대신한다(ui/funding.js).
-  // 학생이 두 지레를 밀어 백 칸을 채우고, 그 셈이 끝난 뒤에 아버지가 뒤집는다.
-  // 고른 값 대신 **학생이 한 셈 한 줄**(result.summary)을 기록에 남긴다 — 예전의
+  // 「경복궁을 짓는다」(1막 끝) — 학생이 고을에서 걷거나 돈을 찍어 열 채를 올린다.
+  // 고른 값 대신 **학생이 치른 것 한 줄**(result.summary)을 기록에 남긴다 — 예전의
   // 「이유 쓰기」 자리를 그것이 대신한다(buildRecordText 의 describeDecision 참고).
   async function playFunding(beat) {
     flow.setPhase('beat')
@@ -1656,21 +1646,26 @@ export function boot(root) {
     // 선생님(2026-09-30) 「조여」 — 백 칸을 채워야 넘어간다. 못 채우면 판이 닫히고
     // 「아직」이 뜬 뒤 **처음부터** 다시 열린다(systems/minigame.js untilCleared).
     // 판은 매번 새로 열리므로 지레도 처음 자리로 돌아간다.
-    let result = null
-    await untilCleared(
-      async () => {
-        result = await funding.open({ ...beat, onPush: () => audio.play('pick') })
-        return { cleared: result.goalMet, reason: FUNDING_AGAIN.reason }
-      },
-      view => again.show(view),
-      FUNDING_AGAIN,
-    )
+    // 이 판은 **끝까지 가야만 끝난다** — 열 채를 다 올리기 전에는 나가는 단추가
+    // 없다(ui/rebuild.js). 그래서 「아직」 화면이 따로 필요 없다: 못 해낸 채로
+    // 빠져나갈 길 자체가 없다. 갇히지도 않는다 — 찍기만 해도 반드시 끝난다
+    // (systems/rebuild.js 의 시험이 전수로 잰다).
+    const result = await rebuild.open({
+      title: beat.title ?? '경복궁을 짓는다',
+      quote: beat.quote,
+      actual: beat.actualLine,
+      lines: beat.lines,
+      overturn: beat.overturn,
+      overturnBy: beat.overturnBy,
+      nextLabel: beat.nextLabel,
+      onTap: () => audio.play('pick'),
+    })
     audio.play(councilSound('levy'))
     flow.state = {
       ...flow.state,
       decisions: [...flow.state.decisions, {
         actIndex: flow.actIndex,
-        choiceId: `funding:levy${result.levy}+mint${result.mint}`,
+        choiceId: `rebuild:emptied${result.emptied}+mints${result.mints}`,
         reason: result.summary,
       }],
     }

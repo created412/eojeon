@@ -145,7 +145,7 @@ const CSS = `
 .howto .howto-note{font-size:var(--read-caption,12.5px);color:#6f6a5e;line-height:1.6;
   max-width:min(560px,92vw);text-align:center;word-break:keep-all}
 /* 가로로 누운 손전화 — 그림과 글을 옆으로 벌린다. 위아래로 쌓으면 단추가 창 밖으로 나간다
-   (ui/funding.js 에서 겪은 그 일). 재 보고 정한 값이다. */
+   (옛 셈판에서 겪은 그 일). 재 보고 정한 값이다. */
 @media(max-height:560px){
   .howto{gap:9px;padding:10px 14px}
   .howto h2{display:none}

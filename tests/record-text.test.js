@@ -15,7 +15,7 @@ const act1 = ACTS[1]   // '양요' — council-byeongin · orders 는 없다(훈
 
 describe('describeDecision — 결정 하나를 질문·고른 문구로 되짚는다', () => {
   // 2026-09-26 — 1막의 고르는 어전회의가 「돈을 만든다」 셈판으로 바뀌었다. 고른 값
-  // 대신 학생이 민 셈 한 줄(reason)이 기록에 남는다(ui/funding.js 의 summary).
+  // 대신 학생이 민 셈 한 줄(reason)이 기록에 남는다(ui/rebuild.js 의 summary).
   it('돈을 만든 셈은 물음과 학생이 민 한 줄을 그대로 돌려준다', () => {
     const { question, text } = describeDecision(act0,
       { actIndex: 0, choiceId: 'funding:levy6+mint6', reason: '원납전을 6차례 걷고, 당백전을 6칸 찍었다.' })

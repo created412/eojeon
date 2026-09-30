@@ -124,7 +124,7 @@ const VERB = {
   alone: ['혼자 서 있고', '혼자 서 있다'],
   audience: ['아뢰는 것을 듣고', '아뢰는 것을 듣는다'],
   council: ['어전회의에서 정하고', '어전회의에서 정한다'],
-  funding: ['셈으로 돈을 만들고', '셈으로 돈을 만든다'],
+  funding: ['경복궁을 짓고', '경복궁을 짓는다'],
   orders: ['훈령을 적고', '훈령을 적어 보낸다'],
   brush: ['붓으로 쓰고', '붓으로 직접 쓴다'],
   edict: ['국상 절차를 살피고', '국상 절차를 살핀다'],
@@ -173,7 +173,7 @@ const NOTE = {
   council: lead => (lead.frozen
     ? `어전회의가 열리지만 임금은 말하지 못한다 — ${lead.council?.question ?? ''}`
     : `${lead.council?.question ?? '무엇을 할 것인가'} — 하나를 고르고 그렇게 정한 이유를 쓴다`),
-  funding: lead => `${tidyTitle(lead.title)} — ${lead.question ?? ''} · 두 지레를 밀어 백 칸을 채운다`,
+  funding: lead => `${tidyTitle(lead.title)} — 고을에서 걷거나 돈을 찍어 열 채를 올린다`,
   orders: lead => `${lead.question ?? '무엇을 적어 보낼 것인가'} — 조항을 고르고 이유를 쓴다`,
   brush: lead => {
     const n = lead.glyphs?.length ?? 0
@@ -350,7 +350,7 @@ export function actMap(act) {
 //
 //   map: [
 //     { kind: 'note', group: 'read', title: '글을 읽는다', note: '「1863 겨울, 운현궁」 한 장' },
-//     { kind: 'funding', group: 'hands', title: '셈으로 돈을 만든다', note: '…', handle: true },
+//     { kind: 'funding', group: 'hands', title: '경복궁을 짓는다', note: '…', handle: true },
 //   ]
 //
 //   map: {
