@@ -195,7 +195,10 @@ describe('390px 과 1920px, 그리고 움직임을 줄인 학생', () => {
   })
   it('넘치면 위부터 스크롤된다 — 가운데 정렬에 갇히지 않는다(ui/act-end.js 와 같은 함정)', () => {
     expect(src).toContain('justify-content:safe center')
-    expect(src).toMatch(/\.actq-body\{[^}]*overflow:auto/)
+    // 구르는 것은 세로뿐이다. 그리고 글 상자가 화면 너비 전부를 차지한다 — 예전에는 상자가
+    // 1040px 이라 스크롤 막대가 화면 한복판에 섰다(선생님 2026-10-06 「우측에 스크롤바가 들어와 있어」).
+    expect(src).toMatch(/[.]actq-body[{][^}]*overflow-y:auto/)
+    expect(src).not.toMatch(/[.]actq-body[{][^}]*max-width:1040px/)
   })
 })
 

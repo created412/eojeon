@@ -85,11 +85,12 @@ describe('CRITICAL 1 — advance() 뒤에 저장하면 이어하기가 끝난 �
 // 리뷰가 짚은 그 증상(결정이 두 번 쌓인다)이 재현된다.
 describe('대조군 — advance() 앞에서 저장하면(예전 버그) 실제로 어전회의가 중복된다', () => {
   it('council 비트 직후 · advance 전에 저장하고 이어하면 같은 회의가 다시 열려 결정이 두 번 남는다', () => {
-    // 1막의 어전회의가 셈판으로 바뀌어(2026-09-26) 여기서는 2막의 회의로 본다.
-    const act = ACTS[1]
+    // 1막의 어전회의가 셈판으로(2026-09-26), 2막의 회의가 정족산성 판으로(2026-10-06) 바뀌어
+    // 여기서는 3막의 회의로 본다.
+    const act = ACTS[2]
     const councilBeat = beatsOf(act).find(b => b.kind === 'council')
     const seed = { ...createState(), palace: act.palace, control: act.control }
-    const started = enterAct(seed, act, 1)
+    const started = enterAct(seed, act, 2)
 
     let state = started
     while (!isActOver(state, act)) {
@@ -202,24 +203,14 @@ describe('3단계 — 거울이 실제 진행과 같은 비트를 지나간다 (
     }
   }
 
-  // 위 시험이 정말로 조건 비트를 붙들고 있는지 — 두 길이 실제로 다른 비트를 지나간다.
-  // 여기가 같아져 버리면 위 시험은 아무것도 안 지키는 채로 초록불이 된다.
-  // (예전에는 4막의 대조전 촉박으로 쟀다 — 왕비의 줄과 함께 걷어 내어 5막의 촉박으로 잰다.)
-  it('두 길이 실제로 다른 비트를 지나간다 — 위 시험이 헛것이 아님을 보인다', () => {
-    const act = ACTS.find(a => a.id === 'gapsin')
-    const idx = ACTS.indexOf(act)
-    const run = (caught, flags) => {
-      const invoked = []
-      runAct(act, enterAct({ ...createState(), flags, palace: act.palace, control: act.control }, act, idx),
-        { invoked, caught })
-      return invoked
+  // 예전에는 여기서 「두 길이 실제로 다른 비트를 지나간다」를 보였다. 2026-10-06 에 촉박이
+  // 「늦으면 다시」로 바뀌어 깃발로 갈리는 비트가 한 장도 없다 — 그 사실을 붙든다. 조건
+  // 비트가 다시 생기면 이 시험이 울고, 그때 위의 두 길 견주기가 다시 뜻을 갖는다.
+  it('지금은 깃발로 갈리는 비트가 없다 — 촉박은 늦으면 다시 한다', () => {
+    for (const act of ACTS) {
+      expect(beatsOf(act).filter(b => b.whenFlag || b.unlessFlag), act.id).toEqual([])
+      expect(beatsOf(act).filter(b => b.caughtFlag), act.id).toEqual([])
     }
-    const ok = run(false, {})
-    const late = run(true, { 'flight-caught': true })
-    expect(ok).not.toEqual(late)
-    expect(ok).toContain('gapsin-flight-self')        // 스스로 빠져나온 학생에게만 온다
-    expect(late).toContain('gapsin-flight-caught')    // 이끌려 나온 학생에게만 온다
-    expect(late).not.toContain('gapsin-flight-self')
   })
 })
 

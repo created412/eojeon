@@ -12,10 +12,13 @@ const GROUPS = ['read', 'walk', 'listen', 'hands']
 
 describe('다섯 막이 모두 읽히는 띠 안에 든다', () => {
   for (const [i, act] of ACTS.entries()) {
-    it(`${i + 1}막 ${act.id} — 4~7 걸음`, () => {
+    // 4~7 → 4~8 (2026-10-06). 3막이 여덟이다 — 아버지가 물러난 뒤의 막이라 학생이 손으로 정하는
+    // 자리가 넷(서계의 선택 · 훈령 · 조약문 뜯어 읽기 · 어전회의)이고, 손으로 하는 걸음은 합치지
+    // 않는다. 화면은 넉 줄 두 단으로 여덟까지 한 판에 들어온다(ui/act-map.js --actmap-cols).
+    it(`${i + 1}막 ${act.id} — 4~8 걸음`, () => {
       const steps = actMap(act)
       expect(steps.length, `${act.id} 가 ${steps.length} 걸음이다`).toBeGreaterThanOrEqual(4)
-      expect(steps.length, `${act.id} 가 ${steps.length} 걸음이다`).toBeLessThanOrEqual(7)
+      expect(steps.length, `${act.id} 가 ${steps.length} 걸음이다`).toBeLessThanOrEqual(8)
     })
   }
 })

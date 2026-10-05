@@ -9,9 +9,15 @@ import { PROP_SPECS, buildYardProp, buildYardProps, applyYear } from '../../src/
 
 it('마당에 놓는 물건은 모두 모델과 크기 지정이 있다', () => {
   for (const [id, spec] of Object.entries(PROP_SPECS)) {
+    expect(spec.height, id).toBeGreaterThan(0.5)
+    // 그 자리에서 짓는 물건(후원 뒷문)은 내려받는 모델이 없다 — 그 대신 실제로 지어져야 한다.
+    if (spec.procedural) {
+      const built = buildYardProp(THREE, { id, x: 0, z: 0 })
+      expect(built?.children.length, id + ' 이 빈 채로 선다').toBeGreaterThan(3)
+      continue
+    }
     expect(PROP_MODELS[id], id).toBeTruthy()
     expect(PROP_MODELS[id].startsWith('data:model/gltf-binary;base64,'), id).toBe(true)
-    expect(spec.height, id).toBeGreaterThan(0.5)
   }
 })
 

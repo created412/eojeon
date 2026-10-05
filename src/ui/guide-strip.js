@@ -17,8 +17,9 @@
 //
 // 판 쪽 CSS 를 열두 군데 고치는 대신 여기 한 곳에서 규칙을 건다 — 새 판을 만들면
 // 아래 PANELS 에 이름 하나만 더하면 된다.
+// 'veil' 은 사료 카드·사초함이다 — 띠가 카드의 제목을 덮고 있었다(2026-10-06 화면에서 확인).
 const PANELS = ['note', 'dispatch', 'council', 'orders', 'rebuild', 'brush',
-  'loss', 'move', 'ration', 'cquiz']
+  'loss', 'move', 'ration', 'cquiz', 'veil', 'seekdoc', 'actbg', 'study', 'dilemma', 'jeongjok', 'trail']
 
 const GAP = 12   // 띠와 본문 사이에 두는 숨
 

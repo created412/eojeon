@@ -121,6 +121,15 @@ const CSS = FONT_FACE + `
    text-wrap 을 모르는 브라우저는 이 줄을 통째로 버린다 — 그러면 예전과 같이 보인다. */
 .type-read p{text-wrap:balance}
 
+/* 스크롤 막대 — 선생님(2026-10-06): 「화면 우측에 스크롤바가 들어와 있어.」
+   먹빛 화면 위에 브라우저의 흰 막대가 그대로 서 있었다. 넘치는 판은 여전히 굴릴 수
+   있어야 하므로 없애지는 않고, 가늘고 어둡게 둔다. 어느 화면이든 같은 꼴이다. */
+*{scrollbar-width:thin;scrollbar-color:#6b5836 transparent}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:#6b5836;border-radius:4px}
+*::-webkit-scrollbar-thumb:hover{background:#8a7044}
+
 /* 자간이 허락되는 유일한 자리. 짧은 표제에만 붙인다 — 문단에는 절대 붙이지 않는다. */
 .type-display{font-family:var(--face-display);letter-spacing:var(--read-track)}
 `

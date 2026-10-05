@@ -199,6 +199,10 @@ describe('ambientForBeat — 어느 화면에 무엇을 깔 것인가', () => {
     outing: null,         // 나들이(회수 화면)
     funding: null,        // 돈을 만든다 — 셈판이다, 궁 안의 소리를 깔지 않는다
     alone: 'hall',        // 혼자 서 있는 몇 초 — 궁은 그대로 살아 있고 사람만 없다
+    defend: 'night',      // 정족산성 — 숨어서 기다리는 밤
+    trail: null,          // 소식을 좇는다 — 글 화면이다
+    study: null,          // 문서를 뜯어 읽는다 — 글 화면이다
+    dilemma: null,        // 고민해서 정한다 — 어전회의와 같다
   }
 
   it('게임이 재생하는 모든 비트 종류가 이 표에 적혀 있다 — 새 종류가 조용히 새지 않는다', () => {
@@ -236,8 +240,9 @@ describe('ambientForBeat — 어느 화면에 무엇을 깔 것인가', () => {
   // 달리던 장면(1873 자경전)을 선생님이 걷어 내셨고, 남은 불은 고르는 화면(대화재)
   // 하나였는데 그 화면마저 함께 지웠다. 소리는 systems/audio.js 에 남아 있다 —
   // 불이 다시 붙는 장면이 생기면 그때 이 목록으로 돌아온다.
-  // 'night' 도 2026-10-06 에 갈 곳을 잃었다 — 왕비를 내보내던 대조전의 밤(피신 화면)과 함께.
-  const UNUSED_FOR_NOW = new Set(['fire', 'night'])
+  // 'night' 는 2026-10-06 에 왕비를 내보내던 대조전의 밤(피신 화면)과 함께 갈 곳을 잃었다가,
+  // 같은 날 정족산성의 밤(kind:'defend')이 받아 갔다.
+  const UNUSED_FOR_NOW = new Set(['fire'])
   it('바닥 소리가 모두 실제 비트에서 한 번씩은 깔린다', () => {
     const used = new Set(beats.map(ambientForBeat).filter(Boolean))
     for (const bed of AMBIENCES) {

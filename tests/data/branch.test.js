@@ -76,40 +76,27 @@ describe('조건부 비트가 사초함을 갈라놓지 못한다 (리뷰 I4)', 
 })
 
 // ── 5막 C3 — 정변 사흘째 밤 ────────────────────────────────────────
-// 늦어도 게임 오버 화면은 없다. 달라지는 것은 깃발 하나뿐이고, 홍영식·박영교가
-// 남는다는 것도 북묘·영방으로 이어진다는 것도 두 경로가 똑같다.
-describe('C3 — 늦어도 홍영식과 박영교는 똑같이 남는다', () => {
+// 예전에는 늦으면 「청군의 손에 이끌려 나왔다」 한 화면이 갈렸다. 2026-10-06 에 촉박이 「늦으면
+// 다시」로 바뀌어 갈림길이 사라졌다. 홍영식·박영교가 남는다는 것은 이제 누구에게나 같다.
+describe('C3 — 갈림길이 없다. 홍영식과 박영교는 누구에게나 똑같이 남는다', () => {
   const gapsin = actById('gapsin')
-  const flew = dryRun(gapsin, createState(), 4)
-  const caught = dryRun(gapsin, { ...createState(), flags: { 'flight-caught': true } }, 4)
+  const run = dryRun(gapsin, createState(), 4)
 
-  it('「실제로 일어난 일」 비트가 두 경로에서 같다', () => {
-    expect(flew.historical).toEqual(caught.historical)
-    expect(flew.historical).toContain('gapsin-hong')
+  it('깃발로 갈리는 비트가 없다', () => {
+    expect(gapsin.beats.filter(b => b.whenFlag || b.unlessFlag || b.caughtFlag)).toEqual([])
   })
 
-  it('끝난 자리의 역사가 같다 — 마지막에 선 곳도 조작권도 같다', () => {
-    expect(sameHistory(flew.state, caught.state)).toBe(true)
-    expect(flew.state.palace).toBe('ojoyu')
-    expect(caught.state.palace).toBe('ojoyu')
-    expect(flew.state.control).toBe('D')
+  it('깃발을 미리 심어도 지나가는 장면이 같다', () => {
+    const flagged = dryRun(gapsin, { ...createState(), flags: { 'flight-caught': true } }, 4)
+    expect(flagged.played).toEqual(run.played)
+    expect(sameHistory(run.state, flagged.state)).toBe(true)
   })
 
-  it('갈린 것은 깃발뿐이다', () => {
-    expect(knowledgeDiff(flew.state, caught.state)).toEqual(['flight-caught'])
-  })
-
-  it('두 경로가 서로 다른 것을 본다 — 그러나 다른 것은 그 한 화면뿐이다', () => {
-    expect(flew.played).toContain('gapsin-flight-self')
-    expect(caught.played).toContain('gapsin-flight-caught')
-    expect(flew.played.filter(id => !caught.played.includes(id))).toEqual(['gapsin-flight-self'])
-    expect(caught.played.filter(id => !flew.played.includes(id))).toEqual(['gapsin-flight-caught'])
-  })
-
-  it('두 경로 모두 5막의 두 카드를 쥐고 나온다', () => {
-    for (const s of [flew.state, caught.state]) {
-      expect(s.sources.read).toContain('gapsin-memoir')
-    }
+  it('홍영식·박영교의 장면을 지나고, 청군의 영방에서 조작권 없이 끝난다', () => {
+    expect(run.historical).toContain('gapsin-hong')
+    expect(run.state.palace).toBe('ojoyu')
+    expect(run.state.control).toBe('D')
+    expect(run.state.sources.read).toContain('gapsin-memoir')
   })
 
   it('조건이 붙은 비트가 궁·조작권·낮을 건드리지 않는다', () => {

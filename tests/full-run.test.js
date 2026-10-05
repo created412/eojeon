@@ -53,23 +53,17 @@ describe('1~5막 이어달리기 — 한 번도 막히지 않고 지나간다', 
     })
   }
 
-  // 「늦어도 역사가 안 바뀐다」의 이어달리기판. tests/data/branch.test.js 가 막 하나씩
-  // 견주는 것을, 여기서는 다섯 막을 통째로 걸어가 견준다.
-  it('늦는 학생도 어디에서도 멈추지 않고, 「일어난 일」이 같은 자리에 있다', () => {
+  // 「늦어도 역사가 안 바뀐다」의 이어달리기판이었다. 2026-10-06 에 갈림길이 모두 사라졌다 —
+  // 왕비의 줄을 걷어 냈고(4막), 촉박은 늦으면 **다시 하는** 것이 되었다(선생님: 「제한시간 내
+  // 못 할 시 다시 도망 이벤트를 하게 하고 성공하면 다음으로」). 이제 붙드는 것은 그 반대다:
+  // 늦든 아니든 지나가는 장면이 한 칸도 다르지 않다.
+  it('늦는 학생과 제때 닿는 학생이 지나가는 장면이 같다 — 갈림길이 없다', () => {
     const ok = playThrough(createState(), { caught: false })
     const late = playThrough(createState(), { caught: true })
-
-    const historicalOf = (r) => r.played.filter(p => {
-      const [actId, beatId] = p.split('/')
-      return beatsOf(ACTS.find(a => a.id === actId)).find(b => b.id === beatId)?.historical === true
-    })
-    expect(historicalOf(late)).toEqual(historicalOf(ok))
-
-    // 갈리는 것은 「무엇을 아는가」뿐이다 — 끝난 자리의 궁과 조작권은 같다
+    expect(late.played).toEqual(ok.played)
     expect(late.state.palace).toBe(ok.state.palace)
     expect(late.state.control).toBe(ok.state.control)
-    // 그리고 실제로 갈리기는 한다 — 안 갈리면 위 단정들이 아무것도 안 지키는 것이다
-    expect(late.played).not.toEqual(ok.played)
+    expect(Object.keys(late.state.flags ?? {})).toEqual(Object.keys(ok.state.flags ?? {}))
   })
 
   // 하루 칸수 — 어느 막 어느 지점에서도 음수로 내려가지 않는다. 음수가 되면

@@ -5,7 +5,6 @@ import { installCinematicStyle } from './ui/cinematic-style.js'
 import { stageEvent } from './systems/event-staging.js'
 import { createInput, isTyping } from './input/input.js'
 import { PALACES, pickupNear, roomLabel, roomAt, baseOf } from './data/palaces.js'
-import { objectiveRoute } from './systems/route.js'
 import { guideForBeat, GAME_INTRO, ACT_GUIDE } from './data/guide.js'
 import { createGuideStrip } from './ui/guide-strip.js'
 import { npcsAt, npcNear, npcHandledCardIds, npcCardIds, npcById, portraitKeyOf } from './data/npcs.js'
@@ -38,6 +37,15 @@ import { createVoicePlayer } from './systems/voice.js'
 import { BGM } from './data/bgm-data.js'
 import { createBgm, bgmForBeat } from './systems/bgm.js'
 import { INQUIRIES, clozeBlanks } from './data/inquiries.js'
+import { SEOGYE_DOC } from './data/source-games.js'
+import { createDocSeek } from './ui/doc-seek.js'
+import { createDocStudy } from './ui/doc-study.js'
+import { createDilemma } from './ui/dilemma.js'
+import { studyById, dilemmaById } from './data/studies.js'
+import { createJeongjok } from './ui/jeongjok.js'
+import { createTrail } from './ui/trail.js'
+import { AGAIN_COPY } from './systems/jeongjok.js'
+import { AGAIN_COPY as REBUILD_AGAIN } from './systems/rebuild.js'
 import { installPaperVars } from './ui/paper-css.js'
 import { createCouncil } from './ui/council-ui.js'
 import { createActEnd } from './ui/act-end.js'
@@ -71,7 +79,7 @@ import { relocate } from './systems/relocate.js'
 import { createAudio } from './systems/audio.js'
 import { createWebAudioEngine } from './systems/web-audio-engine.js'
 import { createRation } from './ui/ration.js'
-import { hubAt, hubOptions, hubDate, shouldDeferReport, pendingReport, performReport, completeActivity, closeHub, freedomRecord, dayReport, exitBlock, objectiveLine, towardParticle } from './systems/freedom.js'
+import { hubAt, hubOptions, hubDate, shouldDeferReport, pendingReport, performReport, completeActivity, closeHub, freedomRecord, dayReport, exitBlock, objectiveLine, towardParticle, taskList } from './systems/freedom.js'
 // 궁 안의 물건 — 걸어가 E 를 누르면 뜨는 해설(data/artifacts.js). 사료가 아니라서
 // 사초함에 쌓이지 않고, 값(해 칸)도 치르지 않는다(systems/artifacts.js 머리말).
 import { artifactNear, hasSeen, markArtifactSeen, artifactRecord, artifactCount } from './systems/artifacts.js'
@@ -289,6 +297,17 @@ export function describeDecision(act, decision) {
     const beat = beatsOf(act).find(b => b.kind === 'funding')
     return { question: beat?.question ?? '이 비용을 어디서 만드는가', text: decision.reason || '(셈을 남기지 않음)' }
   }
+  // 정족산성(kind:'defend') — 고른 것이 아니라 그 밤을 어떻게 치렀는지가 남는다(reason).
+  if (decision.choiceId.startsWith('defend:')) {
+    const beat = beatsOf(act).find(b => b.kind === 'defend')
+    return { question: `${(beat?.introTitle ?? '정족산성')} — 기다렸다가 쏜다`, text: decision.reason || '(셈을 남기지 않음)' }
+  }
+  // 고민해서 정하는 자리(kind:'dilemma') — choiceId 는 'dilemma:<자리>:<보기>' 꼴이다.
+  if (decision.choiceId.startsWith('dilemma:')) {
+    const [, id, optionId] = decision.choiceId.split(':')
+    const d = dilemmaById(id)
+    return { question: d?.title ?? '', text: d?.options.find(o => o.id === optionId)?.text ?? optionId }
+  }
   if (decision.choiceId.startsWith('orders:')) {
     const beat = beatsOf(act).find(b => b.kind === 'orders')
     const picked = decision.choiceId.slice('orders:'.length)
@@ -314,6 +333,12 @@ export function describeDecision(act, decision) {
   const beat = beatsOf(act).find(b => b.kind === 'council' && b.council?.choices.some(c => c.id === decision.choiceId))
   const choice = beat?.council?.choices.find(c => c.id === decision.choiceId)
   return { question: beat?.council?.question ?? '', text: choice?.text ?? decision.choiceId }
+}
+
+// 고민해서 정한 자리에서 기록에 남기는 한 줄 — 고른 것과, 그 값으로 내어준 것.
+export function dilemmaReason(d, option) {
+  if (!option) return ''
+  return `「${d.title}」 — 고른 것: ${option.text} · 내어준 것: ${option.cost}`
 }
 
 // 「내 기록 복사」— 세특의 밑감이 되는 그 산출물이다. 지금까지 치른 막 전부의
@@ -348,7 +373,18 @@ export function buildRecordText(state, acts) {
     ...freedomRecord(state),
     // 본 물건은 사료 목록과 나란히 서지 않는다 — 제목이 따로 붙는다(systems/artifacts.js).
     ...artifactRecord(state),
-    ...Object.entries(state.inquiries ?? {}).flatMap(([id, record]) => [
+    ...Object.entries(state.inquiries ?? {}).flatMap(([id, record]) => record.kind === 'read' ? [
+      // 밑줄 긋기(systems/source-read.js) — 해석을 쓰는 칸이 없다. 그은 구절만 적는다.
+      '', `[사료 읽기] ${sourceById(id)?.title ?? id}`,
+      `밑줄 그은 구절 — ${(record.selected ?? []).join(' / ') || '(없음)'}`,
+    ] : record.kind === 'seek' ? [
+      '', `[사료 읽기] ${sourceById(id)?.title ?? id}`,
+      `문제 삼은 곳 — ${(record.selected ?? []).join(' / ') || '(없음)'}`,
+    ] : record.kind === 'study' ? [
+      // 문서를 뜯어 읽는 판(systems/doc-study.js) — 학생이 문서에 단 주석들이다.
+      '', `[문서 뜯어 읽기] ${studyById(id)?.paper ?? id}`,
+      `단 주석 — ${(record.selected ?? []).join(' / ') || '(없음)'}`,
+    ] : [
       '', `[사료 탐구] ${sourceById(id)?.title ?? id}`,
       // 빈칸 채우기(조선책략)는 표시한 근거 대신 채운 칸을 적는다.
       INQUIRIES[id]?.kind === 'cloze'
@@ -411,6 +447,7 @@ export function ambientForBeat(beat) {
   if (beat.ambient) return beat.ambient
   if (beat.kind === 'explore') return 'hall'
   if (beat.kind === 'rush') return beat.fire === true ? 'fire' : 'siege'
+  if (beat.kind === 'defend') return 'night'    // 숨어서 기다리는 밤의 산성
   // 조작권 D 장면(kind:'hold')은 무음이면 안 된다. 이 장면은 「안 움직인다 · 아무것도
   // 안 변한다」가 내용인데 거기에 무음까지 겹치면 학생이 받는 신호가 정확히
   // 「얼어붙었다 · 고장났다」가 된다 — 화면은 글로 「고장이 아니다」라고 말하는데
@@ -517,7 +554,7 @@ export function boot(root) {
   const hud = createCinematicHud(root, { onCodex: () => {
     if (flow.phase === 'day' && !pause.isOpen()) pressQ()
   }, onRotate: direction => ctx.rotateView(direction), onResetView: () => ctx.resetView(),
-  onObjective: () => openActivities(), onEscape: () => runToGoal() })
+})
   // 문서·사초함이 닫히는 소리. 「어떻게 닫히든 정확히 한 번」을 dialog 가 이미
   // 보증한다 — 화면 안 「닫기」 단추로 닫아도 여기를 지난다. 태블릿 학생에게는
   // 그 단추가 유일한 길이다(.veil 은 z-index 40, 태블릿 E·Q 단추는 22 라 문서가
@@ -526,6 +563,9 @@ export function boot(root) {
   const dialog = createDialog(root, {
     onClose: () => audio.play('close'),
     getInquiry: id => flow.state.inquiries?.[id] ?? {},
+    // 밑줄 긋기(systems/source-read.js) — 그은 구절을 사초함 기록에 남긴다.
+    onRead: (id, record) => saveInquiry(id, record),
+    onReadTap: ok => audio.play(ok ? 'decide' : 'deny'),
     onInquirySave: (id, record) => {
       const inquiries={...(flow.state.inquiries??{}),[id]:record}
       flow.state={...flow.state,inquiries}
@@ -534,6 +574,11 @@ export function boot(root) {
       return checkpoint ? saveGame({...checkpoint,inquiries}) : false
     },
   })
+  const docSeek = createDocSeek(root)
+  const docStudy = createDocStudy(root)
+  const dilemma = createDilemma(root)
+  const jeongjok = createJeongjok(root)
+  const trail = createTrail(root)
   const council = createCouncil(root)
   const actEnd = createActEnd(root)
   const pause = createPause(root)
@@ -940,7 +985,48 @@ export function boot(root) {
   function showPacketCards(cards, done = null) {
     const [first, ...rest] = cards
     if (!first) { done?.(); return }
-    dialog.showCard(first, () => showPacketCards(rest, done))
+    const next = () => { guide.set(guideForBeat(activeBeat)); showPacketCards(rest, done) }
+    // 문서마다 손에 쥘 때 하는 일이 다르다(data/source-games.js).
+    //   · 제 판이 있는 문서(서계)는 그 판을 치르면 끝이다 — 같은 글을 카드로 또 펴지 않는다.
+    //     문서는 사초함에 들어가 있으니 다시 보고 싶으면 거기서 연다.
+    //   · 그 밖의 문서는 카드가 뜨고, 기록에 밑줄을 그어야 덮인다.
+    // 안내 띠도 지금 하는 일로 바꾼다 — 예전에는 문서를 읽는 동안에도 「신하가 아룁니다.
+    // 끝까지 들으세요」가 떠 있었다(2026-10-06 화면에서 확인).
+    const game = sourceGameFor(first.id)
+    if (game && !flow.state.inquiries?.[first.id]?.compared) {
+      guide.set(SOURCE_GAME_GUIDE[first.id] ?? CARD_GUIDE)
+      game().then(next)
+      return
+    }
+    guide.set(CARD_GUIDE)
+    dialog.showCard(first, next)
+  }
+
+  const CARD_GUIDE = '문서를 읽고, 물음의 답이 되는 구절을 눌러 밑줄을 그으세요. 그어야 덮을 수 있습니다.'
+  const SOURCE_GAME_GUIDE = {
+    [SEOGYE_DOC.id]: '문서의 낱말을 눌러 뜻을 보고, 조선이 문제 삼은 두 곳을 찾으세요. 둘 다 찾아야 덮을 수 있습니다.',
+  }
+
+  // 사료를 처음 손에 쥘 때 여는 판. 없으면 null.
+  function sourceGameFor(id) {
+    if (id === SEOGYE_DOC.id) {
+      return async () => {
+        const record = await docSeek.open(SEOGYE_DOC, {
+          onPick: () => audio.play('pick'),
+          onFound: () => audio.play('decide'),
+          onMiss: () => audio.play('deny'),
+        })
+        saveInquiry(id, record)
+      }
+    }
+    return null
+  }
+
+  function saveInquiry(id, record) {
+    const inquiries = { ...(flow.state.inquiries ?? {}), [id]: record }
+    flow.state = { ...flow.state, inquiries }
+    const checkpoint = loadGame()
+    if (checkpoint) saveGame({ ...checkpoint, inquiries })
   }
 
   // E 가 들어오는 유일한 문. 알현 국면에서는 pressE() 의 판정(줍기·나가기·나들이)이
@@ -1208,25 +1294,8 @@ export function boot(root) {
       .sort((a, b) => a.d - b.d)[0]?.o ?? null
   }
 
-  function openActivities() {
-    if (flow.phase !== 'day' || hubBusy || pause.isOpen() || speak.isOpen() || dialog.isOpen()) return
-    const next = nearestActivity()
-    if (!next) { banner(root, '오늘 할 일은 다 했다. 나가는 곳으로 가면 다음 사건으로 넘어간다 — 마당과 방 안의 물건은 그전에 더 볼 수 있다.', 4200); return }
-    chooseActivity(next.id)
-  }
-
-  function chooseActivity(id) {
-    if (flow.phase !== 'day' || hubBusy || pause.isOpen() || speak.isOpen() || dialog.isOpen()) return
-    const option = hubOptions(flow.state, flow.act()).find(o => o.id === id && !o.disabled)
-    if (!option) return
-    selectedActivity = id
-    if (activityReady(option)) { onPressE(); return }
-    const route = objectiveRoute(PALACES[flow.state.palace], option.room,
-      { x: ctx.player.position.x, z: ctx.player.position.z }, flow.state.control, option.point)
-    if (!route.length) { selectedActivity = null; banner(root, '지금은 그곳으로 가는 길이 막혀 있다'); return }
-    tapTarget = route.shift(); tapRoute = route; autoWalk = true
-    banner(root, `${option.label} — 그곳으로 걷는다. 도착하면 E 를 누르세요.`, 3200)
-  }
+  // ⚠ 여정 판을 누르면 그곳까지 걸어가 주던 것(openActivities·chooseActivity)은 2026-10-06 에
+  //   걷어 냈다 — 선생님: 「자동으로 이동시키는 건 막아 버려. 모든 곳에서.」
 
   function restoreHub() {
     const hub = hubAt(flow.act(), flow.state.beatIndex)
@@ -1355,7 +1424,10 @@ export function boot(root) {
     flow.setPhase('audience')
 
     // 직선이 아니라 꺾인 길 — 전각을 뚫고 지나가지 않는다(지적 #18 「기둥에 부딪힌다」).
-    const path = processionPath(def, start, end, to.id, flow.state.control)
+    // 길은 조작권과 상관없이 낸다('A'). 행렬은 임금이 걷는 것이 아니라 **데리고 가는** 것이다 —
+    // 임금의 조작권으로 길을 찾으면, 5막처럼 조작권이 없는(D) 채로 관물헌에서 끌려 나가는
+    // 행렬이 길을 못 찾아 벽을 뚫고 직선으로 걷는다(2026-10-06 수로 재어 확인).
+    const path = processionPath(def, start, end, to.id, 'A')
 
     // 곁을 걷는 사람을 **꽂아 넣지 않는다.** 예전에는 여기서 임금 둘레에 한꺼번에
     // 옮겨 놓았다 — 앞 장면에서 서 있던 자리에서 눈 깜빡할 사이에 옮겨지는 것이다
@@ -1680,24 +1752,32 @@ export function boot(root) {
   async function playFunding(beat) {
     flow.setPhase('beat')
     hint.hidden = true
-    // 선생님(2026-09-30) 「조여」 — 백 칸을 채워야 넘어간다. 못 채우면 판이 닫히고
-    // 「아직」이 뜬 뒤 **처음부터** 다시 열린다(systems/minigame.js untilCleared).
-    // 판은 매번 새로 열리므로 지레도 처음 자리로 돌아간다.
-    // 이 판은 **끝까지 가야만 끝난다** — 열 채를 다 올리기 전에는 나가는 단추가
-    // 없다(ui/rebuild.js). 그래서 「아직」 화면이 따로 필요 없다: 못 해낸 채로
-    // 빠져나갈 길 자체가 없다. 갇히지도 않는다 — 찍기만 해도 반드시 끝난다
-    // (systems/rebuild.js 의 시험이 전수로 잰다).
-    const result = await rebuild.open({
-      title: beat.title ?? '경복궁을 짓는다',
-      quote: beat.quote,
-      actual: beat.actualLine,
-      lines: beat.lines,
-      overturn: beat.overturn,
-      overturnBy: beat.overturnBy,
-      nextLabel: beat.nextLabel,
-      onTap: () => audio.play('pick'),
-    })
-    audio.play(councilSound('levy'))
+    // 선생님(2026-09-30) 「조여」 — 해내야 넘어간다. 2026-10-06 에 판을 다시 갈면서 날이 흐르게
+    // 되었다(1865 → 1868): 그 안에 열 채를 못 올리면 판이 닫히고 「아직」이 뜬 뒤 **처음부터**
+    // 다시 열린다(systems/minigame.js untilCleared). 거듭할수록 일꾼의 손이 빨라지고, 돈이
+    // 떨어져 서 있으면 주전소가 빛난다 — 찍기만 해도 반드시 끝나므로 갇히는 학생은 없다
+    // (tests/systems/rebuild.test.js 가 손을 여럿 돌려 잰다).
+    let result = null
+    await untilCleared(async n => {
+      guide.set(guideForBeat(beat))
+      result = await rebuild.open({
+        title: beat.title ?? '경복궁을 짓는다',
+        intro: beat.intro,
+        startLabel: beat.startLabel,
+        quote: beat.quote,
+        actual: beat.actualLine,
+        lines: beat.lines,
+        overturn: beat.overturn,
+        overturnBy: beat.overturnBy,
+        nextLabel: beat.nextLabel,
+        tries: n,
+        onTap: () => audio.play('pick'),
+        onBay: () => audio.play('brush'),     // 한 채가 올라갈 때마다 — 나무 얹는 소리 대신 붓 소리를 빌린다
+        onStall: () => audio.play('deny'),
+        onDone: () => audio.play(councilSound('levy')),
+      })
+      return result
+    }, view => { guide.hide(); return again.show(view) }, REBUILD_AGAIN)
     flow.state = {
       ...flow.state,
       decisions: [...flow.state.decisions, {
@@ -1732,6 +1812,97 @@ export function boot(root) {
     return flow.state
   }
 
+  // 정족산성 — 기다렸다가 쏜다(2026-10-06). 해내야 넘어간다: 포수들이 더 버티지 못하면
+  // 「아직」이 뜨고 처음부터 다시 한다(systems/minigame.js untilCleared). 거듭할수록 판이
+  // 거든다 — 셋째 판부터 「지금 —」이 뜨고, 넷째 판부터 저들의 걸음이 느려진다.
+  // 장계(beat.grantCard)는 여기서 주지 않는다 — playBeat() 이 한 자리에서 준다.
+  async function playDefend(beat) {
+    flow.setPhase('beat')
+    hint.hidden = true
+    let last = null
+    const { tries } = await untilCleared(async n => {
+      guide.set(guideForBeat(beat))
+      last = await jeongjok.open({
+        ...beat,
+        tries: n,
+        // 쏘는 소리는 북 한 번, 닿지 않거나 헛쏜 것은 「안 된다」 — 화면은 소리를 모른다.
+        onVolley: kind => {
+          if (kind === 'hit') audio.play('drum')
+          else if (kind === 'early' || kind === 'empty' || kind === 'notready' || kind === 'breach') audio.play('deny')
+          else if (kind === 'ready') audio.play('pick')
+        },
+        onWin: () => audio.play('decide'),
+      })
+      return last
+    }, view => { guide.hide(); return again.show(view) }, AGAIN_COPY)
+    flow.state = {
+      ...flow.state,
+      decisions: [...flow.state.decisions, {
+        actIndex: flow.actIndex,
+        choiceId: `defend:tries${tries}`,
+        reason: last?.summary ?? '',
+      }],
+    }
+    return flow.state
+  }
+
+  // 소식을 좇는다(2026-10-06) — 4막, 아버지가 청군 군영에서 돌아오지 않는다. 사람을 보내
+  // 알아보지만 가마는 언제나 한 걸음 앞에 있다(systems/trail.js). 상태에 남기는 것이 없다:
+  // 무엇을 눌러도 일어난 일은 같다. 마지막 소식이 닿는 순간 해금 한 음이 운다.
+  async function playTrail(beat) {
+    flow.setPhase('beat')
+    hint.hidden = true
+    await trail.open(beat, {
+      onSend: () => audio.play('pick'),
+      onReport: () => audio.play('open'),
+      onStill: () => audio.play('deny'),
+      onDone: () => bgm.sting('loss'),
+    })
+    return flow.state
+  }
+
+  // 문서를 뜯어 읽는 판(2026-10-06) — 조약문 · 「속방」 두 글자 · 정강 열네 조.
+  // 끝까지 가야만 닫힌다(ui/doc-study.js). 갇히지는 않는다 — 두 번 헛짚으면 그 보기가 빛난다.
+  // 문서(beat.grantCard·grantCards)는 여기서 주지 않는다 — playBeat() 이 한 자리에서 준다.
+  async function playStudy(beat) {
+    flow.setPhase('beat')
+    hint.hidden = true
+    const study = studyById(beat.study)
+    if (!study) throw new Error(`없는 문서 판: ${beat.study} (${beat.id})`)
+    audio.play('open')
+    const record = await docStudy.open(study, {
+      onRight: () => audio.play('decide'),
+      onMiss: () => audio.play('deny'),
+      onFlip: () => audio.play('pick'),
+    })
+    audio.play('close')
+    saveInquiry(study.id, record)
+    return flow.state
+  }
+
+  // 고민해서 정하는 자리(2026-10-06) — 아버지가 물러난 뒤의 큰 사건마다 하나씩 선다.
+  // 무엇을 고르든 역사는 그대로 간다. 기록에는 고른 것과 **그 값으로 내어준 것**이 남는다.
+  async function playDilemma(beat) {
+    flow.setPhase('beat')
+    hint.hidden = true
+    const d = dilemmaById(beat.dilemma)
+    if (!d) throw new Error(`없는 선택 자리: ${beat.dilemma} (${beat.id})`)
+    const result = await dilemma.open(d, {
+      onOpen: () => audio.play('pick'),
+      onPick: () => audio.play('decide'),
+    })
+    const option = d.options.find(o => o.id === result.choiceId)
+    flow.state = {
+      ...flow.state,
+      decisions: [...flow.state.decisions, {
+        actIndex: flow.actIndex,
+        choiceId: `dilemma:${d.id}:${result.choiceId}`,
+        reason: dilemmaReason(d, option),
+      }],
+    }
+    return flow.state
+  }
+
   // G 회수 비트(설계서 §5.G) — 종로의 추이와 무위영의 가마. 시계는 없다.
   // 추이는 지금 막까지의 것만 보여 준다 — 학생이 지나온 만큼만 보인다.
   // 다 보고 나면 beat.grantCard 를 자기 눈으로 본 것으로 친다 — 그 지급은 playBeat() 이 한다.
@@ -1762,47 +1933,61 @@ export function boot(root) {
   // 안내문이 실제로 이 기기에서 참인 말만 하게 한다.
   function rushControlHint() {
     return isCoarse()
-      ? '화면 아래 붉은 판을 누르면 목적지까지 달아난다. 바닥을 짚어 직접 걸어가도 된다.'
-      : 'Shift 를 눌러 달린다. 화면 아래 붉은 판을 누르면 목적지까지 달아난다.'
+      ? '바닥을 짚어 달린다. 길은 스스로 찾아야 한다.'
+      : 'Shift 를 눌러 달린다. 길은 스스로 찾아야 한다.'
   }
 
-  // 촉박 비트(C1 등) — 불이 방을 하나씩 삼키는 제한 시간. 판정은 프레임 루프 안에서
-  // performance.now() 로만 한다(전역 제약, fire-rush.js·rush-scene.js 가 시간만 본다) —
-  // 여기서 setInterval 폴링을 쓰지 않는다. 실패(caught)해도 게임 오버 화면은 없다 —
-  // beat.caughtFlag 한 줄만 flags 에 남기고 다음 비트로 그대로 넘어간다(설계서 5장 C1).
+  // 촉박 비트 — 제한 시간 안에 목적지에 닿아야 한다. 판정은 프레임 루프 안에서
+  // performance.now() 로만 한다(rush-scene.js 가 시간만 본다) — setInterval 을 쓰지 않는다.
+  //
+  // ⚠ 2026-10-06 — **닿을 때까지 되풀이한다.** 예전에는 늦어도 깃발 한 줄만 남기고 다음
+  //   장면으로 넘어갔다. 선생님: 「이 도망 이벤트는 제한시간 내 못 할 시 다시 도망 이벤트를
+  //   하게 하는 식으로 반복하게 하고 성공하면 다음으로 넘어가고.」 늦으면 처음 자리에서
+  //   다시 시작하고, 되풀이할 때마다 귀띔이 하나씩 는다(beat.retryHints). 게임 오버 화면은
+  //   여전히 없다 — 「다시」가 있을 뿐이다.
   function playRush(beat) {
     return new Promise(resolve => {
       flow.setPhase('beat')
       hint.hidden = true
       const intro = { ...beat.intro, lines: [...(beat.intro.lines ?? []), rushControlHint()] }
       guide.set('글을 읽고 「다음」을 누르세요. 그다음 서둘러 달아납니다.')
-      noteScreen.show(intro).then(() => {
+      let attempt = 0
+      const begin = () => {
         guide.set(guideForBeat(beat))
         const def = PALACES[flow.state.palace]
         const from = def.rooms.find(r => r.id === beat.spawnRoom)
         if (from) {
           ctx.player.position.set(from.x, 1.9, from.z)
-          flow.state = { ...flow.state, room: from.id }
+          flow.state = { ...flow.state, room: from.id, blocked: null }
         }
+        acc = 0; gaitAxis = restAxis()
+        tapTarget = null; tapRoute = []
         flow.setPhase('rush')
         rushFire = beat.fire === true
         session = startRush({
           track: beat.track,
           totalMs: rushDurationMs(beat.totalMs, isTouchDevice()),
-          goalRoom: beat.goalRoom,
+          goalRoom: beat.goalRoom ?? null,
+          goalPoint: beat.goalPoint ?? null,
           now: performance.now(),
         })
         resolveRush = (outcome) => {
-          const caught = outcome === 'caught'
-          banner(root, caught ? beat.onCaught : beat.onArrive)
-          if (caught && beat.caughtFlag) {
-            flow.state = { ...flow.state, flags: { ...flow.state.flags, [beat.caughtFlag]: true } }
-          }
           flow.setPhase('beat')
           hint.hidden = true
-          resolve(flow.state)
+          if (outcome !== 'caught') {
+            banner(root, beat.onArrive)
+            resolve(flow.state)
+            return
+          }
+          // 늦었다 — 처음 자리에서 다시. 귀띔은 되풀이한 횟수만큼 깊어진다.
+          attempt++
+          const hints = beat.retryHints ?? []
+          const tip = hints.length ? hints[Math.min(attempt, hints.length) - 1] : ''
+          banner(root, [beat.onCaught, tip].filter(Boolean).join('  '), 3400)
+          setTimeout(begin, 3600)
         }
-      })
+      }
+      noteScreen.show(intro).then(begin)
     })
   }
 
@@ -1822,6 +2007,24 @@ export function boot(root) {
       hint.hidden = true
       wasPressing = false
       tapTarget = null; tapRoute = []; autoWalk = false   // 앞 장면에서 남은 탭 목표를 들고 들어오지 않는다
+      // 이 장면이 벌어지는 방과 곁에 선 사람들(2026-10-06). 예전에는 임금이 궁의 시작 자리에
+      // 혼자 서 있었다 — 글은 「김옥균·박영효·서광범이 침전에 들었다」인데 화면에는 아무도
+      // 없었다. 바로 앞이 글 화면이라 여기서 옮겨도 순간이동으로 보이지 않는다. 이 사람들이
+      // 다음 장면(끌려 나가는 행렬)에서 그대로 임금을 에워싸고 걷는다.
+      if (beat.room) {
+        const room = roomOf(PALACES[flow.state.palace], beat.room)
+        if (room) {
+          const k = kingSpot(room)
+          ctx.player.position.set(k.x, ctx.player.position.y, k.z)
+          flow.state = { ...flow.state, room: room.id }
+        }
+      }
+      if (beat.cast?.length) {
+        ctx.setNpcs(beat.cast.map(c => npcById(c.npc)).filter(Boolean))
+        for (const c of beat.cast) {
+          ctx.placeNpc(c.npc, { x: ctx.player.position.x + c.dx, z: ctx.player.position.z + c.dz, yaw: null, hidden: false })
+        }
+      }
       holdSession = hold.open(beat.view, {
         onPress: () => audio.play('deny'),   // 「눌렀는데 안 된다」를 귀로도 알린다
         onOffer: () => audio.play('door'),   // 뒤에서 문이 닫힌다
@@ -1968,6 +2171,10 @@ export function boot(root) {
       case 'rush':    return await playRush(beat)
       case 'hold':    return await playHold(beat)
       case 'outing':  return await playOuting(beat)
+      case 'defend':  return await playDefend(beat)
+      case 'trail':   return await playTrail(beat)
+      case 'study':   return await playStudy(beat)
+      case 'dilemma': return await playDilemma(beat)
       default:
         throw new Error(`아직 구현하지 않은 비트 종류: ${beat.kind} (${beat.id})`)
     }
@@ -2205,29 +2412,9 @@ export function boot(root) {
     await runBeats({ resumeMidBeat: flow.state.beatEntered === true })
   }
 
-  // 여정 판을 누르면 이 낮의 나가는 방으로 걸어간다 — 문 앞을 먼저 짚고 전각 안으로 들어간다.
-  // 방은 앞면(+z) 가운데로만 드나들어서(palaces.js doorsOf) 곧장 방 한가운데를 짚으면 뒷벽·옆벽에 막힌다.
-  function walkToObjective() {
-    if (flow.phase !== 'day' || pause.isOpen() || dialog.isOpen() || speak.isOpen()) return
-    const route = objectiveRoute(PALACES[flow.state.palace], currentExit()?.room,
-      { x: ctx.player.position.x, z: ctx.player.position.z }, flow.state.control)
-    if (!route.length) { banner(root, '이미 그곳에 있다 — E 를 누르세요', 1800); return }
-    tapTarget = route.shift()
-    tapRoute = route
-    autoWalk = true
-  }
-
-  // 촉박 장면 — 붉은 판을 누르면 목적지 방으로 달린다(2026-09-15 선생님: 「촉박 장면도 패드로 쉽게」).
-  // 판정은 그대로다: 시간 안에 목적지 방에 들어가야 한다. 길만 찾아 준다.
-  function runToGoal() {
-    if (flow.phase !== 'rush' || !session || pause.isOpen()) return
-    const route = objectiveRoute(PALACES[flow.state.palace], activeBeat?.goalRoom,
-      { x: ctx.player.position.x, z: ctx.player.position.z }, flow.state.control)
-    if (!route.length) return
-    tapTarget = route.shift()
-    tapRoute = route
-    autoWalk = true
-  }
+  // ⚠ 나가는 방으로 걸어가 주던 walkToObjective, 촉박에서 목적지로 달아나 주던 runToGoal 도
+  //   2026-10-06 에 걷어 냈다. 길은 학생이 찾는다. 바닥을 짚어 걷는 것(태블릿의 걸음)은 그대로다 —
+  //   그것은 「거기로 한 걸음」이지 「길을 찾아 주는 것」이 아니다.
 
   // 탭 목표를 향해 매 스텝 axisToward 로 계산한 축을 step() 에 그대로 먹인다 —
   // 두 번째 이동 경로를 만들지 않는다. 이동 키를 누르면 탭 목표는 즉시 지운다
@@ -2245,8 +2432,8 @@ export function boot(root) {
         if (!tapTarget) autoWalk = false
         return input
       }
-      // 촉박 장면에서 판을 눌러 달아나는 중이면 달린다.
-      return { axis: () => a, running: () => autoWalk && flow.phase === 'rush' }
+      // 촉박 장면에서는 바닥을 짚어 가는 걸음도 달린다 — 태블릿에는 Shift 가 없다.
+      return { axis: () => a, running: () => flow.phase === 'rush' }
     }
     return input
   }
@@ -2508,8 +2695,8 @@ export function boot(root) {
       audio.countdown(remain, session.rush.totalMs, now)
       const goal = PALACES[flow.state.palace].rooms.find(r => r.id === activeBeat?.goalRoom)
       hud.showRush({ remainMs: remain, totalMs: session.rush.totalMs,
-        label: `${goal?.name ?? '출구'}으로 이동하십시오` })
-      const outcome = session.tick(now, flow.state.room)
+        label: activeBeat?.goalLabel ?? `${goal?.name ?? '출구'}으로 이동하십시오` })
+      const outcome = session.tick(now, flow.state.room, ctx.player.position)
       if (outcome !== 'running') {
         const done = resolveRush
         session = null
@@ -2537,6 +2724,8 @@ export function boot(root) {
       phase: flow.phase,
       // 지적 #16 — 「남은 일 3곳」이 아니라 **누구에게 가서 무엇을 하는지**.
       // 나갈 곳 이름은 화면이 안다(currentExit) — 그래서 그 갈래만 여기서 잇는다.
+      // 그날의 일 전부 — 어디에서 무엇을, 했는지 안 했는지(systems/freedom.js taskList).
+      tasks: flow.phase === 'day' ? taskList(hubOptions(flow.state, flow.act())) : [],
       objective: flow.phase === 'day'
         ? (dayObjective() ?? exitObjective())
         : activeBeat?.exit?.label ?? '신하를 찾아 보고를 듣고 사료를 살펴보십시오.',

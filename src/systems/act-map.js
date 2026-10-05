@@ -43,6 +43,7 @@ export const GROUP_OF_KIND = {
   note: 'read',
   dispatch: 'read',      // 장계도 읽는 것이다. 다만 여러 통 중 고를 수 있다(아래 노트가 그것을 말한다).
   plunder: 'read',       // 빼앗긴 목록을 확인하는 화면.
+  trail: 'read',         // 사람을 보내 알아본다 — 누르기는 하지만 하는 일은 소식을 읽는 것이다(systems/trail.js).
   // 걷는다 — 몸이 움직이는 대목. 스스로 걷는 것(explore)과 실려 가는 것(procession·move)이
   // 한 무리인 것이 이상해 보일 수 있으나, 학생의 눈에는 「장소가 바뀐다」 한 가지다.
   explore: 'walk',
@@ -59,6 +60,9 @@ export const GROUP_OF_KIND = {
   orders: 'hands',
   brush: 'hands',
   outing: 'hands',
+  defend: 'hands',       // 정족산성 — 기다렸다가 쏜다(systems/jeongjok.js).
+  study: 'hands',        // 문서를 뜯어 읽으며 주석을 단다(systems/doc-study.js).
+  dilemma: 'hands',      // 얻는 것과 내어주는 것을 견주어 하나를 정한다(ui/dilemma.js).
 }
 
 export const GROUP_LABEL = { read: '읽기', walk: '걷기', listen: '듣기', hands: '손으로' }
@@ -67,8 +71,8 @@ export const GROUP_LABEL = { read: '읽기', walk: '걷기', listen: '듣기', h
 // 이긴다 — 손으로 하는 것이 가장 세고, 글이 가장 약하다. 「글 두 장 읽고 장계를 읽는」
 // 걸음은 「장계를 읽는다」다: 학생이 그 대목에서 할 일은 장계 쪽이다.
 const SALIENCE = [
-  'funding', 'council', 'orders', 'brush', 'outing',
-  'rush', 'dispatch', 'explore', 'audience', 'move', 'plunder', 'hold', 'alone',
+  'funding', 'council', 'orders', 'brush', 'defend', 'study', 'dilemma', 'outing',
+  'rush', 'dispatch', 'trail', 'explore', 'audience', 'move', 'plunder', 'hold', 'alone',
   'procession', 'note',
 ]
 const rank = kind => {
@@ -114,6 +118,7 @@ const VERB = {
   note: ['글을 읽고', '글을 읽는다'],
   dispatch: ['장계를 읽고', '장계를 읽는다'],
   plunder: ['빼앗긴 기록을 확인하고', '빼앗긴 기록을 확인한다'],
+  trail: ['사람을 보내 알아보고', '사람을 보내 알아본다'],
   explore: ['걸어 다니며 만나고', '걸어 다니며 만난다'],
   procession: ['행렬을 따라가고', '신하들이 모시고 간다'],
   move: ['거처를 옮기고', '거처를 옮긴다'],
@@ -126,6 +131,9 @@ const VERB = {
   orders: ['훈령을 적고', '훈령을 적어 보낸다'],
   brush: ['붓으로 쓰고', '붓으로 직접 쓴다'],
   outing: ['궁 밖을 살피고', '궁 밖을 살핀다'],
+  defend: ['산성을 지키고', '산성을 지킨다'],
+  study: ['문서를 뜯어 읽고', '문서를 뜯어 읽는다'],
+  dilemma: ['고민해서 정하고', '고민해서 정한다'],
 }
 
 // 한 줄 노트 — 그 걸음에서 **구체적으로** 무엇을 하는가. 막 데이터가 이미 적어 둔
@@ -149,6 +157,7 @@ const NOTE = {
     return `지도에서 붉은 지명을 눌러 ${where ? `「${where}」의 ` : ''}${many}을 읽고, 결정하러 간다`
   },
   plunder: lead => `「${tidyTitle(lead.title)}」 — 무엇이 실려 나갔는지 확인한다`,
+  trail: lead => `「${tidyTitle(lead.title)}」 — 사람을 보내 알아본다. 소식은 언제나 한 걸음 늦다`,
   explore: lead => (lead.free
     ? '가고 싶은 곳으로 걷고, 만난 사람에게 E 를 눌러 말을 건다'
     : '왼쪽 위 「지금의 여정」에서 갈 곳을 고르면 그리로 걸어간다 — 닿으면 E'),
@@ -177,6 +186,9 @@ const NOTE = {
     return `${what ? `「${what}」에 새길 ` : ''}${n ? `${n}자를 ` : '글자를 '}손가락이나 마우스로 한 자씩 쓴다`
   },
   outing: () => '궁 밖에서 본 것을 살핀다',
+  defend: lead => `${lead.title ? `「${tidyTitle(lead.title)}」 — ` : ''}저들이 화승총이 닿는 곳에 들 때까지 기다렸다가 쏜다`,
+  study: lead => `${lead.title ? `「${tidyTitle(lead.title)}」 — ` : ''}문서를 읽고 물음에 답하며 주석을 단다`,
+  dilemma: lead => `${lead.title ?? '무엇을 고를 것인가'} — 얻는 것과 내어주는 것을 견주어 하나를 정한다`,
 }
 
 // 걸음 안에 곁딸린 종류가 있으면 짧은 이름표로 붙인다 — 「걸어 다니며 만난다」
@@ -193,6 +205,9 @@ const TAG = {
   hold: () => '멈춤',
   alone: () => '혼자',
   plunder: () => '빼앗김',
+  trail: () => '소식',
+  study: () => '문서',
+  dilemma: () => '선택',
 }
 
 function tagsOf(beats, leadKind) {

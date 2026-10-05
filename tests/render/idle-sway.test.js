@@ -175,3 +175,72 @@ describe('뼈가 없는 인물(판 하나로 선 어머니)', () => {
     expect(mesh.scale.y).toBe(1)
   })
 })
+
+// 선생님(2026-10-06): 「여흥부대부인 민씨가 안 움직여. 모든 캐릭터가 조금씩 움직이고 있어야 해.」
+// 숨(세로 0.6%)만으로는 화면에서 보이지 않았다. 판 하나로 할 수 있는 것을 다 쓴다.
+describe('판 하나로 선 어머니가 눈에 보이게 움직인다', () => {
+  const flat = () => {
+    const pivot = new THREE.Group()
+    const mesh = new THREE.Mesh()
+    pivot.add(mesh)
+    pivot.userData.idleFlat = mesh
+    pivot.userData.idleSeed = idleSeed('mother')
+    pivot.userData.flatFootY = -1.8
+    return { pivot, mesh }
+  }
+
+  it('서 있는 동안 좌우로 기운다 — 눈에 보일 만큼, 그러나 흔들거리지 않을 만큼', () => {
+    const { pivot, mesh } = flat()
+    let lo = Infinity, hi = -Infinity
+    for (let t = 0; t < 30000; t += 16) {
+      updateSway(pivot, 16, { walking: false })
+      lo = Math.min(lo, mesh.rotation.z); hi = Math.max(hi, mesh.rotation.z)
+    }
+    expect(hi - lo).toBeGreaterThan(0.02)    // 1도 넘게 오간다
+    expect(hi - lo).toBeLessThan(0.09)       // 5도를 넘지 않는다
+  })
+
+  it('기울어도 발은 제자리다', () => {
+    const { pivot, mesh } = flat()
+    for (let t = 0; t < 30000; t += 16) {
+      updateSway(pivot, 16, { walking: false })
+      // 발(0, -1.8)이 판의 회전·이동 뒤에 놓이는 자리
+      const a = mesh.rotation.z
+      const fx = mesh.position.x - (-1.8) * Math.sin(a) * mesh.scale.y
+      expect(Math.abs(fx)).toBeLessThan(0.002)
+    }
+  })
+
+  it('걸을 때는 걸음의 박자로 솟고 실린다', () => {
+    const { pivot, mesh } = flat()
+    let lift = 0, tilt = 0
+    for (let t = 0; t < 3000; t += 16) {
+      updateSway(pivot, 16, { walking: true })
+      lift = Math.max(lift, mesh.position.y); tilt = Math.max(tilt, Math.abs(mesh.rotation.z))
+    }
+    expect(lift).toBeGreaterThan(0.03)
+    expect(tilt).toBeGreaterThan(0.025)
+  })
+
+  it('걷다 서면 뚝 끊기지 않고 가라앉는다', () => {
+    const { pivot, mesh } = flat()
+    for (let t = 0; t < 1500; t += 16) updateSway(pivot, 16, { walking: true })
+    const walkLift = pivot.userData.flatWalk
+    updateSway(pivot, 16, { walking: false })
+    expect(pivot.userData.flatWalk).toBeLessThan(walkLift)
+    expect(pivot.userData.flatWalk).toBeGreaterThan(0.5)
+    for (let t = 0; t < 2000; t += 16) updateSway(pivot, 16, { walking: false })
+    expect(pivot.userData.flatWalk).toBeLessThan(0.01)
+    expect(mesh.position.y).toBeLessThan(0.005)
+  })
+
+  it('움직임을 줄여 달라고 한 학생에게는 가만히 서 있는다', () => {
+    const { pivot, mesh } = flat()
+    for (let t = 0; t < 3000; t += 16) updateSway(pivot, 16, { walking: true })
+    updateSway(pivot, 16, { walking: true, reducedMotion: true })
+    expect(mesh.rotation.z).toBe(0)
+    expect(mesh.position.x).toBe(0)
+    expect(mesh.position.y).toBe(0)
+    expect(mesh.scale.x).toBe(1)
+  })
+})

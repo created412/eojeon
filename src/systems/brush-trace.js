@@ -195,14 +195,8 @@ export function inkGuideAlpha(dryness) {
   return GUIDE_ALPHA_WET + (GUIDE_ALPHA_DRY - GUIDE_ALPHA_WET) * clamp01(dryness)
 }
 
-// 종이에 크게 앉히는 남은 초의 빛깔. 안내점보다 **먼저** 칠하므로 안내점과 획이
-// 언제나 이 숫자 위에 온다(brush.js 의 paint 가 그 순서를 지킨다). 그래도 알파를
-// 낮게 묶어 둔다 — 종이에 번진 물자국만큼만 보이면 충분하다.
-export function inkWashColor(level) {
-  if (level === INK_CRIT) return 'rgba(196,74,36,0.20)'
-  if (level === INK_WARN) return 'rgba(176,86,42,0.15)'
-  return 'rgba(138,106,68,0.10)'
-}
+// ⚠ 종이 한가운데에 남은 초를 물자국처럼 앉히던 것(inkWashColor)은 2026-10-06 에 걷어 냈다.
+//   선생님: 「숫자 22가 떠서 글자 쓰기가 너무 불편해.」 따라 쓸 안내점과 숫자의 획이 겹쳤다.
 
 // ── 단계마다 한 줄 ────────────────────────────────────────────────────
 // 「먹이 마른다」 — 색을 못 읽는 학생에게도 말로 한 번 알린다. 두 줄 다 짧게 둔다:

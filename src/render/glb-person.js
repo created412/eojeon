@@ -27,7 +27,7 @@ import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js'
 import { MODELS } from './models-data.js'
 // 서 있는 사람의 숨·무게 옮김·고개. 값은 저쪽(DOM 도 three 도 모르는 순수 모듈)이
 // 내고, 뼈를 돌리는 일만 여기서 한다 — 선생님 2026-09-26 「전부 움직이고 있어야해.」
-import { idlePose, idleSeed } from '../systems/idle-pose.js'
+import { flatPose, idlePose, idleSeed } from '../systems/idle-pose.js'
 
 // 인물이 세계에서 차지하는 키. 앞선 두 판이 쓰던 값을 그대로 잇는다 —
 // 이 값을 바꾸면 궁궐·문·기둥과의 비례가 함께 틀어진다.
@@ -408,14 +408,34 @@ const IDLE_FADE = 1 / 0.42
 // 판 하나로 선 인물(render/mother-person.js)의 숨. 뼈가 없고, pivot 의 회전은
 // 빌보드가 매 프레임 덮어쓴다 — 건드릴 수 있는 것은 판의 세로 배율 하나뿐이다.
 // 그래도 「아무 일도 일어나지 않는 판」보다는 낫다.
-function swayFlat(pivot, dtMs, reducedMotion) {
+// 판 하나로 선 인물(어머니). 숨만 쉬던 것을 2026-10-06 에 넓혔다 — 좌우로 조금 기울고,
+// 이따금 몸을 틀고, 걸을 때는 걸음의 박자로 실린다(systems/idle-pose.js flatPose).
+// 기우는 축은 **발**이다: 판의 원점은 허리께라, 그냥 돌리면 발이 바닥을 쓸고 다닌다.
+const _flat = {}
+function swayFlat(pivot, dtMs, reducedMotion, walking = false) {
   const mesh = pivot.userData?.idleFlat
   if (!mesh) return
-  if (reducedMotion) { mesh.scale.y = 1; return }
-  const t = (pivot.userData.idleClock ?? 0) + dtMs
-  pivot.userData.idleClock = t
-  idlePose(t, pivot.userData.idleSeed, _idle)
-  mesh.scale.y = _idle.scaleY
+  if (reducedMotion) {
+    mesh.scale.y = 1; mesh.scale.x = 1; mesh.rotation.z = 0
+    mesh.position.x = 0; mesh.position.y = 0
+    return
+  }
+  const u = pivot.userData
+  const t = (u.idleClock ?? 0) + dtMs
+  u.idleClock = t
+  // 걷다 서면 뚝 끊기지 않게 걷는 정도를 부드럽게 오간다(뼈 있는 사람의 swayAmt 와 같다).
+  const walk = (u.flatWalk ?? 0) + ((walking ? 1 : 0) - (u.flatWalk ?? 0)) * Math.min(1, dtMs / 160)
+  u.flatWalk = walk
+  const phase = ((u.swayPhase ?? 0) + dtMs * 0.0085 * (walk > 0.02 ? 1 : 0)) % (Math.PI * 2)
+  u.swayPhase = phase
+  flatPose(t, u.idleSeed, walk, phase, _flat)
+  const footY = u.flatFootY ?? 0
+  mesh.scale.y = _flat.scaleY
+  mesh.scale.x = _flat.scaleX
+  mesh.rotation.z = _flat.tilt
+  // 발(0, footY)이 제자리에 남도록 판을 옮긴다.
+  mesh.position.x = footY * Math.sin(_flat.tilt)
+  mesh.position.y = footY * (1 - Math.cos(_flat.tilt)) + _flat.lift
 }
 
 /**
@@ -426,7 +446,7 @@ function swayFlat(pivot, dtMs, reducedMotion) {
  */
 export function updateSway(pivot, dtMs, { walking = false, running = false, reducedMotion = false, pace = 1 } = {}) {
   const s = pivot.userData?.person
-  if (!s || !s.model) return swayFlat(pivot, dtMs, reducedMotion)
+  if (!s || !s.model) return swayFlat(pivot, dtMs, reducedMotion, walking)
 
   // 정지 선호(prefers-reduced-motion)에서는 쉬는 자세로 되돌리고 나간다. 굽힘
   // (scene.js applyBow)은 이 뒤에 얹히므로 읍은 그대로 남는다 — 그것은 움직임이

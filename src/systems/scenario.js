@@ -81,6 +81,8 @@ export function visitorCardIds(visitor) {
 export function grantedIdsOf(beat) {
   const out = []
   if (beat?.grantCard) out.push(beat.grantCard)
+  // 문서 한 묶음을 한 판에서 뜯어 읽는 비트(kind:'study' — 조약문 세 조항)는 여러 장을 준다.
+  for (const id of beat?.grantCards ?? []) out.push(id)
   for (const v of beat?.visitors ?? []) out.push(...visitorCardIds(v))
   return out
 }

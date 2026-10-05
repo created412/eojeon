@@ -11,7 +11,7 @@ function hold(state, ids) {
 }
 
 const act0 = ACTS[0]   // '즉위' — council 비트 하나
-const act1 = ACTS[1]   // '양요' — council-byeongin · orders 는 없다(훈령은 3막)
+const act1 = ACTS[1]   // '양요' — 고르는 회의가 없다(2026-10-06, 정족산성 판이 대신한다). 남는 것은 그 밤을 치른 한 줄이다.
 
 describe('describeDecision — 결정 하나를 질문·고른 문구로 되짚는다', () => {
   // 2026-09-26 — 1막의 고르는 어전회의가 「돈을 만든다」 셈판으로 바뀌었다. 고른 값
@@ -24,10 +24,10 @@ describe('describeDecision — 결정 하나를 질문·고른 문구로 되짚�
   })
 
   it('어전회의 결정은 그 비트의 question·choice.text 를 그대로 돌려준다', () => {
-    const act = ACTS[1]   // 2막 병인양요 어전회의
-    const beat = ACTS[1].beats.find(b => b.kind === 'council')
+    const act = ACTS[2]   // 3막 조약을 두고 여는 어전회의(2막의 회의는 2026-10-06 정족산성 판이 대신한다)
+    const beat = act.beats.find(b => b.kind === 'council')
     const choice = beat.council.choices[1]
-    const { question, text } = describeDecision(act, { actIndex: 1, choiceId: choice.id, reason: '' })
+    const { question, text } = describeDecision(act, { actIndex: 2, choiceId: choice.id, reason: '' })
     expect(question).toBe(beat.council.question)
     expect(text).toBe(choice.text)
   })
@@ -106,12 +106,15 @@ describe('buildRecordText — 「내 기록 복사」에 실제로 들어가는 
       decisions: [
         ...s.decisions,
         { actIndex: 0, choiceId: 'coin', reason: '' },
-        { actIndex: 1, choiceId: act1.beats.find(b => b.kind === 'council').council.choices[0].id, reason: '' },
+        { actIndex: 1, choiceId: 'defend:tries1', reason: '정족산성 — 첫 판에 프랑스군을 물리쳤다' },
       ],
     }
     const text = buildRecordText(s, ACTS)
     expect(text).toContain('[1막 「즉위」]')
     expect(text).toContain('[2막 「양요」]')
+    // 2막에 남는 것은 고른 보기가 아니라 그 밤을 치른 한 줄이다.
+    expect(act1.beats.some(b => b.kind === 'defend')).toBe(true)
+    expect(text).toContain('선택 — 정족산성 — 첫 판에 프랑스군을 물리쳤다')
   })
 })
 

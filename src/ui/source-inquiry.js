@@ -78,6 +78,8 @@ export function installInquiryStyle(){
  .source-inquiry a{color:#4c604a;font-size:12px}
  .source-inquiry .inquiry-source-link{display:block;margin:0 0 12px}
  .card.has-inquiry .meaning,.card.has-inquiry .gloss,.card.has-inquiry .excerpt{display:none}
+ /* 글만 감추면 「기록에 적힌 것」「우리가 붙인 해석」 이름표가 빈 종이로 남는다(2026-10-06 화면에서 확인) — 칸째로 감춘다. */
+ .card.has-inquiry .record,.card.has-inquiry .reading{display:none}
  .card.has-inquiry .close:disabled{opacity:.45;cursor:not-allowed}
  `;document.head.appendChild(style)
 }

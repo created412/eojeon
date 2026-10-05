@@ -138,3 +138,51 @@ export function idlePose(tMs, seed, out = {}) {
   out.headNod = breath * IDLE.breathNod
   return out
 }
+
+// ── 뼈가 없는 인물(판 하나로 선 사람)의 자세 ────────────────────────────────
+//
+// 선생님(2026-10-06): 「여흥부대부인 민씨가 안 움직여. 모든 캐릭터가 조금씩 움직이고
+// 있어야 해.」 어머니는 그림 한 장을 오려 세운 판이라 굽힐 허리도 돌릴 고개도 없다.
+// 그동안 한 것은 숨(세로 배율 0.6%)뿐이었고, 화면에서는 그것이 보이지 않았다 —
+// 임금이 다가서면 서성임도 멈추니(읍할 차례인데 판은 읍하지 못한다) 완전히 굳었다.
+//
+// 판 하나로 할 수 있는 것을 다 쓴다:
+//   tilt    발을 축으로 좌우로 아주 조금 기운다 — 무게를 옮기는 것과 느린 흔들림.
+//           걸을 때는 걸음의 박자로 좌우로 실린다.
+//   scaleY  숨.
+//   scaleX  이따금 몸을 조금 트는 것처럼 폭이 준다(고개 대신).
+//   lift    걸을 때 한 걸음마다 조금 솟는다.
+// 값은 뼈 있는 사람의 서 있는 자세와 같은 박자(IDLE)를 쓴다 — 한 마당에 선 두 사람이
+// 다른 시계로 숨 쉬지 않게.
+export const FLAT = {
+  swayHz: 0.11,        // 9초에 한 번 좌우로
+  sway: 0.014,         // rad, 약 0.8°
+  shift: 0.02,         // 무게를 옮길 때 기우는 폭(rad, 약 1.1°)
+  breathScale: 0.009,  // 숨 — 0.9%. 뼈 있는 사람(0.6%)보다 조금 크다: 판은 가슴만 부풀 수 없다
+  turn: 0.03,          // 몸을 틀 때 폭이 주는 몫(3%)
+  walkTilt: 0.04,      // 걸을 때 좌우로 실리는 폭(rad, 약 2.3°)
+  walkLift: 0.055,     // 걸을 때 솟는 높이(m)
+}
+
+/**
+ * 판 하나의 한 프레임 자세.
+ *   tMs       서 있는 자세의 시계
+ *   seed      idleSeed()
+ *   walk      걷는 정도 0~1(부드럽게 오간다) · phase 걸음의 위상(rad)
+ * 내놓는 값: { tilt(rad), scaleX, scaleY, lift(m) }
+ */
+export function flatPose(tMs, seed, walk = 0, phase = 0, out = {}) {
+  const t = tMs / 1000
+  const s = seed ?? NO_SEED
+  const breath = Math.sin(TAU * (IDLE.breathHz * t + s.breath))
+  const sway = Math.sin(TAU * (FLAT.swayHz * t + s.arm))
+  const shift = shiftCurve(frac(IDLE.shiftHz * t + s.shift))
+  const look = occasional(frac(IDLE.lookHz * t + s.look))
+  const w = Math.max(0, Math.min(1, walk))
+  const still = 1 - w
+  out.tilt = still * (sway * FLAT.sway + shift * FLAT.shift) + w * Math.sin(phase) * FLAT.walkTilt
+  out.scaleY = 1 + breath * FLAT.breathScale
+  out.scaleX = 1 - still * look * FLAT.turn
+  out.lift = w * Math.abs(Math.sin(phase)) * FLAT.walkLift
+  return out
+}

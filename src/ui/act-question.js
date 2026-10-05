@@ -109,9 +109,15 @@ const CSS = `
 /* 그림이 없는 막에서는 막까지 짙으면 먹판 하나가 된다 — 아래쪽만 남긴다. */
 .actq-dark+.actq-scrim{background:linear-gradient(180deg,#05060800 0%,#05060859 68%,#050608bf 100%)}
 
+/* ⚠ 글 상자가 **화면 너비 전부**를 차지하고, 글의 폭은 안여백으로 줄인다(2026-10-06).
+   예전에는 상자 자체가 1040px 이었고 넘치면 그 상자가 굴렀다 — 그래서 스크롤 막대가
+   화면 오른쪽 끝이 아니라 **글 상자의 오른쪽 끝, 곧 화면 한복판**에 섰다(선생님이
+   찍어 보내신 그 흰 막대다). 이제 구르더라도 막대는 화면 끝에 선다.
+   그리고 낮은 화면에서 구르지 않도록 틈과 안여백을 화면 높이에 맞춰 줄인다. */
 .actq-body{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;
-  gap:clamp(18px,3vh,32px);padding:clamp(28px,5vw,64px) clamp(20px,6vw,72px);
-  width:100%;max-width:1040px;text-align:center;overflow:auto;max-height:100%}
+  gap:clamp(12px,2.6vh,32px);
+  padding:clamp(18px,4vh,64px) max(clamp(20px,6vw,72px),calc(50% - 448px));
+  width:100%;text-align:center;overflow-x:hidden;overflow-y:auto;max-height:100%}
 
 /* 「제1막 · 즉위 1863」 — 질문보다 먼저 읽히면 안 된다. 작고 조용하게 둔다.
    자간은 .16em 까지만 준다 — 처음 .34em 을 주었더니 「제 1 막」이 세 낱말로 흩어져
@@ -184,6 +190,18 @@ const CSS = `
   .actq-q{font-size:clamp(var(--read-title,24px),6.6vw,34px);line-height:1.55}
   .actq-go{width:100%;max-width:340px;padding:14px 20px}
   .actq-act{letter-spacing:.24em}
+}
+
+/* 낮은 화면(노트북 768·프로젝터 720)에서 굴리지 않고 한 판에 들어오게 — 질문과 본 것의
+   줄 사이를 조금 조인다. 글씨 크기의 바닥(--read-title)은 건드리지 않는다. */
+@media(max-height:860px){
+  .actq-q{font-size:clamp(var(--read-title,30px),5.2vh,46px);line-height:1.34}
+  .actq-lead{line-height:1.6}
+  .actq-seen{padding:12px 20px}
+  .actq-seen-title{margin-bottom:4px}
+  .actq-seen-list li{line-height:1.55;padding:3px 0 3px 20px}
+  .actq-seen-list li::before{top:.78em}
+  .actq-go{padding:11px 34px}
 }
 
 /* 움직임을 줄여 달라고 한 학생에게는 그림이 떠돌지 않는다. 화면은 그대로 뜬다. */

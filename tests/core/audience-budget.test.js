@@ -153,15 +153,19 @@ describe('어느 사료든 제 막 안에서 손에 들어온다', () => {
   // 불렀고, 하루 여섯 칸으로는 어떤 학생도 받을 수 없었다(판정 R102).
   // 2026-09-13 역사 순서 정리 — 조약문은 낮에 고르는 문서가 아니라, 훈령 뒤 신헌의 알현에서
   // 모두가 받는다. 서계는 그보다 먼저(1873) 역관의 알현에서 받는다.
-  it('서계를 먼저, 조약문 세 장은 훈령 뒤 신헌의 알현에서 한꺼번에 받는다', () => {
+  // 2026-10-06 — 조약문 세 장은 신헌이 건네는 것이 아니라, 알현 바로 뒤 「조약문을 뜯어 읽는」
+  // 판(treaty-study)을 마치면 손에 들어온다. 읽지 않고는 어전회의에 들지 못한다.
+  it('서계를 먼저, 조약문 세 장은 훈령 뒤 신헌이 올린 조약문을 뜯어 읽고 받는다', () => {
     const beats = beatsOf(ACTS[2])
     const at = id => beats.findIndex(b => b.id === id)
     const grants = id => beats[at(id)].visitors.flatMap(v => v.grantCards ?? [])
     expect(grants('seogye-audience')).toEqual(['seogye'])
-    expect(grants('sinheon-returns').sort()).toEqual(['ganghwa1', 'ganghwa10', 'ganghwa7'])
+    expect(grants('sinheon-returns')).toEqual([])
+    expect([...beats[at('treaty-study')].grantCards].sort()).toEqual(['ganghwa1', 'ganghwa10', 'ganghwa7'])
     expect(at('seogye-audience')).toBeLessThan(at('unyo-dispatch'))
     expect(at('orders-sinheon')).toBeLessThan(at('sinheon-returns'))
-    expect(at('sinheon-returns')).toBeLessThan(at('council-treaty'))
+    expect(at('sinheon-returns')).toBe(at('treaty-study') - 1)
+    expect(at('treaty-study')).toBe(at('council-treaty') - 1)
     expect(at('council-treaty')).toBeLessThan(at('joil-trade-note'))
   })
 })

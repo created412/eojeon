@@ -16,8 +16,12 @@ function atHub(actIndex, id) {
 
 describe('역사 경계 안의 거점 선택', () => {
   // 75 → 66 (2026-10-06): 왕비의 줄을 걷어 냈다 — 2막 가례 둘, 4막 일곱이 빠지고 한 장이 들어갔다.
-  it('66비트를 보존하고 8개의 탐색 거점만 연다', () => {
-    expect(ACTS.flatMap(a => a.beats)).toHaveLength(66)
+  // 66 → 70 (2026-10-06): 3막에 서계의 선택 · 조약문 뜯어 읽기, 4막에 난의 선택, 5막에 정강 읽기 ·
+  // 정강의 선택이 들어가고 친필 넉 자가 빠졌다.
+  // 70 → 69 (2026-10-06): 2막의 장계 차례 맞추기와 어전회의 둘이 정족산성 판 하나가 되었다.
+  // 69 → 70 (2026-10-06): 4막에 아버지가 군영으로 떠나는 알현(imo-invitation)이 들어갔다.
+  it('70비트를 보존하고 8개의 탐색 거점만 연다', () => {
+    expect(ACTS.flatMap(a => a.beats)).toHaveLength(70)
     expect(ACTS.flatMap(a => a.beats.map((_, i) => hubAt(a, i))).filter(Boolean)).toHaveLength(8)
   })
   it('다른 막과 다음 시기의 보고를 현재 거점에서 열지 못한다', () => {
@@ -88,7 +92,7 @@ describe('역사 경계 안의 거점 선택', () => {
     delete legacy.freedom
     const loaded = deserialize(serialize(legacy))
     expect(SAVE_KEY).toBe('eojeon.save.v1')
-    expect(loaded.version).toBe(5)   // 4 → 5 (2026-10-06, core/state.js 머리말)
+    expect(loaded.version).toBe(6)   // 4 → 5 (2026-10-06, core/state.js 머리말)
     expect(loaded.beatIndex).toBe(legacy.beatIndex)
     expect(hubOptions(loaded, ACTS[2]).find(o => o.id === 'beat:seogye-audience').done).toBe(true)
   })

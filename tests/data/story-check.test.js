@@ -82,20 +82,24 @@ describe('3막 — 아버지가 물러난다', () => {
 describe('4막 — 날짜가 거꾸로 흐르지 않는다', () => {
 
   it('난의 밤 → 아버지 → 걸을 수 없다 → 얼어붙은 회의 → 끌려감의 차례다', () => {
-    const order = ['imo-night', 'imo-father-returns', 'imo-daewongun', 'imo-council', 'imo-abduction', 'imo-jemulpo', 'imo-sokbang']
+    const order = ['imo-rush', 'imo-choice', 'imo-father-returns', 'imo-daewongun', 'imo-council', 'imo-invitation', 'imo-abduction', 'imo-jemulpo', 'imo-sokbang']
     const idx = order.map(id => at('imo', id))
     expect(idx.every(i => i >= 0)).toBe(true)
     expect([...idx].sort((a, b) => a - b)).toEqual(idx)
     expect(beat('imo', 'imo-father-returns').dateLabel).toContain('6월 10일')
   })
 
-  // 선생님(2026-10-06): 「왕비를 그냥 없애버리고.」 난의 밤은 대조전으로 달려가는 촉박이었다.
-  // 달려갈 곳을 지어내지 않고, 기록에 남은 것(임금이 아버지에게 수습을 맡겼다)으로 다음 장면에 잇는다.
-  it('난의 밤이 다음 장면(아버지의 입궐)으로 이어진다', () => {
-    const t = text(beat('imo', 'imo-night'))
-    expect(t).toContain('아버지에게 맡겼다')
+  // 난의 밤은 하루에 두 번 바뀌었다(2026-10-06): 왕비에게 달려가는 촉박 → 글 한 장 → 다시
+  // 달아나는 판. 지금은 **왕비 없이** 안쪽 침전으로 몸을 피하고, 닿아야 아버지가 온다.
+  it('난의 밤은 달아나는 판이고, 기록과 재구성을 가른다', () => {
+    const r = beat('imo', 'imo-rush')
+    expect(r.kind).toBe('rush')
+    const t = r.intro.lines.join(NL)
     expect(t).toContain('실록에 없다')
-    expect(beat('imo', 'imo-night').origin).toContain('p.115')
+    expect(t).toContain('재구성')
+    expect(t).toContain('고위 관료')           // 교과서 115쪽
+    expect(r.intro.origin).toContain('115쪽')
+    expect(JSON.stringify(r)).not.toContain('왕비')
   })
 
 
@@ -199,8 +203,8 @@ describe('화자가 하나다', () => {
   })
 
   it('기록이 말하는 사람은 「임금」으로 남는다 — 당신이 한 일과 기록은 다르다', () => {
-    expect(text(beat('imo', 'imo-night'))).toContain('임금이 궁 안 어디에 있었는지')
-    expect(beat('gapsin', 'gapsin-brush').afterLines.join(NL)).toContain('임금이 정말 저 글자를 썼는지')
+    expect(beat('imo', 'imo-rush').intro.lines.join(NL)).toContain('임금이 궁 안 어디에 있었는지')
+    expect(beat('gapsin', 'gapsin-takezoe').lines.join(NL)).toContain('임금이 「日使來衛')
   })
 })
 
@@ -217,15 +221,34 @@ describe('끝을 사람의 자리로 닫는다', () => {
   })
 })
 
-describe('2막 어전회의 — 이긴 소식을 쥐고 「맞설 것인가」를 묻지 않는다', () => {
-  const c = beat('yangyo', 'council-byeongin')
-  it('물음이 정족산성 승전 뒤의 것이다', () => {
-    expect(c.council.question).toContain('정족산성에서 한 번 물리쳤다')
-    expect(c.council.question).toContain('아직 강화도에 있다')
+// 2026-10-06 — 선생님: 「장계를 순서대로 놓는 것보단 프랑스 애들을 물리치는 미니게임이 좋지 않을까.
+// 관련 어전회의와 근거 대기 등도 없애고 합쳐서 미니게임 하나. 그 결과 프랑스가 외규장각 의궤를
+// 훔쳐 가는 스토리로 이어지도록.」
+describe('2막 정족산성 — 장계가 오고, 그 밤을 치르고, 곧바로 약탈로 이어진다', () => {
+  const b = beat('yangyo', 'jeongjok-battle')
+  it('파발 → 정족산성 → 외규장각 약탈이 사이에 아무것도 없이 잇닿는다', () => {
+    expect(at('yangyo', 'janggye-arrives')).toBe(at('yangyo', 'jeongjok-battle') - 1)
+    expect(at('yangyo', 'jeongjok-battle')).toBe(at('yangyo', 'oegyujanggak-plunder') - 1)
   })
-  it('승전 장계는 회의 전에 이미 손에 들어와 있다', () => {
-    const got = beat('yangyo', 'janggye-arrives').visitors.flatMap(v => v.grantCards ?? [])
-    expect(got).toContain('yangheonsu')
-    expect(at('yangyo', 'janggye-arrives')).toBeLessThan(at('yangyo', 'council-byeongin'))
+  it('장계 차례 맞추기와 그 어전회의는 없다', () => {
+    expect(at('yangyo', 'byeongin-dispatch')).toBe(-1)
+    expect(at('yangyo', 'council-byeongin')).toBe(-1)
+  })
+  it('승전 장계는 그 밤을 치른 뒤에 손에 들어온다', () => {
+    expect(beat('yangyo', 'janggye-arrives').visitors.flatMap(v => v.grantCards ?? [])).toEqual([])
+    expect(b.grantCard).toBe('yangheonsu')
+    expect(b.quote).toContain('저들이 오르기를 기다려 쳤더니')
+  })
+  it('이긴 뒤의 글이 약탈로 넘긴다 — 교과서의 문장과 「그러나」', () => {
+    expect(b.actual).toContain('승리를 거두었다')
+    expect(b.actual).toContain('외규장각 도서 등을 약탈하였다')
+    expect(b.actualOrigin).toContain('『고등 한국사1』')
+    expect(b.bridge).toContain('빈손으로 물러가지 않았다')
+  })
+  it('임금이 강화도에 간 것처럼 꾸미지 않는다 — 재구성이라고 밝힌다', () => {
+    expect(b.grade).toBe('staged')
+    expect(b.origin).toContain('재구성')
+    expect(b.note).toContain('한양을 떠날 수 없다')
+    expect(b.sub).toContain('재구성')
   })
 })

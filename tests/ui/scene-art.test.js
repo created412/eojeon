@@ -33,10 +33,10 @@ it('그림마다 재구성이라고 캡션에 적고, 대체 글이 있다', () 
   }
 })
 
-it('배 그림은 그 해의 장계에 붙는다 — 1866 프랑스, 1871 미국, 1875 운요호', () => {
+it('배 그림은 그 해의 자리에 붙는다 — 1866 프랑스(정족산성 판의 첫 장), 1871 미국, 1875 운요호', () => {
   const dispatches = ACTS.flatMap(a => a.beats).filter(b => b.kind === 'dispatch').flatMap(b => b.dispatches)
   const art = id => dispatches.find(d => d.id === id)?.art
-  expect(art('by1')).toBe('fleet-1866')
+  expect(ACTS[1].beats.find(b => b.id === 'jeongjok-battle').art).toBe('fleet-1866')
   expect(art('sn1')).toBe('fleet-1871')
   expect(art('un1')).toBe('unyo-1875')
 })

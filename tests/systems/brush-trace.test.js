@@ -11,15 +11,15 @@ import {
   INK_WARN_LINE, INK_CRIT_LINE, INK_SPARE_LINE,
   PAPER_WET, PAPER_DRY, STROKE_WET, STROKE_DRY, GUIDE_ALPHA_WET, GUIDE_ALPHA_DRY,
   inkLevelAt, inkLevel, inkPressLine, inkSpared, inkPassLine,
-  inkDryness, inkPaperColor, inkStrokeColor, inkGuideAlpha, inkWashColor,
+  inkDryness, inkPaperColor, inkStrokeColor, inkGuideAlpha,
 } from '../../src/systems/brush-trace.js'
 import { actById } from '../../src/data/acts.js'
 import { beatsOf } from '../../src/systems/scenario.js'
 
-// 5막 배열 안의 그 비트를 그대로 본다. main.js 가 이것을 가리키는 상수를 들고
-// 있던 시절이 있었지만 임시 통로와 함께 지웠다(Task 15) — 여기서 베껴 적지 않고
-// 언제나 acts.js 에서 id 로 꺼낸다.
-const F2_BEAT = beatsOf(actById('gapsin')).find(b => b.id === 'gapsin-brush')
+// 시간을 재지 않는 붓 비트의 본보기. 예전에는 5막의 gapsin-brush 를 acts.js 에서 꺼냈으나,
+// 그 비트는 2026-10-06 에 막에서 걷어 냈다 — 붓 화면의 「안 마르는 판」을 재려고 옮겨 둔
+// 것을 쓴다(tests/helpers/untimed-brush.js).
+import { UNTIMED_BRUSH_BEAT as F2_BEAT } from '../helpers/untimed-brush.js'
 import { writingHtml, finishHtml } from '../../src/ui/brush.js'
 // 게임이 실제로 화면에 넘기는 그 view 를 짓는 함수다. 비트를 화면 함수에 직접
 // 넘겨 보면, 그 사이에서 값을 흘리는 자리(playBrush 의 조립)는 영원히 안 보인다
@@ -280,25 +280,19 @@ describe('F2 비트 — 쓰고 난 다음에 의심을 알린다', () => {
   })
 })
 
-// Task 14 — F2 도 마찬가지다. 5막이 ACTS 에 붙으면서 처음으로 실제 경로를 탄다.
-describe('F2 가 실제 막 진행을 탄다 (Task 14)', () => {
-  it('5막 배열에 gapsin-brush 비트가 있다 — 위 검사들이 보는 데이터의 출처다', () => {
-    expect(F2_BEAT, '5막에 gapsin-brush 비트가 없다 — 위 검사들이 undefined 를 본다').toBeTruthy()
+// 2026-10-06 — 선생님: 「일본 공사는 와서 지켜라 글씨 쓰게 하는 건 없애버리자.」
+describe('5막에는 붓을 드는 자리가 없다', () => {
+  it('막에 실린 붓 비트는 2막 척화비 하나뿐이다', () => {
+    const ids = ['enthronement', 'yangyo', 'chinjeong', 'imo', 'gapsin']
+      .flatMap(id => beatsOf(actById(id)).filter(b => b.kind === 'brush').map(b => id + '/' + b.id))
+    expect(ids).toEqual(['yangyo/cheokhwabi-brush'])
   })
 
-  it('5막을 처음부터 걸어가면 이 비트를 실제로 지나간다', async () => {
-    const { actById } = await import('../../src/data/acts.js')
-    const { dryRun } = await import('../../src/systems/branch.js')
-    const { createState } = await import('../../src/core/state.js')
-    const { played } = dryRun(actById('gapsin'), createState(), 4)
-    expect(played).toContain('gapsin-brush')
-  })
-
-  it('F2 는 경우궁에 든 다음에 온다 — 창덕궁 침전에서 쓰지 않는다', async () => {
-    const { actById } = await import('../../src/data/acts.js')
-    const { beatsOf } = await import('../../src/systems/scenario.js')
-    const ids = beatsOf(actById('gapsin')).map(b => b.id)
-    expect(ids.indexOf('gapsin-move-gyeongu')).toBeLessThan(ids.indexOf('gapsin-brush'))
+  it('넉 자와 그 기록이 하나뿐이라는 사실은 글 한 장에 남는다', () => {
+    const note = beatsOf(actById('gapsin')).find(b => b.id === 'gapsin-takezoe')
+    const said = note.lines.join(' ')
+    expect(said).toContain('日使來衛')
+    expect(said).toContain('하나뿐')
   })
 })
 
@@ -657,19 +651,6 @@ describe('먹이 마른다 — 눈에 보이게 (2026-09-26)', () => {
     }
   })
 
-  it('종이에 앉는 남은 초는 물자국만큼만 진하다 — 획과 안내점을 이기지 않는다', () => {
-    for (const level of [INK_WET, INK_WARN, INK_CRIT]) {
-      const wash = inkWashColor(level)
-      expect(wash, level).toMatch(/^rgba\(\d+,\d+,\d+,0\.\d+\)$/)
-      const alpha = Number(wash.match(/,([0-9.]+)\)$/)[1])
-      // 안내점(0.28)보다 옅게 — 숫자가 안내점보다 진해지면 그것은 물자국이 아니라 방해다
-      expect(alpha, level).toBeLessThan(GUIDE_ALPHA_WET)
-    }
-    // 단계가 오르면 조금 더 진해진다 — 숫자를 안 읽는 학생에게도 종이가 말한다
-    const a = (lv) => Number(inkWashColor(lv).match(/,([0-9.]+)\)$/)[1])
-    expect(a(INK_WARN)).toBeGreaterThan(a(INK_WET))
-    expect(a(INK_CRIT)).toBeGreaterThan(a(INK_WARN))
-  })
 
   it('여유 있게 끝낸 글자에는 「한 번에 썼다」가 붙는다', () => {
     expect(inkSpared(0, 0, 22000)).toBe(true)
@@ -761,16 +742,23 @@ describe('시계가 눈에 보이게 배선되어 있다 (2026-09-26)', () => {
     expect(body).toContain('paint()')        // 종이 자신이 마른다
   })
 
-  it('종이를 칠하는 순서가 안내점을 지키게 되어 있다 — 물자국이 가장 먼저다', () => {
+  // 선생님(2026-10-06): 「척화비 게임할 때 숫자 22가 떠서 글자 쓰기가 너무 불편해. 초를 세는 거
+  // 우측에 이미 있으니 글자 쓰는 공간에 초는 없애버려.」 예전에는 종이 한가운데에 남은 초를
+  // 큰 숫자로 깔았다 — 따라 쓸 안내점과 숫자의 획이 겹쳤다.
+  it('글자 쓰는 종이에는 숫자를 그리지 않는다 — 바탕, 안내점, 획뿐이다', () => {
     const body = bodyOf(brushSrc, 'paint')
-    const wash = body.indexOf('inkWashColor')
+    expect(body, '종이에 글자를 그려 넣는다').not.toContain('fillText')
+    expect(body).not.toContain('shownSecond')
     const guide = body.indexOf('inkGuideAlpha')
     const stroke = body.indexOf('inkStrokeColor')
-    expect(wash, 'paint 가 물자국을 안 그린다').toBeGreaterThan(-1)
     expect(guide, 'paint 가 안내점 불투명도를 안 쓴다').toBeGreaterThan(-1)
-    expect(wash, '남은 초가 안내점 위에 올라간다 — 따라 쓸 것을 덮는다').toBeLessThan(guide)
     expect(guide, '안내점이 획 위에 올라간다').toBeLessThan(stroke)
     expect(body).toContain('inkPaperColor(')
+  })
+
+  it('남은 초는 오른쪽 시계가 말한다 — 지운 것이 아니라 자리를 옮긴 것이다', () => {
+    expect(bodyOf(brushSrc, 'drawInk')).toContain('clockNum')
+    expect(brushSrc).toContain('clockface')
   })
 
   it('여유 있게 끝낸 글자에 한 줄이 붙는다 — 통과가 침묵으로 지나가지 않는다', () => {

@@ -1,82 +1,98 @@
-// 막을 열기 전 배경지식 — 사진과 글로 읽는 한 판.
+// 막을 열기 전 — 연표의 빈칸을 채우는 한 판.
 //
-// 선생님(2026-09-30): 「1막의 역사적 내용을 영상이나 그림 등으로 배경지식을
-// 설명해 주면 좋을 것 같아.」
+// 선생님(2026-09-30): 「1막의 역사적 내용을 … 배경지식을 설명해 주면 좋을 것 같아.」
+// 선생님(2026-10-06): 「막이 시작하기 전 교과서 내용 정리가 게임에 방해가 되네. 그래도
+// 필요한 건 맞아. … 한 판에 들어오는 연표하고 빈칸 채우기 문제로 넣는 건 어떨까.」
 //
-// 영상이 아니라 사진인 까닭을 적어 둔다. 이 게임은 한 파일로 나가고(13MB 한도,
-// 남은 여유 1.4MB) 바깥으로 아무 요청도 하지 않는다 — 학교 망에서 외부가 막혀도
-// 돌아야 하기 때문이다. 짧은 영상 하나도 그 두 조건을 한꺼번에 깬다.
-// 대신 **이미 게임 안에 있는 실제 사진**을 쓴다(data/act-background.js 머리말).
+// 예전 판은 사진 다섯 장과 글 열 줄을 아래로 굴려 읽는 화면이었다 — 길었고, 읽으라고만
+// 했다. 이 판은 **굴리지 않는다.** 연표 다섯 줄과 낱말 여덟 개가 한 화면에 들어오고,
+// 빈칸을 다 채우면 막이 열린다. 셈은 systems/cloze.js 가 한다. 여기서는 그리기만 한다.
 //
-// ⚠ 사진마다 relation 을 반드시 적는다. 고종의 사진은 즉위 때가 아니고, 근정전
-//   사진은 중건 직후가 아니다. 배경지식을 가르치는 자리에서 그 구분이 무너지면
-//   이 게임이 줄곧 지켜 온 것이 가장 중요한 자리에서 무너진다.
+// ⚠ 문장은 교과서의 것이다(data/act-background.js 가 쪽수를 적는다). 출처 줄을 지우지 않는다.
+// ⚠ 한 화면에 들어와야 한다 — 글씨와 틈을 화면 **높이**에 맞춰 줄인다(clamp + vh).
+//   넓은데 낮은 화면(손전화 가로 844×390)이 가장 위험하다. 거기서도 넘치면 판 안에서만
+//   구른다(바깥 화면은 구르지 않는다).
 import { installTypeVars } from './type-css.js'
-import { HISTORICAL_MEDIA } from './historical-media-data.js'
+import { makeBoard, initialState, place, focusBlank, isDone, hintChip, lineFor } from '../systems/cloze.js'
 
 const CSS = `
 .actbg,.actbg *{box-sizing:border-box}
-.actbg{position:fixed;inset:0;z-index:58;overflow:auto;background:#efe7d2;
+.actbg{position:fixed;inset:0;z-index:58;overflow:hidden;background:#efe7d2;
   color:var(--ink-strong,#23201a);font-family:var(--face-body,system-ui,sans-serif);
-  background-image:var(--hanji);background-size:cover;background-position:center}
-.actbg .wrap{max-width:1000px;margin:0 auto;padding:40px 28px 56px;
-  display:flex;flex-direction:column;gap:20px}
-.actbg .date{font-size:var(--read-small,13px);color:var(--ink-quiet,#6b5a3e)}
-.actbg h2{margin:0;font-family:var(--face-display,serif);letter-spacing:.14em;
-  font-size:var(--read-display,30px);line-height:1.4;color:#4f3d21;font-weight:400}
-.actbg .lead{margin:0;font-size:var(--read-lead,18px);line-height:var(--read-lh-body,1.8);
-  color:var(--ink-strong,#23201a);word-break:keep-all;max-width:var(--read-measure,34em)}
+  background-image:var(--hanji);background-size:cover;background-position:center;
+  display:flex;justify-content:center}
+.actbg .wrap{width:100%;max-width:1020px;height:100%;display:flex;flex-direction:column;
+  gap:clamp(6px,1.6vh,16px);padding:clamp(10px,3vh,34px) clamp(14px,3vw,32px) clamp(10px,2.4vh,26px)}
 
-/* 한 대목 = 사진 한 장 + 글 두어 줄. 좁아지면 사진이 위로 올라간다. */
-.actbg .panel{display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start;
-  padding:18px 0;border-top:1px solid #8a6a4433}
-.actbg .panel:first-of-type{border-top:none}
-.actbg figure{margin:0}
-/* ⚠ 세로로 긴 사진(정족산성·척화비)이 제 대목을 통째로 밀어내지 않게 높이를 묶는다.
-   자르지는 않는다(contain) — 사진을 자르는 일은 지적 #21 에서 이미 한 번 고쳤다. */
-.actbg figure img{display:block;width:100%;max-height:300px;object-fit:contain;
-  object-position:top;border:1px solid #8a6a4455;border-radius:2px;background:#dfd5bb}
-.actbg figcaption{margin-top:6px;font-size:var(--read-caption,12px);
-  line-height:var(--read-lh-small,1.6);color:var(--ink-quiet,#6b5a3e);word-break:keep-all}
-.actbg h3{margin:0 0 8px;font-family:var(--face-display,serif);font-size:var(--read-title,21px);
-  color:#4f3d21;font-weight:400;letter-spacing:.04em}
-/* 한 줄이 너무 길면 눈이 다음 줄 첫머리를 놓친다 — 읽는 폭을 묶어 둔다
-   (ui/type-css.js 의 --read-measure 는 이 게임 전체가 쓰는 그 값이다). */
-.actbg .panel p{margin:0 0 8px;font-size:var(--read-body,16.5px);
-  line-height:var(--read-lh-body,1.85);word-break:keep-all;
-  max-width:var(--read-measure,34em)}
+.actbg .top{flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px}
+.actbg h2{margin:0;font-family:var(--face-display,serif);letter-spacing:.1em;
+  font-size:clamp(19px,3.6vh,30px);line-height:1.3;color:#4f3d21;font-weight:400}
+.actbg .src{font-size:clamp(11.5px,1.7vh,14px);color:var(--ink-quiet,#6b5a3e)}
 
-/* 교과서에 실린 사료는 카드와 같은 결로 — 인용 줄을 세우고 글꼴을 바꾼다. */
-.actbg blockquote{margin:12px 0 0;padding:8px 0 8px 16px;border-left:4px solid #8a6a44;
-  max-width:var(--read-measure,34em);
-  font-family:var(--face-display,serif);font-size:var(--read-lead,17px);
-  line-height:var(--read-lh-body,1.9);color:var(--ink-strong,#23201a);word-break:keep-all}
-.actbg blockquote cite{display:block;margin-top:6px;font-family:var(--face-body,sans-serif);
-  font-style:normal;font-size:var(--read-small,13px);color:var(--ink-quiet,#6b5a3e)}
+/* 연표 — 왼쪽에 해, 오른쪽에 문장. 세로 줄 하나가 해들을 꿴다. */
+.actbg .rows{flex:1 1 auto;min-height:0;overflow-y:auto;margin:0;padding:0;list-style:none;
+  display:flex;flex-direction:column;justify-content:space-evenly;gap:clamp(4px,1.2vh,12px);
+  position:relative}
+.actbg .rows::before{content:'';position:absolute;left:calc(clamp(64px,9vw,104px) + 17px);top:10px;bottom:10px;
+  width:2px;background:#8a6a4455}
+.actbg .rows li{display:grid;grid-template-columns:clamp(64px,9vw,104px) 12px 1fr;gap:0 12px;align-items:start}
+.actbg .yr{font-family:var(--face-display,serif);font-size:clamp(14px,2.5vh,20px);color:#8a3b22;
+  text-align:right;line-height:1.6;white-space:nowrap}
+.actbg .dot{width:12px;height:12px;border-radius:50%;background:#efe7d2;border:2px solid #8a3b22;
+  margin-top:.55em;position:relative;z-index:1}
+.actbg .rows li.full .dot{background:#8a3b22}
+.actbg .rows p{margin:0;font-size:clamp(14.5px,2.55vh,20px);line-height:1.72;word-break:keep-all}
 
-.actbg .years{display:flex;flex-wrap:wrap;gap:0;border:1px solid #8a6a4455;border-radius:2px;
-  overflow:hidden;background:#00000008}
-.actbg .years div{flex:1 1 140px;padding:10px 14px;border-left:1px solid #8a6a4433}
-.actbg .years div:first-child{border-left:none}
-.actbg .years b{display:block;font-family:var(--face-display,serif);font-size:var(--read-lead,18px);
-  color:#8a3b22;font-weight:400}
-.actbg .years span{font-size:var(--read-small,13px);color:var(--ink-quiet,#5e4a2c)}
+/* 빈칸 — 낱말 길이만큼 벌어져 있다. 지금 채울 칸은 테두리가 선다. */
+.actbg .blank{display:inline-block;vertical-align:baseline;margin:0 2px;padding:0 .5em;
+  min-width:calc(var(--n,2) * 1em + 1em);height:1.5em;line-height:1.4;
+  font:inherit;color:#4f3d21;background:#00000010;border:0;border-bottom:2px solid #8a6a44;
+  border-radius:2px 2px 0 0;cursor:pointer;text-align:center}
+.actbg .blank.on{background:#e0a23a33;border-bottom-color:#b0701a;outline:2px solid #b0701a;outline-offset:1px}
+.actbg .blank.done{background:transparent;border-bottom-color:transparent;color:#8a3b22;
+  font-weight:600;cursor:default;min-width:0;padding:0 1px;outline:none}
+.actbg .blank.pop{animation:actbg-pop .32s ease-out}
+@keyframes actbg-pop{from{transform:scale(1.25);background:#e0a23a66}to{transform:scale(1)}}
 
-.actbg .ahead{margin:0;padding:14px 16px;background:#8a6a4412;border:1px solid #8a6a4433;
-  border-radius:2px;font-size:var(--read-body,16px);line-height:var(--read-lh-body,1.8);
-  word-break:keep-all}
-.actbg .origin{font-size:var(--read-small,12px);color:var(--ink-quiet,#6b5a3e)}
-.actbg .go{align-self:center;padding:14px 40px;background:#3a2d20;border:1px solid #6a5230;
-  color:#f0c469;border-radius:3px;font-family:inherit;font-size:var(--read-label,16px);
-  letter-spacing:.08em;cursor:pointer}
-.actbg .go:hover{background:#4a3a2a}
-.actbg .go:focus-visible{outline:3px solid #e0a23a;outline-offset:3px}
+/* 낱말 — 누르면 지금 칸에 놓인다. */
+.actbg .tray{flex:0 0 auto;display:flex;flex-wrap:wrap;justify-content:center;
+  gap:clamp(6px,1.2vh,10px) 10px;padding:clamp(6px,1.4vh,12px) 0 0;border-top:1px solid #8a6a4440}
+.actbg .chip{padding:clamp(6px,1.3vh,10px) clamp(12px,1.8vw,18px);background:#fbf5e4;
+  border:1px solid #8a6a44;border-radius:3px;font:inherit;font-size:clamp(14.5px,2.5vh,19px);
+  color:#3a2d1a;cursor:pointer;box-shadow:0 2px 0 #8a6a4466;transition:transform .12s}
+.actbg .chip:hover{transform:translateY(-2px)}
+.actbg .chip:active{transform:translateY(1px);box-shadow:none}
+.actbg .chip.used{visibility:hidden}
+.actbg .chip.left{opacity:.45;cursor:default;box-shadow:none}
+.actbg .chip.no{animation:actbg-no .3s}
+@keyframes actbg-no{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.actbg .chip.glow{border-color:#b0701a;background:#ffe9b8;animation:actbg-glow 1s ease-in-out infinite}
+@keyframes actbg-glow{50%{box-shadow:0 0 0 5px #e0a23a55}}
+.actbg .chip:focus-visible,.actbg .blank:focus-visible,.actbg .go:focus-visible{
+  outline:3px solid #b0701a;outline-offset:2px}
 
-@media(max-width:760px){
-  .actbg .wrap{padding:24px 16px 40px;gap:16px}
-  .actbg .panel{grid-template-columns:1fr;gap:12px}
-  .actbg figure{max-width:340px}
+.actbg .say{flex:0 0 auto;min-height:1.5em;text-align:center;font-size:clamp(12.5px,2vh,15.5px);
+  color:var(--ink-quiet,#5e4a2c);word-break:keep-all}
+
+.actbg .foot{flex:0 0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:space-between}
+.actbg .ahead{flex:1 1 320px;margin:0;font-size:clamp(12.5px,2vh,15.5px);line-height:1.55;
+  color:var(--ink-strong,#23201a);word-break:keep-all}
+.actbg .go{flex:0 0 auto;padding:clamp(9px,1.8vh,14px) clamp(22px,3vw,40px);background:#3a2d20;
+  border:1px solid #6a5230;color:#f0c469;border-radius:3px;font-family:inherit;
+  font-size:clamp(14.5px,2.3vh,17px);letter-spacing:.06em;cursor:pointer}
+.actbg .go:disabled{background:#00000014;border-color:#8a6a4455;color:#8a7a5c;cursor:not-allowed}
+.actbg .go:not(:disabled):hover{background:#4a3a2a}
+.actbg .go.ready{animation:actbg-ready .5s ease-out}
+@keyframes actbg-ready{from{transform:scale(1.12)}to{transform:scale(1)}}
+
+@media(max-width:620px){
+  .actbg .rows li{grid-template-columns:54px 12px 1fr;gap:0 8px}
+  .actbg .rows::before{left:67px}
   .actbg .go{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  .actbg .blank.pop,.actbg .chip.no,.actbg .chip.glow,.actbg .go.ready{animation:none}
+  .actbg .chip{transition:none}
 }
 `
 
@@ -92,36 +108,30 @@ function ensureStyle() {
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 
-// 한 대목. 사진이 없으면 글만 낸다 — 없는 사진을 지어내지 않는다.
-export function panelHtml(panel) {
-  const media = panel.media ? HISTORICAL_MEDIA[panel.media] : null
-  const figure = media?.src
-    ? `<figure><img src="${media.src}" alt="${esc(media.title ?? '')}">
-        <figcaption>${esc(panel.relation ?? '')}${media.credit ? `<br>${esc(media.credit)}` : ''}</figcaption>
-      </figure>`
-    : '<div></div>'
-  const quote = panel.quote
-    ? `<blockquote>${esc(panel.quote.text)}<cite>${esc(panel.quote.origin ?? '')}</cite></blockquote>`
-    : ''
-  return `<section class="panel">${figure}<div>
-      <h3>${esc(panel.heading)}</h3>
-      ${(panel.lines ?? []).map(l => `<p>${esc(l)}</p>`).join('')}
-      ${quote}
-    </div></section>`
+// 연표 한 줄. 빈칸은 단추다 — 눌러서 「지금 채울 칸」으로 고를 수 있다.
+export function rowHtml(row, board) {
+  const body = row.parts.map(part => {
+    if (part.blank == null) return esc(part.text)
+    const answer = board.blanks.find(b => b.id === part.blank)?.answer ?? ''
+    return `<button type="button" class="blank" data-blank="${part.blank}" style="--n:${[...answer].length}" aria-label="빈칸"></button>`
+  }).join('')
+  return `<li><span class="yr">${esc(row.year)}</span><i class="dot"></i><p>${body}</p></li>`
 }
 
-export function backgroundHtml(view) {
-  const years = (view.timeline ?? []).map(t =>
-    `<div><b>${esc(t.year)}</b><span>${esc(t.what)}</span></div>`).join('')
+export function backgroundHtml(view, board = makeBoard(view.rows, view.extra)) {
   return `<div class="wrap">
-    ${view.dateLabel ? `<div class="date">${esc(view.dateLabel)}</div>` : ''}
-    <h2>${esc(view.title)}</h2>
-    ${view.lead ? `<p class="lead">${esc(view.lead)}</p>` : ''}
-    ${(view.panels ?? []).map(panelHtml).join('')}
-    ${years ? `<div class="years">${years}</div>` : ''}
-    ${view.ahead ? `<p class="ahead">${esc(view.ahead)}</p>` : ''}
-    ${view.origin ? `<div class="origin">출처 — ${esc(view.origin)}</div>` : ''}
-    <button class="go">${esc(view.buttonLabel ?? '1막을 시작한다')}</button>
+    <div class="top">
+      <h2>${esc(view.title)}</h2>
+      ${view.origin ? `<span class="src">출처 — ${esc(view.origin)}</span>` : ''}
+    </div>
+    <ol class="rows">${board.rows.map(r => rowHtml(r, board)).join('')}</ol>
+    <div class="tray">${board.chips.map(c =>
+      `<button type="button" class="chip" data-chip="${c.id}">${esc(c.word)}</button>`).join('')}</div>
+    <div class="say" aria-live="polite"></div>
+    <div class="foot">
+      ${view.ahead ? `<p class="ahead">${esc(view.ahead)}</p>` : '<span></span>'}
+      <button type="button" class="go" disabled>${esc(view.buttonLabel ?? '막을 시작한다')}</button>
+    </div>
   </div>`
 }
 
@@ -130,22 +140,79 @@ export function createActBackground(root) {
   return {
     open(view) {
       return new Promise(resolve => {
+        const board = makeBoard(view.rows, view.extra)
+        let state = initialState(board)
         const el = document.createElement('div')
         el.className = 'actbg'
         el.setAttribute('role', 'dialog')
         el.setAttribute('aria-modal', 'true')
-        el.innerHTML = backgroundHtml(view)
+        el.innerHTML = backgroundHtml(view, board)
         root.appendChild(el)
+
         const go = el.querySelector('.go')
+        const say = el.querySelector('.say')
+        const blankEls = new Map([...el.querySelectorAll('[data-blank]')].map(b => [b.dataset.blank, b]))
+        const chipEls = new Map([...el.querySelectorAll('[data-chip]')].map(c => [c.dataset.chip, c]))
+
+        function paint(lastOk = null) {
+          const done = isDone(board, state)
+          const hint = hintChip(board, state)
+          for (const [id, b] of blankEls) {
+            const word = state.filled[id]
+            b.classList.toggle('done', !!word)
+            b.classList.toggle('on', !done && state.active === id)
+            if (word) { b.textContent = word; b.disabled = true; b.setAttribute('aria-label', word) }
+          }
+          for (const li of el.querySelectorAll('.rows li')) {
+            const ids = [...li.querySelectorAll('[data-blank]')].map(b => b.dataset.blank)
+            li.classList.toggle('full', ids.length > 0 && ids.every(id => state.filled[id]))
+          }
+          for (const [id, c] of chipEls) {
+            c.classList.toggle('used', !!state.used[id])
+            c.classList.toggle('glow', hint === id)
+            // 다 채운 뒤 남은 낱말은 흐려 둔다 — 「이 연표에는 들어가지 않는다」.
+            c.classList.toggle('left', done && !state.used[id])
+            c.disabled = done || !!state.used[id]
+          }
+          say.textContent = lineFor(board, state, lastOk)
+          if (done && go.disabled) {
+            go.disabled = false
+            go.classList.add('ready')
+            go.focus?.()
+          }
+        }
+
+        for (const [id, b] of blankEls) {
+          b.addEventListener('click', () => { state = focusBlank(board, state, id); paint() })
+        }
+        for (const [id, c] of chipEls) {
+          c.addEventListener('click', () => {
+            const active = state.active
+            const r = place(board, state, id)
+            state = r.state
+            if (r.ok) {
+              view.onPlace?.()
+              const b = blankEls.get(active)
+              b?.classList.remove('pop'); void b?.offsetWidth; b?.classList.add('pop')
+            } else {
+              view.onMiss?.()
+              c.classList.remove('no'); void c.offsetWidth; c.classList.add('no')
+            }
+            paint(r.ok)
+          })
+        }
+
         // 두 번 눌러도 한 번이다 — 다른 화면에서 한 번 났던 일이다.
-        let done = false
+        let closed = false
         go.addEventListener('click', () => {
-          if (done) return
-          done = true
+          if (closed || go.disabled) return
+          closed = true
           el.remove()
-          resolve()
+          resolve({ misses: Object.values(state.misses).reduce((a, n) => a + n, 0) })
         })
-        go.focus?.()
+
+        paint()
+        el.querySelector('.chip')?.focus?.()
       })
     },
   }

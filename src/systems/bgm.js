@@ -17,7 +17,7 @@ export const FADE_MS = 1400
 const ACT_TRACK = ['act1', 'act2', 'act3', 'act4', 'act5']
 
 // 글·문서를 읽는 화면. 소리를 끊지 않고 절반으로 낮춘다.
-const READING = new Set(['note', 'dispatch', 'outing', 'orders'])
+const READING = new Set(['note', 'dispatch', 'outing', 'orders', 'study', 'trail'])
 // 음악이 아예 없는 자리.
 // 혼자 서 있는 몇 초(alone)도 음악이 없다 — 비어 있는 것이 그 장면의 내용이다.
 const SILENT = new Set(['brush', 'plunder', 'hold', 'alone'])
@@ -26,10 +26,10 @@ export function bgmForBeat(beat, actIndex = 0) {
   const act = ACT_TRACK[actIndex] ?? 'act1'
   if (!beat) return { track: 'theme', level: 'full' }
   if (SILENT.has(beat.kind)) return { track: null, level: 'off' }
-  if (beat.kind === 'rush') return { track: 'tension', level: 'full' }
+  if (beat.kind === 'rush' || beat.kind === 'defend') return { track: 'tension', level: 'full' }
   if (beat.kind === 'procession' || beat.kind === 'move') return { track: 'march', level: 'full' }
   if (beat.kind === 'council') return { track: 'council', level: 'bed' }
-  if (beat.kind === 'orders' || beat.kind === 'funding') return { track: 'council', level: 'bed' }
+  if (beat.kind === 'orders' || beat.kind === 'funding' || beat.kind === 'dilemma') return { track: 'council', level: 'bed' }
   if (READING.has(beat.kind)) return { track: act, level: 'bed' }
   if (beat.kind === 'audience') return { track: act, level: 'bed' }
   return { track: act, level: 'full' }       // explore — 학생이 궁을 걷는 동안

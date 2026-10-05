@@ -26,6 +26,8 @@ export const PROP_SPECS = {
   sundial:    { height: 1.4, name: '앙부일구' },
   well:       { height: 2.0, name: '우물' },
   jangdok:    { height: 1.4, name: '장독대' },
+  // 내려받는 모델이 없다 — 기둥 둘과 지붕 하나로 그 자리에서 짓는다(buildBackGate).
+  backgate:   { height: 3.0, name: '후원 뒷문', procedural: true },
 }
 
 const FLOOR = 0.0          // 마당은 기단이 없다 — 땅 위에 그대로 놓인다
@@ -73,9 +75,39 @@ function fitToHeight(THREE, obj, height) {
  *   p: { id, x, z, yaw, scale?, fromYear? }
  * 반환 그룹의 userData.fromYear 를 씬이 보고 해에 따라 보였다 감췄다 한다.
  */
+// 후원 뒷문 — 담에 난 작은 일각문. 눈에 띄지 않아야 한다: 붉은 기둥도 단청도 없이
+// 나무 빛 그대로이고, 문짝 하나가 반쯤 열려 있다. 찾는 학생의 눈에만 걸린다.
+export function buildBackGate(THREE, p) {
+  const pivot = new THREE.Group()
+  pivot.position.set(p.x, 0, p.z)
+  pivot.rotation.y = p.yaw ?? 0
+  pivot.userData.fromYear = p.fromYear ?? null
+  pivot.userData.propId = p.id
+  const wood = new THREE.MeshStandardMaterial({ color: 0x4a3423, roughness: 0.95, metalness: 0 })
+  const dark = new THREE.MeshStandardMaterial({ color: 0x15100b, roughness: 1, metalness: 0 })
+  const tile = new THREE.MeshStandardMaterial({ color: 0x2b2f33, roughness: 0.9, metalness: 0 })
+  const box = (w, h, d, m, x, y, z) => {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m)
+    mesh.position.set(x, y, z)
+    pivot.add(mesh)
+    return mesh
+  }
+  box(0.28, 2.5, 0.28, wood, -0.95, 1.25, 0)          // 왼 기둥
+  box(0.28, 2.5, 0.28, wood, 0.95, 1.25, 0)           // 오른 기둥
+  box(2.3, 0.22, 0.3, wood, 0, 2.55, 0)               // 문틀 위
+  box(1.62, 2.3, 0.06, dark, 0, 1.15, -0.12)          // 문 너머의 어둠
+  const leaf = box(0.8, 2.25, 0.07, wood, -0.52, 1.13, 0.22)   // 반쯤 열린 문짝
+  leaf.rotation.y = 0.9
+  const roof = box(2.9, 0.16, 1.2, tile, 0, 2.86, 0)  // 낮은 지붕
+  roof.rotation.x = 0.06
+  box(2.6, 0.12, 0.5, tile, 0, 3.0, 0)                // 용마루
+  return pivot
+}
+
 export function buildYardProp(THREE, p) {
   const spec = PROP_SPECS[p.id]
   if (!spec) return null
+  if (spec.procedural) return buildBackGate(THREE, p)
   const pivot = new THREE.Group()
   pivot.position.set(p.x, 0, p.z)
   pivot.rotation.y = p.yaw ?? 0

@@ -2,12 +2,16 @@ import { riceLabel, RICE_NOTE } from '../systems/prices.js'
 import { royalIcon } from './royal-icons.js'
 import { installRoyalInterface } from './royal-interface.js'
 
-export function createCinematicHud(root, { onCodex = () => {}, onRotate = () => {}, onResetView = () => {}, onObjective = () => {}, onEscape = () => {} } = {}) {
+// ⚠ 2026-10-06 — 「지금의 여정」 판과 촉박의 붉은 판은 **누를 수 없다.** 예전에는 누르면
+//   목적지까지 걸어가(달아나) 주었다. 선생님: 「일정은 할 일을 보여 주는 거지 … 자동으로
+//   이동시키는 건 막아 버려. 모든 곳에서.」 판은 무엇을 해야 하는지만 말하고, 가는 것은
+//   학생이 한다.
+export function createCinematicHud(root, { onCodex = () => {}, onRotate = () => {}, onResetView = () => {} } = {}) {
   installRoyalInterface()
   const el = document.createElement('div')
   el.className = 'cinema-hud'
   el.hidden = true
-  el.innerHTML = `<div class="cinema-top"><div class="cinema-brand"><span class="hud-seal">御前</span><div><small class="cinema-date"></small><div class="cinema-location"></div></div></div><div class="cinema-chapter"><span class="chapter-dots" aria-hidden="true"></span><span class="chapter-label"></span></div><button class="cinema-codex">${royalIcon('book')}<span>사초함<small class="cinema-collection"></small></span><kbd>Q</kbd></button></div><div class="cinema-objective"><div class="objective-title">${royalIcon('compass')}<small>지금의 여정</small></div><div class="cinema-task"></div><div class="cinema-go">▶ 눌러서 그곳으로 걸어가기</div><div class="cinema-resource"><span class="budget-pips" aria-hidden="true"></span><span class="cinema-budget"></span></div></div><div class="cinema-danger" hidden><div><strong></strong><span></span></div><progress max="1" value="1"></progress><div class="cinema-go danger-go">▶ 이 판을 누르면 목적지로 달아납니다</div><small>시간과 이동 경로는 학습을 위한 재구성입니다.</small></div><div class="cinema-keyboard"><span><kbd>W A S D</kbd> 이동</span><span><kbd>Shift</kbd> 달리기</span><span>우클릭 드래그 · 둘러보기</span></div>`
+  el.innerHTML = `<div class="cinema-top"><div class="cinema-brand"><span class="hud-seal">御前</span><div><small class="cinema-date"></small><div class="cinema-location"></div></div></div><div class="cinema-chapter"><span class="chapter-dots" aria-hidden="true"></span><span class="chapter-label"></span></div><button class="cinema-codex">${royalIcon('book')}<span>사초함<small class="cinema-collection"></small></span><kbd>Q</kbd></button></div><div class="cinema-objective"><div class="objective-title">${royalIcon('compass')}<small>오늘 할 일</small><b class="task-count"></b></div><ol class="cinema-tasks"></ol><div class="cinema-task"></div><div class="cinema-resource"><span class="budget-pips" aria-hidden="true"></span><span class="cinema-budget"></span></div></div><div class="cinema-danger" hidden><div><strong></strong><span></span></div><progress max="1" value="1"></progress><small>시간과 이동 경로는 학습을 위한 재구성입니다.</small></div><div class="cinema-keyboard"><span><kbd>W A S D</kbd> 이동</span><span><kbd>Shift</kbd> 달리기</span><span>우클릭 드래그 · 둘러보기</span></div>`
   root.appendChild(el)
   const viewControls=document.createElement('div')
   viewControls.className='cinema-view-controls'
@@ -28,11 +32,44 @@ export function createCinematicHud(root, { onCodex = () => {}, onRotate = () => 
   }
   const find = c => el.querySelector(c)
   find('.cinema-codex').addEventListener('click', onCodex)
-  find('.cinema-objective .cinema-go').textContent = '▶ 눌러서 가장 가까운 곳으로 걸어가기'
-  // 태블릿에서 3D 바닥을 여러 번 짚어 문을 찾기는 번거롭다(2026-09-14) — 여정 판을 누르면 그곳으로 걸어간다.
-  find('.cinema-objective').addEventListener('click', onObjective)
-  // 촉박 장면도 태블릿에서 쉽게(2026-09-15) — 붉은 판을 누르면 목적지로 달아난다.
-  find('.cinema-danger').addEventListener('click', onEscape)
+  // 할 일 판의 꼴 — 한 줄 한 가지. 한 일은 금빛 표와 함께 흐려지고, 남은 일은 또렷하다.
+  // 글씨는 15px 이다(예전 14px 한 줄은 프로젝터 뒷줄에서 읽히지 않았다).
+  const taskStyle = document.createElement('style')
+  taskStyle.textContent = `
+  .eojeon .cinema-objective{pointer-events:none;cursor:default;width:340px;max-width:340px;padding:14px 16px 12px;
+    background:#0f2f30f5;border:1px solid #e2c79366;border-left:5px solid #e0b25e}
+  .eojeon .cinema-objective .objective-title small{font-size:13px;letter-spacing:.08em;color:#f0d9a6;font-weight:600}
+  .cinema-objective .task-count{margin-left:auto;font-size:13px;font-weight:600;color:#f0d9a6;font-variant-numeric:tabular-nums}
+  .cinema-tasks{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:7px}
+  .cinema-tasks:empty{display:none}
+  .cinema-tasks li{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:start;font-size:15px;line-height:1.5;
+    color:#fbf6e6;word-break:keep-all}
+  .cinema-tasks li i{width:20px;height:20px;margin-top:1px;border:2px solid #e0b25e;border-radius:4px;display:grid;place-items:center;
+    font-style:normal;font-size:14px;line-height:1;color:#0f2f30}
+  .cinema-tasks li b{display:block;font-weight:600;color:#f0d9a6;font-size:12.5px;letter-spacing:.02em}
+  .cinema-tasks li.done{color:#9fb5ab}
+  .cinema-tasks li.done i{background:#e0b25e}
+  .cinema-tasks li.done b{color:#9fb5ab}
+  .cinema-tasks li.done span{text-decoration:line-through;text-decoration-color:#9fb5ab88}
+  .cinema-tasks li.blocked{color:#c9a59a}
+  .cinema-tasks li.blocked i{border-style:dashed;border-color:#c9a59a}
+  .eojeon .cinema-objective .cinema-task{margin:10px 0 9px;font-size:15px;font-weight:600;color:#ffe9b8}
+  .eojeon .cinema-objective .cinema-task:empty{display:none}
+  .eojeon .cinema-objective .cinema-task.exit{padding:8px 10px;border:1px solid #e0b25e;border-radius:4px;background:#e0b25e22}
+  .eojeon .cinema-danger{pointer-events:none;cursor:default}
+  @media(max-width:760px){
+    .eojeon .cinema-objective{width:min(250px,62vw);max-width:min(250px,62vw);padding:10px 11px}
+    .cinema-tasks{gap:5px;margin-top:7px}
+    .cinema-tasks li{font-size:13px;grid-template-columns:18px 1fr;gap:6px}
+    .cinema-tasks li i{width:16px;height:16px;font-size:11px}
+    .cinema-tasks li b{font-size:11px}
+    .eojeon .cinema-objective .cinema-task{font-size:13px;margin:7px 0 6px}
+  }
+  @media(max-height:480px){
+    .cinema-tasks li.done{display:none}
+    .cinema-tasks li b{display:inline;margin-right:4px}
+  }`
+  document.head.appendChild(taskStyle)
   let last = ''
   return {
     update(view) {
@@ -46,7 +83,27 @@ export function createCinematicHud(root, { onCodex = () => {}, onRotate = () => 
       find('.chapter-label').textContent = `${(view.actIndex ?? 0)+1}막 · ${view.actTitle ?? '즉위'}`
       find('.chapter-dots').innerHTML = Array.from({length:5},(_,i)=>`<i class="${i===(view.actIndex??0)?'active':i<(view.actIndex??0)?'complete':''}"></i>`).join('')
       find('.cinema-collection').textContent = `읽은 사료 ${view.readCount ?? 0}장`
-      find('.cinema-task').textContent = view.objective ?? '궁궐을 둘러보고 신하의 보고를 들으십시오.'
+      // 할 일 목록 — 낮에만. 다 했으면 「어디로 가서 E」 한 줄이 테를 두르고 선다.
+      const tasks = view.phase === 'day' ? (view.tasks ?? []) : []
+      const list = find('.cinema-tasks')
+      list.textContent = ''
+      for (const t of tasks) {
+        const li = document.createElement('li')
+        li.className = t.done ? 'done' : t.blocked ? 'blocked' : ''
+        const mark = document.createElement('i'); mark.textContent = t.done ? '✓' : ''
+        const body = document.createElement('div')
+        const where = document.createElement('b'); where.textContent = t.where
+        const what = document.createElement('span'); what.textContent = t.blocked ? `${t.label} — ${t.blocked}` : t.label
+        body.append(where, what)
+        li.append(mark, body)
+        list.appendChild(li)
+      }
+      const open = tasks.filter(t => !t.done && !t.blocked).length
+      find('.task-count').textContent = tasks.length ? `${tasks.filter(t => t.done).length} / ${tasks.length}` : ''
+      const line = find('.cinema-task')
+      // 목록이 있으면 한 줄은 「다 했다 — 어디로」일 때만 쓴다. 목록이 없는 낮(할 일이 없는 날)은 예전처럼 한 줄.
+      line.textContent = tasks.length && open > 0 ? '' : (view.objective ?? '궁궐을 둘러보고 신하의 보고를 들으십시오.')
+      line.classList.toggle('exit', tasks.length > 0 && open === 0)
       find('.cinema-objective').hidden = view.phase !== 'day'
       find('.cinema-budget').textContent = [
         view.riceIndex == null ? '' : riceLabel(view.riceIndex),

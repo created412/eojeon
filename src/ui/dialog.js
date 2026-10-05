@@ -7,6 +7,7 @@ import { inquiryHtml, bindInquiry, installInquiryStyle } from './source-inquiry.
 import { seenArtifacts } from '../systems/artifacts.js'
 import { artifactById } from '../data/artifacts.js'
 import { RUMOR_NOTICE } from './grade-notice.js'
+import { readFor, partsOf, initialRead, underline, readDone, readHint, readRecord, READ_LINES } from '../systems/source-read.js'
 export { RUMOR_NOTICE }
 
 const CSS = `
@@ -78,6 +79,35 @@ const CSS = `
   color:#413c31}
 .card .gloss{font-size:var(--read-small,13px);color:var(--ink-quiet,#6b6558);margin:0 0 16px;
   padding-left:2px;line-height:var(--read-lh-small,1.6)}
+/* ── 밑줄 긋기 (2026-10-06) ─────────────────────────────────────────────
+   선생님: 「애들이 이걸 절대로 안 읽고 그냥 넘어갈 거 같아.」 문서를 처음 손에 쥘 때
+   물음 하나가 뜨고, 답이 되는 구절을 **기록에서 찾아 눌러** 밑줄을 긋는다. 긋기 전에는
+   해석이 가려져 있고 문서를 덮을 수 없다(systems/source-read.js). */
+.card .ask{margin:0 0 12px;padding:10px 14px;border-left:4px solid #a3302a;background:#a3302a12;
+  font-size:var(--read-body,16px);line-height:1.6;color:#3a1c16;word-break:keep-all}
+.card .ask b{display:block;font-size:var(--read-caption,12px);letter-spacing:.14em;color:#a3302a;font-weight:600;margin-bottom:2px}
+.card .record .part{font:inherit;color:inherit;background:transparent;border:0;border-bottom:2px dotted #8a6a4499;
+  padding:1px 1px 0;margin:0;cursor:pointer;text-align:left;border-radius:2px 2px 0 0;
+  -webkit-box-decoration-break:clone;box-decoration-break:clone}
+.card .record .part:hover{background:#8a6a4422}
+.card .record .part:focus-visible{outline:2px solid #a3302a;outline-offset:2px}
+.card .record .part.no{animation:card-no .3s}
+@keyframes card-no{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.card .record .part.glow{background:#e0a23a44;animation:card-glow 1s ease-in-out infinite}
+@keyframes card-glow{50%{background:#e0a23a22}}
+.card .record.read-done .part{cursor:default;border-bottom-color:transparent}
+.card .record.read-done .part:hover{background:transparent}
+.card .record.read-done .part.hit{border-bottom:3px solid #a3302a;background:#a3302a1c}
+.card .read-say{min-height:1.5em;margin:0 0 12px;font-size:var(--read-small,14px);line-height:1.6;color:#7a3a22;word-break:keep-all}
+.card .read-say.found{color:#2a2418;border-left:4px solid #a3302a;padding:6px 0 6px 12px;font-size:var(--read-body,15.5px)}
+/* 긋기 전의 해석 — 가려 둔다. 있다는 것은 보이되 읽히지는 않는다. */
+.card.reading-locked .reading{position:relative;min-height:64px}
+.card.reading-locked .reading .meaning{filter:blur(6px);opacity:.35;user-select:none;max-height:3.6em;overflow:hidden}
+.card.reading-locked .reading::after{content:'밑줄을 그으면 펴진다';position:absolute;inset:auto 0 14px 0;text-align:center;
+  font-size:var(--read-small,13px);color:#5e5849;letter-spacing:.06em}
+.card.reading-locked .gloss{visibility:hidden}
+.card .close:disabled{opacity:.45;cursor:not-allowed}
+@media(prefers-reduced-motion:reduce){.card .record .part.no,.card .record .part.glow{animation:none}}
 .codex .sub{font-size:var(--read-small,13px);color:var(--ink-quiet,#5e5849);margin:-8px 0 14px}
 .card .staged{margin-top:18px;border:1px dashed #8a6a44;padding:11px 14px;
   font-size:var(--read-small,13px);line-height:var(--read-lh-small,1.6);color:var(--ink-quiet,#5e5849)}
@@ -134,7 +164,7 @@ export function noticeFor(card) {
 // onClose — 이 화면이 닫힐 때마다 한 번 불린다(어떻게 닫히든). 이 모듈은 소리를
 // 모른다: 무슨 소리를 낼지는 부르는 쪽(main.js)이 정한다 — ui/brush.js 의 onStroke 와
 // 같은 모양이다. 화면 안 「닫기」 단추가 유일한 길인 기기(태블릿)에서도 이 알림은 온다.
-export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), onInquirySave=()=>{} } = {}) {
+export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), onInquirySave=()=>{}, onRead=()=>{}, onReadTap=()=>{} } = {}) {
   installHistoricalMedia()
   installInquiryStyle()
   const style = document.createElement('style')
@@ -151,7 +181,8 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
   function close(force = false) {
     if (!veil) return
     if(!force && inquiry && !inquiry.ready()) {
-      veil.querySelector('.inquiry-status').textContent='근거를 표시하고 해석을 기록한 뒤, 해설과 비교해 주세요.'
+      const status = veil.querySelector('.inquiry-status')
+      if (status) status.textContent = inquiry.blockLine ?? '근거를 표시하고 해석을 기록한 뒤, 해설과 비교해 주세요.'
       return
     }
     inquiry = null
@@ -174,6 +205,44 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
     bindMedia(veil)
   }
 
+  // 밑줄 긋기를 카드에 건다. 긋기 전에는 닫히지 않는다(close 가 inquiry.ready 를 본다).
+  function bindRead(card, spec) {
+    let state = initialRead()
+    const cardEl = veil.querySelector('.card')
+    const record = veil.querySelector('.record')
+    const say = veil.querySelector('.read-say')
+    const closeBtn = veil.querySelector('.close')
+    const parts = [...veil.querySelectorAll('.record .part')]
+    closeBtn.disabled = true
+    inquiry = { ready: () => readDone(state), blockLine: READ_LINES.blocked }
+    for (const btn of parts) {
+      btn.addEventListener('click', () => {
+        if (readDone(state)) return
+        const i = Number(btn.dataset.part)
+        const r = underline(spec, state, i)
+        state = r.state
+        onReadTap(r.ok)
+        if (r.ok) {
+          btn.classList.add('hit')
+          for (const p of parts) p.classList.remove('glow', 'no')
+          record.classList.add('read-done')
+          cardEl.classList.remove('reading-locked')
+          veil.querySelector('.ask')?.remove()
+          say.textContent = spec.found
+          say.classList.add('found')
+          closeBtn.disabled = false
+          onRead(card.id, readRecord(spec, state))
+          closeBtn.focus?.()
+          return
+        }
+        btn.classList.remove('no'); void btn.offsetWidth; btn.classList.add('no')
+        const hint = readHint(spec, state)
+        if (hint != null) parts[hint]?.classList.add('glow')
+        say.textContent = hint != null ? READ_LINES.hint : READ_LINES.miss
+      })
+    }
+  }
+
   return {
     isOpen: () => veil !== null,
     close,
@@ -184,14 +253,28 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
       // 하우스 룰(가독성 검수 5장) — "분해 아니면 교체, 중간은 없다."
       const gloss = card.gloss ? `<div class="gloss">${card.gloss}</div>` : ''
       const media = sourceMedia(card.id)
-      open(`<div class="card${media ? ' has-media' : ''}${INQUIRIES[card.id]?' has-inquiry':''}">
+      // 밑줄 긋기 — 이 문서에 물음이 있고 아직 긋지 않았으면, 기록의 구절이 단추가 된다.
+      // 이미 그은 문서(사초함에서 다시 여는 것)는 그은 자리를 보여 주기만 한다.
+      const readSpec = INQUIRIES[card.id] ? null : readFor(card.id)
+      const prior = readSpec ? getInquiry(card.id) : null
+      const solvedBefore = !!prior?.compared
+      const readParts = readSpec ? partsOf(readSpec) : []
+      const priorHit = solvedBefore ? readParts.find(p => p.text.trim() === prior.selected?.[0])?.i ?? readSpec.pick : null
+      const excerptHtml = readSpec
+        ? readParts.map(p => `<button type="button" class="part${priorHit === p.i ? ' hit' : ''}" data-part="${p.i}">${p.text}</button>${'<br>'.repeat(p.breaks)}`).join('')
+        : card.excerpt
+      const askHtml = readSpec && !solvedBefore
+        ? `<p class="ask"><b>밑줄 긋기</b>${readSpec.q}</p>` : ''
+      open(`<div class="card${media ? ' has-media' : ''}${INQUIRIES[card.id]?' has-inquiry':''}${readSpec && !solvedBefore ? ' reading-locked' : ''}">
         <div class="source-layout"><div class="source-copy">
         <h3>${card.title}</h3>
         <div class="origin">${card.origin}</div>
-        <div class="record">
+        ${askHtml}
+        <div class="record${solvedBefore ? ' read-done' : ''}">
           <span class="part-label">${RECORD_LABEL}</span>
-          <p class="excerpt">${card.excerpt}</p>
+          <p class="excerpt">${excerptHtml}</p>
         </div>
+        ${readSpec ? `<p class="read-say inquiry-status${solvedBefore ? ' found' : ''}" role="status" aria-live="polite">${solvedBefore ? readSpec.found : ''}</p>` : ''}
         ${gloss}
         <div class="reading">
           <span class="part-label">${READING_LABEL}</span>
@@ -203,6 +286,7 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
         <button class="close">닫기 (E)</button>
       </div>`, onClose)
       inquiry=bindInquiry(veil,card.id,{initial:getInquiry(card.id),onSave:record=>onInquirySave(card.id,record),onReady:ready=>{veil.querySelector('.close').disabled=!ready}})
+      if (readSpec && !solvedBefore) bindRead(card, readSpec)
     },
     showCodex(state, onClose) {
       const row = (c) => {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { ACTS, actById } from '../../src/data/acts.js'
 import { SOURCES } from '../../src/data/sources.js'
+import { STUDIES, DILEMMAS } from '../../src/data/studies.js'
 import { beatsOf } from '../../src/systems/scenario.js'
 
 // ── 게임 안의 「N 해」를 전수로 훑는다 ────────────────────────────────────
@@ -49,7 +50,7 @@ function walkStrings(node, path, visit) {
 // actSpan()·nativeCount() 가 세므로 손으로 적힌 수가 없다(title.js·act-end.js).
 export function collectYearCounts() {
   const found = []
-  for (const [root, name] of [[ACTS, 'ACTS'], [SOURCES, 'SOURCES']]) {
+  for (const [root, name] of [[ACTS, 'ACTS'], [SOURCES, 'SOURCES'], [STUDIES, 'STUDIES'], [DILEMMAS, 'DILEMMAS']]) {
     walkStrings(root, name, (text, path) => {
       for (const m of text.matchAll(COUNT_RE)) {
         const after = text.slice(m.index + m[0].length - 1)
@@ -93,21 +94,6 @@ const CLAIMS = [
     from: 'year:1876', to: 'act:imo',
   },
   {
-    // 어전회의의 근거 한 줄 — 「다섯 해 뒤 그 일이 미국 함대의 구실이 된다」.
-    // 1866(제너럴 셔먼호)에서 1871(신미양요)까지다.
-    where: '다섯 해 뒤 그 일이',
-    from: 'act:yangyo', to: 'year:1871',
-  },
-  {
-    // 같은 회의의 예보 메아리 둘 — 척화비(1871)와 신미양요(1871), 둘 다 1866에서 센다.
-    where: '다섯 해 뒤 척화비가',
-    from: 'act:yangyo', to: 'year:1871',
-  },
-  {
-    where: '다섯 해 뒤 미국 함대가',
-    from: 'act:yangyo', to: 'year:1871',
-  },
-  {
     // 4막 영남 만인소(1881)는 개항(1876)에서 다섯 해 뒤다.
     where: '다섯 해 뒤 영남 만인소가',
     from: 'year:1876', to: 'year:1881',
@@ -143,14 +129,9 @@ const CLAIMS = [
     kind: 'duration',
   },
   {
-    where: '같은 나라를 두고 두 문서가',
+    where: '두 문서가 정반대의 말을',
     note: '강화도 조약(1876)과 조청상민수륙무역장정(1882) 사이',
     from: 'year:1876', to: 'act:imo',
-  },
-  {
-    where: '기억으로 쓴 글이어서',
-    note: '갑신정변(1884)과 『갑신일록』을 쓴 해(1885) 사이',
-    from: 'act:gapsin', to: 'year:1885',
   },
   {
     where: '신미양요의 구실이 된다',
@@ -161,6 +142,32 @@ const CLAIMS = [
     where: '바로 그 군대가 궁 안으로',
     note: '제물포 조약(1882)에서 갑신정변(1884)까지',
     from: 'act:imo', to: 'act:gapsin',
+  },
+  // ── 뜯어 읽는 문서와 고민해서 정하는 자리(data/studies.js · 2026-10-06) ──
+  {
+    where: '세 해 뒤에야 돌아온다',
+    note: '4막 — 대원군이 톈진으로 끌려간 해(1882)에서 돌아온 해(1885)까지',
+    from: 'act:imo', to: 'year:1885',
+  },
+  {
+    where: '하나는 여섯 해 전 당신이',
+    note: '「두 글자」 판 — 강화도 조약(1876)에서 장정(1882)까지',
+    from: 'year:1876', to: 'act:imo',
+  },
+  {
+    where: '한 해 전 운요호가',
+    note: '조약문 판 — 운요호 사건(1875)에서 강화도 조약(1876)까지',
+    from: 'year:1875', to: 'year:1876',
+  },
+  {
+    where: '두 해 전 청이 데려간',
+    note: '정강 판 — 대원군이 끌려간 해(1882)에서 갑신정변(1884)까지',
+    from: 'act:imo', to: 'act:gapsin',
+  },
+  {
+    where: '아홉 해 전 물러나게 한',
+    note: '4막의 선택 — 대원군이 물러난 해(1873)에서 임오군란(1882)까지',
+    from: 'act:chinjeong', to: 'act:imo',
   },
   {
     where: '강화도 조약 제1관은',

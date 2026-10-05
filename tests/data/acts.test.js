@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { studyById } from '../../src/data/studies.js'
 import { ACTS, actById } from '../../src/data/acts.js'
 import { beatsOf, controlTimeline, palaceTimeline, peakControl, endControl, hasWayForward } from '../../src/systems/scenario.js'
 import { SOURCES } from '../../src/data/sources.js'
@@ -11,6 +12,10 @@ const KINDS = [
   'note', 'explore', 'council', 'orders', 'move', 'rush', 'plunder', 'brush', 'dispatch',
   'funding',  // 「경복궁을 짓는다」 — 고르는 어전회의를 대신한다(ui/rebuild.js)
   'alone',    // 혼자 서 있는 몇 초 — 2026-09-27, 아버지가 물러난 직후
+  'defend',   // 정족산성 — 기다렸다가 쏜다 — 2026-10-06 (systems/jeongjok.js)
+  'trail',    // 소식을 좇는다 — 2026-10-06 (systems/trail.js)
+  'study',    // 문서를 뜯어 읽는다 — 2026-10-06 (systems/doc-study.js)
+  'dilemma',  // 고민해서 정한다 — 2026-10-06 (ui/dilemma.js)
   // 3단계
   'outing',   // G 회수 — 종로와 무위영 (Task 6)
   'escape',   // 변장과 맡길 사람 (Task 8)
@@ -71,16 +76,17 @@ describe('2막 「양요」', () => {
     expect(controlTimeline(a)).toEqual(['C'])
   })
 
-  it('장계 비트가 두 번 — 병인양요와 신미양요 — 있다', () => {
-    expect(beatsOf(a).filter(b => b.kind === 'dispatch')).toHaveLength(2)
+  // 2026-10-06 — 병인양요의 장계 차례 맞추기는 정족산성 판(kind:'defend')이 대신한다.
+  it('장계 비트는 신미양요 한 번, 병인양요는 정족산성 판으로 치른다', () => {
+    expect(beatsOf(a).filter(b => b.kind === 'dispatch').map(b => b.id)).toEqual(['sinmi-dispatch'])
+    expect(beatsOf(a).filter(b => b.kind === 'defend').map(b => b.id)).toEqual(['jeongjok-battle'])
   })
 
-  it('병인양요 장계는 창덕궁 국면, 신미양요 장계는 경복궁 국면에 있다', () => {
+  it('정족산성 판은 창덕궁 국면, 신미양요 장계는 경복궁 국면에 있다', () => {
     const ks = beatsOf(a).map(b => b.kind)
     const moveAt = ks.indexOf('move')
-    const dispatchAt = ks.map((k, i) => (k === 'dispatch' ? i : -1)).filter(i => i >= 0)
-    expect(dispatchAt[0]).toBeLessThan(moveAt)
-    expect(dispatchAt[1]).toBeGreaterThan(moveAt)
+    expect(ks.indexOf('defend')).toBeLessThan(moveAt)
+    expect(ks.indexOf('dispatch')).toBeGreaterThan(moveAt)
   })
 
   it('모든 장계에 출처와 등급이 붙어 있다', () => {
@@ -299,11 +305,12 @@ describe('막 전체를 가로지르는 규칙', () => {
     }
   })
 
-  // 4막 난군의 밤(C2)은 대조전의 왕비에게 달려가는 촉박이었다. 왕비의 줄을 걷어 내면서
-  // (2026-10-06) 달려갈 곳이 없어져 글 한 장이 되었다. 남은 촉박은 5막 하나다.
-  it('다섯 막을 다 합쳐 촉박은 한 번이다 — 1884 청군', () => {
+  // 4막 난군의 밤(대조전)과 5막 정변 사흘째 밤(후원 뒷문). 왕비의 줄을 걷어 낼 때 4막의 것을
+  // 글 한 장으로 줄였다가, 같은 날 선생님 말씀으로 되살렸다 — 「임오군란 때 난병들을 피해
+  // 도망가는 건 어디로 간 거야?」 (왕비 없이, 안쪽 침전으로 몸을 피하는 판이다.)
+  it('다섯 막을 다 합쳐 촉박은 두 번이다 — 1882 난군과 1884 청군', () => {
     const rushes = ACTS.flatMap(a => beatsOf(a)).filter(b => b.kind === 'rush')
-    expect(rushes.map(b => b.id)).toEqual(['gapsin-rush'])
+    expect(rushes.map(b => b.id)).toEqual(['imo-rush', 'gapsin-rush'])
   })
 })
 
@@ -356,13 +363,19 @@ describe('4막 「임오」', () => {
     expect(endControl(a)).toBe('D')
   })
 
-  it('촉박이 없다 — 난군의 밤은 글 한 장이다(왕비의 줄을 걷어 냈다)', () => {
-    expect(beatsOf(a).filter(b => b.kind === 'rush')).toHaveLength(0)
-    const night = beatsOf(a).find(b => b.id === 'imo-night')
-    expect(night.kind).toBe('note')
-    expect(night.lines.join(' ')).toContain('亂兵犯闕')
-    // 갈 곳을 지어내지 않는다.
-    expect(night.lines.join(' ')).not.toContain('가야 한다')
+  it('난군의 밤에 달아난다 — 왕비 없이, 안쪽 침전으로', () => {
+    const rushes = beatsOf(a).filter(b => b.kind === 'rush')
+    expect(rushes).toHaveLength(1)
+    const r = rushes[0]
+    expect(r.goalRoom).toBe('daejojeon')
+    expect(r.fire).toBe(false)
+    expect(r.caughtFlag).toBeUndefined()          // 늦으면 다시 한다 — 깃발로 갈리지 않는다
+    const text = r.intro.lines.join(' ')
+    expect(text).toContain('亂兵犯闕')
+    expect(text).toContain('재구성')              // 임금이 어디로 움직였는지는 기록에 없다
+    expect(r.intro.grade).toBe('staged')
+    const rooms = new Set(PALACES.changdeok.rooms.map(x => x.id))
+    for (const id of [...r.track, r.spawnRoom, r.goalRoom]) expect(rooms, id).toContain(id)
   })
 
 
@@ -436,14 +449,18 @@ describe('4막 「임오」', () => {
     }
   })
 
-  it('「속방」을 뜯어 보이고 여섯 해 전 조약과 나란히 놓는다 — 판정 R52', () => {
+  // 2026-10-06 — 글 한 장이 뜻풀이를 보여 주던 것을, 학생이 두 글자를 뜯고 두 문서의 빈칸을
+  // 채우는 판으로 갈았다. 뜯어 보이는 것(屬·邦)과 나란히 놓는 것(자주·속방)은 그대로다.
+  it('「속방」을 학생이 뜯어 읽고, 여섯 해 전 조약과 나란히 놓는다 — 판정 R52', () => {
     const b = beatsOf(a).find(x => x.id === 'imo-sokbang')
-    expect(b.glyphGloss.parts.map(p => p.ch)).toEqual(['屬', '邦'])
-    expect(b.glyphGloss.plain).toBe('다른 나라에 딸린 나라')
-    expect(b.compare.left.line).toContain('자주')
-    expect(b.compare.right.line).toContain('속방')
-    // 설명하지 않는다 — 두 줄이 스스로 말하게 둔다
-    expect(JSON.stringify(b)).not.toContain('그래서')
+    expect(b.kind).toBe('study')
+    expect(b.grantCard).toBe('sokbang')
+    const s = studyById(b.study)
+    const asks = s.steps.map(st => st.ask).join(' ')
+    expect(asks).toContain('屬')
+    expect(asks).toContain('邦')
+    expect(s.sections[0].text).toContain('{자주}')
+    expect(s.sections[1].text).toContain('{속방}')
   })
 })
 
@@ -546,13 +563,13 @@ describe('5막 「갑신」', () => {
     expect(h.track).toBeUndefined()
   })
 
-  it('F2 는 네 글자를 쓰게 하고 나머지 두 표기를 함께 보여 준다', () => {
-    const b = beatsOf(a).find(x => x.kind === 'brush')
-    expect(b.glyphs.join('')).toBe('日使來衛')
-    expect(b.rest.map(r => r.text)).toEqual(['日本公使來護朕', '日本公使來護我'])
-    expect(b.partial).toContain('갑신일록')
-    expect(b.afterLines.join(' ')).toContain('김옥균')
-    expect(b.afterLines.join(' ')).toContain('그중 하나')
+  // 2026-10-06 — 친필 넉 자를 걷고, 정강 열네 조를 읽고 정하는 자리를 넣었다.
+  it('붓을 드는 자리가 없고, 정강을 읽은 다음에 정한다', () => {
+    expect(beatsOf(a).some(x => x.kind === 'brush')).toBe(false)
+    const ids = beatsOf(a).map(x => x.id)
+    expect(ids.indexOf('gapsin-move-changdeok')).toBe(ids.indexOf('gapsin-reform') - 1)
+    expect(ids.indexOf('gapsin-reform')).toBe(ids.indexOf('gapsin-reform-choice') - 1)
+    expect(ids.indexOf('gapsin-reform-choice')).toBe(ids.indexOf('gapsin-qing') - 1)
   })
 
   it('핵심 선택의 「실제로는」이 사실과 해석을 나눠 담는다 — 판정 R12', () => {
@@ -564,18 +581,39 @@ describe('5막 「갑신」', () => {
     expect(c.actual.reading.line).toContain('갑신일록')
   })
 
-  it('C3 는 촉박이고 불이 아니다', () => {
+  // 2026-10-06 — 목적지가 연경당(방)에서 후원 뒷문(담의 한 자리)으로 바뀌었다. 선생님:
+  // 「연경당보단 어디 뒷문이라고 해서 찾기 어렵게 해 두는 게 좋아 보여.」
+  it('C3 는 촉박이고 불이 아니다 — 목적지는 방이 아니라 찾아야 하는 뒷문이다', () => {
     const r = beatsOf(a).find(b => b.kind === 'rush')
     expect(r.fire).toBe(false)
-    expect(r.goalRoom).toBe('yeongyeongdang')
-    expect(r.track[r.track.length - 1]).toBe('yeongyeongdang')
-    expect(r.caughtFlag).toBe('flight-caught')
+    expect(r.goalRoom).toBeUndefined()
+    expect(r.goalPoint).toMatchObject({ x: expect.any(Number), z: expect.any(Number) })
+    expect(r.goalLabel).toContain('뒷문')
+    expect(r.caughtFlag).toBeUndefined()
+    expect(r.retryHints.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('C3 의 목표 방이 그때의 조작권으로 열린다 — 못 들어가는 곳으로 달리게 하지 않는다', () => {
+  it('C3 의 뒷문이 실제로 담에 서 있고, 걸어서 닿는 자리다', () => {
     const r = beatsOf(a).find(b => b.kind === 'rush')
-    const room = PALACES.changdeok.rooms.find(x => x.id === r.goalRoom)
-    expect(isRoomOpen('B', room)).toBe(true)
+    const def = PALACES.changdeok
+    const gate = def.yard.props.find(p => p.id === 'backgate')
+    expect(gate, '담에 문이 없다').toBeTruthy()
+    // 문과 목적지가 같은 자리다.
+    expect(Math.hypot(gate.x - r.goalPoint.x, gate.z - r.goalPoint.z)).toBeLessThan(r.goalPoint.r)
+    // 임금이 걸을 수 있는 땅(담에서 2m 안쪽) 안에서 닿는다.
+    expect(Math.abs(r.goalPoint.z)).toBeLessThanOrEqual(def.ground.d / 2 - 1)
+    expect(Math.abs(r.goalPoint.z) - r.goalPoint.r).toBeLessThan(def.ground.d / 2 - 2)
+    // 어느 방 안도 아니다 — 안내도에 이름이 없다.
+    const inRoom = def.rooms.some(room => Math.abs(gate.x - room.x) < room.w / 2 && Math.abs(gate.z - room.z) < room.d / 2)
+    expect(inRoom).toBe(false)
+  })
+
+  it('왜 달아나는지를 먼저 말한다', () => {
+    const r = beatsOf(a).find(b => b.kind === 'rush')
+    const text = r.intro.lines.join(' ')
+    expect(text).toContain('청군')
+    expect(text).toContain('뒷문')
+    expect(text).toContain('북묘')            // 궁을 나가야 실록이 적은 그다음 자리에 닿는다
   })
 
   it('홍영식·박영교는 두 경로 모두에서 남는다 — 실록이 그렇게 적었다', () => {
@@ -645,7 +683,8 @@ describe('다섯 막이 이어진다', () => {
   // 자기 이야기다 — 종류를 강요하지 않고 「닫는 글이 있는가」만 본다.
   const closingTextOf = (act) => {
     const last = beatsOf(act).at(-1)
-    return [...(last?.lines ?? []), last?.actual?.line ?? ''].join(' ').trim()
+    // 4막은 「두 글자」를 뜯어 읽는 판으로 닫는다 — 그 판의 끝 글(after)이 닫는 글이다.
+    return [...(last?.lines ?? []), last?.actual?.line ?? '', ...(studyById(last?.study)?.after ?? [])].join(' ').trim()
   }
 
   it('막마다 자기 이야기로 닫는 글이 있다 — 1막 문구가 다섯 막에 쓰이지 않는다', () => {
@@ -675,15 +714,15 @@ describe('다섯 막이 이어진다', () => {
     }
   })
 
-  it('촉박은 통틀어 한 번뿐이고, 불길을 뚫고 달리는 장면은 없다', () => {
+  it('촉박은 통틀어 두 번뿐이고, 불길을 뚫고 달리는 장면은 없다', () => {
     const rushes = ACTS.flatMap(a => beatsOf(a).filter(b => b.kind === 'rush'))
-    expect(rushes).toHaveLength(1)
+    expect(rushes).toHaveLength(2)
     expect(rushes.filter(r => r.fire === true)).toHaveLength(0)
   })
 
-  it('친필은 두 번뿐이다 — F1 척화비 · F2 日使來衛 (F3 는 4단계 엔딩)', () => {
+  it('친필은 한 번뿐이다 — F1 척화비 (5막의 日使來衛 는 2026-10-06 에 걷어 냈다)', () => {
     const brushes = ACTS.flatMap(a => beatsOf(a).filter(b => b.kind === 'brush'))
-    expect(brushes).toHaveLength(2)
+    expect(brushes).toHaveLength(1)
   })
 
   it('조작권 D 를 실제로 쓰는 막은 4막과 5막뿐이다', () => {
@@ -821,7 +860,8 @@ describe('4·5막 보강 — 난 전의 집안, 정변 전의 믿음', () => {
   // 남은 순서만 붙든다 — 아버지의 귀환이 대원군 집권 글 앞, 왕비 환궁이 제물포 뒤.
   it('4막: 난의 밤 → 아버지의 귀환 → 대원군 집권 글 → 얼어붙은 회의 → 끌려감', () => {
     const at = id => imo.indexOf(id)
-    expect(at('imo-night')).toBe(at('imo-father-returns') - 1)
+    expect(at('imo-rush')).toBe(at('imo-choice') - 1)
+    expect(at('imo-choice')).toBe(at('imo-father-returns') - 1)
     expect(at('imo-father-returns')).toBe(at('imo-daewongun') - 1)
     expect(at('imo-daewongun')).toBeLessThan(at('imo-council'))
     expect(at('imo-council')).toBeLessThan(at('imo-abduction'))

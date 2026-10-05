@@ -23,6 +23,7 @@ import { advancePrices } from '../../src/systems/prices.js'
 import { isStopDone, markStopPaid, markStopDone, pendingStopId, stopById } from '../../src/systems/outing.js'
 import { spend } from '../../src/core/clock.js'
 import { serialize, deserialize } from '../../src/core/state.js'
+import { dilemmaById } from '../../src/data/studies.js'
 
 // 거울이 아는 비트 종류. 여기 없는 종류가 막에 쓰이면 resume-safety 의 검사가 운다.
 export const MIRRORED_KINDS = new Set([
@@ -30,6 +31,9 @@ export const MIRRORED_KINDS = new Set([
   'audience', 'procession',                                             // 알현·행렬 — 문서는 applyGrant 가 준다(아래 공통 경로)
   'council', 'orders', 'plunder', 'brush', 'move', 'rush',   // 1~3단계
   'hold', 'edict', 'escape', 'outing', 'funding', 'alone',                                  // 3단계가 더한 것
+  'defend',                                                             // 2026-10-06 — 정족산성(기다렸다가 쏜다)
+  'trail',                                                              // 2026-10-06 — 소식을 좇는다(상태에 남기는 것이 없다)
+  'study', 'dilemma',                                                   // 2026-10-06 — 문서를 뜯어 읽는 판 · 고민해서 정하는 자리
 ])
 
 // caught — 촉박(rush)을 놓쳤는가. 이 게임의 조건 비트는 전부 여기서 갈린다
@@ -81,6 +85,17 @@ export function firstChoiceDecider(beat, state, caught = true) {
     // 시험이 본다), 언젠가 비트로 올라와도 거울이 조용히 틀리지 않도록 자리를 둔다.
     case 'outing':
       return state
+    // 정족산성 — 그 밤을 어떻게 치렀는지가 decisions 에 남는다(main.js 의 playDefend).
+    case 'defend':
+      return { ...state, decisions: [...state.decisions, { actIndex: state.actIndex, choiceId: 'defend:tries1', reason: '시험' }] }
+    // 문서를 뜯어 읽는 판 — 주석은 inquiries 에 남고(역사가 아니다), 문서는 applyGrant 가 준다.
+    case 'study':
+      return state
+    // 고민해서 정하는 자리 — 고른 것이 decisions 에 남는다(main.js 의 playDilemma). 첫 보기를 고른다.
+    case 'dilemma': {
+      const d = dilemmaById(beat.dilemma)
+      return { ...state, decisions: [...state.decisions, { actIndex: state.actIndex, choiceId: `dilemma:${d.id}:${d.options[0].id}`, reason: '시험' }] }
+    }
     default:
       return state
   }

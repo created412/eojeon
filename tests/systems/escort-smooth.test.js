@@ -1,12 +1,18 @@
 import { it, expect } from 'vitest'
 import { ACTS } from '../../src/data/acts.js'
 import { PALACES } from '../../src/data/palaces.js'
-import { roomOf, kingSpot, walkAt, escortOffsets, escortSpot, PERSONAL_SPACE } from '../../src/systems/audience.js'
+import { roomOf, kingSpot, escortOffsets, escortSpot, PERSONAL_SPACE, processionPath, formationAll } from '../../src/systems/audience.js'
+import { collides } from '../../src/data/hall-geometry.js'
 import { followStep, FOLLOW_MAX_SPEED } from '../../src/systems/gait.js'
 
 // 선생님(2026-09-15): 행렬 중 인물들이 막 흔들린다 — 한 프레임에 곁 사람 자리가 2m 넘게 튀던 것을 붙든다.
+//
+// 2026-10-06 — 이 시험은 예전 셈(직선으로 걷는 임금 + escortSpot)을 흉내 내고 있었다. 실제
+// 행렬은 9월 말부터 **꺾인 길 위의 대열**(processionPath · formationAll)로 걷는다. 시험이 낡은
+// 셈을 재고 있으면 초록불이어도 아무것도 지키지 않는다 — 실제 셈으로 다시 잰다.
 it('행렬마다 곁을 걷는 사람의 자리가 이어져 움직이고 벽에 겹치지 않는다', () => {
-  let palace
+  const FRAME = 1000 / 60, MAX = FOLLOW_MAX_SPEED * FRAME / 1000
+  let palace, checked = 0
   for (const act of ACTS) {
     palace = act.palace
     for (const b of act.beats) {
@@ -14,26 +20,25 @@ it('행렬마다 곁을 걷는 사람의 자리가 이어져 움직이고 벽에
       if (b.kind !== 'procession') continue
       const def = PALACES[palace]
       const from = kingSpot(roomOf(def, b.room)), to = roomOf(def, b.to)
-      for (const e of escortOffsets(b)) {
-        // 씬(placeNpc smooth)과 같이: 목표 자리로 시간에 맞춰 다가간다(systems/gait.js followStep).
-        const FRAME = 1000 / 60, MAX = FOLLOW_MAX_SPEED * FRAME / 1000
-        let shown = escortSpot(def, from, e), rawJumps = 0, prevRaw = shown
-        for (let f = 0; f <= 400; f++) {
-          const king = walkAt(from, to, f / 400)
-          const target = escortSpot(def, king, e)
-          if (Math.hypot(target.x - prevRaw.x, target.z - prevRaw.z) > 1.5) rawJumps++
-          prevRaw = target
-          const d = Math.hypot(target.x - shown.x, target.z - shown.z)
-          const next = followStep(shown, target, FRAME)
-          expect(Math.hypot(next.x - shown.x, next.z - shown.z), `${b.id}/${e.npc} f${f}`).toBeLessThanOrEqual(MAX + 1e-9)
-          expect(d, `${b.id}/${e.npc} f${f} 대열에서 너무 뒤처짐`).toBeLessThan(3)
-          shown = next
+      const path = processionPath(def, from, { x: to.x, z: to.z }, to.id, 'A')
+      const offsets = escortOffsets(b)
+      const FRAMES = 900          // 15초짜리 행렬
+      // 대열에 든 뒤부터 잰다 — 처음에는 선 자리에서 걸어와 든다.
+      const shown = new Map(formationAll(path, 0, offsets, def).map(f => [f.npc, { x: f.x, z: f.z }]))
+      for (let f = 1; f <= FRAMES; f++) {
+        for (const spot of formationAll(path, f / FRAMES, offsets, def)) {
+          const at = shown.get(spot.npc)
+          const next = followStep(at, spot, FRAME)
+          expect(Math.hypot(next.x - at.x, next.z - at.z), b.id + '/' + spot.npc + ' f' + f).toBeLessThanOrEqual(MAX + 1e-9)
+          expect(Math.hypot(spot.x - next.x, spot.z - next.z), b.id + '/' + spot.npc + ' f' + f + ' 대열에서 너무 뒤처짐').toBeLessThan(4)   // 좁은 데서 자리가 옆으로 바뀌는 순간의 거리까지 넣은 수다
+          expect(collides(def, spot, 0.5), b.id + '/' + spot.npc + ' f' + f + ' 벽 안').toBeFalsy()
+          shown.set(spot.npc, { x: next.x, z: next.z })
         }
-        // 목표 자리 자체는 작은 기둥을 지날 때 한두 번 크게 바뀔 수 있다 — 화면에 보이는 걸음(shown)이 잇닿으면 된다.
-        expect(rawJumps, `${b.id}/${e.npc}`).toBeLessThanOrEqual(3)
       }
+      checked++
     }
   }
+  expect(checked).toBeGreaterThanOrEqual(3)     // 1막 가마 · 2막 경복궁 · 5막 끌려 나가는 길
 })
 
 // 2026-09-22 선생님 영상(운현궁 대문) — 「이동 중 사람이 겹쳐지는 문제」.

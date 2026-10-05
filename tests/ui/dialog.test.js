@@ -101,7 +101,7 @@ describe('사료 카드 — 기록과 해석을 눈으로 가른다', () => {
   it('기록이 제 낱장 위에 놓인다 — 카드 바탕과 다른 물건이다', () => {
     // 선생님(2026-09-30, 두 번째): 「종이 질감 옛날 거로 기록에 적힌 것을 눈에 보이게」
     // 카드 전체가 이미 한지라, 기록을 **따로 떼어** 놓지 않으면 구분이 안 된다.
-    expect(src).toContain('<div class="record">')
+    expect(src).toContain('<div class="record')   // 밑줄을 그은 문서는 read-done 이 덧붙는다
     const at = src.indexOf('.card .record{')
     expect(at, '기록 낱장의 결이 없다').toBeGreaterThan(-1)
     const block = src.slice(at, src.indexOf('.card .record::after'))

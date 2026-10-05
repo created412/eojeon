@@ -2,7 +2,7 @@ import {
   coverage, isTraced, HIT_RADIUS, DONE_RATIO, CHEOKHWABI_REST, CHEOKHWABI_PARTIAL_NOTE,
   inkMsOf, isInkTimed, inkRatio, inkLabel, inkSeconds, inkDried, inkDryNote, inkReport,
   inkLevel, inkPressLine, inkPassLine, inkDryness, inkPaperColor, inkStrokeColor,
-  inkGuideAlpha, inkWashColor, INK_WARN, INK_CRIT,
+  inkGuideAlpha, INK_WARN, INK_CRIT,
 } from '../systems/brush-trace.js'
 import { BRUSH_GUIDES } from './brush-guides-data.js'
 
@@ -356,19 +356,15 @@ export function createBrush(root) {
 
         function paint() {
           // 마를수록 바탕이 메마르고, 먹빛이 검정에서 갈색으로 뜨고, 안내점은 오히려
-          // 또렷해진다. 순서가 약속이다 — 물자국(남은 초)을 가장 먼저 칠하고 그 위에
-          // 안내점, 그 위에 학생의 획. 안내점이 숫자에 덮이는 일이 생길 수 없다.
+          // 또렷해진다. 바탕, 안내점, 학생의 획 — 이 셋뿐이다.
+          //
+          // ⚠ 예전에는 종이 한가운데에 남은 초를 큰 숫자로 물자국처럼 깔았다. 선생님
+          //   (2026-10-06): 「숫자 22가 떠서 글자 쓰기가 너무 불편해. 초를 세는 거 우측에
+          //   이미 있으니 글자 쓰는 공간에 초는 없애버려.」 따라 써야 할 안내점과 숫자의
+          //   획이 겹쳐, 어느 것이 글자의 획인지 가릴 수 없었다. 남은 초는 오른쪽 시계와
+          //   띠, 그리고 종이의 빛깔(마를수록 메마른다)이 말한다. 종이 위에는 글자만 있다.
           g.fillStyle = inkPaperColor(dryness)
           g.fillRect(0, 0, S, S)
-          if (inkMs > 0 && shownSecond >= 0) {
-            g.save()
-            g.fillStyle = inkWashColor(level)
-            g.font = `${Math.round(S * 0.58)}px ${HANJA_FONT}`
-            g.textAlign = 'center'
-            g.textBaseline = 'middle'
-            g.fillText(String(shownSecond), S / 2, S / 2)
-            g.restore()
-          }
           // 안내점
           g.fillStyle = `rgba(138,106,68,${inkGuideAlpha(dryness).toFixed(3)})`
           for (const p of guides) g.fillRect(p.x * S - 1, p.y * S - 1, 3, 3)

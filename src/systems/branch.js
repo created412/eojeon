@@ -83,7 +83,7 @@ export function dryRun(act, state, actIndex = 0) {
 //   (같은 모양의 구멍을 tests 쪽 hasWayForward 에서 방금 닫았다. 이것이 그 형제다.)
 // visitors — 알현 비트가 문서를 건네는 자리다(scenario.js grantedIdsOf). grantCard 와
 //   똑같은 이유로 조건부 비트에 달리면 안 된다: 한쪽 경로만 그 문서를 갖게 된다.
-const GUARDED_FIELDS = ['palace', 'control', 'grantCard', 'cardIds', 'visitors']
+const GUARDED_FIELDS = ['palace', 'control', 'grantCard', 'grantCards', 'cardIds', 'visitors']
 
 // 이 kind 들은 필드 하나가 아니라 kind 자체가 historyOf() 의 sources 를 바꾼다
 // (codex.js 의 plunder() 를 통해서 — 위 dryRun 이 흉내 내는 바로 그 효과다).

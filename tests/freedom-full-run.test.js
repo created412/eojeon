@@ -125,7 +125,7 @@ describe('실제 runBeats로 1~5막 자유 여정 완주', () => {
     }
     expect(a.historical).toEqual(b.historical)
     expect(a.state.moves).toEqual(b.state.moves)
-    expect(a.historical.indexOf('yangyo/byeongin-dispatch')).toBeLessThan(a.historical.indexOf('imo/imo-daewongun'))
+    expect(a.historical.indexOf('yangyo/jeongjok-battle')).toBeLessThan(a.historical.indexOf('imo/imo-daewongun'))
     expect(a.state.freedom.hubs['enthronement/unhyeon-day'].done.map(d => d.id))
       .not.toEqual(b.state.freedom.hubs['enthronement/unhyeon-day'].done.map(d => d.id))
   })
@@ -142,7 +142,8 @@ describe('실제 runBeats로 1~5막 자유 여정 완주', () => {
     expect(r.state.sources.held).not.toContain('choe-ikhyeon')
     expect(r.state.sources.held).not.toContain('seogye')
     for (const report of HUB_REPORTS) expect(r.played).not.toContain(`${report.act}/${report.beat}`)
-    expect(r.state.decisions.filter(d => !d.choiceId.startsWith('orders:'))).toHaveLength(5)
+    // 5 → 8 (2026-10-06): 고민해서 정하는 자리 셋(서계 · 임오 · 정강)이 더해졌다.
+    expect(r.state.decisions.filter(d => !d.choiceId.startsWith('orders:'))).toHaveLength(8)
   })
   it('선택 순서가 달라도 5막까지 같은 역사 순서를 유지한다', () => {
     // 4막 거점의 보고 두 개(완화군·이재선)를 걷어 내면서(2026-09-26) 「한 거점 안에서
