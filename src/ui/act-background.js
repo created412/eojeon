@@ -32,8 +32,10 @@ const CSS = `
   padding:18px 0;border-top:1px solid #8a6a4433}
 .actbg .panel:first-of-type{border-top:none}
 .actbg figure{margin:0}
-.actbg figure img{display:block;width:100%;border:1px solid #8a6a4455;border-radius:2px;
-  background:#dfd5bb}
+/* ⚠ 세로로 긴 사진(정족산성·척화비)이 제 대목을 통째로 밀어내지 않게 높이를 묶는다.
+   자르지는 않는다(contain) — 사진을 자르는 일은 지적 #21 에서 이미 한 번 고쳤다. */
+.actbg figure img{display:block;width:100%;max-height:300px;object-fit:contain;
+  object-position:top;border:1px solid #8a6a4455;border-radius:2px;background:#dfd5bb}
 .actbg figcaption{margin-top:6px;font-size:var(--read-caption,12px);
   line-height:var(--read-lh-small,1.6);color:var(--ink-quiet,#6b5a3e);word-break:keep-all}
 .actbg h3{margin:0 0 8px;font-family:var(--face-display,serif);font-size:var(--read-title,21px);

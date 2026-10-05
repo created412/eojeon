@@ -26,6 +26,12 @@ const CSS = `
 .escape .staged .origin{font-size:var(--read-caption,12px);color:var(--paper-quiet,#8f8a7c);margin-top:10px}
 .escape button.go{padding:13px 32px;background:#3a2d20;border:1px solid #6a5230;color:#e0a23a;
   border-radius:3px;font-size:var(--read-label,15px);cursor:pointer}
+/* 낮은 화면에서는 나가는 단추를 바닥에 붙인다 — 굴려야 닿는 단추는 학생에게
+   「없는 단추」다(2026-10-05 전체 점검 · ui/move-screen.js 와 같은 처방). */
+@media(max-height:560px){
+  .escape button.go{position:sticky;bottom:0;z-index:2;box-shadow:0 0 0 10px #0f1113}
+}
+
 `
 
 let styled = false

@@ -24,6 +24,16 @@ const CSS = `
   line-height:var(--read-lh-small,1.6);white-space:pre-line;text-align:left;word-break:keep-all}
 .move button{margin-top:10px;padding:13px 32px;background:#3a2d20;border:1px solid #6a5230;
   color:#e0a23a;border-radius:3px;font-size:var(--read-label,15px);cursor:pointer}
+/* ⚠ 낮은 화면(손전화·태블릿 가로)에서는 나가는 단추를 바닥에 붙인다.
+   2026-10-05 전체 점검: 이 판은 넘치면 굴러 내려가게 되어 있어(overflow:auto)
+   단추에 닿을 수는 있지만, 굴려야 한다는 표시가 없다 — 844×390 에서 단추가
+   통째로 화면 밖이었다. 글 화면(ui/note-screen.js)이 같은 까닭으로 「다음」을
+   붙여 둔 것과 같은 처방이다. 학생은 「안 눌린다」가 아니라 「단추가 없다」고 한다. */
+@media(max-height:560px){
+  .move button{position:sticky;bottom:0;z-index:2;box-shadow:0 0 0 10px #0f1113}
+  .move{justify-content:flex-start}
+}
+
 `
 
 let styled = false

@@ -123,7 +123,7 @@ export const LABELS = {
   absentHead: '사초함에 없던 글',
   absentFoot: '글 한 장이 이 자리에서 무엇을 할 수 있는지, 이제 보았다.',
   scribeHead: '사관이 받아 적는다',
-  copyNote: '이 문장은 막이 끝나면 나오는 「내 기록 복사」에 그대로 들어갑니다. 활동지에 옮겨 적으세요.',
+  copyNote: '이 문장은 막이 끝날 때 「사관이 적은 것」으로 다시 나옵니다. 활동지에 옮겨 적어 두세요.',
   next: '밤이 깊었다 — 다음으로',
 }
 
@@ -278,7 +278,7 @@ const CSS = `
 .council .council-absent-foot{margin:12px 0 0;font-size:var(--read-caption,13.5px);
   line-height:var(--read-lh-small,1.75);color:var(--paper-quiet,#bdb6a4)}
 
-/* 사관이 받아 적는 문장 — 종이 위에 한 칸. 이 문장이 그대로 「내 기록 복사」로 간다. */
+/* 사관이 받아 적는 문장 — 종이 위에 한 칸. 막 끝 화면의 「사관이 적은 것」에 다시 나온다. */
 .council .council-scribe{max-width:700px;width:100%;background:#e8e2d4;background-image:var(--hanji);
   background-size:cover;border:1px solid #6b5a3e;border-radius:3px;padding:18px 20px;
   box-shadow:inset 0 0 60px #b39a6a2b}

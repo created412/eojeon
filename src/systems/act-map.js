@@ -172,9 +172,9 @@ const NOTE = {
   },
   council: lead => (lead.frozen
     ? `어전회의가 열리지만 임금은 말하지 못한다 — ${lead.council?.question ?? ''}`
-    : `${lead.council?.question ?? '무엇을 할 것인가'} — 하나를 고르고 그렇게 정한 이유를 쓴다`),
+    : `${lead.council?.question ?? '무엇을 할 것인가'} — 근거를 대고 하나를 고른 뒤, 무슨 일이 일어날지 내다본다`),
   funding: lead => `${tidyTitle(lead.title)} — 고을에서 걷거나 돈을 찍어 열 채를 올린다`,
-  orders: lead => `${lead.question ?? '무엇을 적어 보낼 것인가'} — 조항을 고르고 이유를 쓴다`,
+  orders: lead => `${lead.question ?? '무엇을 적어 보낼 것인가'} — 조항을 골라 봉해서 보낸다`,
   brush: lead => {
     const n = lead.glyphs?.length ?? 0
     const what = tidyTitle(lead.title)

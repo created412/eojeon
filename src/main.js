@@ -824,7 +824,7 @@ export function boot(root) {
     loreBanner?.dispose()
     loreBanner = null
     dialog.showArtifact(artifact, artifactLines(artifact, flow.actIndex),
-      first ? () => { loreBanner = banner(root, '궁 안의 물건도 살펴볼 수 있다. 본 것은 사초함(Q) 아래쪽에 쌓인다 — 해 칸은 쓰지 않는다.', 4200) } : undefined)
+      first ? () => { loreBanner = banner(root, '궁 안의 물건도 살펴볼 수 있다. 본 것은 사초함(Q) 아래쪽에 쌓인다.', 4200) } : undefined)
   }
 
   function pressEAction() {
@@ -1894,14 +1894,19 @@ export function boot(root) {
   // saveGame() 은 여기서 부르지 않는다(CRITICAL 1) — runBeats() 가 advance() 뒤에 한 번만.
   // 나들이(stop)는 runBeats 를 거치지 않고 runStop() 에서 곧장 이 함수로 들어온다 —
   // 그래서 지급이 runBeats 가 아니라 여기 있어야 한다.
+  const HANDLE_HOLD_MS = 3000   // 손잡이 한 줄을 읽을 시간. 배너는 이 뒤 0.7초에 걸쳐 사라진다(ui/banner.js)
   async function playBeat(beat) {
     // 개편안 D — 「막마다 진짜 손잡이 하나」(선생님 2026-09-26). 이 막에서 학생이
     // 실제로 쥐는 자리에 닿으면, 그 화면을 열기 **직전에** 한 번 말한다.
     // 「당신은 이 막에서 이것을 쥔다」를 모른 채 쥐면 쥔 것이 아니다.
     const handle = flow.act()?.handle
     if (handle && beat.id === handle.beat) {
-      banner(root, handle.line.replace(/\*\*/g, ''), 4200)
-      await new Promise(done => setTimeout(done, 1600))
+      // ⚠ 배너가 **다 사라진 뒤에** 판을 연다(2026-10-05 전체 점검). 예전에는 1.6초만
+      //   기다리고 판을 열어, 4.2초짜리 배너가 2.6초 동안 판 한가운데에 겹쳐 있었다 —
+      //   훈령의 선택지 위에, 척화비를 쓰는 종이 위에. 먹이 마르는 시계가 도는 동안
+      //   글씨 쓸 자리를 배너가 가리고 있었던 셈이다.
+      banner(root, handle.line.replace(/\*\*/g, ''), HANDLE_HOLD_MS)
+      await new Promise(done => setTimeout(done, HANDLE_HOLD_MS + 750))
     }
     const after = await playBeatScreen(beat)
     // 「이 비트가 무엇을 주는가」를 여기서 되묻지 않는다. 한때 이 자리에
@@ -2004,7 +2009,10 @@ export function boot(root) {
     const q = flow.act().question
     if (q) {
       await actQuestion.open({ mode: 'close', act: flow.actIndex + 1, actLabel: q.label,
-        year: q.year, question: q.text, image: q.image, evidence: actEvidence() })
+        year: q.year, question: q.text, image: q.image, evidence: actEvidence(),
+        // 마지막 막에는 「다음 막」이 없다(2026-10-05 전체 점검 — 5막 끝에서도
+        // 단추가 「다음 막으로」였다). 없는 것을 약속하지 않는다.
+        closeLabel: flow.isLast() ? '마지막 기록으로' : undefined })
     }
 
     await showActEnd(reason)

@@ -28,6 +28,12 @@ const CSS = `
 .orders .origin{font-size:12px;color:#6b6558;margin-top:8px}
 .orders button.go{padding:12px 28px;background:#3a2d20;border:1px solid #6a5230;color:#e0a23a;
   border-radius:3px;font-size:15px;cursor:pointer}
+/* 낮은 화면에서는 나가는 단추를 바닥에 붙인다 — 굴려야 닿는 단추는 학생에게
+   「없는 단추」다(2026-10-05 전체 점검 · ui/move-screen.js 와 같은 처방). */
+@media(max-height:560px){
+  .orders button.go{position:sticky;bottom:0;z-index:2;box-shadow:0 0 0 10px #0f1113}
+}
+
 `
 
 let styled = false

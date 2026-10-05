@@ -8,10 +8,30 @@ import { ACTS } from '../../src/data/acts.js'
 // 배경지식을 설명해 주면 좋을 것 같아.」
 
 describe('배경지식 — 무엇을 싣는가', () => {
-  it('막 id 로 찾는다. 없는 막은 null 이라 예전 화면이 그대로 선다', () => {
+  it('막 id 로 찾는다. 모르는 id 는 null 이라 예전 화면이 그대로 선다', () => {
     expect(backgroundFor('enthronement')).toBeTruthy()
-    expect(backgroundFor('gapsin')).toBeNull()
+    expect(backgroundFor('없는막')).toBeNull()
     expect(backgroundFor(undefined)).toBeNull()
+  })
+
+  it('다섯 막이 모두 제 배경을 갖는다 — 한 막만 고치고 넷을 두고 오지 않았다', () => {
+    for (const act of ACTS) {
+      expect(backgroundFor(act.id), `${act.id} 에 배경이 없다`).toBeTruthy()
+    }
+  })
+
+  it('막 번호가 실제 차례와 맞는다', () => {
+    ACTS.forEach((act, i) => {
+      expect(backgroundFor(act.id).act, `${act.id} 의 막 번호가 어긋난다`).toBe(i + 1)
+    })
+  })
+
+  it('막마다 그 막에서 손으로 할 일을 미리 말한다', () => {
+    for (const act of ACTS) {
+      const ahead = backgroundFor(act.id).ahead
+      expect(ahead, `${act.id} 에 이어지는 말이 없다`).toBeTruthy()
+      expect(ahead.length).toBeGreaterThan(10)
+    }
   })
 
   it('실린 막 id 가 실제로 있는 막이다', () => {
@@ -26,8 +46,11 @@ describe('배경지식 — 무엇을 싣는가', () => {
     }
   })
 
-  it('어디서 온 글인지 밝힌다', () => {
-    expect(ACT_BACKGROUND.enthronement.origin).toContain('한국사1')
+  it('막마다 어디서 온 글인지 밝힌다 — 쪽수까지', () => {
+    for (const [id, bg] of Object.entries(ACT_BACKGROUND)) {
+      expect(bg.origin, `${id} 에 출처가 없다`).toContain('한국사1')
+      expect(bg.origin, `${id} 에 쪽수가 없다`).toMatch(/\d+쪽/)
+    }
   })
 })
 
