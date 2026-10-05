@@ -20,7 +20,7 @@ describe('안내 띠가 본문을 덮지 않는다', () => {
   })
 
   it('손으로 하는 판과 글 화면이 빠짐없이 들어 있다', () => {
-    for (const must of ['note', 'dispatch', 'council', 'orders', 'rebuild', 'brush', 'edict', 'ration']) {
+    for (const must of ['note', 'dispatch', 'council', 'orders', 'rebuild', 'brush', 'ration']) {
       expect(GUIDE_PANELS, `「${must}」 판이 띠 밑에 깔린다`).toContain(must)
     }
   })

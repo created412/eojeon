@@ -125,7 +125,7 @@ describe('실제 runBeats로 1~5막 자유 여정 완주', () => {
     }
     expect(a.historical).toEqual(b.historical)
     expect(a.state.moves).toEqual(b.state.moves)
-    expect(a.historical.indexOf('yangyo/byeongin-dispatch')).toBeLessThan(a.historical.indexOf('imo/imo-rush'))
+    expect(a.historical.indexOf('yangyo/byeongin-dispatch')).toBeLessThan(a.historical.indexOf('imo/imo-daewongun'))
     expect(a.state.freedom.hubs['enthronement/unhyeon-day'].done.map(d => d.id))
       .not.toEqual(b.state.freedom.hubs['enthronement/unhyeon-day'].done.map(d => d.id))
   })
@@ -156,7 +156,7 @@ describe('실제 runBeats로 1~5막 자유 여정 완주', () => {
   })
   it.each(['reports-first', 'people-first'])('%s의 모든 저장 지점에서 재개해 같은 기록으로 끝난다', async policy => {
     const full = await playRoute(policy)
-    expect(full.saves.length).toBeGreaterThan(90)
+    expect(full.saves.length).toBeGreaterThan(80)   // 왕비의 줄을 걷어 내 아홉 비트가 줄었다(2026-10-06)
     for (const json of full.saves) {
       const saved = deserialize(json)
       const resumed = await playRoute(policy, saved, true)

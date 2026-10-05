@@ -17,8 +17,8 @@
 //
 // 판 쪽 CSS 를 열두 군데 고치는 대신 여기 한 곳에서 규칙을 건다 — 새 판을 만들면
 // 아래 PANELS 에 이름 하나만 더하면 된다.
-const PANELS = ['note', 'dispatch', 'council', 'orders', 'rebuild', 'brush', 'edict',
-  'escape', 'loss', 'move', 'ration', 'cquiz']
+const PANELS = ['note', 'dispatch', 'council', 'orders', 'rebuild', 'brush',
+  'loss', 'move', 'ration', 'cquiz']
 
 const GAP = 12   // 띠와 본문 사이에 두는 숨
 

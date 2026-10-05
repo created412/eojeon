@@ -8,7 +8,6 @@ it('막마다 제 곡이 있고, 읽는 화면은 낮게, 침묵할 자리는 �
   expect(bgmForBeat({ kind: 'explore' }, 0)).toEqual({ track: 'act1', level: 'full' })
   expect(bgmForBeat({ kind: 'explore' }, 4)).toEqual({ track: 'act5', level: 'full' })
   expect(bgmForBeat({ kind: 'rush' }, 2).track).toBe('tension')
-  expect(bgmForBeat({ kind: 'escape' }, 3).track).toBe('tension')
   expect(bgmForBeat({ kind: 'procession' }, 0).track).toBe('march')
   expect(bgmForBeat({ kind: 'council' }, 1)).toEqual({ track: 'council', level: 'bed' })
   expect(bgmForBeat({ kind: 'note' }, 1)).toEqual({ track: 'act2', level: 'bed' })

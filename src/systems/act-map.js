@@ -58,8 +58,6 @@ export const GROUP_OF_KIND = {
   funding: 'hands',
   orders: 'hands',
   brush: 'hands',
-  edict: 'hands',
-  escape: 'hands',
   outing: 'hands',
 }
 
@@ -69,7 +67,7 @@ export const GROUP_LABEL = { read: '읽기', walk: '걷기', listen: '듣기', h
 // 이긴다 — 손으로 하는 것이 가장 세고, 글이 가장 약하다. 「글 두 장 읽고 장계를 읽는」
 // 걸음은 「장계를 읽는다」다: 학생이 그 대목에서 할 일은 장계 쪽이다.
 const SALIENCE = [
-  'funding', 'council', 'orders', 'brush', 'edict', 'escape', 'outing',
+  'funding', 'council', 'orders', 'brush', 'outing',
   'rush', 'dispatch', 'explore', 'audience', 'move', 'plunder', 'hold', 'alone',
   'procession', 'note',
 ]
@@ -127,8 +125,6 @@ const VERB = {
   funding: ['경복궁을 짓고', '경복궁을 짓는다'],
   orders: ['훈령을 적고', '훈령을 적어 보낸다'],
   brush: ['붓으로 쓰고', '붓으로 직접 쓴다'],
-  edict: ['국상 절차를 살피고', '국상 절차를 살핀다'],
-  escape: ['왕비를 피신시키고', '왕비를 피신시킨다'],
   outing: ['궁 밖을 살피고', '궁 밖을 살핀다'],
 }
 
@@ -180,8 +176,6 @@ const NOTE = {
     const what = tidyTitle(lead.title)
     return `${what ? `「${what}」에 새길 ` : ''}${n ? `${n}자를 ` : '글자를 '}손가락이나 마우스로 한 자씩 쓴다`
   },
-  edict: lead => `${lead.view?.title ? `「${tidyTitle(lead.view.title)}」 — ` : ''}나라의 장례 절차 기록을 한 줄씩 살핀다`,
-  escape: lead => `${lead.view?.title ? `「${tidyTitle(lead.view.title)}」 — ` : ''}왕비를 어디로, 누구에게 맡길지 고른다`,
   outing: () => '궁 밖에서 본 것을 살핀다',
 }
 

@@ -469,3 +469,26 @@ export function escortSpot(def, king, offset, radius = 0.8, taken = []) {
 
 // 행렬이 걷는 데 걸리는 시간. 수업 한 시간 안에서 볼 장면이라 길게 두지 않는다.
 export const PROCESSION_MS = 6800
+
+
+// ── 알현·행렬이 끝난 자리에 뜨는 한 줄 (2026-10-06 이야기 점검) ──────────────────
+//
+// 이 게임은 글 화면마다 「기록 / 교과서 / 재구성」을 밝힌다. 그런데 사람이 걸어 들어와
+// 말하는 장면 — 알현 열두 자리와 행렬 두 자리 — 은 아무 표시 없이 지나갔다. 비트에
+// origin·grade 를 적어 둔 자리도 있었지만 **그것을 화면에 내는 코드가 없었다.**
+// 「나머지는 이 아비가 합니다」도 「…열 해였습니다」도 게임이 지어낸 말인데, 학생은
+// 그것을 실록의 문장과 같은 무게로 듣고 있었다. 이야기가 탄탄할수록 이 표시가 있어야 한다.
+//
+// 말하는 동안에는 띄우지 않는다 — 장면이 끝나 학생이 「다음으로」를 누르기 전,
+// 화면 아래에 조용히 한 줄로 선다. 접어 두되 지우지 않는다(지적 #21 과 같은 생각).
+export const SCENE_NOTICE = '※ 재구성 장면 — 기록에 남은 일을, 게임이 말과 모습을 지어 보여 준 것입니다.'
+
+/**
+ * 이 장면 끝에 띄울 고지. 알현·행렬이 아니면 null.
+ *   돌려주는 것: { notice, origin } — origin 은 비트에 적힌 근거(없으면 null)
+ */
+export function sceneNotice(beat) {
+  if (!beat || (beat.kind !== 'audience' && beat.kind !== 'procession')) return null
+  const origin = typeof beat.origin === 'string' && beat.origin.trim() ? beat.origin.trim() : null
+  return { notice: SCENE_NOTICE, origin }
+}

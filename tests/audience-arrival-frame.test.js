@@ -31,6 +31,9 @@ it('신하가 도착한 프레임에도 임금이 멈춰 실제 자리와 퇴장
     input: { tap: () => null },
     inputForStep: () => ({ axis: () => ({ x: 0, z: 1 }), running: () => false }),
     speak: { isOpen: () => false }, dialog: { isOpen: () => false },
+    // 걸음의 완급(systems/gait.js)은 여기서 재지 않는다.
+    easedInput: raw => raw, stepBlend: { begin() {}, stepped() {}, end() {} }, walkedThisFrame: false,
+    gaitAxis: { x: 0, z: 0 }, restAxis: () => ({ x: 0, z: 0 }),
     audienceWalk: {
       id: 'hojo', from: { x: 0, z: 0 }, to: visitorSpotFor(room, king), followRoom: room,
       t0: 0, ms: 1000, resolve() {},

@@ -424,7 +424,7 @@ function swayFlat(pivot, dtMs, reducedMotion) {
  *   reducedMotion      정지 선호 — 서성임도 걸음도 숨도 없다. 사람은 그냥 서 있는다.
  *   camera             빌보드 시절의 인자. 3D 메시는 카메라를 안 본다 — 무시한다.
  */
-export function updateSway(pivot, dtMs, { walking = false, running = false, reducedMotion = false } = {}) {
+export function updateSway(pivot, dtMs, { walking = false, running = false, reducedMotion = false, pace = 1 } = {}) {
   const s = pivot.userData?.person
   if (!s || !s.model) return swayFlat(pivot, dtMs, reducedMotion)
 
@@ -440,7 +440,9 @@ export function updateSway(pivot, dtMs, { walking = false, running = false, redu
   }
 
   // 걸음의 위상. 시간으로 돈다 — 프레임 수를 세지 않는다.
-  const speed = walking ? (running ? 0.0135 : 0.0085) : 0.0022
+  // pace — 나아가는 빠르기에 맞춘 배율(systems/gait.js paceFor). 막 떼는 걸음은 느리게 구른다.
+  // 달릴 때는 배율을 쓰지 않는다: 달리기의 박자는 이미 다 올라가 있다.
+  const speed = walking ? (running ? 0.0135 : 0.0085 * pace) : 0.0022
   const phase = ((pivot.userData.swayPhase ?? 0) + dtMs * speed) % (Math.PI * 2)
   pivot.userData.swayPhase = phase
 

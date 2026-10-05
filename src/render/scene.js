@@ -7,6 +7,8 @@ import { buildMother } from './mother-person.js'
 import { createPalaceStaff } from './palace-staff.js'
 import { updatePalaceOcclusion } from './occlusion.js'
 import { turnToward } from './facing.js'
+import { followStep, paceFor, WALKING_SPEED } from '../systems/gait.js'
+import { WALK } from '../systems/movement.js'
 import { buildProp } from './props.js'
 import { applyYear as applyYardYear } from './yard-props.js'
 import { interpolateCameraShot } from './cinematic.js'
@@ -39,8 +41,9 @@ export const CAM_LOOK_Y = 2.6
 // 그 답을 갖고 있는데 씬까지 닿아 있지 않았다. 씬이 속도를 재서 짐작하게 두지 않는다:
 // 이동은 고정 스텝(16.7ms)으로 누적되어 한 프레임에 0 걸음일 때도 두 걸음일 때도 있어,
 // 속도로 짐작하면 달리기가 프레임마다 켜졌다 꺼졌다 한다. 없으면 늘 걷는 것으로 본다.
-// 행렬에서 곁을 걷는 사람이 한 프레임에 다가가는 최대 거리(m). 60fps 에서 초당 약 11m — 임금 걸음보다 넉넉히 빠르다.
-export const FOLLOW_STEP = 0.18
+// ⚠ FOLLOW_STEP(「한 프레임에 0.18m」)은 2026-10-06 에 걷어 냈다 — 프레임 수에 묶여 있어
+//   144Hz 기계에서는 곁을 걷는 사람이 초당 26m 로 튀고 30Hz 태블릿에서는 초당 5m 라
+//   임금을 못 따라왔다. 이제 시간으로 잰다(systems/gait.js followStep).
 
 export function createScene(canvas, { audio = null, running = null } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' })
@@ -361,7 +364,9 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
   // setNpcs() 를 다시 부르면 목록이 통째로 다시 지어져(모델 복제 포함) 걸음이
   // 끊긴다. 그래서 자리만 옮기는 길을 따로 둔다.
   //   yaw: null 이면 임금 쪽을 본다. 숫자면 그 각으로 고정한다.
-  //   smooth: true 이면 한 번에 FOLLOW_STEP 만큼만 다가간다 — 행렬에서 곁을 걷는 사람이 순간이동하지 않게(2026-09-15).
+  //   smooth: true 이면 시간에 맞춰 다가간다(systems/gait.js followStep) — 행렬에서 곁을 걷는
+  //   사람이 순간이동하지 않고, 가까워지면 느려지며 선다. 실제로 옮긴 만큼만 「걷는 중」이다:
+  //   제자리에 선 사람이 발을 구르지 않는다.
   function placeNpc(id, { x, z, yaw = null, walking = false, hidden = null, smooth = false } = {}) {
     const e = npcMeshes.get(id)
     if (!e) return false
@@ -369,14 +374,23 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
       const p={x:x??e.anchor.position.x,z:z??e.anchor.position.z}
       const at=activePalace?safePosition(activePalace,p,.8):p
       if (smooth) {
-        const dx=at.x-e.anchor.position.x,dz=at.z-e.anchor.position.z,d=Math.hypot(dx,dz)
-        const k=d>FOLLOW_STEP?FOLLOW_STEP/d:1
-        e.anchor.position.x+=dx*k;e.anchor.position.z+=dz*k
-      } else { e.anchor.position.x=at.x;e.anchor.position.z=at.z }
+        const now = performance.now()
+        // 오래 안 불렸으면(장면이 바뀌었다) 한 프레임치만 간다 — 밀린 시간을 한 번에 걷지 않는다.
+        const dt = e.followT != null && now - e.followT < 250 ? now - e.followT : 1000 / 60
+        e.followT = now
+        const next = followStep(e.anchor.position, at, dt)
+        e.anchor.position.x = next.x; e.anchor.position.z = next.z
+        // 이번에 실제로 얼마나 빨리 옮겼는가 — 선 사람은 걷는 시늉을 하지 않는다.
+        e.followSpeed = dt > 0 ? next.moved / dt * 1000 : 0
+      } else { e.anchor.position.x=at.x;e.anchor.position.z=at.z; e.followSpeed = null }
     }
     if (hidden != null) e.anchor.visible = !hidden
     e.yaw = yaw
-    e.walking = walking === true
+    // 따라붙는 사람은 **실제로 움직이는 동안** 걷는다 — 부르는 쪽이 「섰다」고 해도 아직
+    // 다가오는 중이면 걷고, 「걷는다」고 해도 제자리면 서 있는다.
+    e.walking = smooth && e.followSpeed != null ? e.followSpeed > WALKING_SPEED : walking === true
+    // 걸음의 박자 — 따라붙는 사람은 실제 빠르기에 맞춰 구른다. 그 밖에는 평소 박자다.
+    e.pace = smooth && e.followSpeed != null ? paceFor(e.followSpeed, WALK) : 1
     // 장면(알현·행렬·낮의 시작)이 직접 옮긴 것이면 서성임과 읍을 지운다 — 그 장면이
     // 신하의 자리를 몰고 있는 동안 궁의 하루가 같은 사람을 함께 잡아당기지 않게 한다.
     if (!applyingLife) { e.lifeStale = true; e.bow = 0 }
@@ -588,13 +602,22 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
   // 왕이 걷는 방향으로 돈다 — 매 프레임 새 위치와 지난 위치의 차를 본다.
   // movement.js 의 판정을 여기서 다시 하지 않는다: 걸었는지 아닌지는 위치가
   // 실제로 움직였는지만 보고 안다(값이 작으면 제자리로 본다).
-  const FACE_EPS = 0.003
+  //
+  // 「걷는 중」은 **속도**로 잰다(systems/gait.js WALKING_SPEED). 예전에는 「한 프레임에
+  // 3mm 넘게 움직였는가」로 쟀다 — 걸음은 1/60초 고정 스텝으로 쌓이므로 화면이 그보다
+  // 빠르면 스텝이 없는 프레임이 끼고, 그 프레임마다 「섰다」가 되어 팔 흔드는 폭이
+  // 출렁였다. 이제 main.js 가 스텝 사이를 섞어 그리므로(createStepBlend) 걷는 동안에는
+  // 매 프레임 조금씩 움직인다.
+  let kingSpeed = 0
   function updateKingMotion(dt, t) {
     if (!king) return
     const dx = player.position.x - lastPX
     const dz = player.position.z - lastPZ
     const moved = Math.hypot(dx, dz)
-    const walking = moved > FACE_EPS
+    // 한 프레임의 빠르기는 들쭉날쭉하다 — 짧게 고른다(약 80ms).
+    const inst = dt > 0 ? moved / dt * 1000 : 0
+    kingSpeed += (inst - kingSpeed) * Math.min(1, dt / 80)
+    const walking = kingSpeed > WALKING_SPEED && moved > 1e-5
     // **즉시 돌지 않는다.** 자판은 여덟 방향뿐이라 W 에서 A 로 바꾸면 90도가 한
     // 프레임에 돌았고, 그것이 「발걸음이 좌우로 움직여서 부자연스럽다」의 정체였다.
     if (walking) {
@@ -608,7 +631,9 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     // 각도가 앞·비스듬·옆·뒤 중 어느 그림을 쓸지 정한다(sprite-person.js).
     // 임금도 서 있는 동안 숨을 쉰다. 예전에는 걷지 않는 순간의 임금이 어좌 앞의
     // 밀랍 인형이었다 — 학생이 가장 오래 보는 몸이 그것이었다(선생님 2026-09-26).
-    updateSway(king.pivot, dt, { walking, running: running?.() === true, reducedMotion })
+    // pace — 나아가는 빠르기에 맞춰 발을 구른다. 막 떼는 걸음과 멈추는 걸음은 느리게.
+    updateSway(king.pivot, dt, { walking, running: running?.() === true, reducedMotion,
+      pace: paceFor(kingSpeed, WALK) })
     lastPX = player.position.x
     lastPZ = player.position.z
   }
@@ -669,7 +694,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
       e.anchor.rotation.y = turnToward(e.anchor.rotation.y, want, dt)
       // 이 순회는 국면을 가리지 않는다 — 알현·행렬·대화 중에도 돈다. 그래서 서 있는
       // 자세(숨·무게 옮김·고개)를 updateSway 안에 둔 것이 그대로 모든 장면에 흐른다.
-      updateSway(e.pivot, dt, { walking: e.walking, reducedMotion })
+      updateSway(e.pivot, dt, { walking: e.walking, reducedMotion, pace: e.pace ?? 1 })
       // 읍은 걸음 자세 **뒤에** 얹는다 — updateSway 가 허리를 쉬는 자세로 되돌리므로.
       applyBow(e)
     }

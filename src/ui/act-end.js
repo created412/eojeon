@@ -1,8 +1,9 @@
 import { SOURCES, sourceById } from '../data/sources.js'
-import { evaluateChoices } from '../systems/council.js'
 import { lostWithReason, everRead } from '../systems/loss-log.js'
-import { ACTS, FUTURE_COUNCIL } from '../data/acts.js'
+import { ACTS } from '../data/acts.js'
+import { PALACES } from '../data/palaces.js'
 import { freedomRecord } from '../systems/freedom.js'
+import { ageAt } from '../systems/king-age.js'
 import { installTypeVars } from './type-css.js'
 
 // 마지막 화면의 「몇 년부터 몇 년까지, 몇 해를 지났다」를 ACTS 에서 뽑는다.
@@ -41,12 +42,59 @@ export function nativeCount(n) {
 // 것인지 정하는 일이 곧 역사가의 일이고, 그것을 학생이 하는 것이 이 게임에서
 // 가장 좋은 대목이다. 세는 장치는 4단계 엔딩이 학생 손에 쥐여 준다(판정 R55).
 // 옮긴 횟수 자체는 기록이 남긴 사실이라 그대로 적는다.
+//
+// 2026-10-06 이야기 점검 — 「궁을 N번 옮겼다」였다. 마지막 두 자리(북묘·오조유의 영방)는
+// 궁이 아니다 — 그 이어 화면이 스스로 「여기는 궁도 사당도 아니고 청군의 군영입니다」라고
+// 적는다. 「거처」로 고친다. 그리고 그 수는 **화면에 나온 것만** 센 것이다(3막 끝이
+// 줄였다고 밝힌 세 번이 빠져 있다) — 그래서 「화면에서」라고 적는다.
+//
+// 가운데 한 줄은 이 이야기의 처음과 끝이다. 열두 살의 명복은 남이 댄 가마에 올라
+// 집을 나섰고, 서른세 살의 임금은 남의 군영에 와 있다. 선생님(2026-10-06): 「역사 내용과
+// 고종의 입장에 감정이입이 될 수 있게.」 나이는 햇수와 마찬가지로 ACTS 에서 센다.
+export function finalPlaceName(id) {
+  // 「오조유의 영방」은 이름만으로는 무엇인지 알 수 없다 — 그 이어 화면의 풀이를 따른다.
+  if (id === 'ojoyu') return '청군의 군영'
+  return PALACES[id]?.name ?? null
+}
+
 export function finalLead(state, acts = ACTS) {
   const span = actSpan(acts)
-  const moves = (state?.moves ?? []).length
+  const moves = state?.moves ?? []
+  const where = finalPlaceName(moves[moves.length - 1]?.to)
+  const arc = where
+    ? `${nativeCount(ageAt(span.from))} 살에 남이 댄 가마를 타고 운현궁을 나섰고, `
+      + `${nativeCount(ageAt(span.to))} 살에 ${where}에 와 있다.<br>`
+    : ''
   return `${span.from}년부터 ${span.to}년까지, ${nativeCount(span.span)} 해를 지났다.<br>`
-    + `궁을 ${moves}번 옮겼다. 그 가운데 스스로 정한 것이 몇 번인지는 당신이 센다.`
+    + arc
+    + `그 사이 화면에서 거처를 ${moves.length}번 옮겼다. 그 가운데 스스로 정한 것이 몇 번인지는 당신이 센다.`
 }
+
+// 옮겨 다닌 자리의 목록 — 「당신이 센다」고 해 놓고 셀 것을 주지 않았다(2026-10-06).
+// 해·어디서 어디로·까닭만 적는다. **스스로 정했는지는 적지 않는다**(판정 R98) — 그것을
+// 정하는 일이 학생의 몫이다. self 값은 이 함수에 들어오지도 않는다.
+export function moveRows(state) {
+  return (state?.moves ?? []).map(m => ({
+    year: m.year ?? '',
+    from: PALACES[m.from]?.name ?? m.from ?? '',
+    to: PALACES[m.to]?.name ?? m.to ?? '',
+    cause: m.cause ?? '',
+  }))
+}
+
+// 3막 끝(acts.js 의 'end')이 「화면에서 뺐다」고 밝힌 이어 세 번. 목록이 1868년에서
+// 1884년으로 건너뛰고 그 사이에 궁이 바뀌어 있으므로, 빠진 것이 있다고 여기서도 말한다.
+export const MOVES_OMITTED_NOTE =
+  '※ 3막 끝에 적어 둔 세 번(1873년부터 창덕궁과 경복궁을 오간 것)은 화면에서 줄여 이 목록에 없습니다.'
+
+// 마지막 화면이 학생에게 남기는 물음. 예전에는 「불타는 궁에서 무엇을 골랐나요?」였다 —
+// 그 장면(1876년 화재)은 2026-09-26 에 걷어 냈는데 물음만 남아, 학생이 게임에서 마지막으로
+// 읽는 글이 보지도 않은 장면을 묻고 있었다. 이 게임이 끝까지 끌고 온 두 가지를 묻는다:
+// 스스로 정한 것을 어떻게 셀 것인가, 그리고 그 자리에 앉은 사람은 어땠겠는가.
+export const FINAL_QUESTIONS = [
+  '위에 적힌 옮김 가운데 임금이 스스로 정한 것은 몇 번인가요? 무엇을 근거로 그렇게 세었나요?',
+  '그 자리에 앉아 있던 사람은 그때마다 무엇을 할 수 있었을까요? 당신이라면 어느 날이 가장 견디기 어려웠을까요?',
+]
 
 // justify-content:center + overflow:auto 만으로는 부족하다 — 내용이 화면보다
 // 길면 Chrome 이 위쪽을 스크롤로도 닿지 않는 자리에 그려 버린다("safe" 없는
@@ -86,6 +134,9 @@ const FINAL_CSS = `
 .actend .row .tag{float:right;font-size:var(--read-caption,11px);color:#cf7a4e;text-decoration:none}
 .actend .row.locked{color:#78838b}
 .actend .row.locked small{display:block;color:var(--paper-quiet,#8f8a7c);font-size:var(--read-caption,11px);text-decoration:none}
+.actend .row .yr{display:inline-block;margin-right:.5em;color:var(--paper-quiet,#8f8a7c);font-variant-numeric:tabular-nums}
+.actend .row .why{display:block;color:var(--paper-quiet,#8f8a7c);font-size:var(--read-caption,12px)}
+.actend .box .omit{font-size:var(--read-caption,12px);color:var(--paper-quiet,#8f8a7c);padding-top:8px;line-height:1.7;word-break:keep-all}
 .actend .foot{font-size:var(--read-small,13px);color:var(--paper-quiet,#8f8a7c);text-align:left;
   max-width:min(100%,var(--read-measure,560px));line-height:var(--read-lh-small,1.9);word-break:keep-all;text-wrap:balance}
 `
@@ -142,16 +193,22 @@ export function createActEnd(root) {
       })
     },
 
-    // 1차시(1~3막) 전체가 끝난 뒤 남기는 마지막 화면. D1·D2 가 무엇을 지웠는지,
-    // 그래서 다음 막의 어전회의에서 무엇이 열리지 않게 되었는지를 이름으로 되돌려준다
-    // (설계서 9장). 복사 단추는 지적 #22 로 걷어냈다 — 저장은 그대로 두므로
-    // 학생이 「처음부터」를 직접 고를 때까지 이 화면은 다시 열 수 있다.
+    // 다섯 막이 다 끝난 뒤 남기는 마지막 화면. 복사 단추는 지적 #22 로 걷어냈다 —
+    // 저장은 그대로 두므로 학생이 「처음부터」를 직접 고를 때까지 이 화면은 다시 열 수 있다.
+    //
+    // 2026-10-06 이야기 점검 — 이 화면은 세 막짜리였을 때의 모습 그대로였다:
+    //   · 「불에 잃은 문서」 칸과 「불타는 궁에서 무엇을 골랐나요?」 — 그 장면은 걷어 냈다.
+    //     칸은 불로 잃은 것이 실제로 있을 때만(옛 저장) 보인다.
+    //   · 「이제 열리지 않는 것」 — 「다음 막의 어전회의」를 내다보는 표본이었는데, 4·5막의
+    //     어전회의는 이제 실제로 치렀고 그 뒤에는 다음 막이 없다. 걷어 냈다
+    //     (FUTURE_COUNCIL 표본은 data/acts.js 에 그대로 있다).
+    //   · 「당신이 센다」고 하면서 셀 목록이 없었다 — 옮겨 다닌 자리를 맨 위에 적는다.
     showFinal(state) {
       return new Promise(() => {   // 마지막 화면이다. 닫지 않는다.
         const kept = state.sources.held.map(id => sourceById(id)).filter(Boolean)
         const burnt = lostWithReason(state, 'fire').map(id => sourceById(id)).filter(Boolean)
         const taken = lostWithReason(state, 'plunder').map(id => sourceById(id)).filter(Boolean)
-        const future = evaluateChoices(state, FUTURE_COUNCIL).filter(c => !c.unlocked)
+        const moved = moveRows(state)
         // everRead() 로 센다 — sources.read 만 쓰면 불타거나 약탈당한 문서가
         // "안 읽음"으로 보인다(2단계 Important 1)
         const read = everRead(state).length
@@ -162,22 +219,22 @@ export function createActEnd(root) {
           <h2>오 늘 은 여 기 까 지</h2>
           <div class="sub">${finalLead(state)}</div>
 
+          <div class="box"><b>옮겨 다닌 자리 ${moved.length}</b>
+            ${moved.map(m => `<div class="row"><span class="yr">${m.year}</span>${m.from} → ${m.to}<span class="why">${m.cause}</span></div>`).join('') || '<div class="row">없다</div>'}
+            <div class="omit">${MOVES_OMITTED_NOTE}</div></div>
+
           <div class="box"><b>들고 나온 문서 ${kept.length}</b>
             ${kept.map(c => `<div class="row">${c.title}</div>`).join('') || '<div class="row">없다</div>'}</div>
 
-          <div class="box"><b>불에 잃은 문서 ${burnt.length}</b>
-            ${burnt.map(c => `<div class="row gone">${c.title}<span class="tag">불탐</span></div>`).join('') || '<div class="row">없다</div>'}</div>
+          ${burnt.length ? `<div class="box"><b>불에 잃은 문서 ${burnt.length}</b>
+            ${burnt.map(c => `<div class="row gone">${c.title}<span class="tag">불탐</span></div>`).join('')}</div>` : ''}
 
           <div class="box"><b>약탈로 잃은 문서 ${taken.length}</b>
             ${taken.map(c => `<div class="row gone">${c.title}<span class="tag">약탈됨 · 프랑스</span></div>`).join('') || '<div class="row">없다</div>'}</div>
 
-          <div class="box"><b>이제 열리지 않는 것</b>
-            ${future.map(c => `<div class="row locked">???${c.missing.map(m => `<small>← 『${m}』이 사초함에 없다</small>`).join('')}</div>`).join('') || '<div class="row">없다</div>'}</div>
-
           <div class="foot">
             읽은 문서 ${read}장 / 전체 ${SOURCES.length}장.<br>
-            불타는 궁에서 무엇을 골랐나요? 왜 그것이었나요?<br>
-            버린 것 때문에 나중에 곤란해질까요?
+            ${FINAL_QUESTIONS.join('<br>')}
           </div>`
         root.appendChild(el)
 

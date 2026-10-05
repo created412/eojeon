@@ -36,8 +36,8 @@ const SOURCE_IMAGES = {
 const NOTE_IMAGES = {
  throne:'injeongjeon', byeongin:'byeongin', 'gyeyu-sangso':'choeikhyeon',
  'doors-open':'heungseon','jagyeong-actual':'gyeongbokgung',
- 'imo-open':'imo','imo-letter':'injeongjeon','imo-declared':'injeongjeon',
- 'imo-known':'imo','imo-fact':'imo','imo-daewongun':'heungseon','imo-abduction':'heungseon',
+ 'imo-open':'imo','imo-night':'imo',
+ 'imo-daewongun':'heungseon','imo-abduction':'heungseon',
  'imo-jemulpo':'jemulpo','imo-sokbang':'lihongzhang',
  'gapsin-open':'kimokgyun','gapsin-takezoe':'injeongjeon','gapsin-gov':'kimokgyun',
  'gapsin-qing':'injeongjeon','gapsin-flight-self':'injeongjeon','gapsin-flight-caught':'injeongjeon',

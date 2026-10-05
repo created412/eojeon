@@ -22,7 +22,7 @@ export const PALACES = {
       { id: 'injeongjeon',  name: '인정전',   gloss: '어전회의',   x:   0, z:  12, w: 22, d: 18, minControl: 'D', furnish: 'court' },
       { id: 'seonjeongjeon',name: '선정전',   gloss: '편전',       x:  21, z:   6, w: 18, d: 16, minControl: 'C', furnish: 'study' },
       { id: 'huijeongdang', name: '희정당',   gloss: '침전',       x:  -3, z:  -8, w: 26, d: 18, minControl: 'C', furnish: 'bedchamber' },
-      { id: 'daejojeon',    name: '대조전',   gloss: '중궁전',     x:  -3, z: -24, w: 16, d: 12, minControl: 'B', furnish: 'inner' },
+      { id: 'daejojeon',    name: '대조전',   gloss: '침전',       x:  -3, z: -24, w: 16, d: 12, minControl: 'B', furnish: 'inner' },
       { id: 'gwanmulheon',  name: '관물헌',                        x:  17, z: -10, w: 12, d: 10, minControl: 'B', furnish: 'study' },
       // furnish — 방 안을 채우는 것(render/interiors.js). 방마다 쓰임에 맞는 세간이 놓인다:
       // 규장각은 서가와 책, 수정전은 기록 궤, 침전은 병풍과 잠자리, 창고는 가마니 …

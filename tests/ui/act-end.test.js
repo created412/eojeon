@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { actSpan, nativeCount, finalLead } from '../../src/ui/act-end.js'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { actSpan, nativeCount, finalLead, moveRows, finalPlaceName, FINAL_QUESTIONS, MOVES_OMITTED_NOTE } from '../../src/ui/act-end.js'
+import { applyBeat, enterAct } from '../../src/systems/scenario.js'
+import { relocate } from '../../src/systems/relocate.js'
 import { beatsOf } from '../../src/systems/scenario.js'
 import { ACTS } from '../../src/data/acts.js'
 
@@ -67,8 +71,10 @@ describe('마지막 화면은 스스로 정한 이동을 세지 않는다 (판�
   })
 
   it('옮긴 횟수 자체는 그대로 적는다 — 그것은 기록이 남긴 사실이다', () => {
-    expect(finalLead({ moves: [{}, {}, {}] })).toContain('궁을 3번 옮겼다')
-    expect(finalLead({ moves: [] })).toContain('궁을 0번 옮겼다')
+    // 「궁을」이었다 — 마지막 두 자리(북묘·청군의 영방)는 궁이 아니다(2026-10-06).
+    expect(finalLead({ moves: [{}, {}, {}] })).toContain('거처를 3번 옮겼다')
+    expect(finalLead({ moves: [] })).toContain('거처를 0번 옮겼다')
+    expect(finalLead({ moves: [{}] })).not.toContain('궁을 1번')
   })
 
   it('moves 가 아예 없어도 화면이 깨지지 않는다', () => {
@@ -93,5 +99,83 @@ describe('마지막 화면은 스스로 정한 이동을 세지 않는다 (판�
       .not.toMatch(/(열|스무|스물|서른)\S*\s*해/)
     // 그러면서 화면 쪽은 여전히 햇수를 말한다 — 지우기만 한 것이 아니다
     expect(finalLead({ moves: [] })).toContain(`${nativeCount(actSpan().span)} 해를 지났다`)
+  })
+})
+
+
+// ── 2026-10-06 이야기 점검 — 마지막 화면이 세 막짜리 시절 그대로였다 ─────────────
+//
+// 선생님: 「내 게임의 가장 큰 장점은 탄탄한 스토리라인이야. 역사 내용과 고종의 입장에
+// 감정이입이 될 수 있게 만드는 거고.」
+//
+// 그런데 학생이 게임에서 마지막으로 읽는 화면이 「불타는 궁에서 무엇을 골랐나요?」를
+// 묻고 있었다 — 그 장면은 9월 26일에 걷어 낸 것이다. 그리고 「스스로 정한 것이 몇 번인지는
+// 당신이 센다」고 하면서 셀 목록을 주지 않았다.
+describe('마지막 화면이 이야기의 끝을 맺는다', () => {
+  // 주석은 걷어 내고 본다 — 주석은 무엇을 왜 뺐는지를 그 이름으로 설명한다.
+  const NL = String.fromCharCode(10)
+  const src = readFileSync(join(process.cwd(), 'src', 'ui', 'act-end.js'), 'utf8')
+    .split(NL).filter(l => !l.trim().startsWith('//')).join(NL)
+
+  // 다섯 막의 이어 비트를 차례로 밟아 실제 게임이 남기는 moves 를 만든다.
+  function playedMoves() {
+    let state = { moves: [], palace: ACTS[0].palace }
+    for (const act of ACTS) {
+      state = { ...state, palace: act.palace ?? state.palace }
+      for (const b of beatsOf(act)) {
+        if (b.kind !== 'move') continue
+        state = relocate(state, { year: b.year, from: state.palace, to: b.palace, cause: b.cause, self: b.self })
+      }
+    }
+    return state
+  }
+
+  it('걷어 낸 장면을 묻지 않는다', () => {
+    expect(src).not.toContain('불타는 궁에서')
+    expect(FINAL_QUESTIONS.join(' ')).not.toContain('불')
+  })
+
+  it('남기는 물음이 이 게임이 끌고 온 두 가지다 — 스스로 정한 것, 그리고 그 자리의 사람', () => {
+    expect(FINAL_QUESTIONS).toHaveLength(2)
+    expect(FINAL_QUESTIONS[0]).toContain('스스로 정한 것')
+    expect(FINAL_QUESTIONS[1]).toContain('당신이라면')
+  })
+
+  it('옮겨 다닌 자리를 해·어디서 어디로·까닭으로 적는다', () => {
+    const rows = moveRows(playedMoves())
+    expect(rows.length).toBeGreaterThanOrEqual(6)
+    expect(rows[0]).toMatchObject({ year: 1868, from: '창덕궁', to: '경복궁' })
+    expect(rows.at(-1).to).toBe('오조유의 영방')
+    for (const r of rows) {
+      expect(r.cause, `${r.year} ${r.to} 에 까닭이 없다`).toBeTruthy()
+      expect(r.from, `${r.year} 의 떠난 자리가 이름이 아니다`).toMatch(/[가-힣]/)
+    }
+  })
+
+  it('목록은 스스로 정했는지를 말하지 않는다 (판정 R98)', () => {
+    for (const r of moveRows(playedMoves())) {
+      expect(Object.keys(r)).toEqual(['year', 'from', 'to', 'cause'])
+    }
+  })
+
+  it('처음과 끝을 한 줄로 잇는다 — 열두 살의 가마에서 서른세 살의 군영까지', () => {
+    const lead = finalLead(playedMoves())
+    expect(lead).toContain('열두 살에')
+    expect(lead).toContain('운현궁을 나섰고')
+    expect(lead).toContain('서른세 살에 청군의 군영에 와 있다')
+  })
+
+  it('끝자리가 어디인지 모르면 그 줄을 지어내지 않는다', () => {
+    expect(finalPlaceName(undefined)).toBeNull()
+    expect(finalLead({ moves: [{}] })).not.toContain('와 있다')
+  })
+
+  it('화면에서 줄인 이어가 있다고 여기서도 말한다', () => {
+    expect(MOVES_OMITTED_NOTE).toContain('3막')
+    expect(src).toContain('MOVES_OMITTED_NOTE}')
+  })
+
+  it('다음 막이 없는 자리에서 「다음 막의 어전회의」를 내다보지 않는다', () => {
+    expect(src).not.toContain('이제 열리지 않는 것')
   })
 })

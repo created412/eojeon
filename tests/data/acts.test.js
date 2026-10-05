@@ -299,12 +299,11 @@ describe('막 전체를 가로지르는 규칙', () => {
     }
   })
 
-  // 3막 자경전 화재(C1) · 4막 난군의 밤(C2) · 5막 정변 사흘째 밤(C3) 셋이다.
-  // 셋뿐이라는 것을 못 박아 둔다 — 촉박이 조용히 늘면 게임이 기다림이 아니라
-  // 재촉으로 기운다(설계서 5장 C).
-  it('다섯 막을 다 합쳐 촉박은 두 번이다 — 1882 난군과 1884 청군', () => {
+  // 4막 난군의 밤(C2)은 대조전의 왕비에게 달려가는 촉박이었다. 왕비의 줄을 걷어 내면서
+  // (2026-10-06) 달려갈 곳이 없어져 글 한 장이 되었다. 남은 촉박은 5막 하나다.
+  it('다섯 막을 다 합쳐 촉박은 한 번이다 — 1884 청군', () => {
     const rushes = ACTS.flatMap(a => beatsOf(a)).filter(b => b.kind === 'rush')
-    expect(rushes.map(b => b.id)).toEqual(['imo-rush', 'gapsin-rush'])
+    expect(rushes.map(b => b.id)).toEqual(['gapsin-rush'])
   })
 })
 
@@ -357,20 +356,15 @@ describe('4막 「임오」', () => {
     expect(endControl(a)).toBe('D')
   })
 
-  it('촉박이 한 번뿐이다 — C2 하나', () => {
-    const rushes = beatsOf(a).filter(b => b.kind === 'rush')
-    expect(rushes).toHaveLength(1)
-    expect(rushes[0].track).toEqual(['donhwamun', 'injeongjeon', 'huijeongdang', 'daejojeon'])
-    expect(rushes[0].goalRoom).toBe('daejojeon')
-    expect(rushes[0].caughtFlag).toBe('queen-lost')
-    expect(rushes[0].fire).toBe(false)          // 난군은 불이 아니다
+  it('촉박이 없다 — 난군의 밤은 글 한 장이다(왕비의 줄을 걷어 냈다)', () => {
+    expect(beatsOf(a).filter(b => b.kind === 'rush')).toHaveLength(0)
+    const night = beatsOf(a).find(b => b.id === 'imo-night')
+    expect(night.kind).toBe('note')
+    expect(night.lines.join(' ')).toContain('亂兵犯闕')
+    // 갈 곳을 지어내지 않는다.
+    expect(night.lines.join(' ')).not.toContain('가야 한다')
   })
 
-  it('촉박의 트랙과 시작 방과 목표가 모두 창덕궁에 실재하는 방이다', () => {
-    const rooms = new Set(PALACES.changdeok.rooms.map(r => r.id))
-    const rush = beatsOf(a).find(b => b.kind === 'rush')
-    for (const id of [...rush.track, rush.spawnRoom, rush.goalRoom]) expect(rooms, id).toContain(id)
-  })
 
   it('낮에 궁 밖으로 나가는 길이 있고 그 값이 세 칸이다', () => {
     const day = beatsOf(a).find(b => b.kind === 'explore')
@@ -395,12 +389,9 @@ describe('4막 「임오」', () => {
     expect(hasWayForward(c)).toBe(true)
   })
 
-  it('청군을 부르는 선택지는 「아는가」로 잠긴다 — 사료로 잠기지 않는다', () => {
+  it('얼어붙은 회의에 깃발로 잠기는 선택지가 없다 — 그 깃발(왕비의 밀서)은 걷어 냈다', () => {
     const c = beatsOf(a).find(b => b.kind === 'council')
-    const qing = c.council.choices.find(ch => ch.needsFlag)
-    expect(qing.needsFlag).toBe('queen-alive-known')
-    expect(qing.requires).toEqual([])
-    expect(qing.flagLabel).toBeTruthy()
+    expect(c.council.choices.filter(ch => ch.needsFlag)).toHaveLength(0)
   })
 
   it('불에 태운 카드가 여기서 이름으로 돌아온다 — D2 의 값', () => {
@@ -410,92 +401,22 @@ describe('4막 「임오」', () => {
     for (const id of all) expect(SOURCES.map(s => s.id)).toContain(id)
   })
 
-  it('국상 비트에는 조건이 붙지 않는다 — 실록에 남은 것이 그렇다', () => {
-    const e = beatsOf(a).find(b => b.kind === 'edict')
-    expect(e.whenFlag).toBeUndefined()
-    expect(e.unlessFlag).toBeUndefined()
-    expect(e.historical).toBe(true)
-  })
 
-  // [판정 R84] 밀서와 승하 선포는 한 화면 건너 나란히 서는 두 갈래다.
-  // 둘 다 학생의 플레이가 만든 자리에 게임이 지어낸 장면이다. 예전에는 밀서만
-  // staged 였고 승하 선포는 source 였다 — note-screen 은 staged 일 때만 재구성
-  // 고지를 내므로, 지어낸 줄이 1차사료의 권위를 입고 나갔다.
-  it('갈림길의 두 화면이 같은 잣대를 받는다 — 밀서도 승하 선포도 재구성이다', () => {
-    const letter = beatsOf(a).find(b => b.id === 'imo-letter')
-    const declared = beatsOf(a).find(b => b.id === 'imo-declared')
-    expect(letter.grade).toBe('staged')
-    expect(declared.grade).toBe('staged')
-  })
 
-  it('재구성 화면이 실록에 없는 귀속을 단정하지 않는다 — 그 기사에 대원군은 없다', () => {
-    const declared = beatsOf(a).find(b => b.id === 'imo-declared')
-    expect(declared.lines.join(' ')).not.toContain('대원군')
-    expect(declared.origin).toContain('실록에 없습니다')
-  })
 
-  // 승하를 알리고 거애 절차를 마련하게 한 6월 10일 기사는 사료다 — 그것은
-  // 바로 다음 화면(국상)이 실록 표에 그대로 올려 고지 없이 보여 준다.
-  it('그 실록 기사는 재구성 화면이 아니라 국상 화면이 인용한다', () => {
-    const gukjang = beatsOf(a).find(b => b.kind === 'edict')
-    expect(gukjang.view.rows[0].text).toContain('거애하는 절차')
-    expect(gukjang.view.rows[0].lunar).toBe('6월 10일')
-    expect(gukjang.grade).toBeUndefined()   // 실록 표는 재구성 고지를 달지 않는다
-  })
 
-  // [판정 R52 · 리뷰 I5] 4막에서 글자가 가장 빈빈한 화면이다. 실록 표에
-  // 나오는 어려운 낱말은 하나도 빠짐없이 그 화면에서 풀려야 한다.
-  // 예전에는 의계·미시·신시·옥체 넷이 풀이 없이 나갔다 — 체백(주검)은 풀어 놓고
-  // 옥체를 안 풀어, 학생이 두 낱말을 같은 것으로 볼지 다른 것으로 볼지 알 수 없었다.
-  it('국상 화면의 어려운 낱말이 하나도 빠짐없이 그 자리에서 풀린다', () => {
-    const v = beatsOf(a).find(b => b.kind === 'edict').view
-    const HARD = ['거애', '소렴', '대렴', '성복', '대행 왕비', '곤전', '체백',
-      '의계', '미시', '신시', '옥체', '의복장']
-    // 2026-10-05 에 규칙을 조였다. 예전에는 풀이가 표 아래 한 문단(glossary)에
-    // 뭉쳐 있었고, 이 시험은 「화면 어딘가에 풀이가 있는가」만 보았다. 이제는
-    // **그 낱말이 나오는 바로 그 줄에** 풀이가 있어야 한다 — 풀이는 낱말 곁에
-    // 있을 때만 풀이다. 낱말이 나오는 자리(글 + 그 글에 딸린 풀이)를 한 쌍씩 본다.
-    const spots = [
-      ...v.rows.map(r => [r.text, r.gloss]),
-      [v.hasi.text, v.hasi.gloss],
-      [v.after.objection.text, v.after.objection.gloss],
-    ]
-    // 한 번 풀어 준 낱말을 줄마다 되풀이하지는 않는다 — 「대행 왕비」는 6월 11일에
-    // 처음 나올 때 풀리고, 12일·14일에는 다시 풀지 않는다. 그래서 규칙은 이것이다:
-    // **처음 나오는 그 줄에서** 풀려 있을 것.
-    const seen = new Set()
-    for (const [text, gloss] of spots) {
-      const here = (gloss ?? []).map(g => g.word).join(' ')
-      for (const w of HARD) {
-        if (!text.includes(w) || seen.has(w)) continue
-        expect(here, `「${w}」가 「${text.slice(0, 18)}…」에 처음 나오는데 그 줄에 풀이가 없다`).toContain(w)
-        seen.add(w)
-      }
+
+
+  // 선생님(2026-10-06): 「왕비를 그냥 없애버리고.」 2막의 가례, 4막의 대조전 촉박·피신·
+  // 밀서·국상·환궁, 문 너머의 목소리를 모두 걷어 냈다. 되살아나지 않게 붙든다.
+  it('왕비의 줄이 어느 막에도 없다', () => {
+    const all = JSON.stringify(ACTS)
+    for (const word of ['왕비', '중궁전', '국상', '가례', '밀서', 'queen-']) {
+      expect(all, `「${word}」가 남아 있다`).not.toContain(word)
     }
-    // 본문이 스스로 풀어 쓰는 낱말도 있다 — 「이런 장례를 의복장(衣服葬)이라 한다」.
-    const prose = [...v.lines, ...v.after.lines, ...v.closing].join(' ')
-    for (const w of HARD) {
-      if (!prose.includes(w)) continue
-      const glossedSomewhere = spots.some(([, g]) => (g ?? []).some(x => x.word.includes(w))) ||
-        new RegExp(`${w}\([^)]*\)이라`).test(prose) || prose.includes(`${w}(`)
-      expect(glossedSomewhere, `「${w}」가 본문에 나오는데 어디에서도 풀리지 않는다`).toBe(true)
-    }
-  })
-
-  it('국상 화면에 뭉친 풀이 문단이 되살아나지 않는다', () => {
-    const v = beatsOf(a).find(b => b.kind === 'edict').view
-    expect(v.glossary, '풀이를 다시 한 문단으로 뭉쳤다').toBeUndefined()
-    for (const r of v.rows) {
-      for (const g of r.gloss ?? []) {
-        expect(g.word.length).toBeGreaterThan(0)
-        expect(g.mean.length).toBeGreaterThan(3)
-      }
-    }
-  })
-
-  it('탈출 장면은 대조전에 닿았을 때만 있다', () => {
-    const e = beatsOf(a).find(b => b.kind === 'escape')
-    expect(e.unlessFlag).toBe('queen-lost')
+    const kinds = new Set(ACTS.flatMap(x => beatsOf(x)).map(b => b.kind))
+    expect(kinds.has('escape')).toBe(false)
+    expect(kinds.has('edict')).toBe(false)
   })
 
   it('양력을 단정하지 않는다 — 발발일은 폭으로 적는다 (판정 R14)', () => {
@@ -554,7 +475,7 @@ describe('5막 「갑신」', () => {
     expect(Object.keys(PALACES)).not.toContain('ujeongchongguk')
     // 첫 비트는 이제 정변 전 김옥균의 알현이다(2026-09-13) — 정변의 밤을 알리는 글 화면을 id 로 찾는다.
     const first = beatsOf(a).find(b => b.id === 'gapsin-open')
-    expect(first.lines.join(' ')).toContain('임금은 그 자리에 없었다')
+    expect(first.lines.join(' ')).toContain('당신은 그 자리에 없었다')
   })
 
   it('조작권이 D → C → B → D 다 — 설계서 5막 머리줄(판정 R43)', () => {
@@ -754,9 +675,9 @@ describe('다섯 막이 이어진다', () => {
     }
   })
 
-  it('촉박은 통틀어 두 번뿐이고, 불길을 뚫고 달리는 장면은 없다', () => {
+  it('촉박은 통틀어 한 번뿐이고, 불길을 뚫고 달리는 장면은 없다', () => {
     const rushes = ACTS.flatMap(a => beatsOf(a).filter(b => b.kind === 'rush'))
-    expect(rushes).toHaveLength(2)
+    expect(rushes).toHaveLength(1)
     expect(rushes.filter(r => r.fire === true)).toHaveLength(0)
   })
 
@@ -898,10 +819,13 @@ describe('4·5막 보강 — 난 전의 집안, 정변 전의 믿음', () => {
   const imo = beatsOf(ACTS[3]).map(b => b.id), gap = beatsOf(ACTS[4]).map(b => b.id)
   // 완화군의 죽음(1880)·이재선의 옥사(1881)·세자 가례를 걷어 냈다(2026-09-26).
   // 남은 순서만 붙든다 — 아버지의 귀환이 대원군 집권 글 앞, 왕비 환궁이 제물포 뒤.
-  it('4막: 아버지의 귀환이 대원군 집권 글 앞, 왕비 환궁이 제물포 뒤', () => {
+  it('4막: 난의 밤 → 아버지의 귀환 → 대원군 집권 글 → 얼어붙은 회의 → 끌려감', () => {
     const at = id => imo.indexOf(id)
+    expect(at('imo-night')).toBe(at('imo-father-returns') - 1)
     expect(at('imo-father-returns')).toBe(at('imo-daewongun') - 1)
-    expect(at('queen-return')).toBe(at('imo-jemulpo') + 1)
+    expect(at('imo-daewongun')).toBeLessThan(at('imo-council'))
+    expect(at('imo-council')).toBeLessThan(at('imo-abduction'))
+    expect(imo.at(-1)).toBe('imo-sokbang')
   })
   it('5막: 김옥균의 알현으로 열고, 그의 끝을 닫기 전에 적는다 — 알현은 한쪽 회고라 재구성이다', () => {
     expect(gap[0]).toBe('kimokgyun-audience')

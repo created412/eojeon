@@ -3,56 +3,29 @@ import { actById } from '../../src/data/acts.js'
 import { dryRun, sameHistory, knowledgeDiff, unsafeConditionalBeats } from '../../src/systems/branch.js'
 import { createState } from '../../src/core/state.js'
 
-// 4막을 두 번 걸어간다. 한 번은 대조전에 닿은 학생으로, 한 번은 늦은 학생으로.
-// C2 의 caughtFlag 는 실제 플레이에서 playRush() 가 붙이므로 여기서는 그 자리에 심는다.
+// 4막에는 이제 갈림길이 없다(2026-10-06). 예전에는 대조전에 닿았는가(queen-lost)로 두 길이
+// 갈렸다 — 선생님: 「왕비를 그냥 없애버리고.」 그 줄을 걷어 내면서 깃발도 함께 사라졌다.
+// 갈림길 규칙 자체는 5막 C3(아래)가 그대로 붙든다.
 const imo = actById('imo')
-const onTime = dryRun(imo, createState(), 3)
-const tooLate = dryRun(imo, { ...createState(), flags: { 'queen-lost': true } }, 3)
 
-describe('7.6 — 실패해도 역사는 바뀌지 않는다', () => {
-  it('두 경로가 서로 다른 것을 본다', () => {
-    expect(onTime.played).not.toEqual(tooLate.played)
-    expect(onTime.played).toContain('imo-escape')
-    expect(onTime.played).toContain('imo-letter')
-    expect(onTime.played).toContain('imo-known')
-    expect(tooLate.played).toContain('imo-declared')
-    expect(tooLate.played).not.toContain('imo-escape')
-    expect(tooLate.played).not.toContain('imo-letter')
+describe('4막 — 갈림길이 없다', () => {
+  it('깃발로 갈리는 비트가 하나도 없다', () => {
+    expect(imo.beats.filter(b => b.whenFlag || b.unlessFlag || b.flag)).toEqual([])
+    expect(imo.beats.filter(b => b.caughtFlag)).toEqual([])
   })
 
-  it('그러나 「실제로 일어난 일」 비트는 두 경로가 한 글자도 다르지 않다', () => {
-    expect(onTime.historical).toEqual(tooLate.historical)
-    expect(onTime.historical.length).toBeGreaterThan(0)
-    expect(onTime.historical).toContain('imo-gukjang')   // 국상은 두 경로 모두 지나간다
-    expect(onTime.historical).toContain('imo-fact')      // 왕비는 어느 쪽이든 살아 있었다
+  it('깃발을 미리 심어도 지나가는 비트가 같다', () => {
+    const plain = dryRun(imo, createState(), 3)
+    const flagged = dryRun(imo, { ...createState(), flags: { 'queen-lost': true } }, 3)
+    expect(plain.played).toEqual(flagged.played)
+    expect(sameHistory(plain.state, flagged.state)).toBe(true)
   })
 
-  it('끝난 자리의 역사가 같다 — 궁·조작권·이어 기록·사초함·쌀 지수가 전부 같다', () => {
-    expect(sameHistory(onTime.state, tooLate.state)).toBe(true)
-  })
-
-  it('두 경로가 같은 카드를 쥐고 막을 나온다', () => {
-    expect(onTime.state.sources.read.sort()).toEqual(tooLate.state.sources.read.sort())
-    expect(onTime.state.sources.read).toContain('jemulpo4')
-    expect(onTime.state.sources.read).toContain('sokbang')
-  })
-
-  it('두 경로 모두 조작권 D 로 끝난다 — 늦지 않았어도 아버지는 돌아온다', () => {
-    expect(onTime.state.control).toBe('D')
-    expect(tooLate.state.control).toBe('D')
-  })
-
-  it('갈린 것은 오직 깃발이다 — 그리고 그 깃발은 「왕이 무엇을 아는가」다', () => {
-    const diff = knowledgeDiff(onTime.state, tooLate.state).sort()
-    expect(diff).toEqual(['queen-alive-known', 'queen-lost'])
-  })
-
-  it('조건이 붙은 비트가 궁·조작권·낮을 건드리지 않는다 — 정적으로 걷는 도구들이 거짓을 말하지 않게', () => {
-    expect(unsafeConditionalBeats(imo)).toEqual([])
-  })
-
-  it('두 경로의 비트 수가 같다 — 건너뛴 자리도 번호는 넘어간다', () => {
-    expect(onTime.state.beatIndex).toBe(tooLate.state.beatIndex)
+  it('조작권 D 로 끝나고, 제물포·속방 두 카드를 쥐고 나온다', () => {
+    const run = dryRun(imo, createState(), 3)
+    expect(run.state.control).toBe('D')
+    expect(run.state.sources.read).toContain('jemulpo4')
+    expect(run.state.sources.read).toContain('sokbang')
   })
 })
 

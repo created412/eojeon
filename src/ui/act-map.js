@@ -201,7 +201,7 @@ export function createActMap(root) {
     open(view = {}) {
       return new Promise(resolve => {
         const steps = (view.steps ?? []).filter(Boolean)
-        const hands = steps.filter(s => s.group === 'hands').length
+        const hands = steps.filter(s => s.group === 'hands' || s.handle).length
 
         const el = doc.createElement('div')
         el.className = 'actmap'
@@ -257,7 +257,7 @@ export function createActMap(root) {
 
         for (const [i, step] of steps.entries()) {
           const li = doc.createElement('li')
-          li.className = step.group === 'hands' ? 'actmap-step actmap-doing' : 'actmap-step'
+          li.className = (step.group === 'hands' || step.handle) ? 'actmap-step actmap-doing' : 'actmap-step'
           li.style.animationDelay = `${Math.min(i, 8) * 55}ms`
 
           const num = doc.createElement('div')
@@ -275,7 +275,7 @@ export function createActMap(root) {
           const label = doc.createElement('span')
           label.textContent = GROUP_LABEL[step.group] ?? ''
           kind.appendChild(label)
-          if (step.group === 'hands') {
+          if (step.group === 'hands' || step.handle) {
             const flag = doc.createElement('span')
             flag.className = 'actmap-hands-flag'
             flag.textContent = '직접 한다'

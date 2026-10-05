@@ -26,7 +26,6 @@ export const CAST = {
   kimjwageun: 'Barrett',   // 영의정 김좌근 — 노대신
   minchisang: 'Sterling',  // 도승지 민치상
   jodaebi: 'Nora',         // 대왕대비 조씨 — 노년
-  wangbi: 'Helena',        // 왕비 민씨
   mother: 'Vera',          // 여흥부대부인 민씨
   gungin: 'Maeve',         // 궁인
   choeikhyeon: 'Desmond',  // 최익현 — 곧고 빠르다

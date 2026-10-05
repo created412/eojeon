@@ -57,7 +57,7 @@ export const NEUTRAL_ATTACH_NOTE =
 
 // 사초함이 빈 학생이 읽을 줄. 「왜 안 모았느냐」가 아니다.
 export const EMPTY_HAND_LINE =
-  '사초함에 아직 놓을 글이 없다. 그래도 회의는 열린다 — 임금은 근거 없이도 정할 수 있다. 다만 무엇을 딛고 정했는지는 적히지 않는다.'
+  '사초함에 아직 놓을 글이 없다. 그래도 회의는 열린다 — 당신은 근거 없이도 정할 수 있다. 다만 무엇을 딛고 정했는지는 적히지 않는다.'
 
 export const FROZEN_CHOICE_FALLBACK = '아무것도 고르지 못했다'
 

@@ -40,7 +40,10 @@ function environment() {
     audienceExitOpen: false, audienceWasWalking: false, resolveAudience: null, lastRebukeAt: -Infinity,
     speak: {isOpen: () => false}, dialog: {isOpen: () => false, close() {}}, pause: {isOpen: () => false},
     hubBusy: false,
-    hint: {}, audio: {play() {}}, currentNpcs: () => [],
+    hint: {}, sceneNote: {show() {}, hide() {}},
+    // 걸음의 완급(systems/gait.js)은 여기서 재지 않는다 — tests/systems/gait.test.js 가 붙든다.
+    easedInput: raw => raw, stepBlend: {begin() {}, stepped() {}, end() {}}, walkedThisFrame: false,
+    gaitAxis: {x: 0, z: 0}, restAxis: () => ({x: 0, z: 0}), audio: {play() {}}, currentNpcs: () => [],
     // 살아 있는 자리(main.js livingNpcs) — 시험대에서는 서성임이 없으므로
     // 데이터 좌표를 그대로 돌려준다. 자리가 비어 있을 때의 갈래가 이것이다.
     npcSpots: new Map(), livingNpcs() { return this.currentNpcs() },

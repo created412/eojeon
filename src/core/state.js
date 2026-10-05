@@ -21,7 +21,11 @@ export const SAVE_KEY = 'eojeon.save.v1'
 //
 // 못 읽는 저장을 만난 학생이 겪는 일은 main.js 의 STALE_SAVE_NOTICE 를 보라 —
 // 「이어서 하기」가 그냥 사라지면 학생은 자기가 뭔가 잘못한 줄 안다.
-const VERSION = 4
+//
+// 4 → 5 (2026-10-06). 왕비의 줄을 걷어 내면서 2막에서 두 비트(가례), 4막에서 일곱 비트
+// (대조전 촉박·피신·밀서·승하 소문·국상·「알고 있었다」·「실제로는」·환궁)가 빠지고
+// 4막에 글 한 장(imo-night)이 들어갔다. 2막 가운데부터 좌표가 통째로 밀린다.
+const VERSION = 5
 
 export function createState() {
   return {

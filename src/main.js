@@ -13,10 +13,12 @@ import {
   roomOf, kingSpot, besideSpot, visitorSpot, doorSpot, walkAt, yawToward, pathAt, pathLength, processionPath, formationAll,
   besideIds, visitorsOf, castOf, rebukeOf, entersOf, departIds, propOf,
   escortOffsets, escortSpot, APPROACH_MS, DEPART_MS, REBUKE_MS, PROCESSION_MS, visitorSpotFor, audienceLeft,
+  sceneNotice,
 } from './systems/audience.js'
 import { boardAt, kingVisibleAt, carryLiftAt, BOARD_MS, CARRY_BEYOND, CAMERA_TRAIL } from './systems/boarding.js'
 import { createState, serialize, deserialize, SAVE_KEY } from './core/state.js'
 import { spend } from './core/clock.js'
+import { easeAxis, restAxis, createStepBlend } from './systems/gait.js'
 import { stopAt, stopHint, markStopPaid, markStopDone, isStopDone, pendingStopId, stopById } from './systems/outing.js'
 import { pickUp, markRead, plunder, isLost } from './systems/codex.js'
 import { recordLoss, LOSS_LABEL, everRead, lossReason } from './systems/loss-log.js'
@@ -56,8 +58,6 @@ import { backgroundFor } from './data/act-background.js'
 import { createAlone } from './ui/alone.js'
 import { createCodexQuiz } from './ui/codex-quiz.js'
 import { quizView } from './systems/codex-quiz.js'
-import { createEscape } from './ui/escape-screen.js'
-import { createEdict } from './ui/edict-screen.js'
 import { createPause } from './ui/pause.js'
 import { createTitle } from './ui/title.js'
 import { createControlsHint, isCoarse } from './ui/controls-hint.js'
@@ -401,15 +401,16 @@ const ACT_MOOD = ['dawnwinter', 'day', 'day', 'daybreak', 'night']
 
 export function moodForBeat(beat, actIndex = 0) {
   if (beat?.kind === 'rush') return beat.fire === true ? 'fire' : 'daybreak'
-  if (beat?.kind === 'escape') return 'night'
   return ACT_MOOD[actIndex] ?? 'day'
 }
 
 export function ambientForBeat(beat) {
   if (!beat) return null
+  // 비트가 스스로 바닥 소리를 정하면 그것이 먼저다 — 4막 난군의 밤(imo-night)이 글 한 장인데도
+  // 궁을 에워싼 소리를 까는 자리다(2026-10-06, 촉박을 걷어 내며 그 소리만 남겼다).
+  if (beat.ambient) return beat.ambient
   if (beat.kind === 'explore') return 'hall'
   if (beat.kind === 'rush') return beat.fire === true ? 'fire' : 'siege'
-  if (beat.kind === 'escape') return 'night'
   // 조작권 D 장면(kind:'hold')은 무음이면 안 된다. 이 장면은 「안 움직인다 · 아무것도
   // 안 변한다」가 내용인데 거기에 무음까지 겹치면 학생이 받는 신호가 정확히
   // 「얼어붙었다 · 고장났다」가 된다 — 화면은 글로 「고장이 아니다」라고 말하는데
@@ -559,8 +560,6 @@ export function boot(root) {
   const actBackground = createActBackground(root)
   const alone = createAlone(root)
   const codexQuiz = createCodexQuiz(root)
-  const escape = createEscape(root)
-  const edict = createEdict(root)
   const ration = createRation(root)
   const dayEnd = createDayEnd(root)
   installPaperVars()          // 한지·장계를 CSS 변수로 걸어 둔다(ui/paper-css.js)
@@ -584,6 +583,37 @@ export function boot(root) {
     'color:#e0a23a;font-size:13px;letter-spacing:2px;pointer-events:none'
   hint.hidden = true
   root.appendChild(hint)
+
+  // 알현·행렬이 끝난 자리의 고지(systems/audience.js sceneNotice). 방금 본 장면에서
+  // 어디까지가 기록이고 어디부터가 게임이 지어낸 것인지 — 「E — 다음으로」 **안에** 한 칸으로 선다.
+  //
+  // 처음에는 화면 아래에 따로 띄웠는데, 안내 줄(hint)의 자리가 화면 크기마다 다르게
+  // 덮어써져 있어(cinematic-style·royal-interface) 고지가 그 줄을 덮었다. 안내 줄의
+  // 자식으로 넣으면 어느 화면에서도 겹치지 않고, 안내 줄이 바뀌거나 숨을 때 함께 사라진다.
+  // 글씨는 13px 아래로 내리지 않는다 — 12px 고지는 프로젝터에서 안 보였다(ui/note-screen.js).
+  const sceneNote = {
+    show(beat) {
+      const n = sceneNotice(beat)
+      if (!n) return
+      const box = document.createElement('div')
+      box.className = 'scene-notice'
+      box.style.cssText =
+        'margin-top:9px;padding-top:9px;border-top:1px solid #ffffff2e;letter-spacing:normal;' +
+        'font-size:13px;line-height:1.6;color:#d9d2c0;word-break:keep-all;font-weight:400'
+      const head = document.createElement('div'); head.textContent = n.notice
+      box.appendChild(head)
+      // 가로로 누운 전화기(높이 480px 아래)에서는 근거 줄까지 넣으면 안내 줄이 임금을 덮는다.
+      // 그 화면에서는 「재구성 장면」 한 줄만 남긴다 — 낱말은 어느 화면에서도 보인다.
+      const short = typeof matchMedia === 'function' && matchMedia('(max-height: 480px)').matches
+      if (n.origin && !short) {
+        const src = document.createElement('div'); src.style.cssText = 'color:#a9a394;margin-top:2px'
+        src.textContent = n.origin
+        box.appendChild(src)
+      }
+      hint.appendChild(box)
+    },
+    hide() { hint.querySelector('.scene-notice')?.remove() },
+  }
 
   const onKey = (e) => handleKey(e)
   let touchWrap = null
@@ -1357,8 +1387,10 @@ export function boot(root) {
     flow.state = { ...flow.state, room: to.id }
     hint.textContent = beat.exit?.label ?? 'E — 다음으로'
     hint.hidden = false
+    sceneNote.show(beat)
     await new Promise(res => { resolveAudience = res })
     hint.hidden = true
+    sceneNote.hide()
 
     // 가마에 오른다 — 눌렀으니 실제로 오른다(지적 #18). beat.board 가 적힌 행렬만.
     if (beat.board) await playBoarding(beat, def)
@@ -1490,15 +1522,17 @@ export function boot(root) {
     // 방금 받은 문서를 다시 볼 틈도 없이 어전회의가 덮친다.
     hint.textContent = `${beat.exit?.label ?? 'E — 다음으로'} · 또는 문으로 걸어 나간다`
     hint.hidden = false
+    sceneNote.show(beat)       // 방금 오간 말이 어디까지 기록인가 — 넘어가기 전에 한 줄
     audienceExitOpen = true
     await new Promise(res => { resolveAudience = res })
 
+    sceneNote.hide()
     audienceExitOpen = false
     resolveAudience = null
     audienceBeat = null
     audienceWalk = null
     // 문으로 나가든 E로 끝내든, 마지막 탭과 막힘을 다음 낮으로 넘기지 않는다.
-    acc = 0
+    acc = 0; gaitAxis = restAxis()
     tapTarget = null; tapRoute = []; autoWalk = false
     flow.state = { ...flow.state, blocked: null }
     hint.hidden = true
@@ -1719,37 +1753,9 @@ export function boot(root) {
     return flow.state
   }
 
-  // 탈출 비트(설계서 §5.C2) — 고른 것은 깃발에 남는다. 이 고름은 역사를 바꾸지 않는다: 왕비는
-  // 어느 쪽을 골라도 궁을 빠져나가 장호원으로 간다(설계서 7.6). 남는 것은 「임금이 무엇을
-  // 시켰는가」이고, 4단계 엔딩의 기록이 그것을 되돌려 준다. 시계는 없다 — 촉박은 대조전에
-  // 닿는 순간 끝났다.
-  async function playEscape(beat) {
-    flow.setPhase('beat')
-    hint.hidden = true
-    const picked = await escape.open(beat.view)
-    const flags = { ...flow.state.flags }
-    for (const [stepId, optionId] of Object.entries(picked)) flags[`escape.${stepId}`] = optionId
-    flow.state = { ...flow.state, flags }
-    // saveGame() 을 여기서 부르지 않는다(CRITICAL 1, playBrush·playOuting 과 같은 이유) —
-    // runBeats() 가 advance() 뒤에 한 번만 저장한다. (계획서 조각은 존재하지 않는 safeSave()
-    // 를 불렀다 — 「서 있는 지시」에 따라 지금 파일의 saveGame() 규약을 따른다.)
-    return flow.state
-  }
-
-  // 국상 비트(설계서 §7.6) — 조건이 붙지 않는다. 두 경로가 모두 지나간다.
-  // 실록에 임금이 6월 14일에 직접 의복장을 하교한 기사가 있기 때문이다(판정 R11).
-  // 성공한 학생은 이 자리에서 자기 플레이가 실록과 어긋나는 지점을 만난다 —
-  // 실패해도 역사가 안 바뀌듯, 성공해도 안 바뀐다.
-  async function playEdict(beat) {
-    flow.setPhase('beat')
-    hint.hidden = true
-    // 국상 — 북 한 번. 이 화면에서 딱 한 번만 울린다.
-    audio.play('drum')
-    await edict.show(beat.view)
-    if (beat.flag) flow.state = { ...flow.state, flags: { ...flow.state.flags, [beat.flag]: true } }
-    // saveGame() 을 여기서 부르지 않는다 — 위 playEscape 와 같은 이유(CRITICAL 1).
-    return flow.state
-  }
+  // ⚠ 피신(escape)·국상(edict) 화면은 2026-10-06 에 걷어 냈다 — 선생님: 「왕비를 그냥
+  //   없애버리고.」 두 화면은 4막에서 왕비의 줄(대조전 → 피신 → 밀서 → 국상 → 환궁)만을
+  //   위해 있었다. 화면 파일(ui/escape-screen.js · ui/edict-screen.js)도 함께 지웠다.
 
   // 태블릿에는 Shift 키가 없다(2단계 최종 리뷰 CRITICAL 2 부속) — attachControls() 가
   // 태블릿 단추를 붙일 때 쓰는 것과 같은 판정(isCoarse)을 그대로 재사용해, 촉박 비트의
@@ -1925,7 +1931,7 @@ export function boot(root) {
     activeBeat = beat
     guide.set(guideForBeat(beat))
     // 직전 장면의 탭 목표로 새 장면이 저절로 걷기 시작하지 않게 한다.
-    acc = 0
+    acc = 0; gaitAxis = restAxis()
     tapTarget = null; tapRoute = []; autoWalk = false
     input.tap()
     flow.state = { ...flow.state, blocked: null }
@@ -1942,7 +1948,12 @@ export function boot(root) {
     ctx.setKingAge({ ...kingLookAt(yearAtBeat(flow.act(), flow.state.beatIndex)),
       attire: kingAttireAt(flow.act(), flow.state.beatIndex, flow.state.palace) })
     switch (beat.kind) {
-      case 'note':    flow.setPhase('beat'); await noteScreen.show(beat); return flow.state
+      case 'note':
+        flow.setPhase('beat')
+        // 북 한 번 — 난군이 돈화문을 넘는 밤(imo-night)에만 울린다. 예전에는 국상 화면의 소리였다.
+        if (beat.drum) audio.play('drum')
+        await noteScreen.show(beat)
+        return flow.state
       case 'explore': return await playExplore(beat)
       case 'audience': return await playAudience(beat)
       case 'procession': return await playProcession(beat)
@@ -1957,8 +1968,6 @@ export function boot(root) {
       case 'rush':    return await playRush(beat)
       case 'hold':    return await playHold(beat)
       case 'outing':  return await playOuting(beat)
-      case 'escape':  return await playEscape(beat)
-      case 'edict':   return await playEdict(beat)
       default:
         throw new Error(`아직 구현하지 않은 비트 종류: ${beat.kind} (${beat.id})`)
     }
@@ -2243,6 +2252,18 @@ export function boot(root) {
   }
 
   let acc = 0
+  // 걸음의 완급(systems/gait.js) — 선생님(2026-10-06): 「자연스러운 게임 움직임까지 바꿔.」
+  //   gaitAxis   눌린 방향을 뒤따라가는 실제 걸음. 눌렀다고 곧장 최고 속도가 아니고,
+  //              뗐다고 그 자리에 박히지 않는다. step() 은 이 축의 길이만큼 걷는다.
+  //   stepBlend  1/60초 고정 스텝과 화면 사이를 잇는다. 스텝이 0번인 프레임에도 임금이
+  //              조금씩 나아가, 주사율이 높은 화면에서 임금만 뚝뚝 끊기지 않는다.
+  let gaitAxis = restAxis()
+  const stepBlend = createStepBlend()
+  let walkedThisFrame = false
+  function easedInput(raw) {
+    gaitAxis = easeAxis(gaitAxis, raw.axis(), FIXED_MS)
+    return { axis: () => gaitAxis, running: () => raw.running() }
+  }
   let lastBlockedBannerAt = -Infinity
   let last = performance.now()
 
@@ -2250,6 +2271,10 @@ export function boot(root) {
     if (!running) return
     const dt = now - last
     last = now
+    // 지난 프레임에 화면용으로 섞어 둔 자리를 진짜 자리로 되돌린다. 그 사이 장면이 임금을
+    // 직접 옮겼으면(알현·궁 이동) 그 자리를 그대로 받는다.
+    stepBlend.begin(ctx.player.position)
+    walkedThisFrame = false
     bgm.tick(now)
     // 말하는 도중에 소리를 끄면 그 말도 그 자리에서 멈춘다(대화판은 글자를 마저 찍는다).
     if (voice.isPlaying() && audio.isMuted()) voice.silence()
@@ -2387,7 +2412,7 @@ export function boot(root) {
       const busy = justArrived || (audienceWalk && !audienceWalk.followRoom) ||
         speak.isOpen() || dialog.isOpen() || pause.isOpen()
       if (busy) {
-        acc = 0
+        acc = 0; gaitAxis = restAxis()
         tapTarget = null; tapRoute = []; autoWalk = false
         if (flow.state.blocked) flow.state = { ...flow.state, blocked: null }
       } else {
@@ -2399,8 +2424,11 @@ export function boot(root) {
         const roomId = audienceBeat.room ?? def.councilRoom
         acc = Math.min(acc + dt, FIXED_MS * MAX_STEPS)
         let steps = 0
+        walkedThisFrame = true
         while (acc >= FIXED_MS && steps < MAX_STEPS) {
-          flow.state = step(ctx, inputForStep(), flow.state, FIXED_MS, { confineRoom: audienceExitOpen ? null : roomId })
+          const before = { x: ctx.player.position.x, z: ctx.player.position.z }
+          flow.state = step(ctx, easedInput(inputForStep()), flow.state, FIXED_MS, { confineRoom: audienceExitOpen ? null : roomId })
+          stepBlend.stepped(before, ctx.player.position)
           acc -= FIXED_MS
           steps++
         }
@@ -2430,8 +2458,11 @@ export function boot(root) {
 
         acc = Math.min(acc + dt, FIXED_MS * MAX_STEPS)
         let steps = 0
+        walkedThisFrame = true
         while (acc >= FIXED_MS && steps < MAX_STEPS) {
-          flow.state = step(ctx, inputForStep(), flow.state, FIXED_MS)
+          const before = { x: ctx.player.position.x, z: ctx.player.position.z }
+          flow.state = step(ctx, easedInput(inputForStep()), flow.state, FIXED_MS)
+          stepBlend.stepped(before, ctx.player.position)
           acc -= FIXED_MS
           steps++
         }
@@ -2443,7 +2474,7 @@ export function boot(root) {
           audio.play('door', { gain: ROOM_DOOR_GAIN })
         }
         if (flow.state.blocked && !autoWalk && now - lastBlockedBannerAt >= BLOCKED_BANNER_MS) {
-          banner(root, '임금이 갈 수 있는 곳은 정해져 있다')
+          banner(root, '당신이 갈 수 있는 곳은 정해져 있다')
           lastBlockedBannerAt = now
         }
         if (flow.phase === 'day') {
@@ -2458,7 +2489,7 @@ export function boot(root) {
           // 하루는 할 일을 다 하고 **나가는 방에서 E 를 눌렀을 때** 끝난다.
         }
       } else {
-        acc = 0
+        acc = 0; gaitAxis = restAxis()
         input.tap()
       }
     }
@@ -2496,6 +2527,9 @@ export function boot(root) {
     ctx.setInteractionCues(flow.phase === 'day' ? markerPoints() : session ?
       PALACES[flow.state.palace].rooms.filter(r => r.id === activeBeat?.goalRoom)
         .map(r => ({ x: r.x, z: r.z, label: r.name, kind: 'door', urgent: true })) : [])
+    // 그리기 직전 — 두 스텝 사이를 누적기에 남은 몫만큼 섞는다. 걷는 국면이 아니었으면
+    // (판이 떠 있다·행렬이 직접 옮긴다) 진짜 자리 그대로 그린다.
+    stepBlend.end(ctx.player.position, walkedThisFrame ? acc / FIXED_MS : 1)
     ctx.render()
     if (!session) hud.hideRush()
     hud.update({

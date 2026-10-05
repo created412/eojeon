@@ -139,7 +139,7 @@ export function dayEndHtml(report) {
         <div class="tiles">${tiles(did) || '<div class="none">하나도 하지 않았다</div>'}</div></div>
       <div class="col"><b>하지 않은 일 ${missed.length}</b>${items(missed) || '<div class="none">남겨 둔 것이 없다</div>'}</div>
     </div>
-    <div class="tail">${report.tail ?? '하지 못한 일은 임금이 고른 것이 아니다 — 그 자리에 갈 수 없었거나, 기록이 남지 않은 일이다.'}</div>
+    <div class="tail">${report.tail ?? '하지 못한 일은 당신이 고른 것이 아니다 — 그 자리에 갈 수 없었거나, 기록이 남지 않은 일이다.'}</div>
     <button class="go">${report.buttonLabel ?? '다음 날로'}</button>`
 }
 

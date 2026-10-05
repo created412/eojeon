@@ -258,7 +258,7 @@ export function orderingVerdict(list, day, placedIds) {
   const lines = ['소식은 거리만큼 늦게 온다. 같은 날 보낸 장계도 어디서 보냈느냐에 따라 며칠씩 늦게 닿는다.']
   const older = pendingOlderThanArrived(list, day)
   if (older > 0) {
-    lines.push(`아직 오지 않은 장계 가운데 ${older}통은, 이미 닿은 장계보다 먼저 보낸 것이다. 임금은 그 일을 아직 모른다.`)
+    lines.push(`아직 오지 않은 장계 가운데 ${older}통은, 이미 닿은 장계보다 먼저 보낸 것이다. 당신은 그 일을 아직 모른다.`)
   }
 
   return { truth, arrival, placedRight, arrivalSame, headline, lines }

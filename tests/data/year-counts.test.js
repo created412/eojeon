@@ -70,14 +70,27 @@ const CLAIMS = [
     from: 'act:enthronement', to: 'act:imo',
   },
   {
-    where: '그 어전회의를 기억하는가',
-    note: '종로 — 1막의 그 어전회의(1863)에서 지금(1882)까지',
-    from: 'act:enthronement', to: 'act:imo',
+    // 2026-10-06 — 「닷새 전」이었다. 경복궁 중건 논의는 즉위 닷새 뒤가 아니라 1865년이다.
+    where: '두 해 전 운현궁에',
+    note: '1막 어전 — 가마를 대던 날(1863)에서 경복궁 중건을 논하는 날(1865)까지',
+    from: 'act:enthronement', to: 'beat:audience',
   },
   {
-    where: '당백전이',
-    note: '종로 — 당백전이 돌기 시작한 해(2막 1866)에서 지금(1882)까지',
+    where: '즉위한 지 두 해',
+    note: '1막 어전의 첫 지문 — 즉위(1863)에서 경복궁 중건을 논하는 날(1865)까지',
+    from: 'act:enthronement', to: 'beat:audience',
+  },
+  {
+    where: '당백전을 찍어 낸',
+    note: '종로 — 당백전을 낸 해(2막 1866)에서 지금(1882)까지',
     from: 'act:yangyo', to: 'act:imo',
+  },
+  {
+    // 2026-10-06 — 예전 줄은 1882년의 쌀값을 당백전에 이었다. 교과서(p.115)가 드는 까닭은
+    // 개항 뒤의 쌀 유출이다. 조약(1876)에서 지금(1882)까지.
+    where: '여섯 해 전에 조약을 맺은 뒤로',
+    note: '종로 — 강화도 조약(1876)에서 지금(1882)까지',
+    from: 'year:1876', to: 'act:imo',
   },
   {
     // 어전회의의 근거 한 줄 — 「다섯 해 뒤 그 일이 미국 함대의 구실이 된다」.
@@ -232,12 +245,34 @@ describe('게임 안의 「N 해」가 기준 연도와 맞는다', () => {
     expect(checked, '셈하는 자리를 하나도 못 찾았다').toBeGreaterThan(5)
   })
 
-  it('4막 종로 화면은 어전회의를 열아홉 해 전, 당백전을 열여섯 해 전으로 갈라 적는다', () => {
+  // 2026-10-06 이야기 점검 — 이 화면은 「그 어전회의에서 나온 당백전이 돌기 시작한 뒤로
+  // 이 줄이 조금씩 길어졌다」고 적어, 1882년의 쌀값을 당백전에 이었다. 당백전은 두 해 만에
+  // 거두었고, 교과서(p.115)가 1882년 쌀값의 까닭으로 드는 것은 개항 뒤의 쌀 유출이다.
+  // 화면의 출처 줄은 처음부터 그렇게 적고 있었다 — 글과 출처가 다른 까닭을 대고 있었다.
+  it('4막 종로 화면은 당백전을 「그때도 뛰었다」로만 떠올리고, 지금의 까닭은 조약에 둔다', () => {
     const stop = actById('imo').beats.find(b => b.kind === 'explore' && b.stops)
       ?.stops.find(s => s.id === 'jongno-1882')
-    const lines = stop.beat.market.lines.join('\n')
-    expect(lines).toContain('열아홉 해 전, 경복궁을 다시 짓는 돈')
-    expect(lines).toContain('당백전이 열여섯 해 전')
-    expect(lines).not.toContain('열여섯 해 전, 경복궁')
+    const market = stop.beat.market
+    const lines = market.lines.join(String.fromCharCode(10))
+    expect(lines).toContain('당백전을 찍어 낸 열여섯 해 전에도')
+    expect(lines).toContain('여섯 해 전에 조약을 맺은 뒤로')
+    expect(lines).toContain('까닭이 다르다')
+    // 당백전에서 오늘의 줄까지를 한 문장으로 잇지 않는다.
+    expect(lines).not.toContain('길어졌다')
+    expect(lines).not.toContain('그 어전회의')
+    // 글이 대는 까닭과 출처가 대는 까닭이 같다.
+    expect(market.origin).toContain('쌀 유출')
+    expect(market.origin).toContain('p.115')
+  })
+
+  // 2026-10-06 — 1막 어전의 김좌근 지문이 「닷새 전」이었다. 경복궁 중건을 정한 것은
+  // 즉위 닷새 뒤가 아니라 고종 2년(1865)이다.
+  it('경복궁 중건을 논하는 1막 어전은 1865년이다', () => {
+    const b = actById('enthronement').beats.find(x => x.id === 'audience')
+    expect(b.year).toBe(1865)
+    expect(b.dateLabel).toContain('1865')
+    const said = b.visitors.flatMap(v => v.lines).join(String.fromCharCode(10))
+    expect(said).not.toContain('닷새 전')
+    expect(said).toContain('두 해 전')
   })
 })

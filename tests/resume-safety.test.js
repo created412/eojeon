@@ -204,8 +204,9 @@ describe('3단계 — 거울이 실제 진행과 같은 비트를 지나간다 (
 
   // 위 시험이 정말로 조건 비트를 붙들고 있는지 — 두 길이 실제로 다른 비트를 지나간다.
   // 여기가 같아져 버리면 위 시험은 아무것도 안 지키는 채로 초록불이 된다.
+  // (예전에는 4막의 대조전 촉박으로 쟀다 — 왕비의 줄과 함께 걷어 내어 5막의 촉박으로 잰다.)
   it('두 길이 실제로 다른 비트를 지나간다 — 위 시험이 헛것이 아님을 보인다', () => {
-    const act = ACTS.find(a => a.id === 'imo')
+    const act = ACTS.find(a => a.id === 'gapsin')
     const idx = ACTS.indexOf(act)
     const run = (caught, flags) => {
       const invoked = []
@@ -214,11 +215,11 @@ describe('3단계 — 거울이 실제 진행과 같은 비트를 지나간다 (
       return invoked
     }
     const ok = run(false, {})
-    const late = run(true, { 'queen-lost': true })
+    const late = run(true, { 'flight-caught': true })
     expect(ok).not.toEqual(late)
-    expect(ok).toContain('imo-letter')          // 밀서는 해낸 학생에게만 온다
-    expect(late).toContain('imo-declared')      // 승하 선포는 놓친 학생에게만 온다
-    expect(late).not.toContain('imo-letter')
+    expect(ok).toContain('gapsin-flight-self')        // 스스로 빠져나온 학생에게만 온다
+    expect(late).toContain('gapsin-flight-caught')    // 이끌려 나온 학생에게만 온다
+    expect(late).not.toContain('gapsin-flight-self')
   })
 })
 

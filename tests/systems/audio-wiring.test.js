@@ -171,8 +171,9 @@ describe('ambientForBeat — 어느 화면에 무엇을 깔 것인가', () => {
     expect(ambientForBeat({ kind: 'rush', fire: false })).toBe('siege')
   })
 
-  it('밤 화면에는 night 를 깐다', () => {
-    expect(ambientForBeat({ kind: 'escape' })).toBe('night')
+  it('비트가 스스로 정한 바닥 소리가 종류보다 먼저다 — 4막 난군의 밤', () => {
+    expect(ambientForBeat({ kind: 'note', ambient: 'siege' })).toBe('siege')
+    expect(ambientForBeat({ kind: 'note' })).toBe(null)
   })
 
   // 「모르는 종류라서 null」이 조용히 지나가면 안 된다. 조작권 D 장면(kind:'hold')이
@@ -187,7 +188,6 @@ describe('ambientForBeat — 어느 화면에 무엇을 깔 것인가', () => {
     audience: 'hall',     // 알현 — 임금은 못 움직여도 궁은 살아 있다('hold' 와 같은 이유)
     procession: 'hall',   // 행렬 — 궁 안을 걸어 나간다
     rush: 'siege',        // 불이 붙는 촉박은 fire — 아래에서 따로 본다
-    escape: 'night',      // 밤 화면
     hold: 'hall',         // 조작권 D — 궁은 그대로 살아 있는데 임금만 못 움직인다
     note: null,           // 글 화면
     council: null,        // 어전회의
@@ -197,7 +197,6 @@ describe('ambientForBeat — 어느 화면에 무엇을 깔 것인가', () => {
     plunder: null,        // 약탈
     brush: null,          // 친필 — 붓소리 말고는 조용한 것이 맞다
     outing: null,         // 나들이(회수 화면)
-    edict: null,          // 국상
     funding: null,        // 돈을 만든다 — 셈판이다, 궁 안의 소리를 깔지 않는다
     alone: 'hall',        // 혼자 서 있는 몇 초 — 궁은 그대로 살아 있고 사람만 없다
   }
@@ -226,7 +225,7 @@ describe('ambientForBeat — 어느 화면에 무엇을 깔 것인가', () => {
   })
 
   it('글·문서·회의 화면에는 아무것도 깔지 않는다', () => {
-    for (const kind of ['note', 'council', 'orders', 'move', 'dispatch', 'plunder', 'brush', 'outing', 'edict', 'funding']) {
+    for (const kind of ['note', 'council', 'orders', 'move', 'dispatch', 'plunder', 'brush', 'outing', 'funding']) {
       expect(ambientForBeat({ kind }), kind).toBe(null)
     }
     expect(ambientForBeat(null)).toBe(null)
@@ -237,7 +236,8 @@ describe('ambientForBeat — 어느 화면에 무엇을 깔 것인가', () => {
   // 달리던 장면(1873 자경전)을 선생님이 걷어 내셨고, 남은 불은 고르는 화면(대화재)
   // 하나였는데 그 화면마저 함께 지웠다. 소리는 systems/audio.js 에 남아 있다 —
   // 불이 다시 붙는 장면이 생기면 그때 이 목록으로 돌아온다.
-  const UNUSED_FOR_NOW = new Set(['fire'])
+  // 'night' 도 2026-10-06 에 갈 곳을 잃었다 — 왕비를 내보내던 대조전의 밤(피신 화면)과 함께.
+  const UNUSED_FOR_NOW = new Set(['fire', 'night'])
   it('바닥 소리가 모두 실제 비트에서 한 번씩은 깔린다', () => {
     const used = new Set(beats.map(ambientForBeat).filter(Boolean))
     for (const bed of AMBIENCES) {

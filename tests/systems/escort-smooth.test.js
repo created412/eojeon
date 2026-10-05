@@ -2,7 +2,7 @@ import { it, expect } from 'vitest'
 import { ACTS } from '../../src/data/acts.js'
 import { PALACES } from '../../src/data/palaces.js'
 import { roomOf, kingSpot, walkAt, escortOffsets, escortSpot, PERSONAL_SPACE } from '../../src/systems/audience.js'
-import { FOLLOW_STEP } from '../../src/render/scene.js'
+import { followStep, FOLLOW_MAX_SPEED } from '../../src/systems/gait.js'
 
 // 선생님(2026-09-15): 행렬 중 인물들이 막 흔들린다 — 한 프레임에 곁 사람 자리가 2m 넘게 튀던 것을 붙든다.
 it('행렬마다 곁을 걷는 사람의 자리가 이어져 움직이고 벽에 겹치지 않는다', () => {
@@ -15,16 +15,17 @@ it('행렬마다 곁을 걷는 사람의 자리가 이어져 움직이고 벽에
       const def = PALACES[palace]
       const from = kingSpot(roomOf(def, b.room)), to = roomOf(def, b.to)
       for (const e of escortOffsets(b)) {
-        // 씬(placeNpc smooth)과 같이: 목표 자리로 한 프레임에 FOLLOW_STEP 만큼만 다가간다.
+        // 씬(placeNpc smooth)과 같이: 목표 자리로 시간에 맞춰 다가간다(systems/gait.js followStep).
+        const FRAME = 1000 / 60, MAX = FOLLOW_MAX_SPEED * FRAME / 1000
         let shown = escortSpot(def, from, e), rawJumps = 0, prevRaw = shown
         for (let f = 0; f <= 400; f++) {
           const king = walkAt(from, to, f / 400)
           const target = escortSpot(def, king, e)
           if (Math.hypot(target.x - prevRaw.x, target.z - prevRaw.z) > 1.5) rawJumps++
           prevRaw = target
-          const dx = target.x - shown.x, dz = target.z - shown.z, d = Math.hypot(dx, dz), k = d > FOLLOW_STEP ? FOLLOW_STEP / d : 1
-          const next = { x: shown.x + dx * k, z: shown.z + dz * k }
-          expect(Math.hypot(next.x - shown.x, next.z - shown.z), `${b.id}/${e.npc} f${f}`).toBeLessThanOrEqual(FOLLOW_STEP + 1e-9)
+          const d = Math.hypot(target.x - shown.x, target.z - shown.z)
+          const next = followStep(shown, target, FRAME)
+          expect(Math.hypot(next.x - shown.x, next.z - shown.z), `${b.id}/${e.npc} f${f}`).toBeLessThanOrEqual(MAX + 1e-9)
           expect(d, `${b.id}/${e.npc} f${f} 대열에서 너무 뒤처짐`).toBeLessThan(3)
           shown = next
         }

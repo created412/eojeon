@@ -15,16 +15,19 @@ function atHub(actIndex, id) {
 }
 
 describe('역사 경계 안의 거점 선택', () => {
-  it('75비트를 보존하고 8개의 탐색 거점만 연다', () => {
-    expect(ACTS.flatMap(a => a.beats)).toHaveLength(75)
+  // 75 → 66 (2026-10-06): 왕비의 줄을 걷어 냈다 — 2막 가례 둘, 4막 일곱이 빠지고 한 장이 들어갔다.
+  it('66비트를 보존하고 8개의 탐색 거점만 연다', () => {
+    expect(ACTS.flatMap(a => a.beats)).toHaveLength(66)
     expect(ACTS.flatMap(a => a.beats.map((_, i) => hubAt(a, i))).filter(Boolean)).toHaveLength(8)
   })
   it('다른 막과 다음 시기의 보고를 현재 거점에서 열지 못한다', () => {
-    const s = atHub(1, 'day-changdeok')
-    expect(beginReport(s, ACTS[1], 'beat:seogye-audience').ok).toBe(false)
-    expect(beginReport(s, ACTS[1], 'beat:axe-sangso').ok).toBe(false)
+    // 예전에는 2막 창덕궁의 「가례 뒤 하례」로 쟀다 — 그 보고는 왕비의 줄과 함께 걷어 냈다.
+    const s = atHub(2, 'day-1873')
+    expect(beginReport(s, ACTS[2], 'beat:axe-sangso').ok).toBe(false)
     expect(beginReport(s, ACTS[4], 'beat:gapsin-gov').ok).toBe(false)
-    expect(hubOptions(s, ACTS[1]).some(o => o.id === 'beat:garye-audience')).toBe(true)
+    expect(hubOptions(s, ACTS[2]).some(o => o.id === 'beat:seogye-audience')).toBe(true)
+    // 2막 창덕궁의 낮에는 이제 보고가 없다.
+    expect(hubOptions(atHub(1, 'day-changdeok'), ACTS[1]).filter(o => o.kind === 'report')).toHaveLength(0)
   })
   it('전각의 조작권이 부족하면 보고를 열 수 없다', () => {
     const s = { ...atHub(2, 'day-1873'), control: 'D' }
@@ -32,12 +35,12 @@ describe('역사 경계 안의 거점 선택', () => {
     expect(hubOptions(s, ACTS[2]).find(o => o.id === 'beat:seogye-audience').blocked).toBeTruthy()
   })
   it('아무것도 안 해도 거점을 닫고 하지 않은 일을 남긴다', () => {
-    const s = atHub(1, 'day-changdeok')
-    const ended = closeHub(s, ACTS[1])
-    expect(freedomRecord(ended).join('\n')).toContain('하례')
-    expect(freedomRecord(ended).join('\n')).toContain('하지 못함')
+    const s = atHub(2, 'day-1873')
+    const ended = closeHub(s, ACTS[2])
+    expect(freedomRecord(ended).join(' ')).toContain('외교 문서 보고')
+    expect(freedomRecord(ended).join(' ')).toContain('하지 못함')
     expect(ended.decisions).toEqual([])
-    expect(closeHub(ended, ACTS[1])).toEqual(ended)
+    expect(closeHub(ended, ACTS[2])).toEqual(ended)
   })
   it('보지 않은 보고를 받았다고 기록하지 않는다', () => {
     // 옛 이름은 「해 칸이 없어도 종료 가능하며…」였다. 해 칸이 없어졌으므로(2026-09-26)
@@ -81,18 +84,18 @@ describe('역사 경계 안의 거점 선택', () => {
     expect(options.every(o => o.point)).toBe(true)
   })
   it('구형 저장의 좌표와 이미 지난 보고를 보존한다', () => {
-    const legacy = atHub(1, 'day-changdeok')
+    const legacy = atHub(2, 'day-1873')
     delete legacy.freedom
     const loaded = deserialize(serialize(legacy))
     expect(SAVE_KEY).toBe('eojeon.save.v1')
-    expect(loaded.version).toBe(4)   // 3 → 4 (2026-09-26, core/state.js 머리말)
+    expect(loaded.version).toBe(5)   // 4 → 5 (2026-10-06, core/state.js 머리말)
     expect(loaded.beatIndex).toBe(legacy.beatIndex)
-    expect(hubOptions(loaded, ACTS[1]).find(o => o.id === 'beat:garye-audience').done).toBe(true)
+    expect(hubOptions(loaded, ACTS[2]).find(o => o.id === 'beat:seogye-audience').done).toBe(true)
   })
   it('새 게임의 선택 보고는 고정 재생하지 않고, 구형 재생 중 보고는 마친다', () => {
-    const act = ACTS[1], beat = act.beats.find(b => b.id === 'garye-audience')
+    const act = ACTS[2], beat = act.beats.find(b => b.id === 'seogye-audience')
     expect(shouldDeferReport(createState(), act, beat)).toBe(true)
-    const legacy = { ...createState(), actIndex: 1, beatIndex: act.beats.indexOf(beat), beatEntered: true }
+    const legacy = { ...createState(), actIndex: 2, beatIndex: act.beats.indexOf(beat), beatEntered: true }
     delete legacy.freedom
     expect(shouldDeferReport(deserialize(serialize(legacy)), act, beat)).toBe(false)
   })
@@ -101,10 +104,10 @@ describe('역사 경계 안의 거점 선택', () => {
     const legacy = { ...createState(), actIndex: 2, beatIndex: act.beats.indexOf(beat), beatEntered: false }
     delete legacy.freedom
     expect(shouldDeferReport(deserialize(serialize(legacy)), act, beat)).toBe(false)
-    const early = ACTS[1], report = early.beats.find(b => b.id === 'garye-audience')
-    const earlierSave = { ...legacy, actIndex: 1, beatIndex: early.beats.indexOf(report) }
-    const completed = { ...deserialize(serialize(earlierSave)), beatIndex: early.beats.indexOf(report) + 1 }
-    expect(hubOptions(completed, early).find(o => o.id === 'beat:garye-audience').done).toBe(true)
+    const report = act.beats.find(b => b.id === 'seogye-audience')
+    const earlierSave = { ...legacy, beatIndex: act.beats.indexOf(report) }
+    const completed = { ...deserialize(serialize(earlierSave)), beatIndex: act.beats.indexOf(report) + 1 }
+    expect(hubOptions(completed, act).find(o => o.id === 'beat:seogye-audience').done).toBe(true)
   })
 })
 

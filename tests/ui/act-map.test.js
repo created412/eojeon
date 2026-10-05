@@ -89,7 +89,8 @@ describe('다섯 막이 다 그려진다', () => {
       }
       // 손으로 하는 걸음은 눈에 띄는 표시와 **글자**를 함께 가진다(색만으로 가르지 않는다).
       const doing = byClass(el, 'actmap-doing')
-      expect(doing).toHaveLength(view.steps.filter(s => s.group === 'hands').length)
+      // 손잡이가 든 걸음도 「직접 한다」다 — 4막의 손잡이는 걷는 낮 안의 급료 가마다.
+      expect(doing).toHaveLength(view.steps.filter(s => s.group === 'hands' || s.handle).length)
       for (const step of doing) expect(textOf(step)).toContain('직접 한다')
       // 「몇 걸음인가」가 화면 위에 적힌다.
       expect(byClass(el, 'actmap-count')).toHaveLength(1)
