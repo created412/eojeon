@@ -46,26 +46,30 @@ describe('카메라가 담장 안에 선다', () => {
     }
   })
 
-  it('작은 궁에서는 실제로 당겨진다 — 고칠 것이 있었다', () => {
+  // 시작 자리는 이제 마당 안쪽이다(아래 describe). 그래도 학생이 **대문 쪽으로
+  // 걸어가면** 같은 일이 생기므로 안전망은 남는다 — 그 자리를 여기서 잰다.
+  const AT_GATE = { x: 0, z: 13 }    // 경우궁의 예전 시작 자리, 담에서 3m
+
+  it('대문 앞에 서면 실제로 당겨진다 — 안전망이 할 일이 있다', () => {
     const def = PALACES.gyeongu
-    const shot = shotBehind(def.spawn)
-    expect(shot.z).toBeGreaterThan(def.ground.d / 2)          // 예전 자리는 담 밖 9m
-    const out = clampShotToGround(shot, def.spawn, def.ground)
+    const shot = shotBehind(AT_GATE)
+    expect(shot.z).toBeGreaterThan(def.ground.d / 2)          // 그대로면 담 밖 9m
+    const out = clampShotToGround(shot, AT_GATE, def.ground)
     expect(out.z).toBeLessThan(shot.z - 4)                     // 그만큼 당겨졌다
   })
 
   it('당긴 만큼 위로 올라간다 — 임금과의 거리가 줄지 않는다', () => {
     const def = PALACES.gyeongu
-    const shot = shotBehind(def.spawn)
-    const out = clampShotToGround(shot, def.spawn, def.ground)
-    const dist = s => Math.hypot(s.x - def.spawn.x, s.y, s.z - def.spawn.z)
+    const shot = shotBehind(AT_GATE)
+    const out = clampShotToGround(shot, AT_GATE, def.ground)
+    const dist = s => Math.hypot(s.x - AT_GATE.x, s.y, s.z - AT_GATE.z)
     expect(out.y).toBeGreaterThan(shot.y)
     expect(dist(out)).toBeCloseTo(dist(shot), 5)
   })
 
   it('다른 값(lookY 따위)은 건드리지 않는다', () => {
     const def = PALACES.gyeongu
-    expect(clampShotToGround(shotBehind(def.spawn), def.spawn, def.ground).lookY).toBe(2)
+    expect(clampShotToGround(shotBehind(AT_GATE), AT_GATE, def.ground).lookY).toBe(2)
   })
 
   it('궁터를 모르면 그대로 둔다 — 터지지 않는다', () => {
@@ -74,3 +78,39 @@ describe('카메라가 담장 안에 선다', () => {
     expect(clampShotToGround(null, { x: 0, z: 0 }, { w: 10, d: 10 })).toBeNull()
   })
 })
+
+// ── 시작 자리 자체를 옮겼다(2026-10-05) ────────────────────────────────────
+// 당기는 것(위)은 안전망이다. 근본은 시작 자리가 대문에서 3m 였다는 것 — 그래서
+// 임금을 마당 안쪽에 세우고, 아주 작은 터는 카메라 배율도 줄였다(camZoom).
+// 이제 **당길 필요 자체가 없어야** 한다: 시작 자리에서 카메라가 처음부터 담 안이다.
+describe('시작 자리에서 카메라가 처음부터 담 안에 선다', () => {
+  for (const [id, def] of Object.entries(PALACES)) {
+    if (!def.ground || !def.spawn) continue
+    it(`${def.name ?? id}`, () => {
+      const scale = def.camZoom ?? 1
+      const camZ = def.spawn.z + CAM_DIST * scale
+      expect(camZ, `${id}: 시작 자리 + 카메라 거리가 담을 넘는다`)
+        .toBeLessThanOrEqual(def.ground.d / 2 - WALL_MARGIN + 1e-9)
+    })
+  }
+
+  it('당기지 않아도 된다 — 안전망이 시작 자리에서는 손대지 않는다', () => {
+    for (const [id, def] of Object.entries(PALACES)) {
+      if (!def.ground || !def.spawn) continue
+      const scale = def.camZoom ?? 1
+      const shot = { x: def.spawn.x + 1.6, y: CAM_HEIGHT * Math.sqrt(scale), z: def.spawn.z + CAM_DIST * scale }
+      expect(clampShotToGround(shot, def.spawn, def.ground), `${id} 에서 아직 당겨진다`).toBe(shot)
+    }
+  })
+
+  it('배율을 줄인 곳은 작은 터뿐이다 — 큰 궁의 카메라는 건드리지 않았다', () => {
+    expect(PALACES.changdeok.camZoom).toBeUndefined()
+    expect(PALACES.gyeongbok.camZoom).toBeUndefined()
+    expect(PALACES.gyeongu.camZoom).toBeLessThan(1)
+  })
+
+  it('scene.js 가 궁의 배율을 실제로 쓴다', () => {
+    expect(sceneSrc).toMatch(/activePalace\?\.camZoom/)
+  })
+})
+

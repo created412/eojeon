@@ -633,10 +633,13 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     //   먼저 0 을 못 박아, 가마 장면에서 각을 돌려도 아무 일이 없었다 — 행렬·가마는
     //   phase 가 'audience' 라 늘 이 갈래에 걸린다.
     const viewAngle = viewOverride ?? (audience ? 0 : orbit)
-    const distance = (danger ? 10 : audience ? 11 : CAM_DIST) * zoom
+    // 궁이 정한 배율(data/palaces.js camZoom) — 5막의 작은 궁은 카메라를 당겨 담 안에 세운다.
+    // 학생이 바퀴로 정한 배율(zoom)에 곱한다: 궁을 옮겨도 학생의 손맛은 그대로 남는다.
+    const scale = zoom * (activePalace?.camZoom ?? 1)
+    const distance = (danger ? 10 : audience ? 11 : CAM_DIST) * scale
     const targetShot = {
       x: player.position.x + Math.sin(viewAngle) * distance + Math.cos(viewAngle) * 1.6,
-      y: (danger ? 5.6 : audience ? 5.1 : CAM_HEIGHT) * Math.sqrt(zoom),
+      y: (danger ? 5.6 : audience ? 5.1 : CAM_HEIGHT) * Math.sqrt(scale),
       z: player.position.z + Math.cos(viewAngle) * distance - Math.sin(viewAngle) * 1.6,
       lookY: danger ? CAM_LOOK_Y + 0.45 : CAM_LOOK_Y,
     }

@@ -51,6 +51,11 @@ describe('「지금 할 일」이 실제로 있는 일을 시킨다', () => {
     expect(KIND_GUIDE.orders).not.toMatch(/이유를 쓰/)
   })
 
+  it('국상 안내가 어보를 말한다 — 읽기만 시키면 넘어가는 길을 모른다', () => {
+    expect(KIND_GUIDE.edict).toMatch(/어보/)
+    expect(KIND_GUIDE.edict).toMatch(/누르/)
+  })
+
   it('손으로 하는 장면마다 안내가 있다', () => {
     for (const kind of ['funding', 'brush', 'dispatch', 'council', 'orders']) {
       expect(KIND_GUIDE[kind], `${kind} 에 안내가 없다`).toBeTruthy()

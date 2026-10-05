@@ -16,13 +16,62 @@ const CSS = `
 .edict .r.mark .d{color:#e8b45c}
 .edict .paper{max-width:min(100%,700px);background:#e8e2d4;color:var(--ink-strong,#23201a);border-radius:4px;
   padding:24px 26px;line-height:var(--read-lh-body,1.9);font-size:var(--read-body,17px);text-align:left;
-  white-space:pre-wrap;word-break:keep-all}
+  word-break:keep-all}
+/* 줄바꿈을 살리는 것은 **하교의 글**뿐이다. 예전에는 종이 전체에 pre-wrap 을 걸어,
+   마크업의 들여쓰기와 줄바꿈까지 빈 줄로 찍혔다 — 풀이·출처·어보 사이가 벌어져
+   어보가 종이 밑으로 밀려났다(2026-10-05, 두 칸으로 나눈 뒤 찍어 보고 알았다). */
+.edict .paper .hasi{white-space:pre-wrap}
 .edict .paper .origin{font-size:var(--read-small,13px);color:var(--ink-quiet,#5e5849);margin-top:14px;white-space:normal}
 .edict .rendered{font-size:var(--read-small,12px);color:var(--ink-quiet,#7a7462);margin-top:10px;white-space:normal}
 .edict .origin{font-size:var(--read-small,12px);color:var(--paper-quiet,#6b6558);
   max-width:min(100%,var(--read-measure,560px));line-height:var(--read-lh-small,1.7);word-break:keep-all}
-.edict .gloss{max-width:min(100%,660px);border:1px solid #2a2f34;border-radius:3px;padding:12px 15px;
-  font-size:var(--read-small,13px);color:#c9c2b1;line-height:var(--read-lh-small,1.8);text-align:left;word-break:keep-all}
+/* ── 두 칸: 실록의 닷새 | 내가 내리는 하교 ──────────────────────────────
+   2026-10-05 전체 점검. 예전에는 한 줄로 길게 쌓여 있었다 — 표, 출처, 낱말 풀이
+   열한 개가 뭉친 문단, 그 아래에야 하교와 어보. 1280×800 에서 **정작 손으로
+   찍어야 할 어보가 화면 밖**이었고, 풀이 문단은 「 · 」로 이어진 한 덩어리라
+   모르는 낱말을 만나면 처음부터 훑어야 했다.
+
+   그래서 둘로 가른다. 왼쪽은 읽는 것(실록이 날마다 적은 것), 오른쪽은 하는 것
+   (그 가운데 하나를 내 이름으로 내린다). 어보는 오른쪽 칸 위쪽에 있어 화면을
+   굴리지 않아도 보인다. 좁은 화면에서는 한 칸으로 내려가고, 그때는 **하교가
+   먼저** 온다 — 손으로 할 일이 화면 밖으로 밀리지 않게. */
+.edict .cols{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:22px;
+  width:100%;max-width:1120px;align-items:start;text-align:left}
+.edict .col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.edict .col .rows,.edict .col .paper{max-width:none}
+.edict .col .origin{max-width:none}
+.edict .col.act{align-items:center}
+.edict .col.act .paper{align-self:stretch}
+
+/* 낱말 풀이는 그 낱말이 나오는 줄 바로 밑에 선다 — 풀이는 낱말 곁에 있을 때만 풀이다. */
+.edict .r{flex-wrap:wrap}
+.edict .r .t{flex:1 1 0;min-width:0}
+.edict .g{flex:1 1 100%;margin:2px 0 0 102px;display:flex;flex-direction:column;gap:1px;
+  font-size:var(--read-caption,12px);line-height:1.55;color:var(--paper-quiet,#8f8a7c)}
+.edict .g b{color:#c9a15a;font-weight:400}
+.edict .paper .g{margin:12px 0 0;color:var(--ink-quiet,#5e5849);white-space:normal}
+.edict .paper .g b{color:#7a4a1c}
+
+/* 문턱은 700 이다. 860 으로 두었더니 손전화 가로(844×390)가 걸려 한 칸으로 쌓였다 —
+   넓은데 낮은 화면이야말로 두 칸이 필요하다(ui/rebuild.js 가 같은 일을 겪었다). */
+@media(max-width:700px){
+  .edict .cols{grid-template-columns:1fr}
+  .edict .col.act{order:-1}
+  .edict .g{margin-left:0}
+}
+/* 낮은 화면에서는 「내 이름으로 내린다」를 바닥에 붙인다(ui/move-screen.js 와 같은 처방). */
+@media(max-height:560px){
+  /* 낮은 화면에서는 머리글을 줄인다. 표제와 이끄는 두 줄이 본문 크기 그대로면
+     390px 높이의 절반을 먹어, 하교와 어보가 첫 화면에 들어오지 못한다. */
+  .edict{justify-content:flex-start;gap:8px;padding:12px 16px}
+  .edict > p{font-size:var(--read-small,14px);line-height:1.5}
+  .edict .paper{padding:14px 16px 40px;font-size:var(--read-small,15px);line-height:1.7}
+  .edict .stamp{width:84px;height:84px;margin-top:8px}
+  .edict .stamp .ink{font-size:18px;border-width:4px}
+  /* 아직 못 누르는 단추는 붙이지 않는다. 붙였더니 흐릿한 단추가 하교의 글 한가운데에
+     떠서 글을 가렸다. 어보를 찍어 단추가 살아나면 그때 바닥에 붙어 눈에 들어온다. */
+  .edict button.go:not([disabled]){position:sticky;bottom:0;z-index:2;box-shadow:0 0 0 10px #0d0e10}
+}
 .edict .unknown{border:1px solid #3a4248;border-radius:3px;padding:12px 16px;max-width:min(100%,660px);
   font-size:var(--read-small,13px);color:var(--paper-quiet,#8f8a7c);line-height:var(--read-lh-small,1.7);
   text-align:left;word-break:keep-all}
@@ -44,8 +93,12 @@ const CSS = `
    격자는 왼쪽 위부터 채우므로 글자를 之·施·寶·命 순으로 적어 넣는다 — 그래야
    화면에서는 施命之寶 로 읽힌다. (한때 한 줄로 늘어놓아 「寶之命施」로 보였다.) */
 .edict .stamp .ink i{font-style:normal}
-.edict .stamp .tip{position:absolute;left:0;right:0;bottom:-28px;font-size:var(--read-small,12px);
-  color:var(--paper-quiet,#8f8a7c);letter-spacing:normal}
+/* ⚠ 이 글은 **누런 종이 위**에 놓인다. 예전 빛깔(--paper-quiet)은 어두운 바탕에 쓰는
+   옅은 회색이라 종이 위에서는 거의 보이지 않았다 — 「어보를 눌러 찍는다」가 이 화면의
+   유일한 조작 안내인데 그것이 안 읽혔다(2026-10-05). 먹빛으로 바꾸고 한 줄에 둔다. */
+.edict .stamp .tip{position:absolute;left:50%;transform:translateX(-50%);bottom:-28px;white-space:nowrap;
+  font-size:var(--read-small,13px);color:#5e4a2c;letter-spacing:normal}
+.edict .paper{padding-bottom:46px}
 .edict .sealnote{font-size:var(--read-small,12px);color:var(--paper-quiet,#6b6558);
   max-width:min(100%,var(--read-measure,560px));line-height:var(--read-lh-small,1.7);margin-top:34px;
   word-break:keep-all;text-wrap:balance}
@@ -85,9 +138,15 @@ function ensureStyle() {
   styled = true
 }
 
-function rowsHtml(rows) {
+// 낱말 풀이 — [{ word, mean }]. 그 낱말이 나오는 줄 바로 밑에 붙는다.
+export function glossHtml(gloss) {
+  if (!gloss?.length) return ''
+  return `<div class="g">${gloss.map(g => `<span><b>${g.word}</b> — ${g.mean}</span>`).join('')}</div>`
+}
+
+export function rowsHtml(rows) {
   return rows.map(r =>
-    `<div class="r${r.mark ? ' mark' : ''}"><span class="d">${r.lunar}</span><span>${r.text}</span></div>`
+    `<div class="r${r.mark ? ' mark' : ''}"><span class="d">${r.lunar}</span><span class="t">${r.text}</span>${glossHtml(r.gloss)}</div>`
   ).join('')
 }
 
@@ -113,15 +172,20 @@ export function createEdict(root) {
           el.innerHTML = `
             <h2>${view.title}</h2>
             ${view.lines.map(l => `<p>${l}</p>`).join('')}
-            <div class="rows">${rowsHtml(view.rows)}</div>
-            <div class="origin">${view.rowsOrigin}</div>
-            ${view.glossary ? `<div class="gloss">${view.glossary}</div>` : ''}
-            <div class="paper">${view.hasi.text}
-              <div class="origin">${view.hasi.origin}</div>
-              <div class="rendered">※ 기록의 내용을 오늘날 말로 옮겼습니다</div>
-              ${sealHtml()}</div>
-            <div class="sealnote">${SEAL_NOTE}</div>
-            <button class="go" disabled>${view.buttonLabel}</button>`
+            <div class="cols">
+              <div class="col read">
+                <div class="rows">${rowsHtml(view.rows)}</div>
+                <div class="origin">${view.rowsOrigin}</div>
+              </div>
+              <div class="col act">
+                <div class="paper"><div class="hasi">${view.hasi.text}</div>${glossHtml(view.hasi.gloss)}
+                  <div class="origin">${view.hasi.origin}</div>
+                  <div class="rendered">※ 기록의 내용을 오늘날 말로 옮겼습니다</div>
+                  ${sealHtml()}</div>
+                <div class="sealnote">${SEAL_NOTE}</div>
+                <button class="go" disabled>${view.buttonLabel}</button>
+              </div>
+            </div>`
           bindSeal(el, () => { el.querySelector('.go').disabled = false })
           el.querySelector('.go').addEventListener('click', after)
         }

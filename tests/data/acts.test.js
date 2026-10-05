@@ -449,22 +449,47 @@ describe('4막 「임오」', () => {
   // 옥체를 안 풀어, 학생이 두 낱말을 같은 것으로 볼지 다른 것으로 볼지 알 수 없었다.
   it('국상 화면의 어려운 낱말이 하나도 빠짐없이 그 자리에서 풀린다', () => {
     const v = beatsOf(a).find(b => b.kind === 'edict').view
-    const shown = [
-      ...v.lines,
-      ...v.rows.map(r => r.text),
-      v.hasi.text,
-      ...v.after.lines,
-      v.after.objection.text,
-      ...v.closing,
-    ].join(' ')
-    // 풀이가 있을 수 있는 자리는 둘이다 — glossary 줄과, 낱말을 그 자리에서
-    // 풀어 쓰는 본문(「이런 장례를 의복장(衣服葱)이라 한다」)이다.
-    const glossed = `${v.glossary} ${v.after.lines.join(' ')}`
     const HARD = ['거애', '소렴', '대렴', '성복', '대행 왕비', '곤전', '체백',
       '의계', '미시', '신시', '옥체', '의복장']
+    // 2026-10-05 에 규칙을 조였다. 예전에는 풀이가 표 아래 한 문단(glossary)에
+    // 뭉쳐 있었고, 이 시험은 「화면 어딘가에 풀이가 있는가」만 보았다. 이제는
+    // **그 낱말이 나오는 바로 그 줄에** 풀이가 있어야 한다 — 풀이는 낱말 곁에
+    // 있을 때만 풀이다. 낱말이 나오는 자리(글 + 그 글에 딸린 풀이)를 한 쌍씩 본다.
+    const spots = [
+      ...v.rows.map(r => [r.text, r.gloss]),
+      [v.hasi.text, v.hasi.gloss],
+      [v.after.objection.text, v.after.objection.gloss],
+    ]
+    // 한 번 풀어 준 낱말을 줄마다 되풀이하지는 않는다 — 「대행 왕비」는 6월 11일에
+    // 처음 나올 때 풀리고, 12일·14일에는 다시 풀지 않는다. 그래서 규칙은 이것이다:
+    // **처음 나오는 그 줄에서** 풀려 있을 것.
+    const seen = new Set()
+    for (const [text, gloss] of spots) {
+      const here = (gloss ?? []).map(g => g.word).join(' ')
+      for (const w of HARD) {
+        if (!text.includes(w) || seen.has(w)) continue
+        expect(here, `「${w}」가 「${text.slice(0, 18)}…」에 처음 나오는데 그 줄에 풀이가 없다`).toContain(w)
+        seen.add(w)
+      }
+    }
+    // 본문이 스스로 풀어 쓰는 낱말도 있다 — 「이런 장례를 의복장(衣服葬)이라 한다」.
+    const prose = [...v.lines, ...v.after.lines, ...v.closing].join(' ')
     for (const w of HARD) {
-      if (!shown.includes(w)) continue
-      expect(glossed, `「${w}」가 화면에 나오는데 풀이가 없다`).toContain(w)
+      if (!prose.includes(w)) continue
+      const glossedSomewhere = spots.some(([, g]) => (g ?? []).some(x => x.word.includes(w))) ||
+        new RegExp(`${w}\([^)]*\)이라`).test(prose) || prose.includes(`${w}(`)
+      expect(glossedSomewhere, `「${w}」가 본문에 나오는데 어디에서도 풀리지 않는다`).toBe(true)
+    }
+  })
+
+  it('국상 화면에 뭉친 풀이 문단이 되살아나지 않는다', () => {
+    const v = beatsOf(a).find(b => b.kind === 'edict').view
+    expect(v.glossary, '풀이를 다시 한 문단으로 뭉쳤다').toBeUndefined()
+    for (const r of v.rows) {
+      for (const g of r.gloss ?? []) {
+        expect(g.word.length).toBeGreaterThan(0)
+        expect(g.mean.length).toBeGreaterThan(3)
+      }
     }
   })
 

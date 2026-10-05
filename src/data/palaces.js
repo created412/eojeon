@@ -201,8 +201,17 @@ export const PALACES = {
     id: 'gyeongu',
     name: '경우궁',
     councilRoom: 'jeongdang',
+    // 시작 자리와 카메라(2026-10-05 전체 점검).
+    //
+    // 예전 시작 자리는 대문 바로 안쪽이었다. 그런데 카메라는 임금 뒤로 12m 물러나
+    // 서므로(render/scene.js CAM_DIST) 이 작은 터에서는 **담장 밖**에 서게 되고,
+    // 대문·행각 지붕이 화면을 덮었다. 그래서 임금을 마당 안쪽에 세우고, 터가 아주
+    // 작은 곳은 카메라도 조금 당긴다(camZoom) — 좁은 곳은 좁게 보이는 것이 맞다.
+    // 수는 「시작 자리 + 카메라 거리 ≤ 담 − 2.2m」가 되게 골랐다
+    // (tests/render/camera-clamp.test.js 가 그 부등식을 궁마다 잰다).
     ground: { w: 36, d: 32 },
-    spawn: { x: 0, z: 13 },
+    spawn: { x: 0, z: 5 },
+    camZoom: 0.72,
     rooms: [
       { id: 'jeongdang',  name: '정당',   x:   0, z:  -4, w: 16, d: 12, minControl: 'D', furnish: 'quarters' },
       { id: 'haenggak-e', name: '동행각', x:  13, z:   6, w: 10, d: 10, minControl: 'D', furnish: 'storehouse' },
@@ -259,7 +268,8 @@ export const PALACES = {
     name: '계동궁',
     councilRoom: 'sarangchae',
     ground: { w: 44, d: 40 },
-    spawn: { x: 0, z: 12 },
+    spawn: { x: 0, z: 7 },      // 대문 안쪽 3m → 마당 가운데(위 경우궁의 설명과 같은 까닭)
+    camZoom: 0.88,
     rooms: [
       { id: 'sarangchae', name: '사랑채', x: 0, z: -6, w: 20, d: 14, minControl: 'D', furnish: 'sarang' },
     ],
@@ -271,7 +281,7 @@ export const PALACES = {
     name: '북묘',
     councilRoom: 'sadang',
     ground: { w: 56, d: 52 },
-    spawn: { x: 0, z: 16 },
+    spawn: { x: 0, z: 11 },     // 대문 안쪽 → 마당 가운데. 이 터는 넉넉해 카메라는 그대로 둔다
     rooms: [
       { id: 'sadang', name: '사당', x: 0, z: -6, w: 20, d: 16, minControl: 'D', furnish: 'shrine' },
     ],
@@ -285,7 +295,7 @@ export const PALACES = {
     name: '오조유의 영방',
     councilRoom: 'yeongbang',
     ground: { w: 56, d: 52 },
-    spawn: { x: 0, z: 16 },
+    spawn: { x: 0, z: 11 },     // 북묘와 같다
     rooms: [
       { id: 'yeongbang', name: '영방', x: 0, z: -6, w: 22, d: 14, minControl: 'D', furnish: 'guardroom' },
     ],
