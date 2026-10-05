@@ -87,6 +87,27 @@ export function pointAt(path, d) {
  * 지키고, 시험이 같은 시각에 같은 답을 받는다. 다만 읍은 시계로 정할 수 없다 —
  * 임금이 어디 있느냐에 달렸으므로 사람마다 상태를 하나씩 들고 있는다.
  */
+// 지나가던 궁인이 읍하며 서 있는 시간. 이만큼 굽히고 나서 가던 길을 간다.
+export const BOW_HOLD_MS = 2600
+
+// 임금과 이만큼은 떨어져 선다. 사람 둘이 어깨를 맞대지 않을 만큼.
+export const STAND_ASIDE = 1.5
+
+// 임금과 너무 가까우면 임금에게서 멀어지는 쪽으로 그만큼 물러선 자리를 낸다.
+// 꼭 같은 자리에 포개졌으면(방향을 정할 수 없으면) 길의 옆쪽으로 비킨다.
+export function standAside(at, king, gap = STAND_ASIDE) {
+  if (!king || !at) return at
+  const dx = at.x - king.x, dz = at.z - king.z
+  const dist = Math.hypot(dx, dz)
+  if (dist >= gap) return at
+  if (dist < 1e-6) {
+    // yaw 는 걷는 쪽이다 — 그 오른쪽으로 비킨다.
+    const yaw = at.yaw ?? 0
+    return { ...at, x: king.x + Math.cos(yaw) * gap, z: king.z - Math.sin(yaw) * gap }
+  }
+  return { ...at, x: king.x + dx / dist * gap, z: king.z + dz / dist * gap }
+}
+
 export function createWalkers() {
   let paths = new Map()     // id -> { path, walker, offset }
   let bows = new Map()      // id -> { p, bowing, last, held }
@@ -145,7 +166,24 @@ export function createWalkers() {
         // 읍 — 신하와 같은 문턱을 쓴다(systems/palace-life.js). 재는 자리는 지난
         // 프레임에 실제로 서 있던 자리다: 학생이 보고 있는 몸이 판정의 근거여야 한다.
         const dist = king && bow.at ? Math.hypot(king.x - bow.at.x, king.z - bow.at.z) : Infinity
-        bow.bowing = bow.bowing ? dist <= BOW_FAR : dist <= BOW_NEAR
+        // 읍은 **한 번 하고 지나간다**(2026-10-06).
+        //
+        // 예전에는 임금이 곁에 있는 동안 내내 굽힌 채 서 있었다. 임금이 걸어서 지나칠
+        // 때는 그것이 맞지만, 임금이 **한 자리에 서 있으면** 궁인이 영영 그 자리에
+        // 박힌다 — 경우궁 시작 화면에서 궁인 하나가 임금과 카메라 사이에 서서 임금
+        // 등에 포개져 보였고, 학생이 걷기 전까지 비키지 않았다.
+        // 궁인은 심부름 가는 길이다: 굽혀 예를 갖추고(BOW_HOLD_MS), 가던 길을 간다.
+        // 한 번 읍한 사람은 임금에게서 멀어졌다가(BOW_FAR 밖) 다시 다가올 때 또 읍한다.
+        if (dist > BOW_FAR) bow.greeted = false
+        const near = bow.bowing ? dist <= BOW_FAR : dist <= BOW_NEAR
+        if (near && !bow.greeted) {
+          bow.bowing = true
+          bow.bowedFor = (bow.bowedFor ?? 0) + raw
+          if (bow.bowedFor >= BOW_HOLD_MS) { bow.greeted = true; bow.bowing = false; bow.bowedFor = 0 }
+        } else {
+          bow.bowing = false
+          bow.bowedFor = 0
+        }
         bow.p = clamp01(bow.p + (bow.bowing ? dt / BOW_IN_MS : -dt / BOW_OUT_MS))
         const depth = ease(bow.p)
         // 굽히는 동안에는 **그 사람의 시계가 선다** — 임금이 지나가면 서 있던 자리에서
@@ -162,7 +200,18 @@ export function createWalkers() {
         const d = walking ? (t - pauseMs) / 1000 * WALKER_SPEED : 0
         const at = reducedMotion ? pointAt(path, 0) : pointAt(path, d)
         bow.at = at
-        out.push({ id, x: at.x, z: at.z,
+        // 임금과 **한 몸으로 겹쳐 서지 않는다**(2026-10-06).
+        //
+        // 궁인은 임금이 다가오면 그 자리에 멈춰 읍한다. 그런데 임금이 걸어오는 것이
+        // 아니라 **나타나는** 때가 있다 — 궁을 옮겨 시작 자리에 설 때, 장면이 임금을
+        // 옮겨 놓을 때. 마침 그 자리를 지나던 궁인은 임금과 겹친 채로 멈춰 선다
+        // (경우궁 시작 화면에서 임금 등 뒤에 사람이 하나 포개져 있었다).
+        // 그래서 임금 곁 STAND_ASIDE 안에 들면 그만큼 옆으로 비켜 선다 — 길을 내어
+        // 주는 것이고, 임금 앞에서 실제로 하는 일이기도 하다.
+        // bow.at(읍을 재는 자리)은 길 위의 본래 자리 그대로 둔다: 비켜 선 자리로 재면
+        // 임금이 따라올 때마다 문턱이 흔들린다.
+        const shown = standAside(at, king)
+        out.push({ id, x: shown.x, z: shown.z,
           // 굽히는 동안에는 걸음을 멈추고 임금을 마주 본다(yaw=null 은 「임금을 본다」).
           yaw: depth > 0 ? null : at.yaw,
           walking: walking && depth === 0 && !reducedMotion && !frozen,

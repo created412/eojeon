@@ -152,6 +152,148 @@ export function pathAt(points, u) {
   return { x: last.x, z: last.z }
 }
 
+// ── 대열 — 곁을 걷는 사람도 **같은 길**을 걷는다 ─────────────────────────────
+//
+// 선생님(2026-10-06): 「어린 고종이 가마 타러 갈 때 4~5명이 함께 갈 때 이동이 좀 이상해.」
+//
+// 행렬을 연속으로 찍어 보니 까닭이 둘이었다.
+//
+// ① 대열 자리를 **지도의 남북**으로 놓고 있었다. beat.escort 의 dx·dz 는 「걷는 방향을
+//    +z 로 본 값」이라고 적혀 있는데(escortOffsets 머리말), 정작 놓을 때는
+//    king.x + dx, king.z + dz 로 지도 위에 그대로 더했다. 길이 남쪽으로 곧을 때만
+//    우연히 맞고, 꺾이는 순간 「앞서 걷는 사람」이 옆구리에 붙어 옆걸음을 친다.
+// ② 그 자리가 기둥에 걸리면 **빈자리를 찾아 튕겼다**(escortSpot ②·③). 앞서 걷던
+//    두 사람이 대문 기둥에 닿는 순간 문 밖과 마당 구석으로 흩어졌다.
+//
+// 그래서 사람마다 임금과 **같은 길 위의 한 점**을 준다:
+//
+//   lead  길을 따라 임금보다 얼마나 앞서는가(m). 음수면 뒤따른다.   ← 예전의 dz
+//   side  그 자리에서 걷는 방향의 오른쪽으로 얼마나 비켜 서는가(m). ← 예전의 dx
+//
+// 길이 꺾이면 대열도 따라 꺾인다. 앞선 사람은 임금보다 먼저 닿아 **문 곁에 서서
+// 기다리고**, 뒤따르는 사람은 임금이 걸음을 뗀 뒤에야 따라나선다. 흩어질 일이 없다.
+//
+// 좁은 데(문간·기둥 사이)에서는 옆으로 벌린 폭(side)을 줄여 **한 줄로** 지난다.
+// 사람들이 길 위의 서로 다른 자리에 있으므로 폭을 0 으로 줄여도 겹치지 않는다.
+
+// 길 위에서 a(m)만큼 간 자리와, 그 자리에서 걷는 방향.
+export function pointOnPath(points, a) {
+  const pts = points ?? []
+  if (pts.length === 0) return null
+  if (pts.length === 1) return { x: pts[0].x, z: pts[0].z, hx: 0, hz: 1 }
+  let want = Math.max(0, Math.min(pathLength(pts), a))
+  for (let i = 1; i < pts.length; i++) {
+    const p = pts[i - 1], q = pts[i]
+    const seg = Math.hypot(q.x - p.x, q.z - p.z)
+    if (seg === 0) continue
+    if (want <= seg || i === pts.length - 1) {
+      const k = Math.min(1, want / seg)
+      return { x: p.x + (q.x - p.x) * k, z: p.z + (q.z - p.z) * k, hx: (q.x - p.x) / seg, hz: (q.z - p.z) / seg }
+    }
+    want -= seg
+  }
+  const last = pts[pts.length - 1]
+  return { x: last.x, z: last.z, hx: 0, hz: 1 }
+}
+
+// 임금이 u(0..1)일 때 길을 따라 몇 m 왔는가 — pathAt 과 같은 완급을 쓴다.
+export function arcAt(points, u) {
+  const t = Math.max(0, Math.min(1, u))
+  return t * t * (3 - 2 * t) * pathLength(points)
+}
+
+// 대열에서 서로 겹치지 않게 두는 숨. 문 곁에서 기다리는 사람과 임금 사이의 거리이기도 하다.
+export const FORMATION_GAP = 1.5
+
+/**
+ * 곁을 걷는 한 사람의 자리.
+ *
+ *   points  임금이 걷는 길
+ *   u       임금의 진행(0..1)
+ *   offset  { dz: lead, dx: side } — escortOffsets() 가 낸 그대로
+ *   def     궁. 주면 기둥·벽을 피해 폭을 줄인다
+ *
+ * 돌려주는 것: { x, z, yaw, walking }
+ *   yaw      걷는 동안은 걷는 방향, 서서 기다릴 때는 null(= 임금을 본다)
+ *   walking  이 사람이 지금 걸음을 옮기고 있는가
+ */
+// 길이 꺾이는 자리에서 걷는 방향을 **둥글게** 읽는다.
+//
+// 격자 길찾기가 낸 길은 직각으로 꺾인다. 그 모서리에서 방향을 그대로 읽으면 「오른쪽」이
+// 한 걸음 사이에 90도 돌아, 옆으로 비켜 선 사람이 몇 m 를 튄다(시험이 3.6m 를 쟀다).
+// 앞뒤로 조금 떨어진 두 점을 이어 방향을 읽으면 모서리가 둥글게 펴진다.
+const HEADING_WINDOW = 1.6
+
+function smoothHeading(points, arc) {
+  const a = pointOnPath(points, arc - HEADING_WINDOW)
+  const b = pointOnPath(points, arc + HEADING_WINDOW)
+  const dx = b.x - a.x, dz = b.z - a.z
+  const len = Math.hypot(dx, dz)
+  if (len < 1e-6) { const at = pointOnPath(points, arc); return { hx: at.hx, hz: at.hz } }
+  return { hx: dx / len, hz: dz / len }
+}
+
+// 앞선 사람이 끝에서 멈추는 자리 — 끝점보다 이만큼 못 미친 데.
+//
+// 끝점(대문 한가운데)은 임금이 설 자리다. 그 곁에는 설 수가 없다: 문간이 좁아 기둥에
+// 걸린다(처음에는 끝점 곁에 세우려 했고, 시험이 넷이 전부 (0, 19) 에 포개진 것을
+// 잡았다). 그래서 앞선 사람은 **문 앞 마당에서 길 양옆으로 비켜 서고**, 임금이 그
+// 사이를 지나 문으로 든다. 실제 행렬이 문 앞에서 하는 일이기도 하다.
+export const END_STANDOFF = 2.8
+
+/**
+ * 곁을 걷는 한 사람의 자리.
+ *   taken  이미 자리를 잡은 사람들(임금 포함). 주면 그들과 겹치지 않는 폭을 고른다.
+ */
+export function formationAt(points, u, offset, def = null, radius = 0.6, taken = []) {
+  const total = pathLength(points)
+  const lead = offset?.dz ?? 0
+  const side = offset?.dx ?? 0
+  const own = arcAt(points, u) + lead
+  // 길 밖으로는 나가지 않는다. 뒤따르는 사람은 처음 자리에서 기다렸다가 따라나서고,
+  // 끝에서는 임금 뒤 |lead| 만큼 떨어진 데서 멈춘다. 앞선 사람은 문 앞에서 멈춘다.
+  const stopAt = lead > 0 ? Math.max(0, total - END_STANDOFF) : total + Math.min(0, lead)
+  const arc = Math.max(0, Math.min(stopAt, own))
+  const at = pointOnPath(points, arc)
+  if (!at) return null
+  const h = smoothHeading(points, arc)
+  // 걷는 방향의 오른쪽 = (hz, -hx). (+z 로 걸을 때 오른쪽이 +x 가 되게 맞춘 것이다 —
+  // 예전 자료의 dx 가 그 뜻으로 적혀 있다.)
+  const rx = h.hz, rz = -h.hx
+  // 문 앞에서 기다리는 사람은 임금이 지나갈 길을 비워야 하므로, 폭을 0 으로 적었어도 비켜 선다.
+  const waiting = lead > 0 && own >= stopAt
+  const base = waiting && Math.abs(side) < FORMATION_GAP ? Math.sign(side || 1) * FORMATION_GAP : side
+  // 좁은 데서는 폭을 줄이되, 본래 벌려 서던 사람은 반 걸음 밑으로는 안 줄인다 —
+  // 길 위까지 당기면 그 자리를 지나는 임금과 겹친다.
+  const floor = base === 0 ? 0 : Math.sign(base) * Math.min(Math.abs(base), FORMATION_GAP * 0.75)
+  const widths = base === 0 ? [0] : [1, 0.8, 0.6, 0.45].map(k => (Math.abs(base * k) >= Math.abs(floor) ? base * k : floor))
+  const tries = [...new Set([...widths, floor, -floor, -base])]
+  const others = (taken ?? []).filter(Boolean)
+  const gapOf = q => Math.min(Infinity, ...others.map(o => Math.hypot(q.x - o.x, q.z - o.z)))
+  let spot = null, best = null
+  for (const w of tries) {
+    const q = { x: at.x + rx * w, z: at.z + rz * w }
+    if (def && collides(def, q, radius)) continue
+    const gap = gapOf(q)
+    if (gap >= PERSONAL_SPACE) { spot = q; break }
+    if (!best || gap > best.gap) best = { q, gap }       // 다 비좁으면 그중 가장 덜 겹치는 데
+  }
+  if (!spot) spot = best?.q ?? { x: at.x, z: at.z }
+  const walking = own > 0 && own < stopAt && u < 1
+  return { x: spot.x, z: spot.z, yaw: walking ? Math.atan2(h.hx, h.hz) : null, walking }
+}
+
+/** 대열 전체. 임금 자리를 먼저 치고, 적힌 차례대로 서로 겹치지 않게 놓는다. */
+export function formationAll(points, u, offsets, def = null, radius = 0.6) {
+  const king = pathAt(points, u)
+  const taken = king ? [king] : []
+  return (offsets ?? []).map(o => {
+    const p = formationAt(points, u, o, def, radius, taken)
+    if (p) taken.push(p)
+    return { npc: o.npc, ...p }
+  })
+}
+
 // 한 구간을 실제로 걸을 수 있는가 — 촘촘히 짚어 본다. 양 끝이 비어 있어도
 // 가운데가 기둥이면 걸린다(대각선으로 그은 구간이 그렇다).
 function clearSegment(def, a, b, radius) {

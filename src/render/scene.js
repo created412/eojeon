@@ -6,7 +6,6 @@ import { buildPerson, disposePerson, updateSway, RANK_SPECS, modelsReady } from 
 import { buildMother } from './mother-person.js'
 import { createPalaceStaff } from './palace-staff.js'
 import { updatePalaceOcclusion } from './occlusion.js'
-import { clampShotToGround } from './camera-clamp.js'
 import { turnToward } from './facing.js'
 import { buildProp } from './props.js'
 import { applyYear as applyYardYear } from './yard-props.js'
@@ -643,10 +642,13 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
       z: player.position.z + Math.cos(viewAngle) * distance - Math.sin(viewAngle) * 1.6,
       lookY: danger ? CAM_LOOK_Y + 0.45 : CAM_LOOK_Y,
     }
-    // 카메라를 담장 안에 붙든다 — 5막의 작은 궁에서는 뒤로 12m 물러설 자리가 없어
-    // 카메라가 담 밖에 섰고, 대문·행각 지붕이 화면을 덮었다(render/camera-clamp.js).
-    const shot = clampShotToGround(targetShot, player.position, activePalace?.ground)
-    cameraShot = reducedMotion || snapCamera ? shot : interpolateCameraShot(cameraShot, shot, 1 - Math.exp(-dt / 120))
+    // ⚠ 카메라를 담 안으로 당기지 **않는다.** 2026-10-05 에 당기는 장치를 넣었다가
+    //   하루 만에 걷어냈다. 작은 궁의 시작 화면을 고치려던 것인데, **모든 궁의 대문
+    //   앞**에서도 걸려, 임금이 대문에 다가가면 화면이 머리 꼭대기에서 내려다보는
+    //   각으로 뒤집혔다 — 1막 가마 행렬의 마지막이 통째로 그랬다(연속으로 찍어 보고
+    //   알았다). 담 밖에서 대문을 돌아보는 본래 그림이 더 낫다. 작은 궁은 시작 자리와
+    //   배율(data/palaces.js spawn·camZoom)로 고쳤고, 그것으로 충분하다.
+    cameraShot = reducedMotion || snapCamera ? targetShot : interpolateCameraShot(cameraShot, targetShot, 1 - Math.exp(-dt / 120))
     snapCamera = false
     camera.position.set(cameraShot.x, cameraShot.y, cameraShot.z)
     camera.lookAt(player.position.x, cameraShot.lookY, player.position.z)

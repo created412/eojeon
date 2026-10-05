@@ -6,7 +6,7 @@ import { npcsAt } from '../../src/data/npcs.js'
 import { baseOf } from '../../src/data/palaces.js'
 import {
   createWalkers, walkerPath, measurePath, pointAt, stopPoint,
-  WALKER_SPEED, WALKER_PAUSE_MS,
+  WALKER_SPEED, WALKER_PAUSE_MS, standAside, STAND_ASIDE, BOW_HOLD_MS,
 } from '../../src/systems/palace-walkers.js'
 import { BOW_NEAR, BOW_FAR } from '../../src/systems/palace-life.js'
 
@@ -157,14 +157,55 @@ describe('걸음', () => {
     expect(BOW_NEAR).toBeLessThan(BOW_FAR)
   })
 
-  it('굽히는 동안 걸음의 시계가 서서, 임금이 지나간 뒤 그 자리에서 잇는다', () => {
+  it('굽히는 동안에는 걸음의 시계가 선다 — 그 자리에서 굽힌다', () => {
     const w = life()
     const id = w.ids()[0]
     let me = w.tick({ now: 6000 }).find(o => o.id === id)
-    const king = { x: me.x, z: me.z }
-    for (let ms = 6100; ms <= 20000; ms += 100) me = w.tick({ now: ms, king }).find(o => o.id === id)
-    // 열네 초를 굽힌 채 서 있었으니 저만치 가 있으면 안 된다.
-    expect(Math.hypot(me.x - king.x, me.z - king.z)).toBeLessThan(1)
+    const king = { x: me.x, z: me.z + 3 }            // 3m 앞에 임금이 선다
+    const at = { x: me.x, z: me.z }
+    for (let ms = 6100; ms <= 6100 + BOW_HOLD_MS - 300; ms += 100) me = w.tick({ now: ms, king }).find(o => o.id === id)
+    expect(me.bow).toBeGreaterThan(0.5)
+    expect(Math.hypot(me.x - at.x, me.z - at.z)).toBeLessThan(0.3)      // 굽히는 동안 제자리
+  })
+
+  it('읍은 한 번 하고 지나간다 — 임금이 서 있어도 영영 박혀 있지 않는다', () => {
+    // 예전에는 임금이 곁에 있는 한 내내 굽힌 채 서 있었다. 경우궁 시작 화면에서
+    // 궁인 하나가 임금과 카메라 사이에 박혀 임금 등에 포개져 보였다.
+    const w = life()
+    const id = w.ids()[0]
+    let me = w.tick({ now: 6000 }).find(o => o.id === id)
+    const king = { x: me.x, z: me.z + 3 }
+    const at = { x: me.x, z: me.z }
+    let movedOn = false, jump = 0, prev = me
+    for (let ms = 6100; ms <= 30000; ms += 100) {
+      me = w.tick({ now: ms, king }).find(o => o.id === id)
+      jump = Math.max(jump, Math.hypot(me.x - prev.x, me.z - prev.z))
+      prev = me
+      if (Math.hypot(me.x - at.x, me.z - at.z) > 2) movedOn = true
+    }
+    expect(movedOn, '임금이 서 있는 내내 한 자리에 박혀 있었다').toBe(true)
+    // 다시 걸을 때 저만치로 튀지 않는다 — 서 있던 그 자리에서 잇는다.
+    expect(jump).toBeLessThan(1.7)
+  })
+
+  it('읍하고 지나간 사람은, 멀어졌다 다시 다가올 때 또 읍한다', () => {
+    const w = life()
+    const id = w.ids()[0]
+    let me = w.tick({ now: 6000 }).find(o => o.id === id)
+    const near = { x: me.x, z: me.z + 3 }
+    let bowed = 0
+    for (let ms = 6100; ms <= 12000; ms += 100) { me = w.tick({ now: ms, king: near }).find(o => o.id === id); if (me.bow > 0.5) bowed = 1 }
+    expect(bowed).toBe(1)
+    // 임금이 멀리 간다
+    for (let ms = 12100; ms <= 14000; ms += 100) me = w.tick({ now: ms, king: { x: 999, z: 999 } }).find(o => o.id === id)
+    expect(me.bow).toBeLessThan(0.2)
+    // 다시 곁에 선다 — 또 읍한다
+    let again = 0
+    for (let ms = 14100; ms <= 16000; ms += 100) {
+      me = w.tick({ now: ms, king: { x: me.x, z: me.z + 3 } }).find(o => o.id === id)
+      if (me.bow > 0.5) again = 1
+    }
+    expect(again).toBe(1)
   })
 
   it('움직임 줄이기에서는 길의 첫 자리에 서 있는다 — 읍은 남는다', () => {
@@ -242,5 +283,49 @@ describe('길 위의 한 점', () => {
   it('궁의 걸음은 임금보다 느리고, 한 자리에서 몇 초 쉰다', () => {
     expect(WALKER_SPEED).toBeLessThan(2)
     expect(WALKER_PAUSE_MS).toBeGreaterThan(2000)
+  })
+})
+
+// ── 임금과 겹쳐 서지 않는다(2026-10-06) ────────────────────────────────────
+// 경우궁 시작 화면에서 임금 등 뒤에 궁인 하나가 포개져 있었다. 임금이 걸어온 것이
+// 아니라 시작 자리에 **나타났고**, 마침 그 자리를 지나던 궁인이 그대로 멈춰 선 것이다.
+describe('궁인이 임금과 한 몸으로 겹쳐 서지 않는다', () => {
+  it('임금이 바로 그 자리에 나타나면 옆으로 비켜 선다', () => {
+    const at = { x: 3, z: 4, yaw: 0 }
+    const out = standAside(at, { x: 3, z: 4 })
+    expect(Math.hypot(out.x - 3, out.z - 4)).toBeCloseTo(STAND_ASIDE, 6)
+  })
+
+  it('가까이 있으면 임금에게서 멀어지는 쪽으로 물러선다', () => {
+    const out = standAside({ x: 0.5, z: 0, yaw: 0 }, { x: 0, z: 0 })
+    expect(out.x).toBeCloseTo(STAND_ASIDE, 6)
+    expect(out.z).toBeCloseTo(0, 6)
+  })
+
+  it('넉넉히 떨어져 있으면 건드리지 않는다 — 같은 값을 그대로 돌려준다', () => {
+    const at = { x: 5, z: 0, yaw: 1 }
+    expect(standAside(at, { x: 0, z: 0 })).toBe(at)
+  })
+
+  it('임금이 없으면 그대로 둔다', () => {
+    const at = { x: 1, z: 1 }
+    expect(standAside(at, null)).toBe(at)
+  })
+
+  it('실제 궁에서 궁인이 지나는 자리에 임금이 나타나도 겹치지 않는다', () => {
+    const def = PALACES.gyeongu
+    const walkers = createWalkers()
+    walkers.setPalace(def, walkersIn('gyeongu'))
+    expect(walkers.ids().length).toBeGreaterThan(0)
+    for (let t = 0; t < 60000; t += 2000) {
+      // 임금 없이 한 번 돌려 궁인이 지금 어디 있는지 보고, 바로 그 자리에 임금을 세운다.
+      for (const w of walkers.tick({ now: t, king: null })) {
+        const king = { x: w.x, z: w.z }
+        for (const s of walkers.tick({ now: t, king })) {
+          expect(Math.hypot(s.x - king.x, s.z - king.z), `${s.id} t=${t}`)
+            .toBeGreaterThanOrEqual(STAND_ASIDE - 1e-6)
+        }
+      }
+    }
   })
 })

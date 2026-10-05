@@ -10,7 +10,7 @@ import { guideForBeat, GAME_INTRO, ACT_GUIDE } from './data/guide.js'
 import { createGuideStrip } from './ui/guide-strip.js'
 import { npcsAt, npcNear, npcHandledCardIds, npcCardIds, npcById, portraitKeyOf } from './data/npcs.js'
 import {
-  roomOf, kingSpot, besideSpot, visitorSpot, doorSpot, walkAt, yawToward, pathAt, pathLength, processionPath,
+  roomOf, kingSpot, besideSpot, visitorSpot, doorSpot, walkAt, yawToward, pathAt, pathLength, processionPath, formationAll,
   besideIds, visitorsOf, castOf, rebukeOf, entersOf, departIds, propOf,
   escortOffsets, escortSpot, APPROACH_MS, DEPART_MS, REBUKE_MS, PROCESSION_MS, visitorSpotFor, audienceLeft,
 } from './systems/audience.js'
@@ -1327,8 +1327,11 @@ export function boot(root) {
     // 직선이 아니라 꺾인 길 — 전각을 뚫고 지나가지 않는다(지적 #18 「기둥에 부딪힌다」).
     const path = processionPath(def, start, end, to.id, flow.state.control)
 
+    // 곁을 걷는 사람을 **꽂아 넣지 않는다.** 예전에는 여기서 임금 둘레에 한꺼번에
+    // 옮겨 놓았다 — 앞 장면에서 서 있던 자리에서 눈 깜빡할 사이에 옮겨지는 것이다
+    // (임금의 순간이동을 고친 것과 같은 까닭). 선 자리에서 걸어와 대열에 든다
+    // (placeNpc 의 smooth 가 한 걸음씩 다가가게 한다).
     const escort = escortOffsets(beat)
-    for (const e of escort) ctx.placeNpc(e.npc, { x: start.x + e.dx, z: start.z + e.dz, yaw: 0 })
 
     // 걷는 동안 한 줄씩 뜬다. 화면을 덮는 판이 아니라 배너다 — 장면을 가리지 않는다.
     // 소리는 없다(2026-09-22 선생님: 「나레이션을 모두 제거」) — 음성 파일이 없으니 narrate() 는
@@ -2309,18 +2312,14 @@ export function boot(root) {
       ctx.player.position.x = p.x
       ctx.player.position.z = p.z
       flow.state = { ...flow.state, room: roomAt(PALACES[flow.state.palace], p.x, p.z)?.id ?? null }
-      // 바라보는 쪽은 **지금 걷는 쪽**이다. 길이 꺾이므로 처음과 끝을 이은 각을
-      // 쓰면 꺾인 뒤에도 옛 방향을 보며 옆걸음으로 걷는다(지적 #18).
-      const ahead = pathAt(pr.path, Math.min(1, u + 0.02)) ?? pr.to
-      const yaw = Math.hypot(ahead.x - p.x, ahead.z - p.z) > 0.01
-        ? yawToward(p, ahead) : yawToward(pr.from, pr.to)
       const def = PALACES[flow.state.palace]
-      // 자리를 차례로 잡는다 — 앞사람이 이미 선 자리는 다음 사람이 피한다(겹침 방지).
-      const taken = [{ x: p.x, z: p.z }]
-      for (const e of pr.escort) {
-        const at = escortSpot(def, p, e, 0.8, taken)
-        taken.push(at)
-        ctx.placeNpc(e.npc, { x: at.x, z: at.z, yaw, walking: u < 1, smooth: true })
+      // 곁을 걷는 사람도 **같은 길**을 걷는다(선생님 2026-10-06: 「4~5명이 함께 갈 때
+      // 이동이 좀 이상해」). 예전에는 대열 자리를 지도의 남북으로 놓아, 길이 꺾이면
+      // 앞선 사람이 옆구리에 붙어 옆걸음을 쳤고, 기둥에 걸리면 빈자리로 튕겨 대문
+      // 앞에서 흩어졌다. 셈은 systems/audience.js formationAll 이 한다.
+      // 바라보는 쪽도 그 셈이 낸다 — 걷는 동안은 걷는 쪽, 서서 기다릴 때는 임금 쪽.
+      for (const f of formationAll(pr.path, u, pr.escort, def)) {
+        ctx.placeNpc(f.npc, { x: f.x, z: f.z, yaw: f.yaw, walking: f.walking, smooth: true })
       }
       if (u >= 1) {
         procession = null
@@ -2354,12 +2353,10 @@ export function boot(root) {
         const len = Math.max(0.001, Math.hypot(dx, dz))
         ctx.player.position.x = p.x - (dx / len) * CAMERA_TRAIL
         ctx.player.position.z = p.z - (dz / len) * CAMERA_TRAIL
-        const yaw = yawToward({ x: bd.spec.x, z: bd.spec.z }, bd.carryTo)
-        const taken = [p]
-        for (const e of (bd.escort ?? [])) {
-          const at = escortSpot(PALACES[flow.state.palace], p, e, 0.8, taken)
-          taken.push(at)
-          ctx.placeNpc(e.npc, { x: at.x, z: at.z, yaw, walking: k < 1, smooth: true })
+        // 가마 곁을 걷는 사람들 — 행렬과 같은 대열 셈을 쓴다(가마가 가는 길을 따른다).
+        const carryPath = [{ x: bd.spec.x, z: bd.spec.z }, bd.carryTo]
+        for (const f of formationAll(carryPath, k, bd.escort ?? [], PALACES[flow.state.palace])) {
+          ctx.placeNpc(f.npc, { x: f.x, z: f.z, yaw: f.yaw, walking: f.walking, smooth: true })
         }
       }
       if (u >= 1) { boarding = null; bd.resolve() }
