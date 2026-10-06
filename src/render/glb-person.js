@@ -40,6 +40,9 @@ export const RANK_SPECS = {
   senior:    { model: 'senior' },
   mid:       { model: 'mid' },
   messenger: { model: 'messenger' },
+  // 궁녀 — 선생님(2026-10-06): 「궁녀가 여전히 대충그린 그림이야. 다른 캐릭터에 맞춰서 만들어 넣어야해.」
+  // 예전에는 코드로 깎은 메시였다(render/palace-maid.js, 걷어 냄). 이제 다른 인물과 같은 image_to_3d GLB 다.
+  maid:      { model: 'maid', height: 2.68 },
 }
 
 function modelKey(spec) {
@@ -445,6 +448,7 @@ function swayFlat(pivot, dtMs, reducedMotion, walking = false) {
  *   camera             빌보드 시절의 인자. 3D 메시는 카메라를 안 본다 — 무시한다.
  */
 export function updateSway(pivot, dtMs, { walking = false, running = false, reducedMotion = false, pace = 1 } = {}) {
+  if (pivot.userData?.updateFigure) return pivot.userData.updateFigure(dtMs, { walking, running, reducedMotion, pace })
   const s = pivot.userData?.person
   if (!s || !s.model) return swayFlat(pivot, dtMs, reducedMotion, walking)
 

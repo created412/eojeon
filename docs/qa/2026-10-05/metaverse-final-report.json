@@ -1,0 +1,47 @@
+[
+  {
+    "act": 1,
+    "beat": "unhyeon-day",
+    "distance": 9.719506362868701,
+    "cameraRotated": true,
+    "codexBlocksMovement": true,
+    "pause": true,
+    "errors": []
+  },
+  {
+    "act": 2,
+    "beat": "day-changdeok",
+    "distance": 7.795368831677838,
+    "cameraRotated": true,
+    "codexBlocksMovement": true,
+    "pause": true,
+    "errors": []
+  },
+  {
+    "act": 3,
+    "beat": "day-1873",
+    "distance": 7.876513812531405,
+    "cameraRotated": true,
+    "codexBlocksMovement": true,
+    "pause": true,
+    "errors": []
+  },
+  {
+    "act": 4,
+    "beat": "imo-day",
+    "distance": 7.974754343713987,
+    "cameraRotated": true,
+    "codexBlocksMovement": true,
+    "pause": true,
+    "errors": []
+  },
+  {
+    "act": 5,
+    "beat": "gapsin-day",
+    "distance": 9.683275732125276,
+    "cameraRotated": true,
+    "codexBlocksMovement": true,
+    "pause": true,
+    "errors": []
+  }
+]

@@ -83,7 +83,8 @@ describe('마지막 화면은 스스로 정한 이동을 세지 않는다 (판�
 
   // 마지막 비트와 그 다음 화면이 같은 말을 하는가 — 두 화면은 학생이 잇달아 읽는다.
   it('마지막 비트가 「게임이 말하지 않는다」고 하고, 다음 화면도 세지 않는다', () => {
-    const last = beatsOf(ACTS.at(-1)).at(-1)
+    // 2026-10-06 — 그 말을 하는 글(three-days)은 이제 맨 끝이 아니다. 뒤에 돌아오는 길이 붙었다.
+    const last = beatsOf(ACTS.at(-1)).find(b => b.id === 'three-days')
     expect(last.lines.join(' ')).toContain('이 게임이 말하지 않는다')
     expect(finalLead({ moves: [{ self: 'disputed' }] })).not.toMatch(/\d+\s*번이었다/)
   })
@@ -145,7 +146,8 @@ describe('마지막 화면이 이야기의 끝을 맺는다', () => {
     const rows = moveRows(playedMoves())
     expect(rows.length).toBeGreaterThanOrEqual(6)
     expect(rows[0]).toMatchObject({ year: 1868, from: '창덕궁', to: '경복궁' })
-    expect(rows.at(-1).to).toBe('오조유의 영방')
+    expect(rows.at(-2).to).toBe('오조유의 영방')
+    expect(rows.at(-1)).toMatchObject({ year: 1884, from: '오조유의 영방', to: '창덕궁' })   // 2026-10-06 — 돌아온다
     for (const r of rows) {
       expect(r.cause, `${r.year} ${r.to} 에 까닭이 없다`).toBeTruthy()
       expect(r.from, `${r.year} 의 떠난 자리가 이름이 아니다`).toMatch(/[가-힣]/)
@@ -158,11 +160,18 @@ describe('마지막 화면이 이야기의 끝을 맺는다', () => {
     }
   })
 
-  it('처음과 끝을 한 줄로 잇는다 — 열두 살의 가마에서 서른세 살의 군영까지', () => {
+  // 2026-10-06 — 끝이 청군의 군영에서 창덕궁으로 옮겨졌다. 돌아온 것이므로 「돌아와 있다」다.
+  it('처음과 끝을 한 줄로 잇는다 — 열두 살의 가마에서 서른세 살의 궁까지', () => {
     const lead = finalLead(playedMoves())
     expect(lead).toContain('열두 살에')
     expect(lead).toContain('운현궁을 나섰고')
-    expect(lead).toContain('서른세 살에 청군의 군영에 와 있다')
+    expect(lead).toContain('서른세 살에 창덕궁에 돌아와 있다')
+  })
+
+  it('처음 가 본 자리에서 끝났으면 「와 있다」다 — 「돌아와」를 지어내지 않는다', () => {
+    const lead = finalLead({ moves: [{ from: 'changdeok', to: 'gyeongu' }, { from: 'gyeongu', to: 'ojoyu' }] })
+    expect(lead).toContain('청군의 군영에 와 있다')
+    expect(lead).not.toContain('돌아와')
   })
 
   it('끝자리가 어디인지 모르면 그 줄을 지어내지 않는다', () => {

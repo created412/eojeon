@@ -110,13 +110,12 @@ describe('4막 — 날짜가 거꾸로 흐르지 않는다', () => {
 })
 
 describe('5막', () => {
-  it('회의의 근거 풀이가 그 카드를 「김옥균이 망명한 뒤에 쓴 것」이라 하지 않는다', () => {
-    // 카드 자신이 「김옥균이 직접 쓴 글이 아니라 1943년 일본에서 펴낸 전기」라고 말한다.
-    const src = readFileSync(join(process.cwd(), 'src', 'data', 'acts.js'), 'utf8')
-    const line = src.split(NL).find(l => l.includes("notes: { 'gapsin-memoir'"))
-    expect(line).toBeTruthy()
-    expect(line).not.toContain('그가 망명한 뒤에 쓴 것')
-    expect(line).toContain('1943년')
+  // 2026-10-06 — 회의의 근거 풀이(notes)는 「근거 대기」와 함께 걷어 냈다. 그 카드가 누구의 글인지는
+  // 카드 자신과 사초함 물음이 말한다.
+  it('후쿠자와 전기의 카드가 스스로 「김옥균이 직접 쓴 글이 아니다」라고 밝힌다', () => {
+    const src = readFileSync(join(process.cwd(), 'src', 'data', 'sources.js'), 'utf8')
+    expect(src).toContain('김옥균이 직접 쓴 글이 아니라')
+    expect(readFileSync(join(process.cwd(), 'src', 'data', 'acts.js'), 'utf8')).not.toContain('그가 망명한 뒤에 쓴 것')
   })
 
   it('윤치호의 나이를 만 나이로 박지 않는다 — 이 게임의 나이는 세는나이다', () => {
@@ -209,7 +208,8 @@ describe('화자가 하나다', () => {
 })
 
 describe('끝을 사람의 자리로 닫는다', () => {
-  const end = beat('gapsin', 'end')
+  // 2026-10-06 — 이 글은 이제 맨 끝이 아니다(id:'three-days'). 그 뒤에 궁으로 돌아와 앉는 길이 선다.
+  const end = beat('gapsin', 'three-days')
   it('5막의 마지막 글이 셈법 이야기로 끝나지 않는다', () => {
     expect(text(end)).not.toContain('세는 방식에 따라')
     expect(end.lines.at(-1)).toContain('당신에게 남는다')
@@ -218,6 +218,47 @@ describe('끝을 사람의 자리로 닫는다', () => {
     expect(end.lines[0]).toContain('군영으로 옮겨졌다')
     expect(text(end)).not.toMatch(/[0-9]+ *번|(한|두|세|네|다섯|여섯|일곱) 번/)
     expect(text(end)).toContain('이 게임이 말하지 않는다')
+  })
+})
+
+// 선생님(2026-10-06): 「게임의 마무리가 그냥 도망치고 끝나? 뭔가 게임을 끝낸 거 같지 않고 그래.
+// 마무리가 게임이 끝난 거 같은 느낌을 주게끔 마무리 다시 해 봐.」
+describe('끝 — 달아난 자리에서 끝나지 않는다. 돌아와 앉는다', () => {
+  const beats = ACTS[4].beats
+  const idx = id => beats.findIndex(b => b.id === id)
+
+  it('청군의 군영 뒤에 궁으로 돌아오는 이어가 있다 — 실록 10월 23일', () => {
+    const back = beat('gapsin', 'gapsin-return')
+    expect(back.kind).toBe('move')
+    expect(back.palace).toBe('changdeok')
+    expect(back.sillok).toContain('10월 23일')
+    expect(back.sillok).toContain('환어')
+    expect(back.sillok).toContain('줄였습니다')   // 20일 원세개의 영방으로 옮긴 것은 화면에서 줄였다고 밝힌다
+    expect(idx('gapsin-move-ojoyu')).toBeLessThan(idx('gapsin-return'))
+  })
+
+  it('돌아온 뒤 제 발로 걷는다 — 이 막에서 처음이고, 갈 곳은 인정전의 어좌 하나다', () => {
+    const walk = beat('gapsin', 'last-walk')
+    expect(walk.kind).toBe('explore')
+    expect(walk.control).toBe('A')
+    expect(walk.exit.room).toBe('injeongjeon')
+    expect(walk.exit.label).toContain('어좌에 앉는다')
+    expect(walk.spawnRoom).toBe('donhwamun')              // 궁의 문에서 시작한다 — 돌아오는 길을 걷는다
+    expect(walk.exit.objective).toContain('스스로 걷는다')
+    expect(walk.guide).toContain('아무도 데려가지 않습니다')
+    expect(walk.plain).toBe(true)                         // 물건이 E 를 가로채지 않는다
+    expect(walk.stops).toBeUndefined()
+    for (const b of beats.slice(0, idx('gapsin-return'))) expect(b.control, b.id).not.toBe('A')
+  })
+
+  it('마지막 장면은 어좌 앞이다 — 글 화면이 아니라 서 있는 자리', () => {
+    const end = beats.at(-1)
+    expect(end.id).toBe('end')
+    expect(end.kind).toBe('alone')
+    expect(end.room).toBe('injeongjeon')
+    expect(end.lines[0]).toContain('열두 살에 처음 앉았던 자리')
+    expect(end.origin).toContain('재구성')
+    expect(idx('last-walk')).toBe(idx('end') - 1)
   })
 })
 

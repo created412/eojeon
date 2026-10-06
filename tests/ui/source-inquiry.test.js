@@ -25,15 +25,8 @@ it('모든 한자는 안내선이 내장되어 있고 일부만 칠하면 완료
  }
 })
 
-it('조선책략 빈칸 — 네 칸을 모두 맞게 채우고 한 문장을 써야 비교할 수 있다', () => {
- const s = INQUIRIES['joseon-chaeryak'], t = '청이 러시아를 막으려고 조선을 끌어들였다.'
- expect(s.kind).toBe('cloze')
- const right = { 0: '러시아', 1: '러시아', 2: '중국(청)', 3: '일본' }
- expect(inquiryReady(s, { blanks: right, text: t })).toBe(true)
- expect(inquiryReady(s, { blanks: { ...right, 2: '일본' }, text: t })).toBe(false)
- expect(inquiryReady(s, { blanks: { 0: '러시아' }, text: t })).toBe(false)
- expect(inquiryReady(s, { blanks: right, text: '청' })).toBe(false)
- const html = inquiryHtml('joseon-chaeryak')
- expect((html.match(/class="cloze-blank"/g) ?? []).length).toBe(4)
- for (const o of s.options) expect(html).toContain(o)
+// 『조선책략』도 2026-10-06 에 이 표에서 나갔다 — 선생님: 「이건 없어도 좋을 거 같아. 복잡해.」
+it('사료 탐구 표는 비어 있다 — 해석을 써 넣는 칸이 게임에 남아 있지 않다', () => {
+ expect(Object.keys(INQUIRIES)).toEqual([])
+ expect(inquiryHtml('joseon-chaeryak')).toBe('')
 })

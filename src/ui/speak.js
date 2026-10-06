@@ -15,10 +15,12 @@ import { speakerMedia, mediaFigure, installHistoricalMedia, bindMedia } from './
 import { PAPER } from './paper-data.js'
 import { revealCount } from '../systems/voice.js'
 
-// 한 글자가 나오는 데 걸리는 시간. **프레임이 아니라 시간이다.**
-export const CHAR_MS = 26
-// 이보다 긴 줄은 기다리기가 지루하다 — 그 위로는 한 번에 뜬다.
-export const MAX_TYPE_MS = 2400
+// 선생님(2026-10-06): 「대화문이 글자 크기가 커져서 매우 좋아. 다만 … 글자가 빠르게
+// 쏟아지듯 뜨게 되어서 눈이 너무 피로해.」
+// 예전에는 한 글자씩(26ms) 찍었다. 글이 커지자 그 흐름이 눈을 잡아끌었다 — 읽는 게
+// 아니라 쫓게 된다. 이제 **한 줄이 통째로 조용히 떠오른다**(REVEAL_MS 동안 한 번).
+// 읽는 속도는 학생의 손이 정한다(「다음 대사」). 목소리가 실린 줄만 소리의 시계를 따른다.
+export const REVEAL_MS = 420
 
 const CSS = `
 .speak{position:fixed;inset:0;z-index:46;pointer-events:none;
@@ -43,6 +45,9 @@ const CSS = `
 .speak .name em{font-style:normal;font-size:12px;color:#e4c9a0;letter-spacing:2px;margin-left:9px}
 .speak .line{margin:6px 0 0;font-size:17px;line-height:1.9;white-space:pre-wrap;
   word-break:keep-all;min-height:62px;color:#23201a}
+.speak .line.rise{animation:speakLine .42s ease-out}
+@keyframes speakLine{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.speak .line.rise{animation:none}}
 .speak .next{position:absolute;right:18px;bottom:10px;font-size:13px;color:#7a2b26;
   letter-spacing:2px;animation:speakBob 1.1s ease-in-out infinite}
 @keyframes speakBob{0%,100%{transform:translateY(0);opacity:.55}50%{transform:translateY(3px);opacity:1}}
@@ -59,6 +64,42 @@ const CSS = `
   .speak .line{font-size:16px;line-height:1.85;min-height:56px}
   .speak .name{left:16px}
 }
+/* 2026-10-06 사용자: 「대화문 글자가 작고, 폰트가 가독성이 떨어져.」 */
+.eojeon .speak .conversation{width:min(1400px,94vw);bottom:24px;grid-template-columns:minmax(0,1fr) minmax(230px,27%);gap:12px}
+.eojeon .speak .conversation .panel{display:flex;flex-direction:column;overflow:hidden;padding:62px 36px 68px;min-height:238px;max-height:62vh;background:linear-gradient(145deg,#17282af5,#101c25f5)!important;border:1px solid #d5bd8277;border-top:3px solid #d6bd80;border-radius:12px;box-shadow:0 18px 64px #0009;color:#fff8e8}
+.eojeon .speak .conversation .panel::after{display:none}
+.eojeon .speak .conversation .panel .name{top:0;left:28px;padding:10px 22px;background:#d9c394;color:#183035;font:600 22px/1.3 var(--face-body,system-ui);letter-spacing:0;border:0;border-radius:0 0 6px 6px}
+.eojeon .speak .conversation .panel .name em{font:400 16px/1.3 var(--face-body,system-ui);color:#394849;letter-spacing:0}
+.eojeon .speak .conversation .panel .line{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;font:500 clamp(23px,2vw,30px)/1.65 var(--face-body,system-ui);color:#fff8e8;text-align:center;text-wrap:pretty;letter-spacing:0;margin:8px auto 0;padding:0;min-height:72px;max-width:38em}
+.eojeon .speak .conversation .panel .dots{left:30px;bottom:24px;gap:7px}
+.eojeon .speak .conversation .panel .dots i{width:7px;height:7px;background:#9faaa555}
+.eojeon .speak .conversation .panel .dots i.on{background:#dac491}
+.eojeon .speak .conversation .panel .next{right:22px;bottom:14px;min-height:44px;padding:9px 20px;border:1px solid #d5bd8277;background:#243a3c;color:#ffe6ae;border-radius:6px;font:600 17px/1.4 var(--face-body,system-ui);letter-spacing:0;animation:none;cursor:pointer}
+.eojeon .speak .conversation .portrait-stage{background:transparent;border:0;box-shadow:none;padding:0;overflow:visible;max-height:none}
+.eojeon .speak .conversation .portrait-stage .historical-image{height:min(65vh,640px);width:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 6px 18px #000a)}
+.eojeon .speak .conversation .portrait-stage .media-zoom{background:transparent}
+.eojeon .speak .conversation .portrait-stage figcaption{margin:0;padding:8px 10px;background:#122027e8;color:#eee3cd;font:400 13px/1.5 var(--face-body,system-ui);text-align:center;border-radius:6px;text-shadow:none}
+.portrait-source-hint{display:block;color:#d5bf88}
+/* 고정 소리 단추가 대화 진행점을 덮지 않도록 대화 중에는 빈 위쪽에 둔다. */
+.eojeon:has(.speak) .game-sound{left:12px!important;top:12px;bottom:auto!important}
+@media(max-height:550px) and (min-width:501px){
+ .eojeon .speak .conversation{bottom:10px;grid-template-columns:minmax(0,1fr) 170px;gap:8px}
+ .eojeon .speak .conversation .panel{padding:46px 20px 68px;min-height:190px;max-height:calc(100vh - 80px)}
+ .eojeon .speak .conversation .panel .line{font-size:21px;line-height:1.5;min-height:54px}
+ .eojeon .speak .conversation .panel .name{font-size:18px;padding:7px 14px}
+ .eojeon .speak .conversation .portrait-stage .historical-image{height:65vh}
+ .eojeon .speak .conversation .portrait-stage figcaption{font-size:11px;padding:5px}
+}
+@media(max-width:500px){
+ .eojeon .speak .conversation{bottom:10px;gap:0}
+ .eojeon .speak .conversation .portrait-stage{width:46%;max-height:none;overflow:visible}
+ .eojeon .speak .conversation .portrait-stage .historical-image{height:30vh}
+ .eojeon .speak .conversation .portrait-stage figcaption{font-size:11px;padding:4px}
+ .eojeon .speak .conversation .panel{padding:52px 18px 64px;max-height:52vh;min-height:190px}
+ .eojeon .speak .conversation .panel .line{font-size:22px;line-height:1.55}
+ .eojeon .speak .conversation .panel .name{font-size:19px;left:18px}
+}
+@media(prefers-reduced-motion:reduce){.eojeon .speak .speaker-portrait{animation:none}}
 `
 
 let styled = false
@@ -104,7 +145,7 @@ export function createSpeak(root, { voice = null } = {}) {
            <div class="name">${view.name ?? ''}${view.title ? `<em>${view.title}</em>` : ''}</div>
            <p class="line"></p>
            <div class="dots">${lines.map(() => '<i></i>').join('')}</div>
-           <div class="next">▼</div>
+           <button type="button" class="next">다음 대사 →</button>
          </div>${mediaFigure(media, { portrait: true })}</div>`
       root.appendChild(el)
       bindMedia(el)
@@ -127,8 +168,9 @@ export function createSpeak(root, { voice = null } = {}) {
 
       function startLine() {
         i += 1
+        lineEl.scrollTop = 0
         dots.forEach((d, k) => d.classList.toggle('on', k <= i))
-        nextEl.textContent = i === lines.length - 1 ? '▼ 닫기' : '▼'
+        nextEl.textContent = i === lines.length - 1 ? '대화 마치기 ✓' : '다음 대사 →'
         const text = lines[i]
         voice?.stop()
         if (timer) clearInterval(timer)
@@ -141,25 +183,24 @@ export function createSpeak(root, { voice = null } = {}) {
         const handle = clip ? voice.play(clip) : null
         if (handle) {
           timer = setInterval(() => {
-            if (handle.failed) { clearInterval(timer); timer = null; typeByTime(text); return }
+            if (handle.failed) { clearInterval(timer); timer = null; showWhole(text); return }
             const n = Math.min(text.length, revealCount(clip.t, handle.currentMs()))
             paint(n)
             if (handle.ended || n >= text.length) { clearInterval(timer); timer = null; paint(text.length); typing = false }
           }, 30)
           return
         }
-        typeByTime(text)
+        showWhole(text)
       }
 
-      function typeByTime(text) {
-        const step = Math.max(8, Math.min(CHAR_MS, MAX_TYPE_MS / Math.max(1, text.length)))
-        let n = lineEl.textContent.length
-        typing = true
-        timer = setInterval(() => {
-          n += 1
-          paint(n)
-          if (n >= text.length) { clearInterval(timer); timer = null; typing = false }
-        }, step)
+      // 한 줄을 통째로 올린다. 글자를 세지 않는다 — 떠오르는 것은 줄 하나뿐이다.
+      function showWhole(text) {
+        if (timer) { clearInterval(timer); timer = null }
+        typing = false
+        lineEl.classList.remove('rise')
+        void lineEl.offsetWidth
+        lineEl.classList.add('rise')
+        paint(text.length)
       }
 
       advance = () => {

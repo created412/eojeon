@@ -1,5 +1,6 @@
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import { buildRoofGeometry } from './roof.js'
+import { pavilionFloor } from '../data/yard-geometry.js'
 
 // 마당의 낮은 돌길·물길은 발밑에 남아야 한다. 난간·정자는 따로 묶어 가림에 양보한다.
 // 같은 재질을 한 메시로 합치되 물건끼리는 나눈다 — 다리를 가렸다고 후원까지 사라지면 안 된다.
@@ -91,7 +92,8 @@ export function buildYardFeatures(THREE, tex, def) {
 
     const v = p.pavilion, pavilion = part('부용정', v.x, v.z), wood = []
     // 부용정은 물가에 걸친 정자다 — 처마 전체를 자리 검사 범위에 넣고 기둥 둘은 못 위에 세운다.
-    mesh(pavilion, '정자 마루', [box(v.w - .9, .16, v.d - .9, 0, .27, 0)],
+    const floor = pavilionFloor(v)
+    mesh(pavilion, '정자 마루', [box(floor.w, .16, floor.d, 0, .27, 0)],
       new THREE.MeshLambertMaterial({ color: 0x997749, map: tex?.maru ?? null }), true)
     for (const x of [-1, 1]) for (const z of [-1, 1]) {
       wood.push(new THREE.CylinderGeometry(.13, .16, 2.7, 8).translate(x * (v.w / 2 - .7), 1.6, z * (v.d / 2 - .7)))

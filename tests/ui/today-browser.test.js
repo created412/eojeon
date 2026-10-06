@@ -54,12 +54,62 @@ async function sweepTray(page){
   await page.locator('.skip').waitFor({state:'visible'})
 }
 
+// 열세 달(2026-10-06) — 열세 번 눌러야 가마가 나온다. 열두 번은 빈손이다.
+async function waitMonths(page){
+  const go=page.locator('.month-go')
+  for(let i=1;i<=13;i++){
+    await go.click()
+    expect(await page.locator('.months i.none').count()).toBe(Math.min(i,12))
+  }
+  expect(await page.locator('.months i.came').count()).toBe(1)
+  expect(await page.locator('.month-say').innerText()).toContain('한 달 치')
+  await go.click()   // 가마를 받는다
+}
+
+it('844×390 가로 화면에서도 낟알판 아래쪽이 잘리지 않고 손으로 집힌다', async () => {
+  await page.setViewportSize({width:844,height:390})
+  await page.evaluate(() => {
+    const beat=fixture.ACTS.flatMap(a=>a.beats).flatMap(b=>b.stops??[]).map(s=>s.beat).find(b=>b?.ration)
+    fixture.createRation(document.querySelector('#root')).open({market:{title:'쌀값',lines:[],series:[]},ration:beat.ration})
+  })
+  await page.getByRole('button',{name:'급료를 내주는 곳으로 간다'}).click()
+  await waitMonths(page); await page.locator('.sack').click()
+  const wrap=await page.locator('.tray-wrap').boundingBox(),canvas=await page.locator('.tray').boundingBox()
+  expect(wrap.height).toBeGreaterThanOrEqual(canvas.height)
+  const grain=await page.evaluate(()=>fixture.createTray().grains.filter(g=>g.kind!=='rice').sort((a,b)=>b.y-a.y)[0])
+  await page.locator('.tray').scrollIntoViewIfNeeded()
+  const box=await page.locator('.tray').boundingBox()
+  await page.mouse.click(box.x+box.width*grain.x/100,box.y+box.height*grain.y/62)
+  expect(await page.locator('.tray-count').innerText()).toContain('24알')
+  expect(await page.locator('.skip').isVisible()).toBe(true)
+})
+
+// 골라낸 뒤 — 섬에 되어 보고(차지 않는다), 곁의 섬을 보고(가득하다), 군졸들의 소리를 듣는다.
+async function throughMeasure(page, checkBounds=null){
+  await page.locator('.to-measure').click()
+  const go=page.locator('.seom-go')
+  await go.click()
+  expect(await page.locator('.month-say').innerText()).toContain('차지 않는다')
+  expect(await page.locator('.seom.theirs').isVisible()).toBe(false)
+  await go.click()
+  expect(await page.locator('.seom.theirs').isVisible()).toBe(true)
+  expect(await page.locator('.ration blockquote').innerText()).toContain('무위소의 군사가 받는 것은 완전하고')
+  if(checkBounds)await checkBounds('.seoms,.seom,.ration blockquote,.seom-go')
+  await go.click()
+  expect(await page.locator('.cry').innerText()).toContain('13개월 동안 급료를 주지 않다가')
+  if(checkBounds)await checkBounds('.cry,.burst-opts button')
+  await page.locator('.burst-opts button').first().click()
+  expect(await page.locator('.happened').innerText()).toContain('포도청')
+  await page.locator('.to-reveal').click()
+}
+
 it('390px에서 가마·곡물 그림이 없거나 손상되어도 깨진 이미지를 숨기고 진행한다', async () => {
   await page.evaluate(() => {
     const beat=fixture.ACTS.flatMap(a=>a.beats).flatMap(b=>b.stops??[]).map(s=>s.beat).find(b=>b?.ration)
     fixture.createRation(document.querySelector('#root')).open({market:{title:'쌀값',lines:[],series:[]},ration:beat.ration})
   })
-  await page.getByRole('button',{name:'무위영으로 간다'}).click()
+  await page.getByRole('button',{name:'급료를 내주는 곳으로 간다'}).click()
+  await waitMonths(page)
   await page.locator('.sack img').evaluate(img=>{img.src='data:image/webp;base64,broken'})
   await page.waitForFunction(()=>{const i=document.querySelector('.sack img');return i.complete&&!i.naturalWidth})
   expect(await page.locator('.sack img').isVisible()).toBe(false)
@@ -70,7 +120,7 @@ it('390px에서 가마·곡물 그림이 없거나 손상되어도 깨진 이미
   // 갇히는 학생은 여전히 없다는 것이 이 화면의 약속이다.
   await sweepTray(page)
   await page.locator('.skip').click()
-  await page.locator('.to-reveal').click()
+  await throughMeasure(page)
   await page.locator('.grain img').evaluate(img=>{img.src='data:image/webp;base64,broken'})
   await page.waitForFunction(()=>{const i=document.querySelector('.grain img');return i.complete&&!i.naturalWidth})
   expect(await page.locator('.grain img').isVisible()).toBe(false)
@@ -91,7 +141,8 @@ it('낟알판에서 겨와 모래를 손으로 집어내면 남은 것이 열세
     const beat=f.ACTS.flatMap(a=>a.beats).flatMap(b=>b.stops??[]).map(s=>s.beat).find(b=>b?.ration)
     f.createRation(document.querySelector('#root')).open({market:{title:'쌀값',lines:[],series:[]},ration:beat.ration})
   })
-  await page.getByRole('button',{name:'무위영으로 간다'}).click()
+  await page.getByRole('button',{name:'급료를 내주는 곳으로 간다'}).click()
+  await waitMonths(page)
   await page.locator('.open-sack').click()
   const {debris,rice}=await page.evaluate(() => {
     const t=fixture.createTray(), at=g=>({x:g.x/fixture.TRAY_W,y:g.y/fixture.TRAY_H})
@@ -111,7 +162,7 @@ it('낟알판에서 겨와 모래를 손으로 집어내면 남은 것이 열세
   const wage=await page.locator('.wage-line').innerText()
   expect(wage).toContain('열세 달')
   expect(wage).toContain('급료')
-  await page.locator('.to-reveal').click()
+  await throughMeasure(page)
   expect(await page.locator('.grain figcaption').innerText()).toContain('모래')
   await page.getByRole('button',{name:'돌아간다'}).click()
   expect(await page.locator('.ration').count()).toBe(0)
@@ -140,35 +191,25 @@ it('대사 중 음소거할 때 이미 보인 자막을 지우지 않고 빠른 
   expect(await page.evaluate(()=>({playing:voice.isPlaying(),paused:made.every(a=>a.paused)}))).toEqual({playing:false,paused:true})
 })
 
-it('저장한 조선책략 빈칸·해석을 사초함에서 다시 열고 수정할 수 있다', async () => {
-  await page.evaluate(() => {
+// 선생님(2026-10-06): 「글자가 빠르게 쏟아지듯 뜨게 되어서 눈이 너무 피로해.」
+it('목소리 없는 대사는 글자를 한 자씩 찍지 않고 한 줄이 통째로 뜬다', async () => {
+  await page.clock.install()
+  const line='「아버지께서 오늘 아침 일찍 대궐로 드셨다. 너도 곧 부르실 것이다. 옷을 단정히 하고 기다려라.」'
+  await page.evaluate(line => {
     const f=fixture
-    window.state={...f.createState(),sources:{held:['joseon-chaeryak'],read:['joseon-chaeryak'],lost:[]}}
-    window.openInquiry=()=>{
-      document.querySelector('#root').replaceChildren()
-      const dialog=f.createDialog(document.querySelector('#root'),{
-        getInquiry:id=>state.inquiries?.[id]??{},
-        onInquirySave:(id,record)=>{state=f.deserialize(f.serialize({...state,inquiries:{[id]:record}}));return true}})
-      dialog.showCodex(state)
-    }
-    openInquiry()
-  })
-  await page.getByRole('button',{name:'황준헌 『조선책략』'}).click()
-  const answers=['러시아','러시아','중국(청)','일본']
-  for(let i=0;i<4;i++)await page.locator(`[data-blank="${i}"]`).selectOption(answers[i])
-  await page.locator('.inquiry-answer').fill('청의 외교관은 러시아의 남하를 막으려 하였다.')
-  await page.locator('.inquiry-compare').click()
-  await page.locator('.inquiry-revision').fill('청의 이익도 함께 고려한다.')
-  await page.locator('.close').click()
-  await page.evaluate(()=>openInquiry())
-  await page.getByRole('button',{name:'황준헌 『조선책략』'}).click()
-  expect(await page.locator('.cloze-blank').evaluateAll(es=>es.map(e=>e.value))).toEqual(answers)
-  expect(await page.locator('.inquiry-answer').inputValue()).toContain('러시아의 남하')
-  expect(await page.locator('.inquiry-revision').inputValue()).toBe('청의 이익도 함께 고려한다.')
-  expect(await page.locator('.close').isEnabled()).toBe(true)
-  await page.locator('[data-blank="2"]').selectOption('일본')
-  expect(await page.locator('.close').isEnabled()).toBe(false)
+    window.speak=f.createSpeak(document.querySelector('#root'),{voice:f.createVoicePlayer({isMuted:()=>true})})
+    speak.show({npcId:'mother',lines:[line,'다음 지문이다.']})
+  }, line)
+  expect(await page.locator('.line').textContent()).toBe(line)
+  await page.clock.runFor(200)
+  expect(await page.locator('.line').textContent()).toBe(line)
+  expect(await page.locator('.line.rise').count()).toBe(1)
+  await page.evaluate(()=>speak.press())          // 한 번이면 다음 줄이다 — 「다 보여 주기」 누름이 따로 없다
+  expect(await page.locator('.line').textContent()).toBe('다음 지문이다.')
 })
+
+// (2026-10-06) 「저장한 조선책략 빈칸·해석을 사초함에서 다시 열고 수정한다」 시험은 걷었다 — 그 탐구
+// (빈칸을 고르고 해석을 써 넣는 칸)가 게임에서 사라졌다. 지금은 tests/data/studies.test.js 가 붙든다.
 
 it('글 화면을 넘기면 음소거 자막 타이머와 이전 음성이 다음 화면에 남지 않는다', async () => {
   await page.clock.install()
@@ -197,7 +238,8 @@ it.each([true,false])('390px에서 그림 유무(%s)와 무관하게 가마·곡
     expect(boxes.length).toBeGreaterThan(0)
     for(const box of boxes){expect(box.left).toBeGreaterThanOrEqual(0);expect(box.right).toBeLessThanOrEqual(390)}
   }
-  await page.getByRole('button',{name:'무위영으로 간다'}).click()
+  await page.getByRole('button',{name:'급료를 내주는 곳으로 간다'}).click()
+  await waitMonths(page)
   expect(await page.locator('.sack img').count()).toBe(present?1:0)
   if(present)await page.locator('.sack img').evaluate(i=>i.decode())
   await checkBounds('.sack,.sack span,.open-sack')
@@ -208,8 +250,8 @@ it.each([true,false])('390px에서 그림 유무(%s)와 무관하게 가마·곡
   await sweepTray(page)
   await checkBounds('.tray-wrap,.tray,.tray-count,.skip')
   await page.locator('.skip').click()
-  await checkBounds('.tray-wrap,.wage-line,.to-reveal')
-  await page.locator('.to-reveal').click()
+  await checkBounds('.tray-wrap,.wage-line,.to-measure')
+  await throughMeasure(page, checkBounds)
   expect(await page.locator('.grain img').count()).toBe(present?1:0)
   if(present)await page.locator('.grain img').evaluate(i=>i.decode())
   await checkBounds('.grain,.grain figcaption div')

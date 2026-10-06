@@ -19,7 +19,7 @@
 // 아래 PANELS 에 이름 하나만 더하면 된다.
 // 'veil' 은 사료 카드·사초함이다 — 띠가 카드의 제목을 덮고 있었다(2026-10-06 화면에서 확인).
 const PANELS = ['note', 'dispatch', 'council', 'orders', 'rebuild', 'brush',
-  'loss', 'move', 'ration', 'cquiz', 'veil', 'seekdoc', 'actbg', 'study', 'dilemma', 'jeongjok', 'trail']
+  'loss', 'move', 'ration', 'cquiz', 'veil', 'seekdoc', 'actbg', 'study', 'dilemma', 'jeongjok', 'trail', 'weigh', 'gwangseong']
 
 const GAP = 12   // 띠와 본문 사이에 두는 숨
 
@@ -39,11 +39,32 @@ export function createGuideStrip(root) {
   text-align:center;box-shadow:0 4px 14px #0008}
   .guide-strip b{color:#e0a23a;font-weight:600;margin-right:8px;letter-spacing:1px}
   .guide-strip[hidden]{display:none}
+  .guide-strip.guide-scrolled,.guide-strip.guide-suspended{visibility:hidden}
   @media(max-width:760px){.guide-strip{top:auto;bottom:8px;font-size:13px}}
   ${selTop}{padding-top:var(--guide-clear,0px) !important;box-sizing:border-box}
   ${selBottom}{padding-bottom:var(--guide-clear,0px) !important;box-sizing:border-box}`
   document.head.appendChild(style)
   root.appendChild(el)
+
+  // 스크롤된 본문은 고정 안내 띠 아래를 지나간다. 여백을 지우면 화면이 튀므로
+  // 띠만 잠시 가리고, 판의 맨 위로 돌아오면 다시 보여 준다. 내부 카드 스크롤도 포함한다.
+  const panelSelector = PANELS.map(p => `.${p}`).join(',')
+  const scrolled = new Set()
+  function refreshScrolled() {
+    for (const node of scrolled) if (!node.isConnected) scrolled.delete(node)
+    el.classList.toggle('guide-scrolled', scrolled.size > 0)
+  }
+  function onScroll(event) {
+    const target = event.target
+    if (!target?.closest?.(panelSelector)) return
+    if (target.scrollTop > 4) scrolled.add(target)
+    else scrolled.delete(target)
+    refreshScrolled()
+  }
+  root.addEventListener?.('scroll', onScroll, true)
+  // Q로 사초함만 닫으면 새 guide.set 없이 궁으로 돌아온다. 떼어 낸 판의 가림도 해제한다.
+  const panelsChanged = globalThis.MutationObserver ? new MutationObserver(refreshScrolled) : null
+  panelsChanged?.observe(root, { childList: true })
 
   const html = document.documentElement
   function publish() {
@@ -61,6 +82,7 @@ export function createGuideStrip(root) {
 
   return {
     set(text) {
+      scrolled.clear(); el.classList.remove('guide-scrolled')
       if (!text) { el.hidden = true; publish(); return }
       el.innerHTML = ''
       const b = document.createElement('b'); b.textContent = '지금 할 일'
@@ -69,6 +91,13 @@ export function createGuideStrip(root) {
       publish()
     },
     hide() { el.hidden = true; publish() },
+    suspend(on) { el.classList.toggle('guide-suspended', !!on) },
+    dispose() {
+      panelsChanged?.disconnect()
+      root.removeEventListener?.('scroll', onScroll, true)
+      window.removeEventListener?.('resize', publish)
+      el.hidden = true; publish(); el.remove(); style.remove()
+    },
   }
 }
 

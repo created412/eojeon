@@ -61,8 +61,10 @@ export const GROUP_OF_KIND = {
   brush: 'hands',
   outing: 'hands',
   defend: 'hands',       // 정족산성 — 기다렸다가 쏜다(systems/jeongjok.js).
+  stand: 'hands',        // 광성보 — 닿지 않는 포(systems/gwangseong.js).
   study: 'hands',        // 문서를 뜯어 읽으며 주석을 단다(systems/doc-study.js).
   dilemma: 'hands',      // 얻는 것과 내어주는 것을 견주어 하나를 정한다(ui/dilemma.js).
+  weigh: 'hands',        // 들은 말을 저울에 올리고 정한다(ui/weigh.js).
 }
 
 export const GROUP_LABEL = { read: '읽기', walk: '걷기', listen: '듣기', hands: '손으로' }
@@ -71,7 +73,7 @@ export const GROUP_LABEL = { read: '읽기', walk: '걷기', listen: '듣기', h
 // 이긴다 — 손으로 하는 것이 가장 세고, 글이 가장 약하다. 「글 두 장 읽고 장계를 읽는」
 // 걸음은 「장계를 읽는다」다: 학생이 그 대목에서 할 일은 장계 쪽이다.
 const SALIENCE = [
-  'funding', 'council', 'orders', 'brush', 'defend', 'study', 'dilemma', 'outing',
+  'funding', 'weigh', 'council', 'orders', 'brush', 'defend', 'stand', 'study', 'dilemma', 'outing',
   'rush', 'dispatch', 'trail', 'explore', 'audience', 'move', 'plunder', 'hold', 'alone',
   'procession', 'note',
 ]
@@ -132,8 +134,10 @@ const VERB = {
   brush: ['붓으로 쓰고', '붓으로 직접 쓴다'],
   outing: ['궁 밖을 살피고', '궁 밖을 살핀다'],
   defend: ['산성을 지키고', '산성을 지킨다'],
+  stand: ['성벽에서 버티고', '성벽에서 버틴다'],
   study: ['문서를 뜯어 읽고', '문서를 뜯어 읽는다'],
   dilemma: ['고민해서 정하고', '고민해서 정한다'],
+  weigh: ['저울에 올려 정하고', '저울에 올려 정한다'],
 }
 
 // 한 줄 노트 — 그 걸음에서 **구체적으로** 무엇을 하는가. 막 데이터가 이미 적어 둔
@@ -160,7 +164,7 @@ const NOTE = {
   trail: lead => `「${tidyTitle(lead.title)}」 — 사람을 보내 알아본다. 소식은 언제나 한 걸음 늦다`,
   explore: lead => (lead.free
     ? '가고 싶은 곳으로 걷고, 만난 사람에게 E 를 눌러 말을 건다'
-    : '왼쪽 위 「지금의 여정」에서 갈 곳을 고르면 그리로 걸어간다 — 닿으면 E'),
+    : '왼쪽 위 「오늘 할 일」을 보고 그곳을 찾아 걸어간다 — 닿으면 E'),
   procession: () => '신하들이 임금을 모시고 간다 — 지켜본다',
   move: (lead, beats) => {
     const n = countOf(beats, 'move')
@@ -177,7 +181,7 @@ const NOTE = {
   },
   council: lead => (lead.frozen
     ? `어전회의가 열리지만 임금은 말하지 못한다 — ${lead.council?.question ?? ''}`
-    : `${lead.council?.question ?? '무엇을 할 것인가'} — 근거를 대고 하나를 고른 뒤, 무슨 일이 일어날지 내다본다`),
+    : `${lead.council?.question ?? '무엇을 할 것인가'} — 하나를 고른 뒤, 무슨 일이 일어날지 내다본다`),
   funding: lead => `${tidyTitle(lead.title)} — 고을에서 걷거나 돈을 찍어 열 채를 올린다`,
   orders: lead => `${lead.question ?? '무엇을 적어 보낼 것인가'} — 조항을 골라 봉해서 보낸다`,
   brush: lead => {
@@ -187,8 +191,10 @@ const NOTE = {
   },
   outing: () => '궁 밖에서 본 것을 살핀다',
   defend: lead => `${lead.title ? `「${tidyTitle(lead.title)}」 — ` : ''}저들이 화승총이 닿는 곳에 들 때까지 기다렸다가 쏜다`,
+  stand: lead => `${lead.title ? `「${tidyTitle(lead.title)}」 — ` : ''}닿지 않는 포로 저들의 배에 맞선다`,
   study: lead => `${lead.title ? `「${tidyTitle(lead.title)}」 — ` : ''}문서를 읽고 물음에 답하며 주석을 단다`,
   dilemma: lead => `${lead.title ?? '무엇을 고를 것인가'} — 얻는 것과 내어주는 것을 견주어 하나를 정한다`,
+  weigh: lead => `${lead.title ? `「${tidyTitle(lead.title)}」 — ` : ''}대신들의 말을 듣고, 들은 말을 저울에 올려 문을 열지 닫을지 정한다`,
 }
 
 // 걸음 안에 곁딸린 종류가 있으면 짧은 이름표로 붙인다 — 「걸어 다니며 만난다」
@@ -208,6 +214,7 @@ const TAG = {
   trail: () => '소식',
   study: () => '문서',
   dilemma: () => '선택',
+  weigh: () => '저울',
 }
 
 function tagsOf(beats, leadKind) {

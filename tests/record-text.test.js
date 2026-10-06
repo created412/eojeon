@@ -24,10 +24,10 @@ describe('describeDecision — 결정 하나를 질문·고른 문구로 되짚�
   })
 
   it('어전회의 결정은 그 비트의 question·choice.text 를 그대로 돌려준다', () => {
-    const act = ACTS[2]   // 3막 조약을 두고 여는 어전회의(2막의 회의는 2026-10-06 정족산성 판이 대신한다)
+    const act = ACTS[4]   // 5막의 어전회의(2막의 회의는 정족산성 판이, 3막의 회의는 임금의 저울이 대신한다 — 2026-10-06)
     const beat = act.beats.find(b => b.kind === 'council')
     const choice = beat.council.choices[1]
-    const { question, text } = describeDecision(act, { actIndex: 2, choiceId: choice.id, reason: '' })
+    const { question, text } = describeDecision(act, { actIndex: 4, choiceId: choice.id, reason: '' })
     expect(question).toBe(beat.council.question)
     expect(text).toBe(choice.text)
   })
@@ -36,7 +36,7 @@ describe('describeDecision — 결정 하나를 질문·고른 문구로 되짚�
     const ordersAct = ACTS[2]   // '친정' — orders-sinheon
     const { text } = describeDecision(ordersAct, { actIndex: 2, choiceId: 'orders:greet+unyo', reason: '' })
     expect(text).toContain('예로써 맞이하되')
-    expect(text).toContain('먼저 포를 쏜 것이')
+    expect(text).toContain('경고 사격을 구실로')
   })
 
   it('아무 훈령도 안 적었으면 그렇게 말한다', () => {
@@ -47,11 +47,23 @@ describe('describeDecision — 결정 하나를 질문·고른 문구로 되짚�
 })
 
 describe('buildRecordText — 「내 기록 복사」에 실제로 들어가는 글', () => {
-  it('일부만 채운 빈칸도 저장을 거쳐 복사할 때 원래 칸의 순서를 유지한다', () => {
+  // 2026-10-06 — 『조선책략』은 빈칸을 고르고 해석을 써 넣던 탐구에서, 뜯어 읽는 판이 되었다.
+  it('『조선책략』을 뜯어 읽으며 단 주석이 저장을 거쳐 기록에 실린다', () => {
+    const state = deserialize(serialize({ ...createState(), inquiries: {
+      'joseon-chaeryak': { kind: 'study', selected: ['防俄 — 러시아를 막는다', '쓴 사람 — 청의 외교관 황준헌'], text: '', compared: true },
+    } }))
+    const text = buildRecordText(state, ACTS)
+    expect(text).toContain('[문서 뜯어 읽기] 황준헌, 『조선책략』 (1880)')
+    expect(text).toContain('단 주석 — 防俄 — 러시아를 막는다 / 쓴 사람 — 청의 외교관 황준헌')
+  })
+
+  it('옛 저장에 남은 빈칸 · 해석 기록도 잃지 않고 적는다', () => {
     const state = deserialize(serialize({ ...createState(), inquiries: {
       'joseon-chaeryak': { blanks: { 3: '일본' }, text: '작성 중' },
     } }))
-    expect(buildRecordText(state, ACTS)).toContain('채운 빈칸 — (빈칸) / (빈칸) / (빈칸) / 일본')
+    const text = buildRecordText(state, ACTS)
+    expect(text).toContain('[사료 탐구] 황준헌 『조선책략』')
+    expect(text).toContain('나의 해석 — 작성 중')
   })
 
   it('사료의 근거·첫 해석·비교 뒤 보완을 함께 보존한다', () => {

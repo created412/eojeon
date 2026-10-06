@@ -17,7 +17,7 @@ describe('역사 이미지의 정확한 연결과 오프라인 표시', () => {
   expect(sourceMedia('dangbaekjeon').caption).toContain('앞면과 뒷면')
   expect(sourceMedia('dangbaekjeon').caption).toContain('當百')
  })
- it.each(['heungseon','choeikhyeon','sinheon'])('%s은 해당 실존 인물 원본 자료를 쓴다',id=>{
+ it.each(['heungseon','choeikhyeon'])('%s은 해당 실존 인물 원본 자료를 쓴다',id=>{
   const npc=NPCS.find(n=>n.id===id)
   const m=speakerMedia({...npc,npcId:id,portrait:'mid'})
   expect(m.caption).toContain(npc.name)
@@ -30,7 +30,7 @@ describe('역사 이미지의 정확한 연결과 오프라인 표시', () => {
   expect(speakerMedia({npcId:'hongjaehak',name:'홍재학',portrait:'mid'}).source).toBeFalsy()
  })
  it('사진의 후대 촬영 시점과 지문의 원본 여부를 구분한다',()=>{
-  expect(speakerMedia({npcId:'heungseon'}).caption).toContain('1883')
+  expect(speakerMedia({npcId:'heungseon'}).caption).toContain('1898년 이전')
   expect(sourceMedia('yeongnam-manin').relation).toContain('상소 원본이 아닌')
   expect(noteMedia({id:'imo-jemulpo'}).caption).toContain('제물포')
  })

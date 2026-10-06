@@ -1,0 +1,610 @@
+[
+  {
+    "index": 0,
+    "act": 0,
+    "id": "unhyeon-note",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 1,
+    "act": 0,
+    "id": "unhyeon-day",
+    "kind": "explore",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 2,
+    "act": 0,
+    "id": "unhyeon-summons",
+    "kind": "audience",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 3,
+    "act": 0,
+    "id": "unhyeon-procession",
+    "kind": "procession",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 4,
+    "act": 0,
+    "id": "throne",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 5,
+    "act": 0,
+    "id": "audience",
+    "kind": "audience",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 6,
+    "act": 0,
+    "id": "funding",
+    "kind": "funding",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 7,
+    "act": 1,
+    "id": "byeongin",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 8,
+    "act": 1,
+    "id": "byeongin-audience",
+    "kind": "audience",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 9,
+    "act": 1,
+    "id": "day-changdeok",
+    "kind": "explore",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 10,
+    "act": 1,
+    "id": "janggye-arrives",
+    "kind": "audience",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 11,
+    "act": 1,
+    "id": "jeongjok-battle",
+    "kind": "defend",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 12,
+    "act": 1,
+    "id": "oegyujanggak-plunder",
+    "kind": "plunder",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 13,
+    "act": 1,
+    "id": "move-1868-out",
+    "kind": "procession",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 14,
+    "act": 1,
+    "id": "move-1868",
+    "kind": "move",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 15,
+    "act": 1,
+    "id": "day-gyeongbok",
+    "kind": "explore",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 16,
+    "act": 1,
+    "id": "gwangseong-stand",
+    "kind": "stand",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 17,
+    "act": 1,
+    "id": "cheokhwabi-order",
+    "kind": "audience",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 18,
+    "act": 1,
+    "id": "cheokhwabi-place",
+    "kind": "explore",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 19,
+    "act": 1,
+    "id": "cheokhwabi-brush",
+    "kind": "brush",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 20,
+    "act": 1,
+    "id": "end",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 21,
+    "act": 2,
+    "id": "gyeyu-sangso",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 22,
+    "act": 2,
+    "id": "gyeyu-audience",
+    "kind": "audience",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 23,
+    "act": 2,
+    "id": "doors-open",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 24,
+    "act": 2,
+    "id": "alone-in-hall",
+    "kind": "alone",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 25,
+    "act": 2,
+    "id": "seogye-audience",
+    "kind": "audience",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 26,
+    "act": 2,
+    "id": "day-1873",
+    "kind": "explore",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 27,
+    "act": 2,
+    "id": "seogye-choice",
+    "kind": "dilemma",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 28,
+    "act": 2,
+    "id": "unyo-dispatch",
+    "kind": "dispatch",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 29,
+    "act": 2,
+    "id": "day-1875",
+    "kind": "explore",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 30,
+    "act": 2,
+    "id": "axe-sangso",
+    "kind": "audience",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 31,
+    "act": 2,
+    "id": "orders-sinheon",
+    "kind": "orders",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 32,
+    "act": 2,
+    "id": "treaty-draft",
+    "kind": "audience",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 33,
+    "act": 2,
+    "id": "treaty-study",
+    "kind": "study",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 34,
+    "act": 2,
+    "id": "council-treaty",
+    "kind": "weigh",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 35,
+    "act": 2,
+    "id": "joil-trade-note",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 36,
+    "act": 2,
+    "id": "end",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 37,
+    "act": 3,
+    "id": "imo-open",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 38,
+    "act": 3,
+    "id": "imo-day",
+    "kind": "explore",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 39,
+    "act": 3,
+    "id": "imo-report",
+    "kind": "audience",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 40,
+    "act": 3,
+    "id": "imo-report-choice",
+    "kind": "dilemma",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 41,
+    "act": 3,
+    "id": "imo-rush",
+    "kind": "rush",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 42,
+    "act": 3,
+    "id": "imo-fault",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 43,
+    "act": 3,
+    "id": "imo-choice",
+    "kind": "dilemma",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 44,
+    "act": 3,
+    "id": "imo-father-returns",
+    "kind": "audience",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 45,
+    "act": 3,
+    "id": "imo-daewongun",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 46,
+    "act": 3,
+    "id": "imo-council",
+    "kind": "council",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 47,
+    "act": 3,
+    "id": "imo-invitation",
+    "kind": "audience",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 48,
+    "act": 3,
+    "id": "imo-abduction",
+    "kind": "trail",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 49,
+    "act": 3,
+    "id": "imo-jemulpo",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 50,
+    "act": 3,
+    "id": "imo-sokbang",
+    "kind": "study",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 51,
+    "act": 4,
+    "id": "kimokgyun-audience",
+    "kind": "audience",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 52,
+    "act": 4,
+    "id": "gapsin-open",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 53,
+    "act": 4,
+    "id": "gapsin-hold",
+    "kind": "hold",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 54,
+    "act": 4,
+    "id": "gapsin-taken",
+    "kind": "procession",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 55,
+    "act": 4,
+    "id": "gapsin-move-gyeongu",
+    "kind": "move",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 56,
+    "act": 4,
+    "id": "gapsin-takezoe",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 57,
+    "act": 4,
+    "id": "gapsin-gov",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 58,
+    "act": 4,
+    "id": "gapsin-day",
+    "kind": "explore",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 59,
+    "act": 4,
+    "id": "gapsin-move-gyedong",
+    "kind": "move",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 60,
+    "act": 4,
+    "id": "gapsin-council",
+    "kind": "council",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 61,
+    "act": 4,
+    "id": "gapsin-move-changdeok",
+    "kind": "move",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 62,
+    "act": 4,
+    "id": "gapsin-reform",
+    "kind": "study",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 63,
+    "act": 4,
+    "id": "gapsin-reform-choice",
+    "kind": "dilemma",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 64,
+    "act": 4,
+    "id": "gapsin-qing",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 65,
+    "act": 4,
+    "id": "gapsin-rush",
+    "kind": "rush",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 66,
+    "act": 4,
+    "id": "gapsin-flight-self",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 67,
+    "act": 4,
+    "id": "gapsin-hong",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 68,
+    "act": 4,
+    "id": "gapsin-move-bukmyo",
+    "kind": "move",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 69,
+    "act": 4,
+    "id": "gapsin-move-ojoyu",
+    "kind": "move",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 70,
+    "act": 4,
+    "id": "gapsin-after",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 71,
+    "act": 4,
+    "id": "kimokgyun-fate",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 72,
+    "act": 4,
+    "id": "three-days",
+    "kind": "note",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 73,
+    "act": 4,
+    "id": "gapsin-return",
+    "kind": "move",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 74,
+    "act": 4,
+    "id": "last-walk",
+    "kind": "explore",
+    "errors": [],
+    "widthOverflow": 0
+  },
+  {
+    "index": 75,
+    "act": 4,
+    "id": "end",
+    "kind": "alone",
+    "errors": [],
+    "widthOverflow": 0
+  }
+]

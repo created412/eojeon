@@ -25,6 +25,15 @@ const ARGS = [
   '--simplify-error', '0.015',
 ]
 
+// 사람(난병·청군)은 물건보다 가까이, 얼굴이 보이게 선다 — 텍스처를 한 단계 크게, 덜 깎는다.
+// 2026-10-06 선생님: 「임오군란 군병들의 디자인이 거지같아. 힉스필드로 군병들을 제대로 만들어.」
+const FIGURE_ARGS = [
+  '--texture-size', '512',
+  '--texture-compress', 'webp',
+  '--compress', 'meshopt',
+  '--simplify-error', '0.004',
+]
+
 mkdirSync(OUT, { recursive: true })
 const files = readdirSync(SRC).filter(f => f.endsWith('.glb')).sort()
 if (!files.length) throw new Error('assets/props 에 GLB 가 없다')
@@ -34,7 +43,7 @@ let total = 0
 for (const file of files) {
   const id = basename(file, '.glb')
   const from = join(SRC, file), to = join(OUT, file)
-  execFileSync('npx', ['gltf-transform', 'optimize', from, to, ...ARGS],
+  execFileSync('npx', ['gltf-transform', 'optimize', from, to, ...(id.startsWith('rioter_') || id.startsWith('qing_') ? FIGURE_ARGS : ARGS)],
     { cwd: ROOT, stdio: 'pipe', shell: process.platform === 'win32' })
   const bytes = readFileSync(to)
   total += bytes.length

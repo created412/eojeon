@@ -15,6 +15,7 @@ import { yearAtBeat } from '../../src/systems/scenario.js'
 import { npcNear } from '../../src/data/npcs.js'
 import { ACTS } from '../../src/data/acts.js'
 import { pressE } from '../../src/main.js'
+import { unlockPalaceLifeCollection } from '../../src/systems/palace-discoveries.js'
 
 const source = readFileSync(new URL('../../src/main.js', import.meta.url), 'utf8')
 function runFunction(name, env, arg) {
@@ -37,7 +38,7 @@ function environment(over = {}) {
   const position = { x: AT.x, y: 1.9, z: AT.z, set(x, y, z) { Object.assign(this, { x, y, z }) } }
   return {
     PALACES, artifactNear, hasSeen, markArtifactSeen, artifactCount, artifactById, artifactLines,
-    yearAtBeat, npcNear, pressE, shown,
+    yearAtBeat, npcNear, pressE, shown, unlockPalaceLifeCollection,
     flow: { state: { ...createState(), palace: 'changdeok', room: SPOT.room, beatIndex: 0 },
       actIndex: 0, act: () => ACTS[0], taken: new Set(), phase: 'day', setPhase() {} },
     ctx: { player: { position }, setPickupMarkers() {} },
@@ -45,6 +46,11 @@ function environment(over = {}) {
     audio: { play() {} }, banner: () => ({ dispose() {} }), root: {}, saveGame() {}, loreBanner: null,
     selectedOption: () => null, currentNpcs: () => [], currentExit: () => null, currentStops: () => [],
     npcSpots: new Map(), livingNpcs() { return this.currentNpcs() },
+    // 「오늘 할 일」에 남은 것이 없는 낮으로 둔다(이 시험은 물건과 나가는 방의 차례를 본다).
+    undoneActivity: () => false,
+    readyReport: () => null,
+    // 지금 치르는 장면. 물건이 가로채지 않는 걸음(beat.plain)인지를 nearbyArtifact 가 본다.
+    activeBeat: null,
     ...over,
   }
 }
@@ -60,10 +66,26 @@ it('물건 앞에 서면 E 판정이 그 물건을 돌려준다', async () => {
   expect(action).toEqual({ type: 'artifact', id: 'uigwe' })
 })
 
+it('문서를 읽는 동안 물건 앞의 E는 새 해설을 열지 않고 문서 닫기만 요청한다', async () => {
+  const env = withNeighbours(environment({ dialog: { isOpen: () => true } }))
+  expect(await runFunction('pressEAction', env)).toEqual({ type: 'close-dialog' })
+  expect(hasSeen(env.flow.state, 'uigwe')).toBe(false)
+})
+
 it('한 번 본 물건은 다시 가로채지 않는다 — 나가는 방에 서 있어도 나갈 수 있다', async () => {
   const env = withNeighbours(environment())
   env.flow.state = markArtifactSeen(env.flow.state, 'uigwe')
   env.currentExit = () => ({ room: SPOT.room, label: '오늘은 여기까지 한다' })
+  const action = await runFunction('pressEAction', env)
+  expect(action.type).toBe('exit-explore')
+})
+
+// 2026-10-06 — 5막의 마지막 걸음. 어좌 앞에서 누른 E 가 곁의 일월오봉도 풀이를 열어 「앉는다」가
+// 한 번 헛돌았다(화면에서 확인). 그 걸음(beat.plain)에서는 안 본 물건도 가로채지 않는다.
+it('물건이 가로채지 않는 걸음에서는, 안 본 물건 앞이어도 나가는 방이 먼저다', async () => {
+  const env = withNeighbours(environment({ activeBeat: { id: 'last-walk', plain: true } }))
+  env.currentExit = () => ({ room: SPOT.room, label: '어좌에 앉는다' })
+  expect(hasSeen(env.flow.state, 'uigwe')).toBe(false)
   const action = await runFunction('pressEAction', env)
   expect(action.type).toBe('exit-explore')
 })

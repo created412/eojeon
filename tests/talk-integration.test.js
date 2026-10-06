@@ -168,7 +168,7 @@ describe('나가는 방과 나들이', () => {
 // 조약문은 이제 알현에서 건넨다(2026-09-13 역사 순서 정리) — 같은 궁에 놓인 두 장으로 배선만 잰다.
 describe('문서 뭉치 — 한 번의 대화로 여러 장', () => {
   const sinheon = { palace: 'gyeongbok' }
-  const cardIds = ['junggeon', 'sinmi-officer']
+  const cardIds = ['junggeon', 'unyo']   // 미군 장교의 글은 2026-10-06 광성보 판이 건넨다 — 궁에 놓인 자리가 없다
   const def = PALACES[sinheon.palace]
 
   it('뭉치는 실제로 여러 장이다', () => {

@@ -1,0 +1,101 @@
+{
+  "tracks": [
+    {
+      "name": "act1",
+      "duration": 33.79997916666667,
+      "rms": 0.11282858673393477,
+      "peak": 0.6637402176856995,
+      "channels": 1
+    },
+    {
+      "name": "act2",
+      "duration": 31.4,
+      "rms": 0.11776724002352078,
+      "peak": 0.5809223651885986,
+      "channels": 1
+    },
+    {
+      "name": "act3",
+      "duration": 29.8,
+      "rms": 0.11124762375735164,
+      "peak": 0.5050481557846069,
+      "channels": 1
+    },
+    {
+      "name": "act4",
+      "duration": 32.79997916666667,
+      "rms": 0.10775266978340796,
+      "peak": 0.5329145193099976,
+      "channels": 1
+    },
+    {
+      "name": "act5",
+      "duration": 34.4,
+      "rms": 0.11286513596134215,
+      "peak": 0.5824345946311951,
+      "channels": 1
+    },
+    {
+      "name": "actend",
+      "duration": 9,
+      "rms": 0.1079289208053088,
+      "peak": 0.5742805004119873,
+      "channels": 1
+    },
+    {
+      "name": "council",
+      "duration": 33.6,
+      "rms": 0.12165458704071302,
+      "peak": 0.5988110899925232,
+      "channels": 1
+    },
+    {
+      "name": "ending",
+      "duration": 33.79997916666667,
+      "rms": 0.11213633057059258,
+      "peak": 0.6748514771461487,
+      "channels": 1
+    },
+    {
+      "name": "loss",
+      "duration": 8,
+      "rms": 0.0900517976441471,
+      "peak": 0.4490353465080261,
+      "channels": 1
+    },
+    {
+      "name": "march",
+      "duration": 28.6,
+      "rms": 0.11188823214905555,
+      "peak": 0.44279441237449646,
+      "channels": 1
+    },
+    {
+      "name": "tension",
+      "duration": 28.2,
+      "rms": 0.10901577769451094,
+      "peak": 0.6685652732849121,
+      "channels": 1
+    },
+    {
+      "name": "theme",
+      "duration": 29.8,
+      "rms": 0.09832240315302866,
+      "peak": 0.49767839908599854,
+      "channels": 1
+    }
+  ],
+  "errors": [],
+  "title": "opening original plays after sound toggle",
+  "transition": {
+    "track": "act1",
+    "volume": 0.17,
+    "time": 2.097517
+  },
+  "loop": {
+    "time": 0.566262,
+    "paused": false,
+    "loop": true,
+    "error": null
+  }
+}

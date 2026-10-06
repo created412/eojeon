@@ -144,6 +144,12 @@ const CSS = `
   font-size:13px;padding:3px 2px;border-radius:0;font-family:inherit}
 .howto .howto-note{font-size:var(--read-caption,12.5px);color:#6f6a5e;line-height:1.6;
   max-width:min(560px,92vw);text-align:center;word-break:keep-all}
+.howto .howto-title{font-family:inherit;font-size:28px;font-weight:600;letter-spacing:0}
+.howto .howto-row{font-size:21px;line-height:1.6}
+.howto .howto-note{color:#b8b4a7;font-size:14px}
+.howto .howto-nav button{min-height:48px;font-size:18px;border-radius:6px}
+.howto .howto-skip{color:#bbb3a0}
+.howto .howto-progress{color:#cbbd9e;font-size:15px;font-variant-numeric:tabular-nums}
 /* 가로로 누운 손전화 — 그림과 글을 옆으로 벌린다. 위아래로 쌓으면 단추가 창 밖으로 나간다
    (옛 셈판에서 겪은 그 일). 재 보고 정한 값이다. */
 @media(max-height:560px){
@@ -153,8 +159,8 @@ const CSS = `
     gap:14px;align-items:center}
   .howto .howto-art{grid-row:span 2}
   .howto .howto-art img{aspect-ratio:3/1.9}
-  .howto .howto-title{font-size:18px;text-align:left}
-  .howto .howto-row{font-size:14.5px;text-align:left;line-height:1.6}
+  .howto .howto-title{font-size:24px;text-align:center}
+  .howto .howto-row{font-size:18px;text-align:center;line-height:1.6}
   .howto .howto-note{font-size:11.5px}
 }
 `
@@ -234,6 +240,7 @@ export function createControlsHint(root) {
 
         const dots = document.createElement('div'); dots.className = 'howto-dots'
         for (const _ of steps) dots.appendChild(document.createElement('i'))
+        const progress = document.createElement('div'); progress.className = 'howto-progress'
 
         const nav = document.createElement('div'); nav.className = 'howto-nav'
         const back = document.createElement('button'); back.className = 'howto-back'; back.textContent = '← 이전'
@@ -252,6 +259,7 @@ export function createControlsHint(root) {
 
         function paint() {
           const s = steps[at]
+          progress.textContent = `${at + 1} / ${steps.length}`
           const art = HOWTO_ART[s.art]
           // 그림이 안 실린 빌드에서는 그림 자리만 접는다 — 글과 단추는 그대로다.
           fig.style.display = art ? '' : 'none'
@@ -274,7 +282,7 @@ export function createControlsHint(root) {
         })
 
         nextBtn = next
-        el.append(step, dots, nav, skip, note)
+        el.append(step, dots, progress, nav, skip, note)
         paint()
 
         root.appendChild(el)

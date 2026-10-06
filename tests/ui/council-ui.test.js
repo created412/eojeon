@@ -251,7 +251,7 @@ describe('놓인 글은 그 말 옆에서 제 말을 한다', () => {
     const claim = claimsOf(byeongin)[0]
     const html = councilSlotHtml(byeongin, claim, 'bellonet', sourceById('bellonet'))
     expect(html).toContain(sourceById('bellonet').title)
-    expect(html).toContain('조선 왕국 최후의 날')
+    expect(html).toContain('조선을 정복하기 위해 진군할 것이다')
     expect(html).toContain('저들이 보낸 글에 그대로 적혀 있다.')
   })
 
@@ -384,7 +384,8 @@ describe('⑤ claims·forecasts 가 없으면 예전 꼴로 물러선다', () =>
     expect(html).toContain('실제로는 이러했다')
     expect(html).not.toContain(LABELS.mineHead)
     expect(html).not.toContain(FORECAST_NOTE)
-    expect(record.sentence).toBe('당신은 사초함에서 근거를 꺼내지 않고 「고른다」 쪽으로 정했다.')
+    // 근거를 대는 판이 없는 회의에서는 「근거를 꺼내지 않고」라고 적지 않는다 — 꺼낼 자리가 없었다.
+    expect(record.sentence).toBe('당신은 「고른다」 쪽으로 정했다.')
   })
 })
 

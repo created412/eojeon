@@ -159,8 +159,8 @@ export const PAPER_WET = '#efe6cf'
 export const PAPER_DRY = '#d7d0c0'
 export const STROKE_WET = '#1b1a17'
 export const STROKE_DRY = '#7b5531'
-export const GUIDE_ALPHA_WET = 0.28
-export const GUIDE_ALPHA_DRY = 0.46
+export const GUIDE_ALPHA_WET = 0.4
+export const GUIDE_ALPHA_DRY = 0.56
 
 function clamp01(t) {
   return t < 0 ? 0 : t > 1 ? 1 : t

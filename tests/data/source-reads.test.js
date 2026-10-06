@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { STUDIES } from '../../src/data/studies.js'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { SOURCES } from '../../src/data/sources.js'
@@ -6,6 +7,7 @@ import { INQUIRIES } from '../../src/data/inquiries.js'
 import { SOURCE_READS, SEOGYE_DOC } from '../../src/data/source-games.js'
 import {
   readFor, partsOf, initialRead, underline, readDone, readHint, readRecord, READ_HINT_AFTER, READ_LINES, BREAK,
+  PROBE_TYPES, probeOf, answerProbe, probeHint, readComplete,
 } from '../../src/systems/source-read.js'
 import {
   unitsOf, targetsOf, initialSeek, look, nominate, seekDone, leftCount, seekHint, seekRecord, HINT_EVERY,
@@ -19,8 +21,9 @@ import {
 const squash = s => String(s).replace(/\s+/g, '')
 
 describe('문서마다 손에 쥘 때 하는 일이 있다', () => {
-  // 제 판이 따로 있는 문서: 서계(찾기), 강화도 조약 셋(주석), 조선책략(빈칸).
-  const OWN_GAME = new Set([SEOGYE_DOC.id, 'ganghwa1', 'ganghwa7', 'ganghwa10', ...Object.keys(INQUIRIES)])
+  // 제 판이 따로 있는 문서: 서계(찾기), 강화도 조약 셋(주석), 조선책략(뜯어 읽기 — data/studies.js 의 card).
+  const OWN_GAME = new Set([SEOGYE_DOC.id, ...Object.keys(INQUIRIES),
+    ...Object.values(STUDIES).flatMap(s => s.cards ?? [])])
 
   it('읽지 않고 닫기만 눌러 모을 수 있는 문서가 한 장도 없다', () => {
     for (const card of SOURCES) {
@@ -108,7 +111,9 @@ describe('밑줄을 긋는다', () => {
   })
 
   it('그은 구절이 기록에 남는다 — 해석을 쓰는 칸은 없다', () => {
-    const done = underline(spec, initialRead(), spec.pick).state
+    const lined = underline(spec, initialRead(), spec.pick).state
+    expect(readRecord(spec, lined).compared).toBe(false)   // 따져 읽기가 남았다
+    const done = answerProbe(spec, lined, probeOf(spec).answer).state
     const rec = readRecord(spec, done)
     expect(rec.kind).toBe('read')
     expect(rec.compared).toBe(true)
@@ -130,12 +135,130 @@ describe('카드 화면이 실제로 그렇게 묶여 있다', () => {
   it('긋기 전에는 덮는 단추가 잠기고 해석이 가려진다', () => {
     expect(src).toContain('closeBtn.disabled = true')
     expect(src).toContain('reading-locked')
-    expect(src).toMatch(/inquiry = \{ ready: \(\) => readDone\(state\)/)
+    expect(src).toMatch(/inquiry = \{ ready: \(\) => readComplete\(spec, state\)/)
   })
 
   it('그으면 해석이 펴지고 기록을 남긴다', () => {
     expect(src).toContain("cardEl.classList.remove('reading-locked')")
     expect(src).toContain('onRead(card.id, readRecord(spec, state))')
+  })
+})
+
+// ── 따져 읽기 — 밑줄 뒤에 묻는 한 가지 ─────────────────────────────────────
+//
+// 선생님(2026-10-06): 「밑줄긋기만 하면 사료 읽기가 재미가 없어. 사료를 분석하고 검토하고
+// 비판하는 여러 아이디어를 넣어 봐야 해. 물론 사료 밑줄긋기가 메인이긴 해.」
+describe('따져 읽기 — 적는 법', () => {
+  for (const [id, spec] of Object.entries(SOURCE_READS)) {
+    const probe = probeOf(spec)
+
+    it(`${id} — 따져 읽을 물음이 있고, 갈래에 이름이 있다`, () => {
+      expect(probe, `${id} 는 밑줄만 긋고 끝난다`).toBeTruthy()
+      expect(PROBE_TYPES[probe.type], `${id}: 갈래 ${probe.type}`).toBeTruthy()
+      expect(probe.ask.length).toBeGreaterThan(10)
+      expect(probe.ok.length).toBeGreaterThan(15)
+    })
+
+    it(`${id} — 고를 것이 셋이고, 답이 그 안에 하나 있다`, () => {
+      expect(probe.options.length).toBe(3)
+      expect(new Set(probe.options.map(o => o.id)).size).toBe(3)
+      expect(probe.options.filter(o => o.id === probe.answer).length).toBe(1)
+    })
+
+    it(`${id} — 답이 아닌 것마다, 왜 아닌지를 짚는 말이 있다`, () => {
+      for (const o of probe.options) {
+        if (o.id === probe.answer) expect(o.say, `${id}/${o.id}`).toBeUndefined()
+        else expect(o.say?.length ?? 0, `${id}/${o.id} 에 짚는 말이 없다`).toBeGreaterThan(8)
+      }
+    })
+
+    it(`${id} — 밑줄 뒤의 한 줄이 따져 읽기의 답을 미리 말하지 않는다`, () => {
+      const answer = probe.options.find(o => o.id === probe.answer).text
+      expect(squash(spec.found)).not.toContain(squash(answer))
+    })
+  }
+
+  it('답이 늘 같은 자리에 서지 않는다', () => {
+    const at = Object.values(SOURCE_READS).map(s => s.probe.options.findIndex(o => o.id === s.probe.answer))
+    for (const i of [0, 1, 2]) expect(at.filter(x => x === i).length, `${i}번 자리`).toBeGreaterThanOrEqual(4)
+  })
+
+  it('물음의 갈래가 여럿이다 — 한 가지만 되풀이해 묻지 않는다', () => {
+    const kinds = new Set(Object.values(SOURCE_READS).map(s => s.probe.type))
+    expect(kinds.size).toBeGreaterThanOrEqual(8)
+    const most = Math.max(...[...kinds].map(k => Object.values(SOURCE_READS).filter(s => s.probe.type === k).length))
+    expect(most).toBeLessThanOrEqual(4)
+  })
+})
+
+describe('따져 읽는다', () => {
+  const spec = readFor('wonnapjeon')
+  const probe = probeOf(spec)
+  const other = probe.options.find(o => o.id !== probe.answer)
+  const lined = () => underline(spec, initialRead(), spec.pick).state
+
+  it('밑줄을 긋기 전에는 답할 수 없다', () => {
+    const r = answerProbe(spec, initialRead(), probe.answer)
+    expect(r.ok).toBe(false)
+    expect(readComplete(spec, r.state)).toBe(false)
+  })
+
+  it('밑줄만으로는 문서가 덮이지 않는다 — 따져 읽기까지가 읽기다', () => {
+    expect(readDone(lined())).toBe(true)
+    expect(readComplete(spec, lined())).toBe(false)
+  })
+
+  it('답하면 덮을 수 있고, 무엇을 따졌는지가 기록에 남는다', () => {
+    const r = answerProbe(spec, lined(), probe.answer)
+    expect(r.ok).toBe(true)
+    expect(r.say).toBe(probe.ok)
+    expect(readComplete(spec, r.state)).toBe(true)
+    const rec = readRecord(spec, r.state)
+    expect(rec.probe.type).toBe(PROBE_TYPES[probe.type])
+    expect(rec.probe.answer).toBe(probe.options.find(o => o.id === probe.answer).text)
+  })
+
+  it('다른 것을 고르면 왜 아닌지를 듣는다 — 판은 덮이지 않는다', () => {
+    const r = answerProbe(spec, lined(), other.id)
+    expect(r.ok).toBe(false)
+    expect(r.say).toBe(other.say)
+    expect(readComplete(spec, r.state)).toBe(false)
+  })
+
+  it(`${READ_HINT_AFTER}번 헛짚으면 답이 빛난다 — 갇히는 학생이 없다`, () => {
+    let s = lined()
+    expect(probeHint(spec, s)).toBeNull()
+    for (let i = 0; i < READ_HINT_AFTER; i++) s = answerProbe(spec, s, other.id).state
+    expect(probeHint(spec, s)).toBe(probe.answer)
+  })
+
+  it('한 번 답하면 다시 고르지 못한다', () => {
+    const done = answerProbe(spec, lined(), probe.answer).state
+    expect(answerProbe(spec, done, other.id).state).toBe(done)
+  })
+
+  it('따져 읽기가 없는 문서는 밑줄만으로 덮인다', () => {
+    const bare = { ...spec, probe: undefined }
+    expect(readComplete(bare, lined())).toBe(true)
+  })
+})
+
+describe('따져 읽기가 카드 화면에 실제로 걸려 있다', () => {
+  const NL = String.fromCharCode(10)
+  const src = readFileSync(join(process.cwd(), 'src', 'ui', 'dialog.js'), 'utf8')
+    .split(NL).filter(l => !l.trim().startsWith('//')).join(NL)
+
+  it('밑줄을 그으면 물음이 열리고, 덮는 단추는 답한 뒤에 풀린다', () => {
+    expect(src).toContain('probeEl.hidden = false')
+    expect(src).toContain('answerProbe(spec, state, btn.dataset.opt)')
+    const answered = src.slice(src.indexOf('answerProbe(spec, state, btn.dataset.opt)'))
+    // 잘못 짚으면 막 재시작으로 먼저 반환한다. 성공 분기의 닫기 해제는 그대로 유지한다.
+    const success = answered.slice(answered.indexOf('if (r.ok)'))
+    expect(success.slice(0, success.indexOf('return'))).toContain('closeBtn.disabled = false')
+  })
+
+  it('갈래의 이름을 화면에 띄운다', () => {
+    expect(src).toContain('PROBE_TYPES[probe.type]')
   })
 })
 

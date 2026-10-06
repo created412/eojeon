@@ -34,6 +34,8 @@ export const MIRRORED_KINDS = new Set([
   'defend',                                                             // 2026-10-06 — 정족산성(기다렸다가 쏜다)
   'trail',                                                              // 2026-10-06 — 소식을 좇는다(상태에 남기는 것이 없다)
   'study', 'dilemma',                                                   // 2026-10-06 — 문서를 뜯어 읽는 판 · 고민해서 정하는 자리
+  'weigh',                                                              // 2026-10-06 — 임금의 저울
+  'stand',                                                              // 2026-10-06 — 광성보(닿지 않는 포)
 ])
 
 // caught — 촉박(rush)을 놓쳤는가. 이 게임의 조건 비트는 전부 여기서 갈린다
@@ -96,6 +98,12 @@ export function firstChoiceDecider(beat, state, caught = true) {
       const d = dilemmaById(beat.dilemma)
       return { ...state, decisions: [...state.decisions, { actIndex: state.actIndex, choiceId: `dilemma:${d.id}:${d.options[0].id}`, reason: '시험' }] }
     }
+    // 광성보 — 어떻게 버텼는지가 decisions 에 남는다(main.js 의 playStand). 끝은 누구에게나 같다.
+    case 'stand':
+      return { ...state, decisions: [...state.decisions, { actIndex: state.actIndex, choiceId: 'stand:fallen', reason: '시험' }] }
+    // 임금의 저울 — 고른 쪽이 decisions 에 남는다(main.js 의 playWeigh). 여는 쪽을 고른다.
+    case 'weigh':
+      return { ...state, decisions: [...state.decisions, { actIndex: state.actIndex, choiceId: `weigh:${beat.weigh}:open`, reason: '시험' }] }
     default:
       return state
   }

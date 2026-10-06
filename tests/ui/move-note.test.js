@@ -16,8 +16,8 @@ const moves = ACTS.flatMap(a => beatsOf(a).map(b => ({ act: a.id, beat: b })))
 const SOLAR_NOTE_TAIL = '확실하지 않아 적지 않습니다'
 
 describe('이어 화면의 근거 줄', () => {
-  it('이어가 여섯 번이다 — 2막 하나, 5막 다섯', () => {
-    expect(moves).toHaveLength(6)
+  it('이어가 일곱 번이다 — 2막 하나, 5막 여섯(정변의 다섯과 나흘 뒤의 환어)', () => {
+    expect(moves).toHaveLength(7)
   })
 
   it('모든 이어의 실록 근거가 실제로 화면 글에 실린다', () => {

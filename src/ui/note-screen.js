@@ -78,12 +78,56 @@ const CSS = `
 }
 `
 
+// 2026-10-06 선생님: 「모든 안내문 글너무많고 가독성낮음, 실제시뮬레이션게임처럼 안내문제시」.
+// 행동 안내는 목표 하나를 먼저, 역사 지문은 두 문단씩 읽는다. 원문과 출처는 보존한다.
+const BRIEFING_CSS = `
+.note{font-family:var(--face-body,system-ui,sans-serif);gap:18px}
+.note .sheet{max-width:820px;padding:32px;flex-shrink:0}
+.note .note-copy{width:100%;max-width:660px;margin:auto;display:flex;flex-direction:column;gap:20px}
+.note .note-copy h2{font-family:inherit;font-size:25px;font-weight:600;letter-spacing:0;text-align:center}
+.note .note-page{display:flex;flex-direction:column;gap:18px}
+.note .note-page[hidden]{display:none}
+.note .note-page p{font-size:21px;line-height:1.7;text-wrap:pretty}
+.note .note-nav{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap}
+.note .note-nav button{margin:0;letter-spacing:0;font-family:inherit;font-size:18px;min-height:48px}
+.note .note-back{min-width:90px;color:#d5cdbb;background:transparent;border-color:#655a48}
+.note .note-back[hidden],.note .note-progress[hidden]{display:none}
+.note .note-progress{color:#d5cdbb;font-size:15px;font-variant-numeric:tabular-nums}
+.note .note-kicker{font-size:14px;font-weight:600;letter-spacing:.16em;color:#bfa375;text-align:center}
+.note.note-briefing{background:radial-gradient(ellipse at 50% 35%,#28312c,#0f1414 75%)}
+.note.note-briefing .sheet{background:#171f1c!important;border:1px solid #617165;border-top:3px solid #d2b276;
+  color:#f3eddf;box-shadow:0 20px 70px #0008;border-radius:12px;text-align:center}
+.note.note-briefing .sheet::after{display:none}
+.note.note-briefing .note-copy h2{font-size:19px;color:#d9d3c4;margin:0}
+.note.note-briefing .note-objective{font-size:clamp(26px,4vw,36px);font-weight:600;line-height:1.4;color:#fff3d5;text-align:center;text-wrap:balance}
+.note.note-briefing .note-action{font-size:21px;line-height:1.6;color:#f3eddf;text-align:center;text-wrap:balance}
+.note .note-context{text-align:left;border-top:1px solid #657266;padding-top:14px}
+.note .note-context summary{font-size:16px;color:#d9c59f;cursor:pointer;padding:6px;text-align:center}
+.note .note-context .note-page{margin-top:20px}
+.note.note-briefing .note-context p{color:#e5e0d4;font-size:18px}
+.note.note-briefing .origin,.note.note-briefing .staged{color:#c5bda9;font-size:14px;line-height:1.6}
+.note .note-nav{position:sticky;bottom:0;z-index:2;background:#0f1113ed;padding:8px 14px;border-radius:8px}
+@media(max-height:560px){
+ .note{padding:14px;gap:10px;justify-content:flex-start}
+ .note .sheet{padding:20px 26px}
+ .note .note-copy{gap:12px}
+ .note .note-page{gap:12px}
+ .note .note-page p{font-size:18px;line-height:1.6}
+ .note .note-copy h2{font-size:22px}
+ .note.note-briefing .note-objective{font-size:27px}
+ .note.note-briefing .note-action{font-size:19px}
+ .note .note-next{position:static;box-shadow:none}
+ .note .note-nav button{padding:10px 24px}
+}
+@media(max-width:600px){.note .sheet{padding:24px 20px}.note .note-page p{font-size:19px}}
+`
+
 let styled = false
 function ensureStyle() {
   if (styled) return
   installTypeVars()
   const style = document.createElement('style')
-  style.textContent = CSS
+  style.textContent = CSS + BRIEFING_CSS
   document.head.appendChild(style)
   styled = true
 }
@@ -100,7 +144,9 @@ export function createNoteScreen(root, { voice = null } = {}) {
     show(beat) {
       return new Promise(resolve => {
         const el = document.createElement('div')
+        const briefing = beat.briefing
         el.className = 'note'
+        el.classList.toggle('note-briefing', !!briefing)
         const staged = beat.grade === 'staged'
           ? '<div class="staged">※ 이 대목은 기록에 남아 있지 않습니다. 게임이 지어내 채운 장면입니다. 이런 것을 「재구성」이라고 합니다.</div>'
           : beat.grade === 'rumor' ? `<div class="staged rumor">${RUMOR_NOTICE}</div>` : ''
@@ -120,29 +166,49 @@ export function createNoteScreen(root, { voice = null } = {}) {
               <div>${side.label ? `<b>${side.label}</b>` : ''}${side.line ?? ''}${
                 side.origin ? `<small>${side.origin}</small>` : ''}</div>`).join('')}
           </div>` : ''
-        const after = (beat.afterLines ?? []).map(l => `<p>${l}</p>`).join('')
+        const lines = (beat.lines ?? []).filter(Boolean)
+        const pages = []
+        for (let i = 0; i < lines.length; i += 2) pages.push(lines.slice(i, i + 2).map(l => `<p>${l}</p>`).join(''))
+        const extra = gloss + cmp + (beat.afterLines ?? []).filter(Boolean).map(l => `<p>${l}</p>`).join('')
+        if (extra) pages.push(extra)
+        if (!pages.length) pages.push('')
+        const content = pages.map((html, i) => `<div class="note-page"${!briefing && i ? ' hidden' : ''}>${html}</div>`).join('')
         // 글은 종이 위에 앉는다. 종이(한지)는 한 장으로 감싸고, 그 바깥의 어두운
         // 바탕은 그대로 둔다 — 궁궐 밤에 등불 아래 편지 한 장을 펼친 그림이다.
         const media = noteMedia(beat)
         el.innerHTML = `
           <div class="sheet${media ? ' has-media' : ''}"><div class="note-copy type-read">
             <h2 class="type-display">${beat.title ?? ''}</h2>
-            ${(beat.lines ?? []).map(l => `<p>${l}</p>`).join('')}
-            ${gloss}
-            ${cmp}
-            ${after}
+            ${briefing ? `<div class="note-kicker">지금 할 일</div><p class="note-objective">${briefing.objective}</p>
+              <p class="note-action">${briefing.action}</p><details class="note-context"><summary>${briefing.contextLabel ?? '배경 살펴보기'}</summary>${content}</details>` : content}
             ${beat.origin ? `<div class="origin">${beat.origin}</div>` : ''}
             ${staged}
             </div>${mediaFigure(media)}
           </div>
-          <button class="note-next">다음</button>`
+          <div class="note-nav"><button class="note-back" hidden>이전</button><span class="note-progress"${briefing || pages.length < 2 ? ' hidden' : ''}>1 / ${pages.length}</span><button class="note-next">${briefing?.buttonLabel ?? '다음'}</button></div>`
         root.appendChild(el)
         bindMedia(el)
         const sheet = el.querySelector('.sheet')
-        if (PAPER.hanji) sheet.style.backgroundImage = `url(${PAPER.hanji})`
+        if (PAPER.hanji && !briefing) sheet.style.backgroundImage = `url(${PAPER.hanji})`
         // 글 화면은 안내·설명 문장이라 소리 내어 읽지 않는다(2026-09-14 선생님: 「안내문구의 음성은 모두 제거」).
         // 고종의 1인칭 독백 음성은 행렬 장면(main.js playProcession)에만 남는다.
-        el.querySelector('.note-next').addEventListener('click', () => { el.remove(); resolve() })
+        let at = 0
+        const back = el.querySelector('.note-back')
+        const next = el.querySelector('.note-next')
+        const pageEls = [...el.querySelectorAll('.note-page')]
+        const paintPage = () => {
+          pageEls.forEach((p, i) => { p.hidden = i !== at })
+          back.hidden = at === 0
+          el.querySelector('.note-progress').textContent = `${at + 1} / ${pages.length}`
+          next.textContent = at < pages.length - 1 ? '계속 읽기' : '다음'
+          el.scrollTop = 0
+        }
+        back.addEventListener('click', () => { if (at > 0) { at--; paintPage() } })
+        next.addEventListener('click', () => {
+          if (!briefing && at < pages.length - 1) { at++; paintPage(); return }
+          el.remove(); resolve()
+        })
+        if (!briefing) paintPage()
       })
     },
   }

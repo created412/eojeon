@@ -236,22 +236,14 @@ describe('5막의 궁 넷 — 좁음이 설계 의도다', () => {
     for (const id of ['gyeongu', 'gyedong', 'bukmyo', 'ojoyu']) expect(baseOf(id)).toBe(id)
   })
 
-  it('경우궁에서 주울 수 있는 것은 개혁 정강 한 장뿐이다 — 설계서 §7 의 표 그대로', () => {
-    expect((PALACES.gyeongu.pickups ?? []).map(p => p.cardId)).toEqual(['reform14'])
-    for (const id of ['gyedong', 'bukmyo', 'ojoyu']) {
+  // 2026-10-06 — 경우궁의 정강 한 장도 걷었다. 선생님: 「정강 14조가 두 번 겹쳐서 나와. 하나로 합쳐 보자.」
+  // 정강은 창덕궁으로 돌아온 뒤의 판에서 한 번만 읽는다. 5막의 궁 넷에는 주울 것이 하나도 없다.
+  it('5막의 궁 넷에는 주울 문서가 없다 — 좁다는 것은 손에 들어오는 것이 적다는 뜻이기도 하다', () => {
+    for (const id of ['gyeongu', 'gyedong', 'bukmyo', 'ojoyu']) {
       expect(PALACES[id].pickups ?? [], id).toHaveLength(0)
     }
   })
 
-  // 좁다는 것은 걸음만 좁다는 뜻이 아니라 손에 들어오는 것이 적다는 뜻이기도 하다.
-  // 그 한 장이 정말 정당 상자 안에 있는지까지 본다 — 방 밖에 놓이면 학생은 영영 못 줍는다.
-  it('그 한 장이 정당 상자 안에 놓여 있다', () => {
-    const p = PALACES.gyeongu.pickups[0]
-    const room = PALACES.gyeongu.rooms.find(r => r.id === p.placeId)
-    expect(room, p.placeId).toBeTruthy()
-    expect(Math.abs(p.x - room.x)).toBeLessThanOrEqual(room.w / 2)
-    expect(Math.abs(p.z - room.z)).toBeLessThanOrEqual(room.d / 2)
-  })
 
   it('북묘는 사당이고 영방은 군영이다 — 이름에 그렇게 적혀 있다', () => {
     expect(PALACES.bukmyo.rooms[0].name).toBe('사당')

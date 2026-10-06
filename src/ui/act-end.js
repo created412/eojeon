@@ -60,10 +60,13 @@ export function finalPlaceName(id) {
 export function finalLead(state, acts = ACTS) {
   const span = actSpan(acts)
   const moves = state?.moves ?? []
-  const where = finalPlaceName(moves[moves.length - 1]?.to)
+  const last = moves[moves.length - 1]?.to
+  const where = finalPlaceName(last)
+  // 앞서 살던 곳으로 되돌아왔으면 「돌아와 있다」다(2026-10-06 — 끝이 청군의 군영에서 창덕궁으로 옮겨졌다).
+  const back = moves.slice(0, -1).some(m => m.to === last || m.from === last)
   const arc = where
     ? `${nativeCount(ageAt(span.from))} 살에 남이 댄 가마를 타고 운현궁을 나섰고, `
-      + `${nativeCount(ageAt(span.to))} 살에 ${where}에 와 있다.<br>`
+      + `${nativeCount(ageAt(span.to))} 살에 ${where}에 ${back ? '돌아와' : '와'} 있다.<br>`
     : ''
   return `${span.from}년부터 ${span.to}년까지, ${nativeCount(span.span)} 해를 지났다.<br>`
     + arc
@@ -216,7 +219,7 @@ export function createActEnd(root) {
         const el = document.createElement('div')
         el.className = 'actend final'
         el.innerHTML = `
-          <h2>오 늘 은 여 기 까 지</h2>
+          <h2>나 의  기 록</h2>
           <div class="sub">${finalLead(state)}</div>
 
           <div class="box"><b>옮겨 다닌 자리 ${moved.length}</b>

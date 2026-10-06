@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { resolveArt, actLine, NOTE_MARK } from '../../src/ui/act-question.js'
+import { resolveArt, actLine, NOTE_MARK, evidenceCards } from '../../src/ui/act-question.js'
 import { ACT_QUESTION_ART, ART_NOTE } from '../../src/ui/act-question-data.js'
 
 // 막마다 하나씩 놓이는 질문 화면(2026-09-26 선생님: 「막마다 질문은 전체화면으로,
@@ -73,21 +73,27 @@ describe('한 번 눌리면 한 번만 넘어간다', () => {
 
   it('키보드로도 눌린다 — 단추이고, 뜨자마자 초점이 간다', () => {
     expect(src).toContain('createElement(\'button\')')
-    expect(src).toContain('go.focus?.()')
+    expect(src).toContain('go.focus?.({ preventScroll: true })')
     expect(src).toContain('.actq-go:focus-visible')
   })
 })
 
 describe('학생이 본 것을 적되, 학생 대신 대답하지 않는다', () => {
-  it('evidence 가 있으면 줄로 그려진다', () => {
+  it('읽은 문서를 그림 카드로 나누며 원문 기록을 보존한다', () => {
     expect(src).toContain('view.evidence')
     expect(src).toContain("box.className = 'actq-seen'")
     expect(src).toContain("list.className = 'actq-seen-list'")
-    expect(src).toMatch(/for \(const seen of evidence\)[\s\S]{0,140}li\.textContent = seen/)
+    const cards = evidenceCards(['읽은 문서 — 원납전(願納錢) · 당백전(當百錢)', { title: '경복궁 중건', text: '학생이 실제로 남긴 긴 선택 기록' }])
+    expect(cards).toHaveLength(3)
+    expect(cards[0].sourceId).toBe('wonnapjeon')
+    expect(cards[0].media.kind).toBe('historical')
+    expect(cards[2].text).toBe('학생이 실제로 남긴 긴 선택 기록')
+    expect(cards[2].media.relation).toContain('재구성')
+    expect(src).toContain('text.textContent = seen.text')
   })
 
   it('evidence 는 닫는 화면에서만, 그리고 빈 칸이면 아예 나오지 않는다', () => {
-    expect(src).toMatch(/close \? \(view\.evidence \?\? \[\]\)\.filter\(Boolean\) : \[\]/)
+    expect(src).toMatch(/close \? evidenceCards\(\(view\.evidence \?\? \[\]\)\.filter\(Boolean\)\) : \[\]/)
     expect(src).toMatch(/if \(evidence\.length\)/)
   })
 
@@ -214,7 +220,7 @@ describe('클래스 이름은 모두 .actq 아래에 있다', () => {
     }
     expect(names.size).toBeGreaterThan(4)
     for (const name of names) {
-      expect(name.startsWith('actq'), `class="${name}" 이 actq 밖에 있다`).toBe(true)
+      expect(name.startsWith('actq') || name === 'act-restart-notice', `class="${name}" 이 actq 밖에 있다`).toBe(true)
     }
   })
 

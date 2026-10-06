@@ -1,0 +1,18 @@
+{
+  "video": "eojeon-prologue-v23.mp4",
+  "soundtrack": "eojeon-prologue-continuous.m4a",
+  "duration": 128,
+  "musicLoopStart": 59,
+  "musicSource": "assets\\bgm\\suno-2026-10-05\\theme-source.mp3",
+  "sourceOffsetSeconds": -2.1,
+  "matchedCorrelation": 0.999788493923418,
+  "matchedGain": 0.791814386844635,
+  "first54Seconds": "Original V23 mix, including dialogue",
+  "seconds54to55": "One-second transition to the same source at its matching time",
+  "musicLoopCrossfadeSeconds": [
+    124,
+    128
+  ],
+  "bytes": 2595995,
+  "sha256": "bc3d3646996cc89125dde66a77afed3a9826f46fa41aff8e7967e29a3b28e885"
+}

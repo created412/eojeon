@@ -6,8 +6,13 @@ import { INQUIRIES } from '../data/inquiries.js'
 import { inquiryHtml, bindInquiry, installInquiryStyle } from './source-inquiry.js'
 import { seenArtifacts } from '../systems/artifacts.js'
 import { artifactById } from '../data/artifacts.js'
+import { discoveryDecoration, palaceCollectionHtml } from './palace-discoveries.js'
+import { PALACE_LIFE_COLLECTION } from '../systems/palace-discoveries.js'
 import { RUMOR_NOTICE } from './grade-notice.js'
-import { readFor, partsOf, initialRead, underline, readDone, readHint, readRecord, READ_LINES } from '../systems/source-read.js'
+import {
+  readFor, partsOf, initialRead, underline, readDone, readComplete, readHint, readRecord, READ_LINES,
+  probeOf, answerProbe, probeHint, PROBE_TYPES,
+} from '../systems/source-read.js'
 export { RUMOR_NOTICE }
 
 const CSS = `
@@ -100,6 +105,23 @@ const CSS = `
 .card .record.read-done .part.hit{border-bottom:3px solid #a3302a;background:#a3302a1c}
 .card .read-say{min-height:1.5em;margin:0 0 12px;font-size:var(--read-small,14px);line-height:1.6;color:#7a3a22;word-break:keep-all}
 .card .read-say.found{color:#2a2418;border-left:4px solid #a3302a;padding:6px 0 6px 12px;font-size:var(--read-body,15.5px)}
+/* ── 따져 읽기 (2026-10-06) — 밑줄을 그은 뒤에 오는 물음 하나. 사료마다 따지는 것이 다르다. */
+.card .probe{margin:14px 0 4px;padding:12px 14px 14px;border:1px solid #3c5a6666;border-left:4px solid #3c5a66;background:#3c5a6612}
+.card .probe[hidden]{display:none}
+.card .probe .kind{display:block;font-size:var(--read-caption,12px);letter-spacing:.12em;color:#2f4a55;font-weight:600;margin-bottom:3px}
+.card .probe .q{margin:0 0 10px;font-size:var(--read-body,16px);line-height:1.6;color:#1d2a30;word-break:keep-all}
+.card .probe .opts{display:flex;flex-direction:column;gap:7px}
+.card .probe .popt{font:inherit;font-size:var(--read-body,15.5px);line-height:1.5;text-align:left;padding:9px 13px;background:#fbf7ea;
+  border:1px solid #8a9aa2;border-radius:3px;color:#1d2a30;cursor:pointer;word-break:keep-all}
+.card .probe .popt:hover:not(:disabled){border-color:#3c5a66;background:#fff}
+.card .probe .popt:focus-visible{outline:2px solid #3c5a66;outline-offset:2px}
+.card .probe .popt.no{animation:card-no .3s;opacity:.55}
+.card .probe .popt.glow{border-color:#b0701a;box-shadow:0 0 0 3px #e0a23a55}
+.card .probe .popt.picked{border-color:#3c5a66;background:#3c5a6622;font-weight:600}
+.card .probe .popt:disabled{cursor:default}
+.card .probe.done .popt:not(.picked){display:none}
+.card .probe .psay{min-height:1.4em;margin:9px 0 0;font-size:var(--read-small,14.5px);line-height:1.6;color:#7a3a22;word-break:keep-all}
+.card .probe.done .psay{color:#1d2a30;font-size:var(--read-body,15.5px)}
 /* 긋기 전의 해석 — 가려 둔다. 있다는 것은 보이되 읽히지는 않는다. */
 .card.reading-locked .reading{position:relative;min-height:64px}
 .card.reading-locked .reading .meaning{filter:blur(6px);opacity:.35;user-select:none;max-height:3.6em;overflow:hidden}
@@ -164,7 +186,7 @@ export function noticeFor(card) {
 // onClose — 이 화면이 닫힐 때마다 한 번 불린다(어떻게 닫히든). 이 모듈은 소리를
 // 모른다: 무슨 소리를 낼지는 부르는 쪽(main.js)이 정한다 — ui/brush.js 의 onStroke 와
 // 같은 모양이다. 화면 안 「닫기」 단추가 유일한 길인 기기(태블릿)에서도 이 알림은 온다.
-export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), onInquirySave=()=>{}, onRead=()=>{}, onReadTap=()=>{} } = {}) {
+export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), onInquirySave=()=>{}, onRead=()=>{}, onReadTap=()=>{}, onReadMiss=()=>{} } = {}) {
   installHistoricalMedia()
   installInquiryStyle()
   const style = document.createElement('style')
@@ -214,7 +236,36 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
     const closeBtn = veil.querySelector('.close')
     const parts = [...veil.querySelectorAll('.record .part')]
     closeBtn.disabled = true
-    inquiry = { ready: () => readDone(state), blockLine: READ_LINES.blocked }
+    const probe = probeOf(spec)
+    const probeEl = veil.querySelector('.probe')
+    inquiry = { ready: () => readComplete(spec, state),
+      get blockLine() { return readDone(state) ? READ_LINES.probeBlocked : READ_LINES.blocked } }
+    // 따져 읽기 — 밑줄을 그은 뒤에 열린다. 답해야 문서를 덮을 수 있다.
+    if (probe && probeEl) {
+      const psay = probeEl.querySelector('.psay')
+      for (const btn of probeEl.querySelectorAll('.popt')) {
+        btn.addEventListener('click', () => {
+          const r = answerProbe(spec, state, btn.dataset.opt)
+          const missed = r.state.probeMisses > state.probeMisses
+          state = r.state
+          onReadTap(r.ok)
+          if (missed && onReadMiss(r.say) === true) return
+          psay.textContent = r.say
+          if (r.ok) {
+            btn.classList.add('picked')
+            probeEl.classList.add('done')
+            for (const b of probeEl.querySelectorAll('.popt')) { b.disabled = true; b.classList.remove('glow', 'no') }
+            closeBtn.disabled = false
+            onRead(card.id, readRecord(spec, state))
+            closeBtn.focus?.()
+            return
+          }
+          btn.classList.remove('no'); void btn.offsetWidth; btn.classList.add('no')
+          const hint = probeHint(spec, state)
+          if (hint) probeEl.querySelector(`.popt[data-opt="${hint}"]`)?.classList.add('glow')
+        })
+      }
+    }
     for (const btn of parts) {
       btn.addEventListener('click', () => {
         if (readDone(state)) return
@@ -222,6 +273,7 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
         const r = underline(spec, state, i)
         state = r.state
         onReadTap(r.ok)
+        if (!r.ok && onReadMiss(READ_LINES.miss) === true) return
         if (r.ok) {
           btn.classList.add('hit')
           for (const p of parts) p.classList.remove('glow', 'no')
@@ -230,8 +282,15 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
           veil.querySelector('.ask')?.remove()
           say.textContent = spec.found
           say.classList.add('found')
-          closeBtn.disabled = false
           onRead(card.id, readRecord(spec, state))
+          if (probe && probeEl) {
+            // 밑줄은 그었다 — 이제 따져 읽는다. 문서는 아직 덮이지 않는다.
+            probeEl.hidden = false
+            probeEl.scrollIntoView?.({ block: 'nearest' })
+            probeEl.querySelector('.popt')?.focus?.()
+            return
+          }
+          closeBtn.disabled = false
           closeBtn.focus?.()
           return
         }
@@ -244,6 +303,8 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
   }
 
   return {
+    // 再시작은 닫기 완료가 아니다. 대기 중인 카드 지급·다음 장면을 실행하지 않는다.
+    dispose() { pendingOnClose = null; inquiry = null; veil?.remove(); veil = null; style.remove() },
     isOpen: () => veil !== null,
     close,
     showCard(card, onClose) {
@@ -265,6 +326,14 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
         : card.excerpt
       const askHtml = readSpec && !solvedBefore
         ? `<p class="ask"><b>밑줄 긋기</b>${readSpec.q}</p>` : ''
+      // 따져 읽기 — 처음에는 숨어 있다가 밑줄을 그으면 열린다. 이미 읽은 문서는 고른 답과 풀이를 보여 준다.
+      const probe = readSpec ? probeOf(readSpec) : null
+      const probeHtml = !probe ? '' : `<div class="probe${solvedBefore ? ' done' : ''}"${solvedBefore ? '' : ' hidden'}>
+          <span class="kind">따져 읽기 · ${PROBE_TYPES[probe.type] ?? ''}</span>
+          <p class="q">${probe.ask}</p>
+          <div class="opts">${probe.options.map(o => `<button type="button" class="popt${solvedBefore && o.id === probe.answer ? ' picked' : ''}" data-opt="${o.id}"${solvedBefore ? ' disabled' : ''}>${o.text}</button>`).join('')}</div>
+          <p class="psay" role="status" aria-live="polite">${solvedBefore ? (probe.ok ?? '') : ''}</p>
+        </div>`
       open(`<div class="card${media ? ' has-media' : ''}${INQUIRIES[card.id]?' has-inquiry':''}${readSpec && !solvedBefore ? ' reading-locked' : ''}">
         <div class="source-layout"><div class="source-copy">
         <h3>${card.title}</h3>
@@ -280,6 +349,7 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
           <span class="part-label">${READING_LABEL}</span>
           <div class="meaning">${card.meaning}</div>
         </div>
+        ${probeHtml}
         ${notice}
         ${inquiryHtml(card.id)}
         </div>${mediaFigure(media)}</div>
@@ -306,9 +376,14 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
         <div class="grp"><b>가지고 있는 문서 ${held.length}</b>${held.map(row).join('') || '<div class="row">아직 없다</div>'}</div>
         <div class="grp"><b>잃어버린 문서 ${gone.length}</b>${gone.map(row).join('') || '<div class="row">아직 없다</div>'}</div>
         <div class="grp"><b>본 물건 ${seenNames.length}</b>${seenNames.map(n => `<div class="row">${n}</div>`).join('') || '<div class="row">아직 없다 — 궁을 걸어 다니며 물건 앞에서 E 를 눌러 보라</div>'}</div>
+        ${palaceCollectionHtml(state)}
         <button class="close">닫기 (Q)</button>
       </div>`, onClose)
       const readCards=held.filter(c=>isRead(state,c.id))
+      veil.querySelector('[data-palace-collection]')?.addEventListener('click',()=>{
+        pendingOnClose=null
+        this.showArtifact(PALACE_LIFE_COLLECTION,PALACE_LIFE_COLLECTION.lines,()=>this.showCodex(state,onClose))
+      })
       veil.querySelectorAll('.row').forEach(row=>{
         const card=readCards.find(c=>row.textContent===c.title)
         if(!card)return
@@ -328,7 +403,8 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
     showArtifact(artifact, lines = [], onClose) {
       const hanja = artifact.hanja ? `<div class="gloss">${artifact.hanja}</div>` : ''
       open(`<div class="card lore">
-        <h3>${artifact.name}<small>물건</small></h3>
+        <h3>${artifact.name}<small>${artifact.collection?'발견 모음 · 재구성':artifact.discovery?'궁살림 · 재구성':'물건'}</small></h3>
+        ${discoveryDecoration(artifact)}
         ${hanja}
         ${lines.map(l => `<p class="talkline">${l}</p>`).join('')}
         <div class="rendered">※ ${artifact.note}</div>

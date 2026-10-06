@@ -6,6 +6,7 @@ import { buildPalaceGarden, makeHallSign } from './palace-garden.js'
 import { buildInterior } from './interiors.js'
 import { buildYardProps } from './yard-props.js'
 import { buildYardFeatures } from './yard-features.js'
+import { buildPalaceDiscoveries } from './palace-discoveries.js'
 import { woodGrain, dancheong, roofTile, baksok, changhoji, maru } from './film-textures.js'
 
 export function makeTextures(THREE) {
@@ -513,6 +514,7 @@ export function buildPalace(THREE, tex, def) {
   root.add(buildWall(THREE, def.ground))
   root.add(buildYard(THREE, tex, def))
   root.add(buildPalaceGarden(def))
+  root.add(buildPalaceDiscoveries(THREE,def))
 
   for (const r of def.rooms) {
     const hall = buildHall(THREE, tex, {

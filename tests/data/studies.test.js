@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { STUDIES, DILEMMAS, studyById, dilemmaById } from '../../src/data/studies.js'
+import { STUDIES, DILEMMAS, studyById, studyForCard, dilemmaById } from '../../src/data/studies.js'
 import { ACTS } from '../../src/data/acts.js'
 import { SOURCES } from '../../src/data/sources.js'
 import { INQUIRIES } from '../../src/data/inquiries.js'
@@ -50,8 +50,21 @@ function walk(study) {
 }
 
 describe('뜯어 읽는 문서 — 데이터', () => {
-  it('세 판이 있다 — 조약문 · 두 글자 · 정강', () => {
-    expect(Object.keys(STUDIES)).toEqual(['treaty1876', 'sokbang1882', 'reform1884'])
+  it('네 판이 있다 — 조약문 · 두 글자 · 조선책략 · 정강', () => {
+    expect(Object.keys(STUDIES)).toEqual(['treaty1876', 'sokbang1882', 'chaeryak1880', 'reform1884'])
+  })
+
+  // 『조선책략』은 막의 비트가 아니라, 그 책을 받는 순간 열린다(card).
+  it('『조선책략』 판은 그 책의 카드에 걸려 있다 — 받으면 열린다', () => {
+    expect(studyForCard('joseon-chaeryak')?.id).toBe('chaeryak1880')
+    expect(studyForCard('reform14')).toBeNull()
+    const s = STUDIES.chaeryak1880
+    expect(blanksOf(s).map(b => b.answer)).toEqual(['러시아', '중국', '일본', '미국'])
+    // 마지막 두 걸음이 「누가 썼는가」와 「그러니 어떻게 읽을 것인가」다.
+    expect(s.steps.at(-2).ok).toContain('청의 외교관')
+    expect(s.steps.at(-1).note).toContain('누가 썼는지를 알고 읽는다')
+    // 해석을 써 넣는 걸음이 없다.
+    expect(s.steps.every(step => ['pick', 'fill', 'flip'].includes(step.kind))).toBe(true)
   })
 
   for (const study of Object.values(STUDIES)) {
@@ -216,8 +229,9 @@ describe('뜯어 읽는 문서 — 셈', () => {
 })
 
 describe('고민해서 정하는 자리 — 데이터', () => {
-  it('세 자리가 있다 — 서계 · 임오 · 정강', () => {
-    expect(Object.keys(DILEMMAS)).toEqual(['seogye', 'imo', 'reform'])
+  // 셋 → 넷 (2026-10-06): 4막에 「이 보고를 듣고 무엇을 명할 것인가」(도봉소의 일, 난이 나기 나흘 전).
+  it('네 자리가 있다 — 서계 · 급료의 보고 · 임오 · 정강', () => {
+    expect(Object.keys(DILEMMAS)).toEqual(['seogye', 'ration', 'imo', 'reform'])
   })
 
   for (const d of Object.values(DILEMMAS)) {
@@ -230,11 +244,11 @@ describe('고민해서 정하는 자리 — 데이터', () => {
       expect(new Set(d.options.map(o => o.id)).size).toBe(d.options.length)
     })
 
-    it(`${d.id} — 맞는 보기를 정해 두지 않고, 뒤에는 교과서의 문장이 온다`, () => {
+    it(`${d.id} — 맞는 보기를 정해 두지 않고, 뒤에는 교과서나 실록의 문장이 온다`, () => {
       expect(d.answer).toBeUndefined()
       for (const o of d.options) expect(o.correct).toBeUndefined()
       expect(d.actual.length).toBeGreaterThan(20)
-      expect(d.origin).toContain('『고등 한국사1』')
+      expect(d.origin).toMatch(/『고등 한국사1』|『고종실록』/)
     })
   }
 
@@ -243,6 +257,18 @@ describe('고민해서 정하는 자리 — 데이터', () => {
     expect(DILEMMAS.seogye.actual).toContain('운요호')
     expect(DILEMMAS.imo.actual).toContain('흥선 대원군에게 수습을 맡겼다')
     expect(DILEMMAS.reform.actual).toContain('사흘 만에 무너졌다')
+  })
+
+  // 선생님(2026-10-06): 「군병들이 왜 봉기했는지 잘 스토리에 안 드러나 있어.」
+  it('급료의 보고 — 「실제로는」은 실록이 적은 그대로다: 군졸을 다스린다는 말은 있고, 급료를 내주라는 명은 없다', () => {
+    const d = DILEMMAS.ration
+    expect(d.actual).toContain('엄하게 조사한 다음 법률을 적용하게')
+    expect(d.actual).toContain('섬이 차지 않은 것은 또한 무슨 까닭인가')
+    expect(d.actual).toContain('보이지 않는다')
+    expect(d.origin).toContain('6월 5일')
+    expect(d.after).toContain('포도청')
+    expect(d.after).toContain('나흘 뒤')
+    expect(d.options.map(o => o.id)).toEqual(['pay', 'probe', 'punish'])
   })
 })
 
@@ -260,9 +286,9 @@ describe('막에 실린 자리', () => {
   const studies = allBeats.filter(b => b.kind === 'study')
   const dilemmas = allBeats.filter(b => b.kind === 'dilemma')
 
-  it('문서 판 셋과 선택 셋이 모두 막에 실려 있다', () => {
+  it('문서 판 셋과 선택 넷이 모두 막에 실려 있다', () => {
     expect(studies.map(b => `${b.act}/${b.study}`)).toEqual(['chinjeong/treaty1876', 'imo/sokbang1882', 'gapsin/reform1884'])
-    expect(dilemmas.map(b => `${b.act}/${b.dilemma}`)).toEqual(['chinjeong/seogye', 'imo/imo', 'gapsin/reform'])
+    expect(dilemmas.map(b => `${b.act}/${b.dilemma}`)).toEqual(['chinjeong/seogye', 'imo/ration', 'imo/imo', 'gapsin/reform'])
   })
 
   it('비트의 제목이 판의 제목과 같다 — 막 안내도에 그 이름이 뜬다', () => {

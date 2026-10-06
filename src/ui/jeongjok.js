@@ -8,6 +8,8 @@
 // ⚠ 한 화면에 들어온다. 길의 높이는 화면 높이를 따라 준다.
 import { installTypeVars } from './type-css.js'
 import { SCENE_ART } from './scene-art-data.js'
+import { BATTLE_ART } from './battle-art-data.js'
+import { drawInfantry } from './battle-painter.js'
 import {
   LANES, REACH, FEINT_MS, createBattle, tick, fire, frontSquad, inReach, reloadRatio, totalSquads, resolved,
   battleResult, BATTLE_LINES,
@@ -114,6 +116,7 @@ const CSS = `
 .jeongjok .sheet p{margin:0;font-size:clamp(14.5px,2.3vh,18px);line-height:1.7;color:#e3dece;word-break:keep-all}
 .jeongjok .sheet figure{margin:0}
 .jeongjok .sheet figure img{display:block;width:100%;height:clamp(64px,16vh,150px);object-fit:cover;border-radius:3px}
+.jeongjok .sheet .gone-art img{height:clamp(110px,28vh,280px);object-position:50% 45%;border:1px solid #6a5230}
 .jeongjok .sheet figcaption{margin-top:4px;font-size:clamp(11px,1.6vh,12.5px);color:#7f8ba0}
 .jeongjok .sheet .rule{padding-left:14px;border-left:3px solid #e0a23a;color:#fdf6e6}
 .jeongjok .sheet .quiet{font-size:clamp(12.5px,1.9vh,14.5px);line-height:1.6;color:#98a2b3}
@@ -133,6 +136,34 @@ const CSS = `
 @media(prefers-reduced-motion:reduce){
   .jeongjok .squad.exposed::after,.jeongjok .gate.flash,.jeongjok .gate.hurt,.jeongjok .embers i{animation:none}
 }
+/* 선생님(2026-10-06): 「힉스필드를 이용해서 진짜 게임같이」.
+   한 전장 위 두 접근로. 밝은 경계와 성문 조작만 남기고 격자와 네모 병사를 걷었다. */
+.jeongjok{background:#0b1015}
+.jeongjok .wrap{max-width:1600px;gap:10px;padding:16px 24px}
+.jeongjok .head{padding:0 4px 10px;border-bottom:1px solid #bcab7938;align-items:center}
+.jeongjok .field{position:relative;display:block;isolation:isolate;overflow:hidden;border:1px solid #bba67855;border-radius:4px;background:#18232c center/cover no-repeat;box-shadow:0 15px 50px #0006}
+.jeongjok .field::before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#080e1720 20%,#080d1630 60%,#080d16a6),linear-gradient(90deg,#07101755,transparent 50%)}
+.jeongjok .lane{position:absolute;left:1.5%;right:1.5%;top:49%;height:24%;grid-template-columns:clamp(90px,12vw,154px) minmax(0,1fr);background:none;border:0;border-radius:0;overflow:visible}
+.jeongjok .lane[data-lane=south]{top:75%}
+.jeongjok .gate{background:linear-gradient(115deg,#172026ec,#10171dc9);border:1px solid #b99b6099;border-left:3px solid #d8b579;border-radius:3px;gap:3px;box-shadow:0 8px 20px #0007;align-self:center;height:90%;max-height:142px;min-height:58px}
+.jeongjok .gate b{font-size:clamp(18px,3vh,28px)}
+.jeongjok .firebtn{padding:7px 4px;min-height:32px;background:linear-gradient(#75563255,#322619aa);border-color:#b89356;color:#ffdf9d}
+.jeongjok .track{background:linear-gradient(180deg,transparent 38%,#61513a55 52%,#95836350 60%,#29291e66 74%,transparent 95%);border-bottom:1px solid #d5bc7918}
+.jeongjok .track::after{background:none}
+.jeongjok .reach{top:34%;bottom:12%;border-right:2px solid #e8c681bb;background:linear-gradient(90deg,#e0a23a08,#e0a23a28);transform:skewY(2deg);box-shadow:1px 0 12px #ffc36540}
+.jeongjok .reach small{top:-26px;left:10px;padding:3px 7px;background:#11191dd9;border:1px solid #bfa16755;border-radius:2px;transform:skewY(-2deg);font-size:clamp(11px,1.65vh,14px)}
+.jeongjok .far{top:auto;bottom:4px;color:#d9dbc8;text-shadow:0 1px 5px #000}
+.jeongjok .squad{top:63%;width:clamp(100px,15vh,155px);height:clamp(64px,11vh,110px);display:block;transform:translate(-20%,-72%);filter:drop-shadow(0 2px 2px #0009)}
+.jeongjok .squad canvas{display:block;width:100%;height:100%}
+.jeongjok .cue{z-index:4;text-shadow:0 2px 4px #000,0 0 12px #f0ba55}
+.jeongjok .shot{z-index:5;box-shadow:0 0 10px #ffd48a99}
+.jeongjok .battle-smoke{position:absolute;left:-28px;top:20%;width:130px;height:70px;pointer-events:none;background:radial-gradient(ellipse,#e1d9bb88,transparent 66%);animation:jj-smoke 1s ease-out forwards;z-index:4}
+@keyframes jj-smoke{from{transform:scale(.4);opacity:.8}to{transform:translate(55px,-20px) scale(1.8);opacity:0}}
+.jeongjok.battle-paused *{animation-play-state:paused!important}
+.jeongjok .foot{min-height:0;padding:0 4px}
+@media(max-height:500px){.jeongjok .wrap{padding:8px 14px;gap:6px}.jeongjok .head{gap:10px;padding-bottom:5px}.jeongjok .sub{display:none}.jeongjok .meters{font-size:12px}.jeongjok .gate{gap:1px}.jeongjok .embers{display:none}.jeongjok .firebtn{padding:4px;min-height:28px}.jeongjok .reach small{top:-21px;padding:2px 5px}.jeongjok .say{font-size:14px}.jeongjok .src{font-size:10px}}
+@media(max-width:640px){.jeongjok .wrap{padding:10px}.jeongjok .meters{font-size:11px;gap:10px}.jeongjok .pips{gap:2px}.jeongjok .pips i{width:8px;height:8px}.jeongjok .reach small{white-space:normal;line-height:1.15}.jeongjok .far{display:none}}
+@media(prefers-reduced-motion:reduce){.jeongjok .battle-smoke{animation:none;opacity:.25}.jeongjok .squad.routed,.jeongjok .squad.breached{animation:none;opacity:.25}}
 `
 
 let styled = false
@@ -194,8 +225,11 @@ export function introHtml(view, tries = 1) {
 }
 
 export function resultHtml(view) {
+  // 선생님(2026-10-06): 「이것도 물러간 그림이 있어야지, 힉스필드로 만들어넣어」 — 물러가는 프랑스군(재구성).
+  const gone = SCENE_ART[view.resultArt ?? 'retreat-1866']
   return `<div class="sheet">
     <h3>${esc(view.resultTitle ?? '저들이 물러갔다')}</h3>
+    ${gone ? `<figure class="gone-art"><img src="${gone.src}" alt="${esc(gone.alt)}"><figcaption>${esc(gone.caption)}</figcaption></figure>` : ''}
     <blockquote>${esc(view.quote ?? '')}<small>${esc(view.quoteBy ?? '')}</small></blockquote>
     <span class="label">실 제 로 는</span>
     <p>${esc(view.actual ?? '')}</p>
@@ -205,7 +239,7 @@ export function resultHtml(view) {
   </div>`
 }
 
-export function createJeongjok(root) {
+export function createJeongjok(root, { clock = null } = {}) {
   ensureStyle()
   return {
     /**
@@ -222,6 +256,9 @@ export function createJeongjok(root) {
         el.setAttribute('aria-modal', 'true')
         el.innerHTML = battleHtml(view, state)
         root.appendChild(el)
+        el.querySelector('.field').style.backgroundImage = `url("${BATTLE_ART.jeongjok}")`
+        const reduced = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false
+        const later = (fn, ms) => (clock?.delay ?? setTimeout)(() => { if (!closed) fn() }, ms)
 
         const say = el.querySelector('.say')
         const stage = el.querySelector('.stage')
@@ -242,10 +279,13 @@ export function createJeongjok(root) {
           node.className = cls
           for (const [k, v] of Object.entries(vars)) node.style.setProperty(k, v)
           track.appendChild(node)
-          setTimeout(() => node.remove(), ms)
+          later(() => node.remove(), ms)
           return node
         }
-        const pulse = (node, cls) => { node.classList.remove(cls); void node.offsetWidth; node.classList.add(cls) }
+        const pulse = (node, cls) => {
+          node.classList.remove(cls); void node.offsetWidth; node.classList.add(cls)
+          if (cls === 'flash') fx(node.parentElement.querySelector('.track'), 'battle-smoke', {}, 1000)
+        }
         const markDone = cls => { donePips[doneCount++]?.classList.add(cls) }
 
         function handle(events) {
@@ -254,7 +294,8 @@ export function createJeongjok(root) {
             if (e.type === 'spawn') {
               const node = document.createElement('div')
               node.className = 'squad'
-              node.innerHTML = '<i></i><i></i><i></i><i></i><i></i><i></i>'
+              node.innerHTML = '<canvas width="280" height="176" aria-hidden="true"></canvas>'
+              node._g = node.firstChild.getContext('2d')
               node.style.setProperty('--p', '1')
               lane.track.appendChild(node)
               squadEls.set(e.id, node)
@@ -266,7 +307,7 @@ export function createJeongjok(root) {
               fx(lane.track, 'shot', { '--to': at }, 400)
               pulse(lane.gate, 'flash')
               node?.classList.add('routed')
-              setTimeout(() => node?.remove(), 720)
+              later(() => node?.remove(), 720)
               squadEls.delete(e.id)
               markDone('on')
               say.textContent = BATTLE_LINES.hit
@@ -278,7 +319,7 @@ export function createJeongjok(root) {
               fx(lane.track, 'puff', { '--at': String(REACH) }).textContent = '닿지 않는다'
               pulse(lane.gate, 'flash')
               node?.classList.add('exposed')
-              setTimeout(() => { fx(lane.track, 'shot back', { '--from': from }, 400); pulse(lane.gate, 'hurt') }, 360)
+              later(() => { fx(lane.track, 'shot back', { '--from': from }, 400); pulse(lane.gate, 'hurt') }, 360)
               say.textContent = BATTLE_LINES.early
               view.onVolley?.('early')
             } else if (e.type === 'empty') {
@@ -292,7 +333,7 @@ export function createJeongjok(root) {
             } else if (e.type === 'breach') {
               const node = squadEls.get(e.id)
               node?.classList.add('breached')
-              setTimeout(() => node?.remove(), 520)
+              later(() => node?.remove(), 520)
               squadEls.delete(e.id)
               pulse(lane.gate, 'hurt')
               markDone('lost')
@@ -312,6 +353,11 @@ export function createJeongjok(root) {
             if (!node) continue
             node.style.setProperty('--p', s.p.toFixed(4))
             node.classList.toggle('held', s.pause > 0 || (s.feint && s.held > 0 && s.held < FEINT_MS))
+            const g = node._g
+            g.clearRect(0, 0, 280, 176)
+            for (let i = 0; i < 6; i++) drawInfantry(g, 50 + i % 3 * 66, 96 + Math.floor(i / 3) * 48, 1.8, {
+              phase: reduced ? 0 : last / 130 + i * 1.6, held: node.classList.contains('held'),
+            })
             if (s.pause <= 0) node.classList.remove('exposed')
           }
           for (const [id, lane] of lanes) {
@@ -326,6 +372,10 @@ export function createJeongjok(root) {
 
         function frame(now) {
           if (!running) return
+          const paused = !!clock?.isPaused()
+          el.classList.toggle('battle-paused', paused)
+          if (paused) { raf = requestAnimationFrame(frame); return }
+          now = clock?.now() ?? now
           const dt = Math.min(80, now - last)   // 탭을 떠났다 돌아와도 한꺼번에 흐르지 않는다
           last = now
           const r = tick(state, dt)
@@ -336,7 +386,7 @@ export function createJeongjok(root) {
         }
 
         function shoot(laneId) {
-          if (!running) return
+          if (clock?.isPaused() || !running) return
           const r = fire(state, laneId)
           state = r.state
           handle(r.events)
@@ -344,7 +394,7 @@ export function createJeongjok(root) {
         }
 
         function onKey(e) {
-          if (!running || e.repeat) return
+          if (!running || clock?.isPaused() || e.repeat) return
           const k = e.key.toLowerCase()
           const lane = k === 'w' || k === 'arrowup' || k === '1' || k === 'ㅈ' ? 'east'
             : k === 's' || k === 'arrowdown' || k === '2' || k === 'ㄴ' ? 'south' : null
@@ -379,11 +429,11 @@ export function createJeongjok(root) {
           const result = battleResult(state, tries)
           if (!result.cleared) {
             // 못 버틴 판은 잠깐 멈춰 보여 준 뒤 닫는다 — 「아직」 화면은 부른 쪽이 띄운다.
-            setTimeout(() => finish(result), 1100)
+            (clock?.delay ?? setTimeout)(() => finish(result), 1100)
             return
           }
           view.onWin?.()
-          setTimeout(() => {
+          ;(clock?.delay ?? setTimeout)(() => {
             if (closed) return
             const panel = document.createElement('div')
             panel.className = 'panel'
@@ -404,7 +454,7 @@ export function createJeongjok(root) {
         start.addEventListener('click', () => {
           intro.remove()
           running = true
-          last = performance.now()
+          last = clock?.now() ?? performance.now()
           paint()
           raf = requestAnimationFrame(frame)
         })

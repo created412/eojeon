@@ -1,16 +1,16 @@
 [
   {
     "id": "heungseon",
-    "title": "Daewongun-1883.jpg",
-    "caption": "흥선대원군 · 1883년 사진",
-    "credit": "양시태 조상관 · 서울역사박물관 소장",
+    "title": "Heungseon Daewongun Portrait.jpg",
+    "caption": "흥선대원군 · 1898년 이전 사진",
+    "credit": "Homer Hulbert · The Passing of Korea (1906) 수록",
     "license": "Public domain",
     "licenseUrl": "https://creativecommons.org/publicdomain/mark/1.0/",
-    "source": "https://commons.wikimedia.org/wiki/File%3ADaewongun-1883.jpg",
-    "originalPath": "assets/historical/originals/heungseon.jpg",
-    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/6/63/Daewongun-1883.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File%3AHeungseon_Daewongun_Portrait.jpg",
+    "originalPath": "assets/historical/originals/heungseon-hulbert.jpg",
+    "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/1/18/Heungseon_Daewongun_Portrait.jpg",
     "processing": "원본의 비율·내용·색상 유지; 크기 조정 및 WebP 압축",
-    "retrieved": "2026-09-11"
+    "retrieved": "2026-10-06"
   },
   {
     "id": "choeikhyeon",

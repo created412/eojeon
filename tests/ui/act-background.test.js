@@ -55,10 +55,8 @@ describe('배경지식 — 무엇을 싣는가', () => {
     }
   })
 
-  it('걷어 낸 것을 다시 들이지 않는다 — 왕비도, 사진도', () => {
-    const all = JSON.stringify(ACT_BACKGROUND)
-    expect(all).not.toContain('왕비')
-    expect(all).not.toContain('media')
+  it('걷어 낸 것을 다시 들이지 않는다 — 왕비', () => {
+    expect(JSON.stringify(ACT_BACKGROUND)).not.toContain('왕비')
   })
 })
 
@@ -107,7 +105,7 @@ describe('판이 실제로 그려진다', () => {
   const html = backgroundHtml(view)
 
   it('줄이 하나도 빠지지 않는다', () => {
-    expect(html.match(/<li>/g)).toHaveLength(view.rows.length)
+    expect(html.match(/<li /g)).toHaveLength(view.rows.length)
     for (const row of view.rows) expect(html).toContain(row.year)
   })
 

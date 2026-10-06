@@ -126,6 +126,32 @@ export function buildYardProp(THREE, p) {
   return pivot
 }
 
+// ── 사람 꼴의 모델(난병 · 청군) ───────────────────────────────────────────
+// 같은 묶음(props-data.js)에 실려 있지만 마당에 놓는 물건이 아니다 — render/crisis.js 가 달아나는
+// 판에서 세운다. 걷는 뼈대가 없는 한 덩어리 메시라, 선 자리에서 들썩이게만 한다.
+// 2026-10-06 선생님: 「임오군란 군병들의 디자인이 거지같아. 힉스필드로 군병들을 제대로 만들어.」
+export const FIGURE_IDS = ['rioter_spear', 'rioter_torch', 'rioter_town', 'qing_soldier']
+export const FIGURE_HEIGHT = 2.8   // 임금 키가 2.89 다
+
+/** 사람 하나. 모델이 아직 안 풀렸으면 풀린 뒤에 채워 넣는다(그때까지 빈 그룹이다). */
+export function buildFigure(THREE, id, height = FIGURE_HEIGHT) {
+  const pivot = new THREE.Group()
+  pivot.userData.figureId = id
+  const attach = () => {
+    const src = loaded.get(id)
+    // ⚠ children 의 수로 재지 않는다 — 부른 쪽이 횃불 빛 같은 것을 먼저 달아 둘 수 있다
+    //   (그렇게 재다가 횃불 든 군인만 영영 서지 않았다).
+    if (!src || pivot.userData.ready) return
+    const obj = src.clone(true)
+    fitToHeight(THREE, obj, height)
+    pivot.add(obj)
+    pivot.userData.ready = true
+  }
+  if (loaded.has(id)) attach()
+  else propsReady(THREE).then(attach)
+  return pivot
+}
+
 // 궁 하나의 마당 물건 전부.
 export function buildYardProps(THREE, def) {
   const g = new THREE.Group()

@@ -1,0 +1,3303 @@
+{
+  "environment": "Windows Chrome; actual media decoding, host speaker output suppressed",
+  "scenes": [
+    {
+      "index": 0,
+      "act": 0,
+      "id": "unhyeon-note",
+      "kind": "note",
+      "beat": "unhyeon-note",
+      "phase": "beat",
+      "expected": "act1",
+      "wanted": "act1",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act1",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.728088,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 1,
+      "act": 0,
+      "id": "unhyeon-day",
+      "kind": "explore",
+      "beat": "unhyeon-day",
+      "phase": "day",
+      "expected": "act1",
+      "wanted": "act1",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act1",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.420291,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 2,
+      "act": 0,
+      "id": "unhyeon-summons",
+      "kind": "audience",
+      "beat": "unhyeon-summons",
+      "phase": "audience",
+      "expected": "act1",
+      "wanted": "act1",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act1",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.534385,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 3,
+      "act": 0,
+      "id": "unhyeon-procession",
+      "kind": "procession",
+      "beat": "unhyeon-procession",
+      "phase": "audience",
+      "expected": "march",
+      "wanted": "march",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act1",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "march",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.379952,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 4,
+      "act": 0,
+      "id": "throne",
+      "kind": "note",
+      "beat": "throne",
+      "phase": "beat",
+      "expected": "act1",
+      "wanted": "act1",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act1",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.239307,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 5,
+      "act": 0,
+      "id": "audience",
+      "kind": "audience",
+      "beat": "audience",
+      "phase": "audience",
+      "expected": "act1",
+      "wanted": "act1",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act1",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.065378,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 6,
+      "act": 0,
+      "id": "funding",
+      "kind": "funding",
+      "beat": "funding",
+      "phase": "beat",
+      "expected": "council",
+      "wanted": "council",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act1",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 3.948052,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "council",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.022798,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 7,
+      "act": 1,
+      "id": "byeongin",
+      "kind": "note",
+      "beat": "byeongin",
+      "phase": "beat",
+      "expected": "act2",
+      "wanted": "act2",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act2",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.088657,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 8,
+      "act": 1,
+      "id": "byeongin-audience",
+      "kind": "audience",
+      "beat": "byeongin-audience",
+      "phase": "audience",
+      "expected": "act2",
+      "wanted": "act2",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act2",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.126734,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 9,
+      "act": 1,
+      "id": "day-changdeok",
+      "kind": "explore",
+      "beat": "day-changdeok",
+      "phase": "day",
+      "expected": "act2",
+      "wanted": "act2",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act2",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.07168,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 10,
+      "act": 1,
+      "id": "janggye-arrives",
+      "kind": "audience",
+      "beat": "janggye-arrives",
+      "phase": "audience",
+      "expected": "act2",
+      "wanted": "act2",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act2",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.08004,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 11,
+      "act": 1,
+      "id": "jeongjok-battle",
+      "kind": "defend",
+      "beat": "jeongjok-battle",
+      "phase": "beat",
+      "expected": "tension",
+      "wanted": "tension",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act2",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "tension",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.384659,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 12,
+      "act": 1,
+      "id": "oegyujanggak-plunder",
+      "kind": "plunder",
+      "beat": "oegyujanggak-plunder",
+      "phase": "beat",
+      "expected": null,
+      "wanted": null,
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act2",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "loss",
+          "loop": false,
+          "paused": false,
+          "muted": false,
+          "time": 2.183689,
+          "volume": 0.44799999999999995,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 13,
+      "act": 1,
+      "id": "move-1868-out",
+      "kind": "procession",
+      "beat": "move-1868-out",
+      "phase": "audience",
+      "expected": "march",
+      "wanted": "march",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act2",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "march",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.193819,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 14,
+      "act": 1,
+      "id": "move-1868",
+      "kind": "move",
+      "beat": "move-1868",
+      "phase": "beat",
+      "expected": "march",
+      "wanted": "march",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act2",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "march",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.174618,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 15,
+      "act": 1,
+      "id": "day-gyeongbok",
+      "kind": "explore",
+      "beat": "day-gyeongbok",
+      "phase": "day",
+      "expected": "act2",
+      "wanted": "act2",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act2",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 1.999384,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 16,
+      "act": 1,
+      "id": "gwangseong-stand",
+      "kind": "stand",
+      "beat": "gwangseong-stand",
+      "phase": "beat",
+      "expected": "tension",
+      "wanted": "tension",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act2",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "tension",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.361659,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 17,
+      "act": 1,
+      "id": "cheokhwabi-order",
+      "kind": "audience",
+      "beat": "cheokhwabi-order",
+      "phase": "audience",
+      "expected": "act2",
+      "wanted": "act2",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act2",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.448184,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 18,
+      "act": 1,
+      "id": "cheokhwabi-place",
+      "kind": "explore",
+      "beat": "cheokhwabi-place",
+      "phase": "day",
+      "expected": "act2",
+      "wanted": "act2",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act2",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.093547,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 19,
+      "act": 1,
+      "id": "cheokhwabi-brush",
+      "kind": "brush",
+      "beat": "cheokhwabi-brush",
+      "phase": "beat",
+      "expected": "council",
+      "wanted": "council",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act2",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 3.93423,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "council",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.048434,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 20,
+      "act": 1,
+      "id": "end",
+      "kind": "note",
+      "beat": "end",
+      "phase": "beat",
+      "expected": "act2",
+      "wanted": "act2",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act2",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.086831,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 21,
+      "act": 2,
+      "id": "gyeyu-sangso",
+      "kind": "note",
+      "beat": "gyeyu-sangso",
+      "phase": "beat",
+      "expected": "act3",
+      "wanted": "act3",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act3",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.054984,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 22,
+      "act": 2,
+      "id": "gyeyu-audience",
+      "kind": "audience",
+      "beat": "gyeyu-audience",
+      "phase": "audience",
+      "expected": "act3",
+      "wanted": "act3",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act3",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.545361,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 23,
+      "act": 2,
+      "id": "doors-open",
+      "kind": "note",
+      "beat": "doors-open",
+      "phase": "beat",
+      "expected": "act3",
+      "wanted": "act3",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act3",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.082625,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 24,
+      "act": 2,
+      "id": "alone-in-hall",
+      "kind": "alone",
+      "beat": "alone-in-hall",
+      "phase": "beat",
+      "expected": null,
+      "wanted": null,
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act3",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 25,
+      "act": 2,
+      "id": "seogye-audience",
+      "kind": "explore",
+      "beat": "day-1873",
+      "phase": "day",
+      "expected": "act3",
+      "wanted": "act3",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act3",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.216192,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 26,
+      "act": 2,
+      "id": "day-1873",
+      "kind": "explore",
+      "beat": "day-1873",
+      "phase": "day",
+      "expected": "act3",
+      "wanted": "act3",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act3",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.990866,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 27,
+      "act": 2,
+      "id": "seogye-choice",
+      "kind": "dilemma",
+      "beat": "seogye-choice",
+      "phase": "beat",
+      "expected": "council",
+      "wanted": "council",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act3",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "council",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.434349,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 28,
+      "act": 2,
+      "id": "unyo-dispatch",
+      "kind": "dispatch",
+      "beat": "unyo-dispatch",
+      "phase": "beat",
+      "expected": "act3",
+      "wanted": "act3",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act3",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.631511,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 29,
+      "act": 2,
+      "id": "day-1875",
+      "kind": "explore",
+      "beat": "day-1875",
+      "phase": "day",
+      "expected": "act3",
+      "wanted": "act3",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act3",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.07504,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 30,
+      "act": 2,
+      "id": "axe-sangso",
+      "kind": "orders",
+      "beat": "orders-sinheon",
+      "phase": "beat",
+      "expected": "council",
+      "wanted": "council",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act3",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "council",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.12642,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 31,
+      "act": 2,
+      "id": "orders-sinheon",
+      "kind": "orders",
+      "beat": "orders-sinheon",
+      "phase": "beat",
+      "expected": "council",
+      "wanted": "council",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act3",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "council",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.92627,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 32,
+      "act": 2,
+      "id": "treaty-draft",
+      "kind": "audience",
+      "beat": "treaty-draft",
+      "phase": "audience",
+      "expected": "act3",
+      "wanted": "act3",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act3",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.125546,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 33,
+      "act": 2,
+      "id": "treaty-study",
+      "kind": "study",
+      "beat": "treaty-study",
+      "phase": "beat",
+      "expected": "act3",
+      "wanted": "act3",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act3",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.992486,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 34,
+      "act": 2,
+      "id": "council-treaty",
+      "kind": "weigh",
+      "beat": "council-treaty",
+      "phase": "beat",
+      "expected": "council",
+      "wanted": "council",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act3",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 4.112248,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "council",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.12556,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 35,
+      "act": 2,
+      "id": "joil-trade-note",
+      "kind": "note",
+      "beat": "joil-trade-note",
+      "phase": "beat",
+      "expected": "act3",
+      "wanted": "act3",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act3",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.953415,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 36,
+      "act": 2,
+      "id": "end",
+      "kind": "note",
+      "beat": "end",
+      "phase": "beat",
+      "expected": "act3",
+      "wanted": "act3",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act3",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.117939,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 37,
+      "act": 3,
+      "id": "imo-open",
+      "kind": "note",
+      "beat": "imo-open",
+      "phase": "beat",
+      "expected": "act4",
+      "wanted": "act4",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act4",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.128602,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 38,
+      "act": 3,
+      "id": "imo-day",
+      "kind": "explore",
+      "beat": "imo-day",
+      "phase": "day",
+      "expected": "act4",
+      "wanted": "act4",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act4",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 5.221609,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 39,
+      "act": 3,
+      "id": "imo-report",
+      "kind": "audience",
+      "beat": "imo-report",
+      "phase": "audience",
+      "expected": "act4",
+      "wanted": "act4",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act4",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.039633,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 40,
+      "act": 3,
+      "id": "imo-report-choice",
+      "kind": "dilemma",
+      "beat": "imo-report-choice",
+      "phase": "beat",
+      "expected": "council",
+      "wanted": "council",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act4",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "council",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.504974,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 41,
+      "act": 3,
+      "id": "imo-rush",
+      "kind": "rush",
+      "beat": "imo-rush",
+      "phase": "beat",
+      "expected": "tension",
+      "wanted": "tension",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act4",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "tension",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.007274,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 42,
+      "act": 3,
+      "id": "imo-fault",
+      "kind": "note",
+      "beat": "imo-fault",
+      "phase": "beat",
+      "expected": "act4",
+      "wanted": "act4",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act4",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.10736,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 43,
+      "act": 3,
+      "id": "imo-choice",
+      "kind": "dilemma",
+      "beat": "imo-choice",
+      "phase": "beat",
+      "expected": "council",
+      "wanted": "council",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act4",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "council",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.343267,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 44,
+      "act": 3,
+      "id": "imo-father-returns",
+      "kind": "audience",
+      "beat": "imo-father-returns",
+      "phase": "audience",
+      "expected": "act4",
+      "wanted": "act4",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act4",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.157335,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 45,
+      "act": 3,
+      "id": "imo-daewongun",
+      "kind": "note",
+      "beat": "imo-daewongun",
+      "phase": "beat",
+      "expected": "act4",
+      "wanted": "act4",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act4",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.042909,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 46,
+      "act": 3,
+      "id": "imo-council",
+      "kind": "council",
+      "beat": "imo-council",
+      "phase": "council",
+      "expected": "council",
+      "wanted": "council",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act4",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "council",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.145885,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 47,
+      "act": 3,
+      "id": "imo-invitation",
+      "kind": "audience",
+      "beat": "imo-invitation",
+      "phase": "audience",
+      "expected": "act4",
+      "wanted": "act4",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act4",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.087431,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 48,
+      "act": 3,
+      "id": "imo-abduction",
+      "kind": "trail",
+      "beat": "imo-abduction",
+      "phase": "beat",
+      "expected": "act4",
+      "wanted": "act4",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act4",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.485622,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 49,
+      "act": 3,
+      "id": "imo-jemulpo",
+      "kind": "note",
+      "beat": "imo-jemulpo",
+      "phase": "beat",
+      "expected": "act4",
+      "wanted": "act4",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act4",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.842072,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 50,
+      "act": 3,
+      "id": "imo-sokbang",
+      "kind": "study",
+      "beat": "imo-sokbang",
+      "phase": "beat",
+      "expected": "act4",
+      "wanted": "act4",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act4",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.158642,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 51,
+      "act": 4,
+      "id": "kimokgyun-audience",
+      "kind": "audience",
+      "beat": "kimokgyun-audience",
+      "phase": "audience",
+      "expected": "act5",
+      "wanted": "act5",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.003845,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 52,
+      "act": 4,
+      "id": "gapsin-open",
+      "kind": "note",
+      "beat": "gapsin-open",
+      "phase": "beat",
+      "expected": "act5",
+      "wanted": "act5",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.086907,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 53,
+      "act": 4,
+      "id": "gapsin-hold",
+      "kind": "hold",
+      "beat": "gapsin-hold",
+      "phase": "rush",
+      "expected": null,
+      "wanted": null,
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 54,
+      "act": 4,
+      "id": "gapsin-taken",
+      "kind": "procession",
+      "beat": "gapsin-taken",
+      "phase": "audience",
+      "expected": "march",
+      "wanted": "march",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "march",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.03176,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 55,
+      "act": 4,
+      "id": "gapsin-move-gyeongu",
+      "kind": "move",
+      "beat": "gapsin-move-gyeongu",
+      "phase": "beat",
+      "expected": "march",
+      "wanted": "march",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "march",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.843866,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 56,
+      "act": 4,
+      "id": "gapsin-takezoe",
+      "kind": "note",
+      "beat": "gapsin-takezoe",
+      "phase": "beat",
+      "expected": "act5",
+      "wanted": "act5",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.443221,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 57,
+      "act": 4,
+      "id": "gapsin-gov",
+      "kind": "explore",
+      "beat": "gapsin-day",
+      "phase": "day",
+      "expected": "act5",
+      "wanted": "act5",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.406596,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 58,
+      "act": 4,
+      "id": "gapsin-day",
+      "kind": "explore",
+      "beat": "gapsin-day",
+      "phase": "day",
+      "expected": "act5",
+      "wanted": "act5",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.480769,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 59,
+      "act": 4,
+      "id": "gapsin-move-gyedong",
+      "kind": "move",
+      "beat": "gapsin-move-gyedong",
+      "phase": "beat",
+      "expected": "march",
+      "wanted": "march",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "march",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.918308,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 60,
+      "act": 4,
+      "id": "gapsin-council",
+      "kind": "council",
+      "beat": "gapsin-council",
+      "phase": "council",
+      "expected": "council",
+      "wanted": "council",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "council",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.526937,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 61,
+      "act": 4,
+      "id": "gapsin-move-changdeok",
+      "kind": "move",
+      "beat": "gapsin-move-changdeok",
+      "phase": "beat",
+      "expected": "march",
+      "wanted": "march",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "march",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.986285,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 62,
+      "act": 4,
+      "id": "gapsin-reform",
+      "kind": "study",
+      "beat": "gapsin-reform",
+      "phase": "beat",
+      "expected": "act5",
+      "wanted": "act5",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 5.473888,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 63,
+      "act": 4,
+      "id": "gapsin-reform-choice",
+      "kind": "dilemma",
+      "beat": "gapsin-reform-choice",
+      "phase": "beat",
+      "expected": "council",
+      "wanted": "council",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "council",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.292642,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 64,
+      "act": 4,
+      "id": "gapsin-qing",
+      "kind": "note",
+      "beat": "gapsin-qing",
+      "phase": "beat",
+      "expected": "act5",
+      "wanted": "act5",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.097166,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 65,
+      "act": 4,
+      "id": "gapsin-rush",
+      "kind": "rush",
+      "beat": "gapsin-rush",
+      "phase": "beat",
+      "expected": "tension",
+      "wanted": "tension",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "tension",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.99028,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 66,
+      "act": 4,
+      "id": "gapsin-flight-self",
+      "kind": "note",
+      "beat": "gapsin-flight-self",
+      "phase": "beat",
+      "expected": "act5",
+      "wanted": "act5",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.119847,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 67,
+      "act": 4,
+      "id": "gapsin-hong",
+      "kind": "note",
+      "beat": "gapsin-hong",
+      "phase": "beat",
+      "expected": "act5",
+      "wanted": "act5",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.952886,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 68,
+      "act": 4,
+      "id": "gapsin-move-bukmyo",
+      "kind": "move",
+      "beat": "gapsin-move-bukmyo",
+      "phase": "beat",
+      "expected": "march",
+      "wanted": "march",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "march",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.51636,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 69,
+      "act": 4,
+      "id": "gapsin-move-ojoyu",
+      "kind": "move",
+      "beat": "gapsin-move-ojoyu",
+      "phase": "beat",
+      "expected": "march",
+      "wanted": "march",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "march",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.368875,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 70,
+      "act": 4,
+      "id": "gapsin-after",
+      "kind": "note",
+      "beat": "gapsin-after",
+      "phase": "beat",
+      "expected": "act5",
+      "wanted": "act5",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.527734,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 71,
+      "act": 4,
+      "id": "kimokgyun-fate",
+      "kind": "note",
+      "beat": "kimokgyun-fate",
+      "phase": "beat",
+      "expected": "act5",
+      "wanted": "act5",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.413344,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 72,
+      "act": 4,
+      "id": "three-days",
+      "kind": "note",
+      "beat": "three-days",
+      "phase": "beat",
+      "expected": "act5",
+      "wanted": "act5",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.5263,
+          "volume": 0.17,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 73,
+      "act": 4,
+      "id": "gapsin-return",
+      "kind": "move",
+      "beat": "gapsin-return",
+      "phase": "beat",
+      "expected": "march",
+      "wanted": "march",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "march",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 2.984536,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 74,
+      "act": 4,
+      "id": "last-walk",
+      "kind": "explore",
+      "beat": "last-walk",
+      "phase": "day",
+      "expected": "act5",
+      "wanted": "act5",
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": false,
+          "muted": false,
+          "time": 3.241526,
+          "volume": 0.32,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    },
+    {
+      "index": 75,
+      "act": 4,
+      "id": "end",
+      "kind": "alone",
+      "beat": "end",
+      "phase": "beat",
+      "expected": null,
+      "wanted": null,
+      "muted": false,
+      "overflow": false,
+      "players": [
+        {
+          "track": "theme",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        },
+        {
+          "track": "act5",
+          "loop": true,
+          "paused": true,
+          "muted": false,
+          "time": 0,
+          "volume": 0,
+          "ready": 4,
+          "error": null
+        }
+      ],
+      "errors": [],
+      "soundControl": true,
+      "ok": true
+    }
+  ],
+  "brush": [
+    {
+      "size": {
+        "width": 1366,
+        "height": 768
+      },
+      "touch": false,
+      "glyphs": [
+        {
+          "glyph": "主",
+          "points": 135,
+          "enabled": true,
+          "progress": "1 / 4 자 · 도달률 100% · 완료했습니다. 다음 글자로를 눌러 주세요."
+        },
+        {
+          "glyph": "和",
+          "points": 233,
+          "enabled": true,
+          "progress": "2 / 4 자 · 도달률 100% · 완료했습니다. 다음 글자로를 눌러 주세요."
+        },
+        {
+          "glyph": "賣",
+          "points": 297,
+          "enabled": true,
+          "progress": "3 / 4 자 · 도달률 100% · 완료했습니다. 다음 글자로를 눌러 주세요."
+        },
+        {
+          "glyph": "國",
+          "points": 308,
+          "enabled": true,
+          "progress": "4 / 4 자 · 도달률 100% · 완료했습니다. 다음 글자로를 눌러 주세요."
+        }
+      ],
+      "errors": [],
+      "guideHidden": true,
+      "scrollTop": 0,
+      "finished": "먹을 한 번도 다시 갈지 않고 넉 자를 썼다.",
+      "after": {
+        "beat": "end",
+        "kind": "note",
+        "phase": "beat",
+        "expected": "act2",
+        "wanted": "act2",
+        "muted": false,
+        "overflow": false,
+        "players": [
+          {
+            "track": "theme",
+            "loop": true,
+            "paused": true,
+            "muted": false,
+            "time": 0,
+            "volume": 0,
+            "ready": 4,
+            "error": null
+          },
+          {
+            "track": "act2",
+            "loop": true,
+            "paused": false,
+            "muted": false,
+            "time": 4.063026,
+            "volume": 0.11807999999999975,
+            "ready": 4,
+            "error": null
+          },
+          {
+            "track": "council",
+            "loop": true,
+            "paused": false,
+            "muted": false,
+            "time": 9.30315,
+            "volume": 0.051920000000000285,
+            "ready": 4,
+            "error": null
+          }
+        ]
+      },
+      "state": {
+        "held": [
+          "wonnapjeon",
+          "dangbaekjeon",
+          "yangheonsu",
+          "sinmi-officer",
+          "cheokhwabi"
+        ],
+        "read": [
+          "wonnapjeon",
+          "dangbaekjeon",
+          "yangheonsu",
+          "sinmi-officer",
+          "cheokhwabi"
+        ],
+        "beat": 13,
+        "saved": 13
+      },
+      "ok": true
+    },
+    {
+      "size": {
+        "width": 844,
+        "height": 390
+      },
+      "touch": true,
+      "glyphs": [
+        {
+          "glyph": "主",
+          "points": 135,
+          "enabled": true,
+          "progress": "1 / 4 자 · 도달률 100% · 완료했습니다. 다음 글자로를 눌러 주세요."
+        },
+        {
+          "glyph": "和",
+          "points": 233,
+          "enabled": true,
+          "progress": "2 / 4 자 · 도달률 100% · 완료했습니다. 다음 글자로를 눌러 주세요."
+        },
+        {
+          "glyph": "賣",
+          "points": 297,
+          "enabled": true,
+          "progress": "3 / 4 자 · 도달률 100% · 완료했습니다. 다음 글자로를 눌러 주세요."
+        },
+        {
+          "glyph": "國",
+          "points": 308,
+          "enabled": true,
+          "progress": "4 / 4 자 · 도달률 100% · 완료했습니다. 다음 글자로를 눌러 주세요."
+        }
+      ],
+      "errors": [],
+      "guideHidden": true,
+      "scrollTop": 0,
+      "finished": "먹을 한 번도 다시 갈지 않고 넉 자를 썼다.",
+      "after": {
+        "beat": "end",
+        "kind": "note",
+        "phase": "beat",
+        "expected": "act2",
+        "wanted": "act2",
+        "muted": false,
+        "overflow": false,
+        "players": [
+          {
+            "track": "theme",
+            "loop": true,
+            "paused": true,
+            "muted": false,
+            "time": 0,
+            "volume": 0,
+            "ready": 4,
+            "error": null
+          },
+          {
+            "track": "act2",
+            "loop": true,
+            "paused": false,
+            "muted": false,
+            "time": 4.721135,
+            "volume": 0.12002285714285732,
+            "ready": 4,
+            "error": null
+          },
+          {
+            "track": "council",
+            "loop": true,
+            "paused": false,
+            "muted": false,
+            "time": 9.481366,
+            "volume": 0.04997714285714275,
+            "ready": 4,
+            "error": null
+          }
+        ]
+      },
+      "state": {
+        "held": [
+          "wonnapjeon",
+          "dangbaekjeon",
+          "yangheonsu",
+          "sinmi-officer",
+          "cheokhwabi"
+        ],
+        "read": [
+          "wonnapjeon",
+          "dangbaekjeon",
+          "yangheonsu",
+          "sinmi-officer",
+          "cheokhwabi"
+        ],
+        "beat": 13,
+        "saved": 13
+      },
+      "ok": true
+    }
+  ],
+  "summary": {
+    "sceneEntries": 76,
+    "passed": 76,
+    "jsErrors": 0,
+    "horizontalOverflow": 0,
+    "redirectedReports": [
+      {
+        "act": 3,
+        "requested": "seogye-audience",
+        "resolved": "day-1873"
+      },
+      {
+        "act": 3,
+        "requested": "axe-sangso",
+        "resolved": "orders-sinheon"
+      },
+      {
+        "act": 5,
+        "requested": "gapsin-gov",
+        "resolved": "gapsin-day"
+      }
+    ],
+    "brushCompleted": true
+  },
+  "auditNotes": [
+    "Initial QA incorrectly treated the loss one-shot as loop BGM. Corrected the assertion and re-ran that scene.",
+    "Initial brush QA expected eight glyphs, but the game contains four. Corrected the driver from current data, then completed both sizes.",
+    "76 saved positions are entry checks, not a continuous human playthrough. Three moved reports resolve through their current scenario runner.",
+    "Landscape touch-capable viewport used automated mouse pointer strokes, not physical finger input."
+  ]
+}

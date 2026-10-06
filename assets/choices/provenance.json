@@ -1,0 +1,49 @@
+{
+  "model": "gpt_image_2_5",
+  "provider": "Higgsfield",
+  "generated": "2026-10-06",
+  "jobs": [
+    {
+      "index": 0,
+      "job_id": "1bcf74d7-e13b-4df4-884c-5f55642650bf",
+      "status": "pending",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3GB6W3XP0HdsF9ZzejW682EtS9T/hf_20261005_223305_1bcf74d7-e13b-4df4-884c-5f55642650bf.png"
+    },
+    {
+      "index": 1,
+      "job_id": "69e51542-86d3-4681-9da8-80840af91724",
+      "status": "pending",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3GB6W3XP0HdsF9ZzejW682EtS9T/hf_20261005_223306_69e51542-86d3-4681-9da8-80840af91724.png"
+    },
+    {
+      "index": 2,
+      "job_id": "f2b6b0ee-1ffa-42ff-9901-8cfc47d3f01f",
+      "status": "pending",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3GB6W3XP0HdsF9ZzejW682EtS9T/hf_20261005_223306_f2b6b0ee-1ffa-42ff-9901-8cfc47d3f01f.png"
+    },
+    {
+      "index": 3,
+      "job_id": "452216d3-f91e-4dc7-a649-25fab41b56dc",
+      "status": "pending",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3GB6W3XP0HdsF9ZzejW682EtS9T/hf_20261005_223307_452216d3-f91e-4dc7-a649-25fab41b56dc.png"
+    },
+    {
+      "index": 4,
+      "job_id": "663f14fd-487f-4924-b920-0d65eb06ce95",
+      "status": "pending",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3GB6W3XP0HdsF9ZzejW682EtS9T/hf_20261005_223306_663f14fd-487f-4924-b920-0d65eb06ce95.png"
+    },
+    {
+      "index": 5,
+      "job_id": "9336c22e-bd9f-4847-8fcb-4d7605c02d92",
+      "status": "pending",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3GB6W3XP0HdsF9ZzejW682EtS9T/hf_20261005_223306_9336c22e-bd9f-4847-8fcb-4d7605c02d92.png"
+    }
+  ],
+  "replacement": {
+    "key": "d:reform:actual",
+    "job_id": "fc97c0d1-89b1-4fcd-9ba7-6d4709d04ac4",
+    "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3GB6W3XP0HdsF9ZzejW682EtS9T/hf_20261005_223633_fc97c0d1-89b1-4fcd-9ba7-6d4709d04ac4.png",
+    "reason": "Replace generated US flag with flag-free Meiji troop withdrawal reconstruction"
+  }
+}

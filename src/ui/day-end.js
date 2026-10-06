@@ -19,7 +19,7 @@
 import { installTypeVars } from './type-css.js'
 import { royalIcon } from './royal-icons.js'
 import { PORTRAITS } from './portraits-data.js'
-import { sourceMedia } from './historical-media.js'
+import { sourceMedia, speakerMedia } from './historical-media.js'
 import { npcById, portraitKeyOf } from '../data/npcs.js'
 
 // ── 한 일을 그림으로 ───────────────────────────────────────────────────────
@@ -39,9 +39,15 @@ import { npcById, portraitKeyOf } from '../data/npcs.js'
 export function tileArt(id) {
   const [kind, rest] = String(id ?? '').split(/:(.+)/)
   if (kind === 'npc') {
-    const key = portraitKeyOf(npcById(rest))
+    const npc = npcById(rest)
+    const key = portraitKeyOf(npc)
     const src = key ? PORTRAITS[key] : null
-    return src ? { kind: 'face', src } : { kind: 'mark', icon: 'compass' }
+    if (src) return { kind: 'face', src }
+    // 선생님(2026-10-06): 「여흥부대부인 민씨가 얼굴이 안뜨네.」 어머니의 그림은 PORTRAITS 가
+    // 아니라 대화판이 쓰는 자리(speakerMedia)에 있다 — 거기서 가져오고, 배경을 오려 내는
+    // 테두리(clip)도 그대로 쓴다. 그래도 없으면 지어내지 않고 표식으로 둔다.
+    const media = npc ? speakerMedia({ npcId: npc.id, name: npc.name, portrait: key }) : null
+    return media?.src ? { kind: 'face', src: media.src, clip: media.clip ?? null, contain: !!media.clip } : { kind: 'mark', icon: 'compass' }
   }
   if (kind === 'card') {
     const media = sourceMedia(rest)
@@ -56,7 +62,7 @@ function tileHtml(it) {
   const art = typeof it === 'string' ? { kind: 'mark', icon: 'palace' } : tileArt(it.id)
   const face = art.kind === 'mark'
     ? `<span class="mark">${royalIcon(art.icon)}</span>`
-    : `<img class="${art.kind}" src="${art.src}" alt="">`
+    : `<img class="${art.kind}${art.contain ? ' cut' : ''}" src="${art.src}" alt=""${art.clip ? ` style="clip-path:${art.clip}"` : ''}>`
   return `<figure class="tile"><div class="frame">${face}</div><figcaption>${label}</figcaption></figure>`
 }
 
@@ -93,6 +99,8 @@ const CSS = `
 /* 얼굴은 위쪽을, 사진은 가운데를 남긴다 — 얼굴을 가운데로 맞추면 이마가 잘린다. */
 .dayend .tile img{width:100%;height:100%;object-fit:cover;display:block}
 .dayend .tile img.face{object-position:50% 12%}
+/* 배경을 오려 낸 전신 그림(어머니) — 타일에서는 얼굴 쪽을 키워 보인다. clip-path 는 변형 전 상자에서 잘린다. */
+.dayend .tile img.face.cut{object-fit:contain;object-position:50% 0;transform:scale(2.6);transform-origin:50% 6%}
 .dayend .tile .mark{color:#8f8a7c}
 .dayend .tile figcaption{font-size:var(--read-caption,12px);color:var(--paper-strong,#cfc8b8);
   line-height:var(--read-lh-small,1.55);word-break:keep-all}

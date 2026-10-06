@@ -361,9 +361,9 @@ describe('어긋난 채로는 넘어가지 않는다', () => {
 describe('게임 안의 장계 비트 셋 — 실제 데이터로 돌려본다', () => {
   const beats = ACTS.flatMap(a => beatsOf(a)).filter(b => b.kind === 'dispatch')
 
-  // 셋 → 둘 (2026-10-06): 병인양요의 장계 차례 맞추기는 정족산성 판이 대신한다.
-  it('장계 비트가 둘 있다', () => {
-    expect(beats.map(b => b.id)).toEqual(['sinmi-dispatch', 'unyo-dispatch'])
+  // 셋 → 둘 → 하나 (2026-10-06): 병인양요는 정족산성 판이, 신미양요는 광성보 판이 대신한다.
+  it('장계 비트가 하나 있다', () => {
+    expect(beats.map(b => b.id)).toEqual(['unyo-dispatch'])
   })
 
   it('세 비트 모두 놓아 보기가 성립한다 — 닿은 것이 둘 이상이고 보낸 날이 다르다', () => {

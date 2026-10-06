@@ -102,7 +102,7 @@ describe('다섯 막이 다 그려진다', () => {
       const { el } = render(act, i)
       const handles = byClass(el, 'actmap-handle')
       expect(handles, act.id).toHaveLength(1)
-      expect(handles[0].parent.parent.className, act.id).toContain('actmap-doing')
+      expect(byClass(el, 'actmap-doing').some(step => walk(step).includes(handles[0])), act.id).toBe(true)
       // `**셈**` 의 별 둘은 화면에 남지 않는다 — 굵은 글씨가 된다.
       expect(textOf(handles[0]), act.id).not.toContain('**')
       expect(walk(handles[0]).some(n => n.tagName === 'b'), act.id).toBe(true)
@@ -128,7 +128,7 @@ describe('한 번 눌리면 한 번만 넘어간다', () => {
     const { root, el, done } = render(ACTS[2], 2)
     let resolved = 0
     const counted = done.then(() => { resolved++ })
-    const go = walk(el).find(n => n.tagName === 'button')
+    const go = byClass(el, 'actmap-go')[0]
     go.click()
     go.click()
     await counted
@@ -145,7 +145,7 @@ describe('한 번 눌리면 한 번만 넘어간다', () => {
 
   it('키보드로 열린다 — 진짜 단추이고, 뜨자마자 초점이 간다', () => {
     const { el } = render(ACTS[0], 0)
-    const go = walk(el).find(n => n.tagName === 'button')
+    const go = byClass(el, 'actmap-go')[0]
     expect(go).toBeTruthy()
     expect(go.focused).toBe(1)
     // 초점이 화면을 아래로 끌어내리면 제목과 첫 걸음이 잘린다.

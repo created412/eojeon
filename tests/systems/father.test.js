@@ -65,7 +65,7 @@ describe('막의 손잡이', () => {
   })
 
   it('손잡이는 학생이 실제로 손을 쓰는 화면이다 — 글 화면이 아니다', () => {
-    const HANDS_ON = new Set(['funding', 'brush', 'orders', 'study', 'dilemma'])
+    const HANDS_ON = new Set(['funding', 'brush', 'orders', 'study', 'dilemma', 'weigh', 'stand'])
     // 4막의 손잡이는 낮 안의 나들이(무위영 급료 가마)다 — 걷는 낮 안에 손으로 하는
     // 화면이 들어 있으면 그 낮이 손잡이다(2026-10-06, 왕비의 줄을 걷어 낸 뒤).
     const handsOn = beat => HANDS_ON.has(beat.kind) ||

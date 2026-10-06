@@ -104,6 +104,24 @@ export function hubOptions(state, act) {
   })
 }
 
+// 지금 선 자리에서 시작할 수 있는 「보고 듣기」(kind:'report') — 없으면 null.
+//
+// ⚠ 2026-10-06 — 여정 판을 눌러 걸어가 주던 것을 걷어 내면서 **보고를 시작하는 길이 함께 끊겼다.**
+//   보고는 「판에서 고른 일」일 때에만 E 로 시작되었는데, 고르는 길이 없어졌으니 3막의 서계 보고와
+//   최익현의 상소, 5막의 개화당 기록을 아무도 들을 수 없었다 — 그날의 일이 남아 하루가 끝나지 않았다.
+//   이제 **그 방에 들어서 표지 곁에 서면** E 로 시작된다. 고르지 않아도 된다.
+export const REPORT_REACH = 6
+export function reportAt(options, room, pos) {
+  let best = null
+  for (const o of options ?? []) {
+    if (o.kind !== 'report' || o.done || o.blocked || o.disabled || !o.point) continue
+    if (o.room && room !== o.room) continue
+    const dist = Math.hypot(pos.x - o.point.x, pos.z - o.point.z)
+    if (dist < REPORT_REACH && (!best || dist < best.dist)) best = { id: o.id, label: o.label, dist }
+  }
+  return best
+}
+
 export function completeActivity(state, act, id) {
   const hub = hubAt(act, state.beatIndex)
   if (!hub) return state

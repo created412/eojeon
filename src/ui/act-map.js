@@ -162,6 +162,29 @@ const CSS = `
 @media(prefers-reduced-motion:reduce){
   .actmap-step{animation:none;opacity:1;transform:none}
 }
+.actmap-sheet{max-width:1040px;border-radius:12px;background:#19211e;color:#f3eddf;border-color:#617165;box-shadow:0 20px 60px #0008}
+.actmap-kicker,.actmap-count,.actmap-kind{color:#c9b68d;text-align:center}
+.actmap-title{color:#fff1d1;font-family:inherit;font-weight:600;letter-spacing:0;text-align:center}
+.actmap-count{font-size:16px}.actmap-count b{color:#ecd2a0}
+.actmap-intro{color:#c4c7bc;font-size:15px;text-align:center;align-self:center}
+.actmap-todo{color:#f4eedf;font-size:23px;text-align:center;align-self:center;border:0;padding:8px 0;max-width:34em}
+.actmap-step{background:#25312b;border-color:#63726466;border-radius:8px}
+.actmap-name{color:#f2eddf;font-size:20px;font-weight:600;text-align:center}
+.actmap-kind{justify-content:center}.actmap-num{justify-self:center;background:#17221b;color:#e7d6b4}
+.actmap-step.actmap-doing{background:#343729;border-color:#af945d}
+.actmap-step.actmap-doing .actmap-name{color:#fff0cc}
+.actmap-step.actmap-doing .actmap-kind,.actmap-hands-flag{color:#e9cc91}
+.actmap-details summary{padding:8px 0;cursor:pointer;text-align:center;color:#d4c6a7;font-size:15px}
+.actmap-note,.actmap-handle{color:#e6dfce;font-size:17px}.actmap-handle b{color:#f0cb7e}
+.actmap-tags li{color:#ddd4bf;border-color:#8c8b7466}
+.actmap-step[hidden]{display:none}
+.actmap-nav{display:flex;gap:18px;align-items:center;justify-content:center;color:#d1c19f;font-size:15px}
+.actmap-nav button{padding:8px 18px;min-height:44px;border:1px solid #71674f;border-radius:5px;background:#233027;color:#e4d3ac;font:inherit;cursor:pointer}
+.actmap-nav button:disabled{opacity:.4}
+.actmap-step{animation:none}
+.actmap-go{position:sticky;bottom:0;z-index:3;letter-spacing:0;font-size:19px;border-radius:6px;background:#3c3020;box-shadow:0 0 0 8px #19211e}
+@media(max-height:560px){.actmap{padding:12px}.actmap-sheet{padding:16px;gap:8px}.actmap-title{font-size:22px}.actmap-todo{font-size:19px;line-height:1.5}.actmap-path{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.actmap-path::before{display:none}.actmap-step{grid-template-columns:1fr;gap:5px;padding:10px}.actmap-name{font-size:17px}.actmap-kind{font-size:12px}.actmap-num{width:26px;height:26px}.actmap-intro{font-size:14px}}
+@media(max-height:560px){.actmap-sheet{padding:12px;gap:6px}.actmap-count{display:none}.actmap-step{padding:8px}.actmap-num{width:22px;height:22px}.actmap-kind svg{width:16px;height:16px}.actmap-details summary{padding:6px 0}.actmap-go{position:static;margin:0;padding:10px 28px;box-shadow:none}.actmap-kicker{font-size:14px}}
 `
 
 let styled = false
@@ -288,11 +311,19 @@ export function createActMap(root) {
           name.textContent = step.title ?? ''
           body.appendChild(name)
 
+          let more = body
           if (step.note) {
             const note = doc.createElement('p')
             note.className = 'actmap-note type-read'
             note.textContent = step.note
-            body.appendChild(note)
+            const details = doc.createElement('details')
+            details.className = 'actmap-details'
+            const summary = doc.createElement('summary')
+            summary.textContent = '어떻게 진행하나요?'
+            details.appendChild(summary)
+            details.appendChild(note)
+            body.appendChild(details)
+            more = details
           }
 
           const tags = (step.tags ?? []).filter(Boolean)
@@ -304,7 +335,7 @@ export function createActMap(root) {
               item.textContent = tag
               list.appendChild(item)
             }
-            body.appendChild(list)
+            more.appendChild(list)
           }
 
           // 이 막에서 쥐는 것 하나는 그 걸음 안에서 말한다 — 따로 떨어뜨리면
@@ -313,10 +344,29 @@ export function createActMap(root) {
             const handle = doc.createElement('p')
             handle.className = 'actmap-handle type-read'
             emphasize(doc, handle, view.handleLine)
-            body.appendChild(handle)
+            more.appendChild(handle)
           }
 
           path.appendChild(li)
+        }
+
+        if (steps.length > 3) {
+          let at = 0
+          const nav = doc.createElement('div'); nav.className = 'actmap-nav'
+          const back = doc.createElement('button'); back.textContent = '이전'
+          const count = doc.createElement('span')
+          const next = doc.createElement('button'); next.textContent = '다음 여정'
+          const paint = () => {
+            Array.from(path.children).forEach((li, i) => { li.hidden = i < at * 3 || i >= (at + 1) * 3 })
+            count.textContent = `${at + 1} / ${Math.ceil(steps.length / 3)}`
+            back.disabled = at === 0
+            next.disabled = (at + 1) * 3 >= steps.length
+          }
+          back.addEventListener('click', () => { if (at > 0) { at--; paint() } })
+          next.addEventListener('click', () => { if ((at + 1) * 3 < steps.length) { at++; paint() } })
+          nav.appendChild(back); nav.appendChild(count); nav.appendChild(next)
+          sheet.appendChild(nav)
+          paint()
         }
 
         const go = doc.createElement('button')

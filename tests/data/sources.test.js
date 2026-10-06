@@ -39,7 +39,10 @@ describe('사료 카드 전체', () => {
 
   it('교과서 번역을 그대로 옮기지 않았음을 출처에 밝힌다', () => {
     for (const c of SOURCES.filter(c => c.origin.includes('한국사1'))) {
-      expect(c.origin, `${c.id}`).toContain('우리말 옮김')
+      if (c.id === 'unyo') {
+        expect(c.origin).toContain('경과를 요약')
+        expect(c.rendering).toBe('교과서 서술 요약')
+      } else expect(c.origin, `${c.id}`).toContain('우리말 옮김')
     }
   })
 
@@ -168,7 +171,8 @@ describe('4·5막 사료 여덟 장', () => {
     const c = sourceById('yeongnam-manin')
     expect(c.excerpt).not.toContain('원수')
     expect(c.excerpt).toContain('나쁜 감정이 없는 나라')   // 교과서 p.115 지면
-    expect(c.meaning).toContain('기미')                    // 국편 발췌의 다른 대목
+    expect(c.excerpt).toContain('러시아는 본래')           // 교과서 빈칸을 국편 국역과 대조
+    expect(c.excerpt).not.toContain('일본은 본래')
   })
 
   it('조선책략 카드는 옮긴 것이 「문장」이 아니라 「취지」임을 밝힌다', () => {

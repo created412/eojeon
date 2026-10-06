@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { revealCount, createVoicePlayer } from '../../src/systems/voice.js'
 import { spokenText } from '../../src/data/voice-cast.js'
+import { createGameTime } from '../../src/core/game-time.js'
 import { ACTS } from '../../src/data/acts.js'
 import { NPCS } from '../../src/data/npcs.js'
 
@@ -52,4 +53,31 @@ describe('음성 없이도 자막은 돈다', () => {
     expect(shown).toEqual(['첫 줄', '둘째 줄'])
     run.stop()
   })
+})
+
+
+it('멈춤 중에는 독백을 넘기지 않고 재개 후 남은 읽기 시간을 보장한다', async () => {
+  vi.useFakeTimers()
+  const clock = createGameTime(() => Date.now())
+  const shown = []
+  const player = createVoicePlayer({ clips: {}, clock })
+  try {
+    const run = player.narrate(['첫 줄', '둘째 줄'], { onLine: text => shown.push(text) })
+    await vi.advanceTimersByTimeAsync(600)
+    clock.setPaused(true)
+    await vi.advanceTimersByTimeAsync(9000)
+    expect(shown).toEqual(['첫 줄'])
+    clock.setPaused(false)
+    await vi.advanceTimersByTimeAsync(1750)
+    expect(shown).toEqual(['첫 줄'])
+    await vi.advanceTimersByTimeAsync(100)
+    expect(shown).toEqual(['첫 줄', '둘째 줄'])
+    run.stop()
+    await run.done
+    expect(vi.getTimerCount()).toBe(0)
+  } finally {
+    player.stop()
+    clock.dispose()
+    vi.useRealTimers()
+  }
 })

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { SCENE_ART } from '../../src/ui/scene-art-data.js'
 import {
   initialTrail, legsOf, currentLeg, send, arrive, riderAt, cargoAt, lagOf, atSea, placeOf, trailRecord,
 } from '../../src/systems/trail.js'
@@ -62,8 +63,8 @@ describe('차례 — 아버지가 걸어 나가고, 돌아오지 않는다', () 
 })
 
 describe('소식은 언제나 한 걸음 늦다', () => {
-  it('세 번 알아본다', () => {
-    expect(legsOf(trail)).toHaveLength(3)
+  it('네 번 알아본다 — 군영, 남쪽 길, 바닷가, 그리고 기다림', () => {
+    expect(legsOf(trail)).toHaveLength(4)
     expect(currentLeg(trail, initialTrail()).label).toBe('사람을 보내 알아본다')
   })
 
@@ -92,7 +93,7 @@ describe('소식은 언제나 한 걸음 늦다', () => {
 
   it('뭍에서는 가마, 바다에서는 배다', () => {
     const { seen } = walk(trail)
-    expect(seen.map(s => atSea(trail, s.cargo))).toEqual([false, true, true])
+    expect(seen.map(s => atSea(trail, s.cargo))).toEqual([false, false, true, true])
   })
 
   it('가는 동안에는 다시 보낼 수 없고, 닿아야 소식이 풀린다', () => {
@@ -112,13 +113,13 @@ describe('소식은 언제나 한 걸음 늦다', () => {
     expect(state.done).toBe(true)
     expect(currentLeg(trail, state)).toBeNull()
     expect(send(trail, state)).toBe(state)
-    expect(trailRecord(trail, state)).toEqual({ asked: 3, done: true })
+    expect(trailRecord(trail, state)).toEqual({ asked: 4, done: true })
   })
 })
 
 describe('적힌 것', () => {
-  it('길은 한양 → 청군 군영 → 남양 마산포 → 톈진이다', () => {
-    expect(trail.places.map(p => p.name)).toEqual(['한양', '청군 군영', '남양 마산포', '톈진'])
+  it('길은 한양 → 청군 군영 → 남쪽 길 → 남양 마산포 → 톈진이다', () => {
+    expect(trail.places.map(p => p.name)).toEqual(['한양', '청군 군영', '남쪽 길', '남양 마산포', '톈진'])
     expect(placeOf(trail, 'namyang').shore).toBe(true)
   })
 
@@ -152,8 +153,8 @@ describe('적힌 것', () => {
 
 describe('화면', () => {
   const html = trailHtml(trail)
-  it('자리 넷과 표 둘(보낸 사람 · 아버지)이 한 줄 위에 있다', () => {
-    expect((html.match(/class="place"/g) ?? []).length).toBe(4)
+  it('자리 다섯과 표 둘(보낸 사람 · 아버지)이 한 줄 위에 있다', () => {
+    expect((html.match(/class="place"/g) ?? []).length).toBe(5)
     expect(html).toContain('보낸 사람')
     expect(html).toContain('class="mark cargo unknown"')   // 첫 소식 전에는 보이지 않는다
   })
@@ -162,6 +163,21 @@ describe('화면', () => {
   })
   it('소식의 글은 처음 화면에 미리 실려 있지 않다', () => {
     for (const leg of legsOf(trail)) for (const line of leg.report) expect(html).not.toContain(line)
+  })
+  // 선생님(2026-10-06): 「힉스필드로 제대로 그림 만들어서 어떤 일이 일어난 건지 전달되게 만들어.」
+  it('소식마다 그림 한 장과 한 줄이 있다 — 그림은 재구성이라고 적혀 있다', () => {
+    for (const leg of legsOf(trail)) {
+      const art = SCENE_ART[leg.art]
+      expect(art, `${leg.label} 의 그림 ${leg.art}`).toBeTruthy()
+      expect(art.caption).toContain('재구성')
+      expect(leg.brief.length).toBeGreaterThan(6)
+    }
+    expect(new Set(legsOf(trail).map(l => l.art)).size).toBe(4)
+  })
+  it('그림은 처음 화면에 미리 실려 있지 않다 — 소식이 닿아야 보인다', () => {
+    for (const leg of legsOf(trail)) expect(html).not.toContain(SCENE_ART[leg.art].src.slice(0, 120))
+    expect((html.match(/class="frame wait"/g) ?? []).length).toBe(4)
+    expect(html).toContain('아직 아무 소식도 없다')
   })
   it('다섯 막 어디에도 이 종류는 여기 하나다', () => {
     expect(ACTS.flatMap(a => beatsOf(a)).filter(b => b.kind === 'trail').map(b => b.id)).toEqual(['imo-abduction'])

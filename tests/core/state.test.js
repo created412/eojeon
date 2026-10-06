@@ -92,7 +92,7 @@ describe('판이 달라 못 읽는 저장을 만나면 학생에게 알린다 (�
   it('옛 판의 저장이면 무슨 일이 있었는지와 무엇을 하면 되는지를 말한다', () => {
     const old = JSON.stringify({ ...createState(), version: 2 })
     expect(staleSaveNotice(old)).toBe(STALE_SAVE_NOTICE)
-    expect(STALE_SAVE_NOTICE).toContain('처음부터')   // 무엇을 누르면 되는지
+    expect(STALE_SAVE_NOTICE).toContain('게임 시작')   // 무엇을 누르면 되는지
     expect(STALE_SAVE_NOTICE).not.toMatch(/[A-Za-z]/) // 학생 화면에 영어 낱말을 내지 않는다
   })
 
@@ -108,6 +108,7 @@ describe('판이 달라 못 읽는 저장을 만나면 학생에게 알린다 (�
     expect(main).toMatch(/notice:\s*staleSaveNotice\(/)
     expect(title).toContain('show({ hasSave = false, notice =')
     // 학생 화면에 나가는 글은 textContent 로만 넣는다(전역 제약 2)
-    expect(title).toMatch(/n\.textContent\s*=\s*notice/)
+    const prologue = readFileSync(join(process.cwd(), 'src', 'ui', 'prologue.js'), 'utf8')
+    expect(prologue).toMatch(/p\.textContent\s*=\s*notice/)
   })
 })

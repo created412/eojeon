@@ -12,6 +12,7 @@
 // 이 파일은 DOM 도 three.js 도 모른다. 자리·방향·굽힘만 값으로 낸다.
 import { objectiveRoute } from './route.js'
 import { roomAt } from '../data/palaces.js'
+import { collides } from '../data/hall-geometry.js'
 import { BOW_NEAR, BOW_FAR, BOW_IN_MS, BOW_OUT_MS } from './palace-life.js'
 
 // 궁인의 걸음. 임금보다 느리다 — 초속 1.05m 로, 급한 걸음이 아니라 일하는 걸음이다.
@@ -95,26 +96,43 @@ export const STAND_ASIDE = 1.5
 
 // 임금과 너무 가까우면 임금에게서 멀어지는 쪽으로 그만큼 물러선 자리를 낸다.
 // 꼭 같은 자리에 포개졌으면(방향을 정할 수 없으면) 길의 옆쪽으로 비킨다.
-export function standAside(at, king, gap = STAND_ASIDE) {
+export function standAside(at, king, gap = STAND_ASIDE, palace = null) {
   if (!king || !at) return at
   const dx = at.x - king.x, dz = at.z - king.z
   const dist = Math.hypot(dx, dz)
   if (dist >= gap) return at
+  let shown
   if (dist < 1e-6) {
     // yaw 는 걷는 쪽이다 — 그 오른쪽으로 비킨다.
     const yaw = at.yaw ?? 0
-    return { ...at, x: king.x + Math.cos(yaw) * gap, z: king.z - Math.sin(yaw) * gap }
+    shown = { ...at, x: king.x + Math.cos(yaw) * gap, z: king.z - Math.sin(yaw) * gap }
+  } else {
+    shown = { ...at, x: king.x + dx / dist * gap, z: king.z + dz / dist * gap }
   }
-  return { ...at, x: king.x + dx / dist * gap, z: king.z + dz / dist * gap }
+  if (!palace) return shown
+  const clear = p => Math.abs(p.x) < palace.ground.w / 2 - .6 &&
+    Math.abs(p.z) < palace.ground.d / 2 - .6 && !collides(palace, p, .6)
+  if (clear(shown)) return shown
+  // 물가·문간에서 읍하며 비켜설 때도 뭍을 고른다. 길 위 좌표만 검사하면
+  // 길찾기를 고쳐도 임금을 피하는 마지막 한 걸음이 물에 빠진다(2026-10-06).
+  const angle = Math.atan2(shown.z - king.z, shown.x - king.x)
+  for (let i = 1; i <= 8; i++) for (const sign of [-1, 1]) {
+    const a = angle + sign * i * Math.PI / 8
+    const p = { ...at, x: king.x + Math.cos(a) * gap, z: king.z + Math.sin(a) * gap }
+    if (clear(p)) return p
+  }
+  return at
 }
 
 export function createWalkers() {
+  let palace = null
   let paths = new Map()     // id -> { path, walker, offset }
   let bows = new Map()      // id -> { p, bowing, last, held }
 
   return {
     // 이 궁에서 걸을 사람과 그 길. 길이 안 나오는 사람은 조용히 빠진다.
     setPalace(def, walkers = []) {
+      palace = def
       paths = new Map()
       bows = new Map()
       for (const w of walkers) {
@@ -210,7 +228,7 @@ export function createWalkers() {
         // 주는 것이고, 임금 앞에서 실제로 하는 일이기도 하다.
         // bow.at(읍을 재는 자리)은 길 위의 본래 자리 그대로 둔다: 비켜 선 자리로 재면
         // 임금이 따라올 때마다 문턱이 흔들린다.
-        const shown = standAside(at, king)
+        const shown = standAside(at, king, STAND_ASIDE, palace)
         out.push({ id, x: shown.x, z: shown.z,
           // 굽히는 동안에는 걸음을 멈추고 임금을 마주 본다(yaw=null 은 「임금을 본다」).
           yaw: depth > 0 ? null : at.yaw,

@@ -95,6 +95,15 @@ describe('오늘 한 일이 얼굴과 문서로 남는다', () => {
     expect(tileArt('npc:없는사람').kind).toBe('mark')
   })
 
+  // 선생님(2026-10-06): 「여흥부대부인 민씨가 얼굴이 안뜨네.」 어머니의 그림은 PORTRAITS 밖(대화판의 자리)에 있다.
+  it('어머니에게 말을 건 일에도 얼굴이 뜬다 — 배경을 오려 내는 테두리째', () => {
+    const art = tileArt('npc:mother')
+    expect(art.kind).toBe('face')
+    expect(art.src).toMatch(/^data:image\//)
+    expect(art.clip).toMatch(/^polygon\(/)
+    expect(dayEndHtml({ done: [{ id: 'npc:mother', label: '여흥부대부인 민씨에게 말을 건다' }], undone: [] })).toContain('clip-path:polygon(')
+  })
+
   it('판이 실제로 그림 칸을 그린다', () => {
     const html = dayEndHtml({ done: [{ id: 'npc:heungseon', label: '흥선대원군에게 말을 건다' }], missed: [] })
     expect(html).toContain('class="tiles"')

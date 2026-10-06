@@ -1,4 +1,4 @@
-// 생성된 인물 GLB 여섯을 게임에 실을 수 있게 줄이고 묶는다.
+// 생성된 인물 GLB 일곱을 게임에 실을 수 있게 줄이고 묶는다.
 //
 //   node tools/pack-glb.mjs
 //
@@ -31,6 +31,7 @@ const CAST = [
   ['senior',     'senior.glb'],
   ['mid',        'mid.glb'],
   ['messenger',  'messenger.glb'],
+  ['maid',       'maid.glb'],       // 궁녀(2026-10-06) — Higgsfield 원화 maid-reference-apose.png → image_to_3d 리깅
 ]
 
 // 텍스처를 1024 로 줄이고 webp 로 바꾼다. simplify-error 0.002 는 실루엣이

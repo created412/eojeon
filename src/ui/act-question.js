@@ -1,5 +1,31 @@
 import { ACT_QUESTION_ART, ART_NOTE } from './act-question-data.js'
 import { installTypeVars } from './type-css.js'
+import { sourceMedia, installHistoricalMedia, openMediaViewer } from './historical-media.js'
+import { SCENE_ART } from './scene-art-data.js'
+import { SOURCES } from '../data/sources.js'
+
+// 2026-10-06 선생님: 「이 막에서 당신이 본 것」도 전부 그림으로 가독성을 고친다.
+// 실제 읽은 문서만 그림 카드로 옮긴다. 긴 기록은 펼쳐 읽고, 자료와 재구성을 구분한다.
+export function evidenceCards(evidence = []) {
+  return evidence.flatMap(item => {
+    if (typeof item !== 'string') return [item]
+    const [kind, ...parts] = item.split(' — ')
+    const text = parts.join(' — ') || item
+    if (kind === '읽은 문서') return text.split(' · ').map(title => ({ kind, title, sourceId: SOURCES.find(s => s.title === title)?.id }))
+    return [{ kind: parts.length ? kind : '돌아본 장면', title: kind === '찾아간 곳' ? '궁에서 만난 사람들' : kind === '살펴본 물건' ? text : '당신이 남긴 선택', text }]
+  }).filter(Boolean).map(item => {
+    const words = `${item.title ?? ''} ${item.text ?? ''}`
+    const scene = /납치|청군 군영|톈진/.test(words) ? 'trail-camp'
+      : /당백전|주전/.test(words) ? 'mint-house'
+      : /원납전/.test(words) ? 'village-levied'
+      : /중건|공사/.test(words) ? 'palace-rising'
+      : /급료|쌀|도봉소/.test(words) ? 'market'
+      : /운요/.test(words) ? 'unyo-1875'
+      : /의궤|외규장각/.test(words) ? 'plunder-1866' : 'night-hall'
+    const media = item.sourceId ? sourceMedia(item.sourceId) : null
+    return { ...item, media: media ?? { ...SCENE_ART[scene], kind: 'reconstruction', relation: SCENE_ART[scene].caption } }
+  })
+}
 
 // 막마다 하나씩 놓이는 질문 화면 — 막을 열 때 한 번, 막을 닫을 때 다시 한 번.
 //
@@ -211,13 +237,56 @@ const CSS = `
 }
 `
 
+const GALLERY_CSS = `
+.actq-close .actq-body{gap:16px;padding:24px max(24px,calc(50% - 530px));font-family:var(--face-body,system-ui,sans-serif)}
+.actq-close .actq-q{font-family:inherit;font-size:clamp(28px,3.1vw,42px);font-weight:600;max-width:26em}
+.actq-close .actq-lead{font-size:17px}
+.actq-close .actq-seen{max-width:100%;background:none;border:0;padding:0}
+.actq-close .actq-seen-title{text-align:center;margin-bottom:14px;font-size:16px}
+.actq-close .actq-seen-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+.actq-close .actq-seen-list li{padding:0;border:1px solid #82745377;background:#141c19ed;border-radius:10px;overflow:hidden;font-size:18px;line-height:1.5}
+.actq-close .actq-seen-list li::before{display:none}
+.actq-close .actq-seen-list li[hidden]{display:none}
+.actq-evidence-image{display:block;width:100%;height:150px;padding:0;border:0;background:#282c25;cursor:zoom-in}
+.actq-evidence-image img{display:block;width:100%;height:100%;object-fit:contain}
+.actq-evidence-copy{padding:12px 16px;text-align:center}
+.actq-evidence-kind{font-size:13px;color:#c5b28b;margin-bottom:5px}
+.actq-evidence-title{margin:0;color:#fff0cf;font-size:20px;font-weight:600;line-height:1.4;text-wrap:balance;word-break:keep-all}
+.actq-evidence-note{font-size:13px;color:#c6c6b6;margin-top:8px}
+.actq-evidence-details{font-size:17px;line-height:1.65;text-align:left;color:#ede5d5}
+.actq-evidence-details summary{text-align:center;color:#cfbc91;font-size:14px;cursor:pointer;padding:8px}
+.actq-evidence-details p{margin:8px 0 0;word-break:keep-all}
+.actq-evidence-nav{display:flex;justify-content:center;gap:18px;align-items:center;margin-top:12px;color:#d3c39f;font-size:15px}
+.actq-evidence-nav button{border:1px solid #827453;background:#1c2520;color:#f1e2c6;padding:10px 20px;border-radius:5px;font:inherit;cursor:pointer;min-height:44px}
+.actq-evidence-nav button:disabled{opacity:.4;cursor:default}
+.actq-close .actq-go{position:sticky;bottom:0;z-index:3;background:#30271c;box-shadow:0 0 20px #0009;font-size:19px}
+@media(max-height:560px){.actq-close .actq-body{padding:14px 24px;gap:10px}.actq-close .actq-q{font-size:26px;line-height:1.3}.actq-close .actq-lead{font-size:15px}.actq-close .actq-seen-title{margin-bottom:8px}.actq-evidence-image{height:82px}.actq-evidence-copy{padding:8px 10px}.actq-evidence-title{font-size:18px}.actq-evidence-note{margin-top:4px}.actq-close .actq-seen-list{gap:10px}.actq-evidence-nav{margin-top:8px}.actq-close .actq-go{padding:10px 24px}}
+@media(max-width:620px){.actq-close .actq-seen-list{grid-template-columns:1fr}.actq-evidence-image{height:140px}}
+@media(max-height:560px) and (min-width:650px){
+ .actq-close .actq-body{padding:8px 24px;gap:6px}
+ .actq-close .actq-lead:not(.act-restart-notice){display:none}
+ .actq-close .actq-q{font-size:24px}
+ .actq-close .actq-seen-title{font-size:14px;margin-bottom:6px}
+ .actq-evidence-image{height:58px}
+ .actq-evidence-copy{padding:6px 10px}
+ .actq-evidence-kind{font-size:12px;margin-bottom:2px}
+ .actq-evidence-title{font-size:17px}
+ .actq-evidence-note{font-size:12px;margin-top:3px}
+ .actq-evidence-nav{margin-top:6px}
+ .actq-evidence-nav button{padding:8px 18px}
+ .actq-close .actq-go{position:static;font-size:18px;padding:9px 24px}
+ .actq-close .actq-note summary{font-size:12px;padding:2px 8px}
+}
+`
+
 let styled = false
 function ensureStyle() {
   if (styled) return
   installTypeVars()
+  installHistoricalMedia()
   const style = document.createElement('style')
   style.id = 'eojeon-actq-style'
-  style.textContent = CSS
+  style.textContent = CSS + GALLERY_CSS
   document.head.appendChild(style)
   styled = true
 }
@@ -265,10 +334,17 @@ export function createActQuestion(root) {
           </div>`
 
         const body = el.querySelector('.actq-body')
+        if (view.notice) {
+          const notice = document.createElement('p')
+          notice.className = 'actq-lead act-restart-notice'
+          notice.setAttribute('role', 'status')
+          notice.textContent = view.notice
+          body.appendChild(notice)
+        }
 
         // 본 것 몇 줄 — 닫는 화면에서만, 그리고 실제로 넘어온 것이 있을 때만.
         // 글은 textContent 로만 넣는다(ui/act-end.js 의 reason 과 같은 규칙).
-        const evidence = close ? (view.evidence ?? []).filter(Boolean) : []
+        const evidence = close ? evidenceCards((view.evidence ?? []).filter(Boolean)) : []
         if (evidence.length) {
           const box = document.createElement('div')
           box.className = 'actq-seen'
@@ -279,10 +355,64 @@ export function createActQuestion(root) {
           list.className = 'actq-seen-list'
           for (const seen of evidence) {
             const li = document.createElement('li')
-            li.textContent = seen
+            const media = seen.media
+            if (media?.src) {
+              const imageButton = document.createElement('button')
+              imageButton.className = 'actq-evidence-image'
+              imageButton.setAttribute('aria-label', `${seen.title} 그림 크게 보기`)
+              const image = document.createElement('img')
+              image.src = media.src
+              image.alt = media.alt ?? media.caption ?? seen.title
+              imageButton.appendChild(image)
+              imageButton.addEventListener('click', () => openMediaViewer(media, imageButton))
+              li.appendChild(imageButton)
+            }
+            const copy = document.createElement('div')
+            copy.className = 'actq-evidence-copy'
+            const kind = document.createElement('div')
+            kind.className = 'actq-evidence-kind'
+            kind.textContent = seen.kind ?? '돌아본 장면'
+            const name = document.createElement('p')
+            name.className = 'actq-evidence-title'
+            name.textContent = seen.title ?? ''
+            const note = document.createElement('div')
+            note.className = 'actq-evidence-note'
+            note.textContent = media?.kind === 'historical' ? '관련 역사 자료 · 눌러서 살펴보기' : '재구성 그림 · 눌러서 살펴보기'
+            copy.append(kind, name, note)
+            if (seen.text && seen.text !== seen.title) {
+              const detail = document.createElement('details')
+              detail.className = 'actq-evidence-details'
+              const summary = document.createElement('summary')
+              summary.textContent = '내 기록 펼치기'
+              const text = document.createElement('p')
+              text.textContent = seen.text
+              detail.append(summary, text)
+              copy.appendChild(detail)
+            }
+            li.appendChild(copy)
             list.appendChild(li)
           }
           box.append(title, list)
+          const size = globalThis.matchMedia?.('(max-width:620px)')?.matches ? 1 : 3
+          if (evidence.length > size) {
+            let at = 0
+            const nav = document.createElement('div')
+            nav.className = 'actq-evidence-nav'
+            const back = document.createElement('button'); back.textContent = '이전'
+            const count = document.createElement('span')
+            const next = document.createElement('button'); next.textContent = '다음 장면'
+            const paint = () => {
+              Array.from(list.children).forEach((li, i) => { li.hidden = i < at * size || i >= (at + 1) * size })
+              count.textContent = `${at + 1} / ${Math.ceil(evidence.length / size)}`
+              back.disabled = at === 0
+              next.disabled = (at + 1) * size >= evidence.length
+            }
+            back.addEventListener('click', () => { if (at > 0) { at--; paint() } })
+            next.addEventListener('click', () => { if ((at + 1) * size < evidence.length) { at++; paint() } })
+            nav.append(back, count, next)
+            box.appendChild(nav)
+            paint()
+          }
           body.appendChild(box)
         }
 
@@ -317,7 +447,7 @@ export function createActQuestion(root) {
         }
 
         root.appendChild(el)
-        go.focus?.()
+        go.focus?.({ preventScroll: true })
       })
     },
   }

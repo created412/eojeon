@@ -114,9 +114,9 @@ describe('실제 runBeats로 1~5막 자유 여정 완주', () => {
       expect(result.state.actIndex).toBe(4)
       expect(result.state.beatIndex).toBe(ACTS[4].beats.length)
       expect(result.played.at(-1)).toBe('gapsin/end')
-      expect(result.state.moves).toHaveLength(6)
+      expect(result.state.moves).toHaveLength(7)   // 6 → 7 (2026-10-06): 끝에 창덕궁으로 돌아온다
       expect(result.state.moves.every(m => m.from && m.to)).toBe(true)
-      expect(Object.keys(result.state.freedom.hubs)).toHaveLength(8)
+      expect(Object.keys(result.state.freedom.hubs)).toHaveLength(9)   // 8 → 9 (2026-10-06): 마지막 걸음
       // 하루의 셈은 없어졌다(core/clock.js 2026-09-26) — 저장에 그 칸이 실리지 않는다.
       expect(result.saves.every(json => deserialize(json).dayLeft === undefined)).toBe(true)
       expect(buildRecordText(result.state, ACTS)).toContain('[궁중 여정]')
@@ -143,7 +143,9 @@ describe('실제 runBeats로 1~5막 자유 여정 완주', () => {
     expect(r.state.sources.held).not.toContain('seogye')
     for (const report of HUB_REPORTS) expect(r.played).not.toContain(`${report.act}/${report.beat}`)
     // 5 → 8 (2026-10-06): 고민해서 정하는 자리 셋(서계 · 임오 · 정강)이 더해졌다.
-    expect(r.state.decisions.filter(d => !d.choiceId.startsWith('orders:'))).toHaveLength(8)
+    // 8 → 9 (같은 날): 광성보 판이 어떻게 버텼는지를 남긴다(stand:fallen).
+    // 9 → 10 (같은 날): 4막에 「이 보고를 듣고 무엇을 명할 것인가」가 더해졌다.
+    expect(r.state.decisions.filter(d => !d.choiceId.startsWith('orders:'))).toHaveLength(10)
   })
   it('선택 순서가 달라도 5막까지 같은 역사 순서를 유지한다', () => {
     // 4막 거점의 보고 두 개(완화군·이재선)를 걷어 내면서(2026-09-26) 「한 거점 안에서

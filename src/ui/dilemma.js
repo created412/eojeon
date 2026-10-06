@@ -4,12 +4,13 @@
 // 주요 이벤트들이 역사적으로 고민하게 만들어야 해.」 「물론 결과는 실제 역사적 사실을 따르지만.」
 //
 // 맞는 답이 없다(data/studies.js DILEMMAS). 고르면 「실제로는」이 뜬다 — 교과서의 문장이다.
-// 어전회의(ui/council-ui.js)가 근거를 놓고 앞일을 내다보는 큰 판이라면, 이것은 한 장짜리다:
-// 무엇과 무엇 사이에 서 있었는지를 한눈에 보고, 하나를 고른다.
+// 무엇과 무엇 사이에 서 있었는지를 그림 카드로 살핀 뒤 하나를 고른다.
+// 고른 뒤의 역사 확인은 별도 화면이다 — 자기 선택과 기록을 한 덩어리로 읽지 않게 한다.
 //
 // ⚠ 곧장 고르지 못하게 한다. 보기를 누르면 먼저 **펼쳐져** 얻는 것·내어주는 것이 보이고,
 //   그 안의 「이렇게 정한다」를 눌러야 정해진다 — 읽지 않고 첫 줄을 누르고 지나가지 않게.
 import { installTypeVars } from './type-css.js'
+import { choiceArtHtml, choiceArtKey, CHOICE_ART_CSS } from './choice-art.js'
 
 const CSS = `
 .dilemma,.dilemma *{box-sizing:border-box}
@@ -50,6 +51,36 @@ const CSS = `
    이 줄이 없으면 「실제로는」이 고르기 전부터 떠 있다 — 2026-10-06 화면에서 실제로 그랬다. */
 .dilemma .actual[hidden],.dilemma .go[hidden]{display:none}
 .dilemma button:focus-visible{outline:3px solid #e0a23a;outline-offset:2px}
+/* 2026-10-06 「선택지마다 그림을 만들어 힉스필드로」 — 선택과 역사 확인을 두 화면으로 나눈다. */
+${CHOICE_ART_CSS}
+.dilemma .wrap{max-width:1260px;gap:18px;padding:30px 28px}
+.dilemma h2{font-size:clamp(25px,3vw,38px);letter-spacing:0;line-height:1.35}
+.dilemma .prompt{font-size:20px;line-height:1.7;max-width:48em}
+.dilemma .opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:start}
+.dilemma .opt{border-radius:12px}
+.dilemma .head{display:block;padding:0;font-size:22px;line-height:1.5}
+.dilemma .head::after{display:none}
+.dilemma .head .choice-art{height:clamp(170px,27vh,260px)}
+.dilemma .choice-label{display:block;padding:18px 18px 7px;min-height:4.4em}
+.dilemma .choice-invite{display:block;padding:0 18px 17px;color:#c5c2b8;font:14px/1.4 var(--face-body,system-ui)}
+.dilemma .opt.open .choice-invite{color:#e8b45c}
+.dilemma .more{padding:4px 18px 20px;gap:16px}
+.dilemma .row{display:flex;flex-direction:column;gap:3px;font-size:18px;line-height:1.65}
+.dilemma .row b{font-size:14px;color:#dec594}
+.dilemma .choose,.dilemma .go{font-size:19px;min-height:50px;border-radius:6px}
+.dilemma .choose{align-self:stretch}
+.dilemma .actual{padding:0;border:0;gap:18px}
+.dilemma .actual>small{font-size:18px;letter-spacing:.15em}
+.dilemma .history-layout{display:grid;grid-template-columns:minmax(220px,.85fr) minmax(0,1.25fr);gap:28px;align-items:center}
+.dilemma .history-layout>.choice-art{height:clamp(240px,45vh,400px);border-radius:10px}
+.dilemma .history-copy{display:flex;flex-direction:column;gap:18px}
+.dilemma .actual p{font-size:21px;line-height:1.8}
+.dilemma .actual .origin{font-size:15px;line-height:1.6}
+.dilemma .actual .tail{font-size:20px;line-height:1.7}
+.dilemma .picked-line{font-size:17px;color:#c9b28b;margin:0}
+.dilemma [hidden]{display:none!important}
+@media(max-width:760px){.dilemma .wrap{padding:22px 16px}.dilemma .opts{grid-template-columns:1fr}.dilemma .head .choice-art{height:210px}.dilemma .choice-label{min-height:0}.dilemma .history-layout{grid-template-columns:1fr}.dilemma .history-layout>.choice-art{height:240px}}
+@media(max-height:500px) and (min-width:761px){.dilemma .wrap{padding:18px}.dilemma .head .choice-art{height:135px}.dilemma .choice-label{font-size:19px}.dilemma .history-layout>.choice-art{height:210px}}
 `
 
 let styled = false
@@ -70,7 +101,7 @@ export function dilemmaHtml(d) {
     <p class="prompt">${esc(d.prompt ?? '')}</p>
     <div class="opts">${(d.options ?? []).map(o => `
       <div class="opt" data-opt="${esc(o.id)}">
-        <button type="button" class="head" aria-expanded="false">${esc(o.text)}</button>
+        <button type="button" class="head" aria-expanded="false">${choiceArtHtml(choiceArtKey('dilemma', d.id, null, o.id))}<span class="choice-label">${esc(o.text)}</span><span class="choice-invite">이 선택 살펴보기</span></button>
         <div class="more">
           <div class="row gain"><b>얻는 것</b><span>${esc(o.gain)}</span></div>
           <div class="row cost"><b>내어주는 것</b><span>${esc(o.cost)}</span></div>
@@ -79,8 +110,11 @@ export function dilemmaHtml(d) {
       </div>`).join('')}</div>
     <div class="actual" hidden>
       <small>실 제 로 는</small>
-      <p>${esc(d.actual)}</p>
-      <div class="origin">${esc(d.origin ?? '')}</div>
+      <p class="picked-line"></p>
+      <div class="history-layout">
+        ${choiceArtHtml(choiceArtKey('dilemma', d.id, null, 'actual'), '역사적 상황을 그린 재구성')}
+        <div class="history-copy"><p>${esc(d.actual)}</p><div class="origin">${esc(d.origin ?? '')}</div></div>
+      </div>
       ${d.after ? `<p class="tail">${esc(d.after)}</p>` : ''}
     </div>
     <button type="button" class="go" hidden>${esc(d.nextLabel ?? '다음으로')}</button>
@@ -122,8 +156,11 @@ export function createDilemma(root) {
             }
             actual.hidden = false
             go.hidden = false
+            el.querySelector('.opts').hidden = true
+            el.querySelector('.prompt').hidden = true
+            el.querySelector('.picked-line').textContent = `당신의 선택 · ${d.options.find(o => o.id === picked)?.text ?? ''}`
             onPick?.()
-            actual.scrollIntoView?.({ block: 'nearest' })
+            el.scrollTop = 0
             go.focus?.()
           })
         }

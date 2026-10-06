@@ -2,7 +2,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import sharp from 'sharp'
 const specs = [
- ['heungseon','Daewongun-1883.jpg','흥선대원군 · 1883년 사진','양시태 조상관 · 서울역사박물관 소장'],
+ ['heungseon','Heungseon Daewongun Portrait.jpg','흥선대원군 · 1898년 이전 사진','Homer Hulbert · The Passing of Korea (1906) 수록'],
  ['choeikhyeon','Portraits for Choe Ik-Hyeon by Chae Yong-sin.jpg','최익현 · 채용신이 그린 초상','채용신 · 공유마당'],
  ['sinheon','Portrait of Shin Heon, author unknown.jpg','신헌 · 전해지는 초상','작자 미상'],
  ['dangbaekjeon','Sangpyeong Tongbo (常平通寶) – Ho Dae Dang Baek (户大當百) - Scan - Obverse & Reverse.jpg','당백전 앞면과 뒷면 · 뒷면의 當百 표기','Donald Trung Quoc Don'],
@@ -30,7 +30,7 @@ const manifest=[],packed={}
 for(const [id,title,caption,credit] of specs){
  const p=pages.find(p=>p.title==='File:'+title),i=p?.imageinfo?.[0]
  if(!i)throw Error('Missing metadata '+title)
- const isPdf=title.endsWith('.pdf'), originalPath=`assets/historical/originals/${id}.${isPdf?'jpg':title.endsWith('.png')?'png':'jpg'}`
+ const isPdf=title.endsWith('.pdf'), originalPath=`assets/historical/originals/${id==='heungseon'?'heungseon-hulbert':id}.${isPdf?'jpg':title.endsWith('.png')?'png':'jpg'}`
  let bytes
  try {bytes=await readFile(originalPath)}catch{
   let url=i.url.split('?')[0]
@@ -53,7 +53,7 @@ for(const [id,title,caption,credit] of specs){
  await writeFile(`assets/historical/${id}.webp`,webp)
  const license=id==='cheokhwabi'?'KOGL Type 1':i.extmetadata.LicenseShortName?.value
  const licenseUrl=license==='KOGL Type 1'?'https://www.kogl.or.kr/info/licenseType1.do':license==='CC BY-SA 4.0'?'https://creativecommons.org/licenses/by-sa/4.0/':license==='CC BY-SA 3.0'?'https://creativecommons.org/licenses/by-sa/3.0/':license==='CC0'?'https://creativecommons.org/publicdomain/zero/1.0/':'https://creativecommons.org/publicdomain/mark/1.0/'
- const m={id,title,caption,credit,license,licenseUrl,source:'https://commons.wikimedia.org/wiki/'+encodeURIComponent(p.title.replaceAll(' ','_')),originalPath,downloadUrl:i.url.split('?')[0],processing:isPdf?'Commons 표지 미리보기; 크기 조정 및 WebP 압축':'원본의 비율·내용·색상 유지; 크기 조정 및 WebP 압축',retrieved:'2026-09-11'}
+ const m={id,title,caption,credit,license,licenseUrl,source:'https://commons.wikimedia.org/wiki/'+encodeURIComponent(p.title.replaceAll(' ','_')),originalPath,downloadUrl:i.url.split('?')[0],processing:isPdf?'Commons 표지 미리보기; 크기 조정 및 WebP 압축':'원본의 비율·내용·색상 유지; 크기 조정 및 WebP 압축',retrieved:id==='heungseon'?'2026-10-06':'2026-09-11'}
  manifest.push(m)
  packed[id]={caption,credit,license,licenseUrl,source:m.source,src:'data:image/webp;base64,'+webp.toString('base64')}
  console.log(id,Math.round(webp.length/1024)+' KB')

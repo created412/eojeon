@@ -159,11 +159,11 @@ describe('화면에 나가는 말', () => {
     expect(countLabel(tray)).not.toMatch(/초|분|남은 시간/)
   })
 
-  it('남은 것이 「쌀」이 아니라 「열세 달치 급료」라고 말한다 — 이 화면의 전부다', () => {
+  it('남은 것이 「쌀」이 아니라 「열세 달을 기다려 받은 급료」라고 말한다 — 「열세 달치」는 아니다(실록: 겨우 한 달분)', () => {
     const tray = pickAll(createTray())
     const line = wageLine(tray)
-    expect(line).toContain('열세 달')
-    expect(line).toContain('급료')
+    expect(line).toContain('열세 달을 기다려 받은 급료')
+    expect(line).not.toContain('열세 달치')
     expect(line).toContain(`${summary(tray).chaff}`)
   })
 

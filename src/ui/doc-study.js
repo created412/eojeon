@@ -1,11 +1,12 @@
 // 문서를 뜯어 읽는 판 — 왼쪽에 문서, 오른쪽에 지금의 물음. 답할 때마다 문서 여백에
 // 붉은 주석이 하나씩 붙는다. 셈은 systems/doc-study.js 가 한다.
 //
-// ⚠ 한 화면에 들어온다(굴리지 않는다). 글씨와 틈은 화면 높이를 따라 준다. 좁으면 문서가
-//   위, 물음이 아래로 쌓이고 그때는 문서 쪽만 구른다.
+// 지금 읽는 대목을 크게 남기고 나머지는 펼쳐 볼 수 있다. 그림과 글씨를 줄여 끼우지 않고,
+// 낮거나 좁은 화면에서는 판을 굴려 읽는다(2026-10-06 그림 보기 개편).
 // ⚠ 「두 나라를 바꿔 읽는다」로 뜬 문장은 **문서에 적힌 글이 아니다.** 빛깔을 바꾸고
 //   「바꿔 읽은 것」이라고 적는다 — 지어낸 문장이 조약문처럼 보이면 안 된다.
 import { installTypeVars } from './type-css.js'
+import { choiceArtHtml, choiceArtKey, CHOICE_ART_CSS } from './choice-art.js'
 import {
   sectionsOf, initialStudy, stepAt, stepCount, flip, answer, focusBlank, activeBlank, chipsOf,
   studyHint, studyRecord,
@@ -93,6 +94,45 @@ const CSS = `
   .study .wrap{grid-template-columns:1fr;grid-template-rows:minmax(0,44%) minmax(0,1fr)}
 }
 @media(prefers-reduced-motion:reduce){.study .notes li.new,.study .opt.no,.study .chip.no{animation:none}.study .sec{transition:none}}
+/* 2026-10-06 「선택지마다 그림을 만들어 힉스필드로」 — 지금 대목을 읽고 그림 보기를 고른다. */
+${CHOICE_ART_CSS}
+.study{overflow-y:auto;display:block}
+.study .wrap{max-width:1440px;margin:auto;height:auto;min-height:100%;grid-template-columns:minmax(300px,.85fr) minmax(0,1.55fr);padding:30px 26px;gap:28px;align-items:start}
+.study .sheet{position:sticky;top:24px;max-height:calc(100dvh - 54px);gap:12px}
+.study .paper{padding:24px 20px;gap:16px;flex:1 1 auto}
+.study .paper h3{font-size:19px;line-height:1.6;letter-spacing:0}
+.study .sec{padding:12px 12px}
+.study .sec .lab{font-size:15px;margin-bottom:8px}
+.study .sec .txt{font-family:var(--face-body,system-ui,sans-serif);font-size:22px;line-height:1.85;letter-spacing:0}
+.study .src{font-size:14px;line-height:1.65;color:#c0b9a9}
+.study .side{overflow:visible;gap:20px}
+.study h2{font-size:clamp(25px,2.7vw,35px);line-height:1.4;letter-spacing:0}
+.study .background-note{font-size:16px;color:#c9c3b7;line-height:1.7}
+.study .background-note summary{cursor:pointer;color:#d7c5a2}
+.study .lead{font-size:17px;line-height:1.75;padding-top:8px}
+.study .step-count{font-size:15px;color:#c3b59e}
+.study .stage{display:flex;flex-direction:column;gap:18px}
+.study .ask{font-family:var(--face-body,system-ui,sans-serif);font-size:24px;line-height:1.65;letter-spacing:0;text-align:center}
+.study .flipbtn{font-size:18px;min-height:48px}
+.study .opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:stretch}
+.study .opts:has(>.opt:last-child:nth-child(2)){grid-template-columns:repeat(2,minmax(0,1fr))}
+.study .opt{padding:0;border-radius:9px;overflow:hidden;font-size:20px;line-height:1.6;display:flex;flex-direction:column}
+.study .opt .choice-art{width:100%;height:145px;flex-shrink:0}
+.study .opt .study-choice-label{display:block;padding:15px 13px}
+.study .opt:disabled{opacity:.65}
+.study .chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.study .chip{padding:0;border-radius:8px;overflow:hidden;font-size:21px;background:#eee3c6}
+.study .chip .choice-art{height:110px}
+.study .chip .study-choice-label{display:block;padding:10px}
+.study .say{font-size:20px;line-height:1.75;margin-top:0}
+.study .notes li{font-size:17px;line-height:1.65}
+.study .after p{font-size:22px;line-height:1.85}
+.study .close{font-size:20px;min-height:52px;margin-top:18px}
+.study .source-toggle{border:1px solid #957b55;color:#5b4425;background:transparent;padding:10px;font-family:inherit;font-size:16px;line-height:1.5;cursor:pointer}
+.study .source-toggle:focus-visible{outline:3px solid #e0a23a;outline-offset:2px}
+.study [hidden]{display:none!important}
+@media(max-width:800px){.study .wrap{grid-template-columns:1fr;grid-template-rows:auto auto;padding:22px 16px}.study .sheet{position:static;max-height:none}.study .paper{max-height:none;padding:18px}.study .sec .txt{font-size:21px}.study .opts{grid-template-columns:repeat(2,minmax(0,1fr))}.study .opt .choice-art{height:140px}}
+@media(max-width:480px){.study .opts,.study .opts:has(>.opt:last-child:nth-child(2)){grid-template-columns:1fr}.study .opt{display:grid;grid-template-columns:120px minmax(0,1fr);align-items:center}.study .opt .choice-art{height:120px}.study .opt .choice-art small{font-size:9px;right:2px;left:2px;text-align:center}.study .opt .study-choice-label{padding:13px}.study .chips{grid-template-columns:repeat(2,minmax(0,1fr))}.study .ask{font-size:22px}}
 `
 
 let styled = false
@@ -128,12 +168,14 @@ export function studyHtml(study) {
         ${study.glyphs ? `<div class="glyphs" aria-label="${esc(study.glyphs)}">${esc(study.glyphs)}</div>` : ''}
         ${sectionsOf(study).map(sectionHtml).join('')}
         <ul class="notes free-notes" data-notes=""></ul>
+        <button type="button" class="source-toggle" aria-expanded="false">문서 전체 펼치기</button>
       </div>
       <div class="src">${esc(study.origin ?? '')}</div>
     </div>
     <div class="side">
       <h2>${esc(study.title)}</h2>
-      <p class="lead">${esc(study.lead ?? '')}</p>
+      <details class="background-note"><summary>이 문서가 온 까닭</summary><p class="lead">${esc(study.lead ?? '')}</p></details>
+      <div class="step-count" aria-live="polite"></div>
       <div class="pips" aria-hidden="true">${Array.from({ length: n }, () => '<i></i>').join('')}</div>
       <div class="stage" data-stage></div>
       <p class="say" aria-live="polite"></p>
@@ -161,10 +203,19 @@ export function createDocStudy(root) {
         const original = new Map([...secEls].map(([id, s]) => [id, s.querySelector('[data-txt]').innerHTML]))
         let shownNotes = 0
         let showingMirror = false
+        let wholePaper = false
+        $('.source-toggle').addEventListener('click', () => { wholePaper = !wholePaper; paintPaper() })
 
         function paintPaper() {
           const step = stepAt(study, state)
+          const focusSection = step?.section ?? (step?.kind === 'fill' ? activeBlank(study, state)?.split(':')[0] : null)
+          const canFold = !state.done && !!focusSection && secEls.size > 1
+          $('.source-toggle').hidden = !canFold
+          $('.source-toggle').textContent = wholePaper ? '지금 대목만 보기' : '문서 전체 펼치기'
+          $('.source-toggle').setAttribute('aria-expanded', String(wholePaper))
+          $('.step-count').textContent = state.done ? '문서 읽기를 마쳤다' : `${state.step + 1} / ${stepCount(study)} · 한 대목씩 읽는다`
           for (const [id, s] of secEls) {
+            s.hidden = canFold && !wholePaper && id !== focusSection
             s.classList.toggle('on', !!step && step.section === id)
             const mirror = !!step && step.kind === 'flip' && step.section === id && showingMirror
             s.classList.toggle('mirror', mirror)
@@ -235,7 +286,8 @@ export function createDocStudy(root) {
             const usedWords = Object.values(state.filled)
             for (const c of chipsOf(study, step)) {
               const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'
-              b.textContent = c.word
+              b.dataset.word = c.word
+              b.innerHTML = choiceArtHtml(choiceArtKey('word', study.id, state.step, c.word)) + `<span class="study-choice-label">${esc(c.word)}</span>`
               if (usedWords.includes(c.word)) b.classList.add('used')
               if (hint === c.word) b.classList.add('glow')
               b.addEventListener('click', () => respond({ word: c.word }, b))
@@ -248,7 +300,8 @@ export function createDocStudy(root) {
           const opts = document.createElement('div'); opts.className = 'opts'
           for (const o of step.options ?? []) {
             const b = document.createElement('button'); b.type = 'button'; b.className = 'opt'
-            b.textContent = o.text
+            b.dataset.choice = o.id
+            b.innerHTML = choiceArtHtml(choiceArtKey('study', study.id, state.step, o.id)) + `<span class="study-choice-label">${esc(o.text)}</span>`
             // 바꿔 읽기 전에는 답할 수 없다 — 읽어 보지 않고 찍지 않게.
             if (step.kind === 'flip' && !state.flipped) b.disabled = true
             if (hint === o.id) b.classList.add('glow')
@@ -260,6 +313,7 @@ export function createDocStudy(root) {
 
         function respond(payload, btn) {
           const r = answer(study, state, payload)
+          const missed = r.state.misses > state.misses
           state = r.state
           say.textContent = r.say ?? ''
           say.classList.toggle('ok', r.ok)
@@ -268,7 +322,7 @@ export function createDocStudy(root) {
             showingMirror = false
             paintPaper(); paintStage()
           } else {
-            onMiss?.()
+            if (missed && onMiss?.(r.say) === true) return
             btn?.classList.remove('no'); void btn?.offsetWidth; btn?.classList.add('no')
             const hint = studyHint(study, state)
             if (hint != null) paintStage()

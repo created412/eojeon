@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { ACTS, actById } from '../../src/data/acts.js'
 import { SOURCES } from '../../src/data/sources.js'
 import { STUDIES, DILEMMAS } from '../../src/data/studies.js'
+import { WEIGHS } from '../../src/data/weigh.js'
 import { beatsOf } from '../../src/systems/scenario.js'
 
 // ── 게임 안의 「N 해」를 전수로 훑는다 ────────────────────────────────────
@@ -50,7 +51,7 @@ function walkStrings(node, path, visit) {
 // actSpan()·nativeCount() 가 세므로 손으로 적힌 수가 없다(title.js·act-end.js).
 export function collectYearCounts() {
   const found = []
-  for (const [root, name] of [[ACTS, 'ACTS'], [SOURCES, 'SOURCES'], [STUDIES, 'STUDIES'], [DILEMMAS, 'DILEMMAS']]) {
+  for (const [root, name] of [[ACTS, 'ACTS'], [SOURCES, 'SOURCES'], [STUDIES, 'STUDIES'], [DILEMMAS, 'DILEMMAS'], [WEIGHS, 'WEIGHS']]) {
     walkStrings(root, name, (text, path) => {
       for (const m of text.matchAll(COUNT_RE)) {
         const after = text.slice(m.index + m[0].length - 1)
@@ -65,6 +66,26 @@ export function collectYearCounts() {
 // ── 자리마다 등록된 두 해 ─────────────────────────────────────────────
 // where 는 그 문장에서만 나오는 토막이다. 같은 문장이 여럿에 걸리면 아래 시험이 운다.
 const CLAIMS = [
+  {
+    where: '다섯 해 전 평양에서 불탄 배',
+    note: '광성보 첫 줄 — 제너럴 셔먼호(1866)에서 신미양요(1871)까지',
+    from: 'year:1866', to: 'year:1871',
+  },
+  {
+    where: '다섯 해 전 정족산성에서는',
+    note: '광성보 — 정족산성(1866)에서 광성보(1871)까지',
+    from: 'year:1866', to: 'year:1871',
+  },
+  {
+    where: '아버지는 세 해 전에 물러났다',
+    note: '임금의 저울 첫 줄 — 친정(1873)에서 조약을 두고 고민하는 해(1876)까지',
+    from: 'year:1873', to: 'year:1876',
+  },
+  {
+    where: '세 해 전부터 정하는 것은 나다',
+    note: '임금의 저울 「아버지의 돌」 — 친정(1873)에서 1876년까지',
+    from: 'year:1873', to: 'year:1876',
+  },
   {
     where: '해가 지났다',
     note: '4막 첫 줄 — 즉위(1863)에서 임오(1882)까지',
@@ -91,21 +112,6 @@ const CLAIMS = [
     // 개항 뒤의 쌀 유출이다. 조약(1876)에서 지금(1882)까지.
     where: '여섯 해 전에 조약을 맺은 뒤로',
     note: '종로 — 강화도 조약(1876)에서 지금(1882)까지',
-    from: 'year:1876', to: 'act:imo',
-  },
-  {
-    // 4막 영남 만인소(1881)는 개항(1876)에서 다섯 해 뒤다.
-    where: '다섯 해 뒤 영남 만인소가',
-    from: 'year:1876', to: 'year:1881',
-  },
-  {
-    // 3막 조약 회의 — 최익현이 아버지를 물러나게 한 계유상소(1873)에서 이 회의(1876)까지.
-    where: '이 사람은 세 해 전',
-    from: 'year:1873', to: 'year:1876',
-  },
-  {
-    // 4막 회의 — 조일 무역 규칙(1876)에서 임오군란(1882)까지. 그 글이 쌀값으로 돌아온다.
-    where: '여섯 해 전에 맺은 글이',
     from: 'year:1876', to: 'act:imo',
   },
   {

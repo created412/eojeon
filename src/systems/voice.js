@@ -20,7 +20,13 @@ export function revealCount(times, ms) {
 // clips — { key: { src, ms, t } }. isMuted — 게임의 음소거(systems/audio.js)를 그대로 따른다.
 // makeAudio — 시험에서 가짜 소리를 끼우는 자리. 브라우저에서는 new Audio(src).
 export function createVoicePlayer({ clips = {}, isMuted = () => false, makeAudio = src => new Audio(src),
-  onStart = () => {}, onEnd = () => {} } = {}) {
+  onStart = () => {}, onEnd = () => {}, clock = null } = {}) {
+  const now = () => clock?.now() ?? Date.now()
+  const delay = (callback, ms) => {
+    if (clock) return clock.delay(callback, ms)
+    const timer = setTimeout(callback, ms)
+    return () => clearTimeout(timer)
+  }
   let current = null
   let sequence = null
 
@@ -80,7 +86,7 @@ export function createVoicePlayer({ clips = {}, isMuted = () => false, makeAudio
         stop() {
           if (cancelled) return
           cancelled = true
-          clearTimeout(timer)
+          timer?.()
           if (sequence === run) { sequence = null; stopAudio() }
           resolve()
         },
@@ -88,8 +94,8 @@ export function createVoicePlayer({ clips = {}, isMuted = () => false, makeAudio
       sequence = run
       function scheduleNext() {
         if (cancelled) return
-        clearTimeout(timer)
-        timer = setTimeout(next, Math.max(0, readMs - (Date.now() - lineStarted)))
+        timer?.()
+        timer = delay(next, Math.max(0, readMs - (now() - lineStarted)))
       }
       function next() {
         timer = null
@@ -97,7 +103,7 @@ export function createVoicePlayer({ clips = {}, isMuted = () => false, makeAudio
         if (index >= lines.length) { run.stop(); return }
         const text = lines[index++]
         const clip = clips[voiceKey('gojong-narrator', text)]
-        lineStarted = Date.now()
+        lineStarted = now()
         readMs = Math.max(2400, clip?.ms ?? text.length * 100)
         onLine(text, clip, index - 1)
         if (!playAudio(clip, failed => failed ? scheduleNext() : next())) scheduleNext()

@@ -237,8 +237,10 @@ describe('main.js 배선 — 빠져나갈 길이 구조로 보장되는가', () 
       expect(canPause('rush', true)).toBe(true)
     })
 
-    it('그 밖에는 지금까지대로 안 열린다 — 촉박 중에 열리면 초시계가 가려진다', () => {
-      for (const phase of ['rush', 'beat', 'council', 'done']) {
+    it('정지 시계가 연결된 촉박·미니게임에서는 열고 나머지 전면 장면은 유지한다', () => {
+      expect(canPause('rush', false)).toBe(true)
+      expect(canPause('beat', false, true)).toBe(true)
+      for (const phase of ['beat', 'council', 'done']) {
         expect(canPause(phase, false), phase).toBe(false)
       }
     })
@@ -251,8 +253,8 @@ describe('main.js 배선 — 빠져나갈 길이 구조로 보장되는가', () 
   })
 
   it('dispose() 가 hold 화면을 걷어 간다 — 막 전환·종료에 판이 남지 않는다', () => {
-    // boot() 가 돌려주는 객체의 dispose 메서드. 몸통은 중괄호로 자른다.
-    const body = blockAt(main, main.indexOf('{', main.lastIndexOf('\n    dispose()')))
+    // 막 재시작에서도 재사용하는 boot 내부 정리 함수.
+    const body = bodyOf(main, 'dispose')
     expect(body).toContain('holdSession')
     expect(body).toContain('.dispose()')
   })

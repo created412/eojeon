@@ -92,10 +92,12 @@ describe('C3 — 갈림길이 없다. 홍영식과 박영교는 누구에게나 
     expect(sameHistory(run.state, flagged.state)).toBe(true)
   })
 
-  it('홍영식·박영교의 장면을 지나고, 청군의 영방에서 조작권 없이 끝난다', () => {
+  // 2026-10-06 — 끝이 청군의 영방에서 창덕궁으로 옮겨졌다(10월 23일의 환어). 영방은 지나간다.
+  it('홍영식·박영교의 장면을 지나고, 청군의 영방을 거쳐 궁으로 돌아와 끝난다', () => {
     expect(run.historical).toContain('gapsin-hong')
-    expect(run.state.palace).toBe('ojoyu')
-    expect(run.state.control).toBe('D')
+    expect(run.historical).toContain('gapsin-move-ojoyu')
+    expect(run.state.palace).toBe('changdeok')
+    expect(run.state.control).toBe('A')
     expect(run.state.sources.read).toContain('gapsin-memoir')
   })
 

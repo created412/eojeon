@@ -22,6 +22,20 @@ describe('단일 HTML 빌드', () => {
     expect(entry.equals(distribution)).toBe(true)
   })
 
+  // 선생님(2026-10-06): 「오프닝 영상을 html에 넣고」. HTML 하나에 영상·연속 음악이 들어 있다.
+  it('프롤로그 영상과 연속 음악이 HTML 안에 있다 — 곁의 파일을 찾지 않는다', async () => {
+    const [html, video, audio] = await Promise.all([
+      readFile(OUT, 'latin1'),
+      readFile('assets/video/eojeon-prologue-v23-web.mp4'),
+      readFile('assets/video/eojeon-prologue-continuous-web.m4a'),
+    ])
+    // 앞 4KB 의 base64 가 그대로 들어 있으면 그 파일이 실린 것이다
+    expect(html).toContain(video.subarray(0, 3 * 1365).toString('base64'))
+    expect(html).toContain(audio.subarray(0, 3 * 1365).toString('base64'))
+    expect(html).not.toContain('dist/assets/video')
+    await expect(stat('dist/assets/video')).rejects.toThrow()
+  })
+
   // 네트워크 요청이 아닌, 남아 있어도 안전한 URL 문자열
   //  - w3.org 네임스페이스: XML 네임스페이스 식별자일 뿐 가져오지 않는다
   //  - jcgt.org: GLSL 셰이더 문자열 안의 인용 주석
@@ -66,9 +80,13 @@ describe('단일 HTML 빌드', () => {
   // 약 1.7MB)을 파일 안에 넣으면서 12MB 로 올렸다 — 게임은 여전히 파일 하나로 오프라인에서 돈다.
   // 이 수를 또 올리기 전에 먼저 줄일 것(이미지·음성 압축)을 찾는다.
   // 2026-09-14 BGM 두 곡(Lyria · 모노 Opus 32kbps, 약 670KB)을 더하며 13MB 로 올렸다.
-  it('13MB 이하다', async () => {
+  // 2026-10-06 사용자 요청: 선택지마다 Higgsfield 그림, 전장·투명 초상·궁녀 3D 추가.
+  // WebP/메시 압축을 거친 새 자산을 포함한 명시적 한도.
+  // 2026-10-06 선생님: 「오프닝 영상을 html에 넣고」 — 영상(CRF 28, 4.9MB)·음악(80kbps, 1.3MB)이 base64 로 붙는다.
+  // 상한은 Cloudflare Pages 의 파일 하나 한도(25MiB)다 — 이보다 크면 공개본으로 올릴 수 없다.
+  it('25MiB(Cloudflare Pages 파일 하나 한도) 이하다', async () => {
     const s = await stat(OUT)
-    expect(s.size).toBeLessThan(13 * 1024 * 1024)
+    expect(s.size).toBeLessThan(25 * 1024 * 1024)
   })
 })
 

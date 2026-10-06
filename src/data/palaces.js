@@ -84,7 +84,10 @@ export const PALACES = {
         { id: 'sundial', x: -14, z: 25, yaw: 0.2 },                        // 앙부일구
         { id: 'well', x: 9, z: -22 },
         { id: 'jangdok', x: -28, z: -31, yaw: -0.3 },
-        { id: 'cheokhwabi', x: 13, z: 29, yaw: -0.35, fromYear: 1871 },
+        // 살림 동선의 끝에 장독을 한 무리 더 둔다. 전각·물가·뒷문은 비운다(2026-10-06 재구성).
+        { id: 'jangdok', x: 33, z: -25, yaw: .2, scale: .85 },
+        // 금천 물속(z=29)에 있던 비석을 남쪽 둑의 뭍으로 옮긴다(2026-10-06).
+        { id: 'cheokhwabi', x: 13, z: 32, yaw: -0.35, fromYear: 1871 },
         // 후원 뒷문 — 궁의 북동쪽 담에 난 작은 문. 5막에서 임금이 궁을 빠져나가는 자리다
         // (acts.js gapsin-rush 의 goalPoint 가 이 자리를 가리킨다). **방이 아니다** — 안내도에
         // 이름이 없고 표지도 서지 않는다. 선생님(2026-10-06): 「어디 뒷문이라고 해서 찾기
@@ -166,6 +169,7 @@ export const PALACES = {
         { id: 'sundial', x: -17, z: 6, yaw: 0.3 },
         { id: 'well', x: -34, z: 5 },
         { id: 'jangdok', x: 33, z: -5, yaw: 0.4 },
+        { id: 'jangdok', x: 40, z: -26, yaw: -.2, scale: .85 },
         { id: 'cheokhwabi', x: 9.5, z: 28, yaw: -0.4, fromYear: 1871 },   // 회랑과 근정전 사이 마당
       ],
     },
@@ -186,7 +190,6 @@ export const PALACES = {
     pickups: [
       // 수정전 — 중건 뒤 규장각이 있던 일곽. 기록이 모이는 곳이다.
       { cardId: 'junggeon',      placeId: 'sujeongjeon',   x: -38, z:  -4 },
-      { cardId: 'sinmi-officer', placeId: 'sujeongjeon',   x: -30, z: -12 },
       // 서계(1873 알현)·조약문 세 장(1876 신헌의 알현)은 이제 사람이 알현에서 건넨다 — 바닥 자리를 지웠다
       // (2026-09-13 역사 순서 정리).
       // 사정전 — 편전. 조약 문서가 여기 쌓인다
@@ -194,7 +197,6 @@ export const PALACES = {
       // 걸어가 주우면 그대로 손에 들어왔다 — 세 해를 앞질렀다. 지금은 그 사람이
       // 도끼를 지고 들어와 직접 건넨다(3막 axe-sangso, data/acts.js).
       { cardId: 'unyo',          placeId: 'sajeongjeon',   x:   6, z:  -6 },
-      { cardId: 'gaehang-chanseong', placeId: 'sujeongjeon', x: -40, z: -12 },
     ],
   },
 
@@ -230,7 +232,6 @@ export const PALACES = {
       // **학생이 임금의 자리에 올라가야 정강 14조를 줍는** 그림이 됐다.
       // (하필 이 문서가 「국왕의 전제권 제한」을 담은 그 열네 조목이다.)
       // tests/data/throne.test.js 가 이 종류를 붙든다.
-      { cardId: 'reform14', placeId: 'jeongdang', x: 0, z: -2.2 },
     ],
   },
   // 운현궁 — 흥선군의 사저. 1863년 겨울까지 명복(고종)이 자란 집이다(2026-09-13 앞부분 보강).

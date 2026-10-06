@@ -76,6 +76,7 @@ export function resetDismissed() { dismissed = false }
 export function installOrientGate(root, {
   doc = globalThis.document,
   coarse = null,        // 시험에서 갈아 끼운다
+  onChange = () => {},
   mm = (q) => globalThis.matchMedia?.(q) ?? { matches: false },
 } = {}) {
   if (!root || !doc?.head) return () => {}
@@ -115,12 +116,14 @@ export function installOrientGate(root, {
       skip.addEventListener('click', () => { dismissed = true; paint() })
       el.append(icon, h, p, skip)
       root.appendChild(el)
+      onChange(true)
       // 이 판이 떠 있는 동안 뒤의 화면을 읽지 못하게 한다 — 돋보기(스크린 리더)가
       // 가려진 글을 계속 읽으면 학생은 어디를 보아야 할지 모른다.
       skip.focus?.()
     } else if (!want && el) {
       el.remove()
       el = null
+      onChange(false)
     }
   }
 

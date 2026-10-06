@@ -1,5 +1,6 @@
 import { HISTORICAL_MEDIA } from './historical-media-data.js'
 import { PORTRAITS } from './portraits-data.js'
+import { PORTRAIT_CUTOUTS } from './portrait-cutouts-data.js'
 import { FEEDBACK_MEDIA } from './feedback-media-data.js'
 import { MOTHER_CLIP } from '../render/mother-person.js'
 import { installTypeVars } from './type-css.js'
@@ -19,7 +20,7 @@ const SOURCE_IMAGES = {
  seogye: ['ganghwa-scene','관련 외교사 · 뒤에 이어진 1876년 조약 체결 그림. 1868년 서계 원본은 아닙니다.'],
  'choe-ikhyeon': ['choeikhyeon','관련 인물 · 왜양일체론을 주장한 최익현. 상소 원본은 아닙니다.'],
  unyo: ['unyo','관련 자료 · 1875년 사건에 등장한 운요호의 모습을 전하는 자료입니다.'],
- 'gaehang-chanseong': ['sinheon','관련 인물 · 강화도 조약 교섭의 조선 측 대표 신헌. 지문은 게임의 재구성입니다.'],
+ 'gaehang-chanseong': ['gojong','관련 인물 · 이 글을 내린 임금 고종. 뒷날(1903년)에 나온 초상이며, 전교의 원본은 아닙니다.'],
  ganghwa1: ['ganghwa-document','원문 자료 · 강화도 조약 문서. 아래 지문은 제1관의 내용입니다.'],
  ganghwa7: ['ganghwa-document','원문 자료 · 강화도 조약 문서. 아래 지문은 제7관의 내용입니다.'],
  ganghwa10: ['ganghwa-document','원문 자료 · 강화도 조약 문서. 아래 지문은 제10관의 내용입니다.'],
@@ -52,7 +53,7 @@ export function noteMedia(beat) {
  if(!id)return null
  const relation=id==='injeongjeon' ? '관련 장소 · 창덕궁의 현재 모습입니다. 지문의 사건 현장을 촬영한 사진은 아닙니다.'
   : id==='kimokgyun' ? '관련 인물 · 갑신정변의 주도자 김옥균입니다. 지문 속 다른 인물의 사진이 아닙니다.'
-  : id==='heungseon' ? '관련 인물 · 흥선대원군의 1883년 사진입니다. 해당 장면을 촬영한 사진은 아닙니다.'
+  : id==='heungseon' ? '관련 인물 · 흥선대원군의 1898년 이전 사진입니다. 해당 장면을 촬영한 사진은 아닙니다.'
   : '관련 역사 자료 · 사진·그림의 제작 시점은 설명에 표시했습니다. 지문의 장면을 그대로 재현한 자료는 아닙니다.'
  return {...HISTORICAL_MEDIA[id],id,relation,kind:'historical'}
 }
@@ -60,7 +61,7 @@ const NAMES={흥선대원군:'heungseon',최익현:'choeikhyeon',신헌:'sinheon
 export function speakerMedia(view) {
  if(view.npcId==='mother'||view.portrait==='mother')return {src:FEEDBACK_MEDIA.mother,kind:'reconstruction',caption:'여흥부대부인 민씨',relation:'고종의 어머니 · 실제 초상이 아닌 게임의 재구성',clip:MOTHER_CLIP}
  const id=NAMES[view.name] ?? (['heungseon','choeikhyeon','sinheon','gojong','kimokgyun'].includes(view.npcId)?view.npcId:null)
- if(id)return {...HISTORICAL_MEDIA[id],id,kind:'historical',relation:'전해지는 실제 사진·초상 · 당시 대화 장면을 촬영한 자료는 아닙니다.'}
+ if(id)return {...HISTORICAL_MEDIA[id],src:PORTRAIT_CUTOUTS[id]??HISTORICAL_MEDIA[id].src,id,kind:'historical',cutout:true,relation:'실제 사진·초상 기반 · AI 배경 제거 편집. 원본은 인물 그림을 눌러 확인할 수 있습니다.'}
  const src=PORTRAITS[view.portrait]
  if(!src)return null
  return {src,kind:'reconstruction',caption:view.name??'대화 인물',
@@ -72,6 +73,12 @@ export function mediaFigure(media,{portrait=false}={}) {
  if(!media)return ''
  const source=media.source?`<a href="${escape(media.source)}" target="_blank" rel="noopener noreferrer">원본 출처 ↗</a>`:''
  const rights=media.license?`<a href="${escape(media.licenseUrl)}" target="_blank" rel="noopener noreferrer">${escape(media.license)}</a>`:''
+ if(portrait)return `<figure class="historical-figure speaker-portrait portrait-stage${media.kind==='reconstruction'?' reconstructed':''}">
+  ${media.id?`<button type="button" class="media-zoom" data-media="${media.id}" aria-label="${escape(media.caption)} 원본 보기">`:''}
+  <img class="historical-image" src="${media.src}" alt="${escape(media.caption)}"${media.clip?` style="clip-path:${media.clip}"`:''}>
+  ${media.id?'</button>':''}
+  <figcaption><span>${media.cutout?'사진·초상 기반 · 배경 제거 편집':escape(media.relation)}</span>${media.id?'<span class="portrait-source-hint">인물을 누르면 원본·출처</span>':''}</figcaption>
+ </figure>`
  return `<figure class="historical-figure${portrait?' speaker-portrait':''}${media.kind==='reconstruction'?' reconstructed':''}">
   <div class="media-heading">${media.kind==='reconstruction'?'재구성 인물':portrait?'기록 속 인물':'기록을 보다'}</div>
   ${media.id?`<button type="button" class="media-zoom" data-media="${media.id}" aria-label="${escape(media.caption)} 크게 보기">`:''}
@@ -163,19 +170,25 @@ export function installHistoricalMedia() {
  if(document.getElementById('historical-media-style'))return
  const style=document.createElement('style');style.id='historical-media-style';style.textContent=CSS;document.head.appendChild(style)
 }
+// 자료 한 장을 크게 띄운다. 이 창(.historical-viewer)을 만드는 자리는 여기 하나다 — 다른 화면
+// (막 앞 연표 ui/act-background.js)도 이 함수를 부른다. figure 는 mediaFigure() 에 넘길 그대로다.
+export function openMediaViewer(figure,returnTo=null) {
+ const modal=document.createElement('dialog');modal.className='historical-viewer'
+ modal.setAttribute('aria-label',figure.caption??'관련 자료')
+ modal.innerHTML='<button type="button" class="viewer-close">닫기 (Esc)</button>'+mediaFigure({...figure,id:undefined})
+ document.body.appendChild(modal)
+ modal.addEventListener('keydown',e=>e.stopPropagation())
+ modal.addEventListener('keyup',e=>e.stopPropagation())
+ modal.querySelector('.viewer-close').addEventListener('click',()=>modal.close())
+ modal.addEventListener('close',()=>{modal.remove();if(returnTo?.isConnected)returnTo.focus()},{once:true})
+ modal.showModal()
+ return modal
+}
 export function bindMedia(container) {
  container.querySelectorAll('.media-zoom').forEach(button=>button.addEventListener('click',event=>{
   event.stopPropagation()
   const media=HISTORICAL_MEDIA[button.dataset.media]
   if(!media)return
-  const modal=document.createElement('dialog');modal.className='historical-viewer'
-  modal.setAttribute('aria-label',media.caption)
-  modal.innerHTML='<button type="button" class="viewer-close">닫기 (Esc)</button>'+mediaFigure({...media,kind:'historical',relation:'원본의 비율과 색상을 유지한 자료입니다. 크기 조정·압축만 적용했습니다.'})
-  document.body.appendChild(modal)
-  modal.addEventListener('keydown',e=>e.stopPropagation())
-  modal.addEventListener('keyup',e=>e.stopPropagation())
-  modal.querySelector('.viewer-close').addEventListener('click',()=>modal.close())
-  modal.addEventListener('close',()=>{modal.remove();if(button.isConnected)button.focus()},{once:true})
-  modal.showModal()
+  openMediaViewer({...media,kind:'historical',relation:'원본의 비율과 색상을 유지한 자료입니다. 크기 조정·압축만 적용했습니다.'},button)
  }))
 }

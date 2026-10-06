@@ -1,0 +1,1569 @@
+[
+  {
+    "index": 0,
+    "act": 0,
+    "id": "unhyeon-note",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 철종 14년 · 1863 겨울 · 운현궁 운현궁 1막 · 즉위 사초함 읽은 사료 0장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 1863 겨울, 운현궁 당신은 열두 살, 이름은 명복이다. 아버지 흥선군은 왕실의 먼 친척이지만, 벼슬도 힘도 없다. 조정은 육십여 년 동안 임금의 외척 몇 집안이 쥐어 왔다. 지금은 안동 김씨다. 『철종실록』 14년 12월 · 『고등 한국사1』 세도 정치 · 집 안의 하루는 재구성 ※ 이 대목은 기록에 남아 있지 않습니다. 게임이 지어내 채운 장면입니다. 이런 것을 「재구성」이라고 합니다. 1 / 2 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "00-1-unhyeon-note.png"
+  },
+  {
+    "index": 1,
+    "act": 0,
+    "id": "unhyeon-day",
+    "kind": "explore",
+    "errors": [],
+    "view": {
+      "text": "御前 철종 14년 · 1863년 음력 12월 8일 · 운현궁 운현궁 1막 · 즉위 사초함 읽은 사료 0장 Q 오늘 할 일 0 / 3 마당 이재면에게 말을 건다 마당 청지기에게 말을 건다 마당 여흥부대부인 민씨에게 말을 건다 쌀 한 섬 ···· 즉위 무렵과 같다 · 아버지 — 곁에 서 계신다 W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 ↶ ↷ 지금 할 일자유롭게 걷고, 만난 사람에게 E 로 말을 걸어 보세요. 다 둘러보았으면 왼쪽 위 「오늘 할 일」에 적힌 곳으로 걸어가 E 를 누릅니다. 이재면 형 · 6m — E 로 말을 건다 멈춤 E 대화 Q 사초 소리 꺼짐 ?",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "interaction-hint",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "01-1-unhyeon-day.png"
+  },
+  {
+    "index": 2,
+    "act": 0,
+    "id": "unhyeon-summons",
+    "kind": "audience",
+    "errors": [],
+    "view": {
+      "text": "御前 철종 14년 · 1863년 음력 12월 8일 · 운현궁 운현궁 · 노안당(사랑채) 1막 · 즉위 사초함 읽은 사료 0장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일신하가 임금 앞으로 와서 아룁니다. 끝까지 들으세요 — E나 대화창을 누르면 넘어갑니다. 멈춤 E 대화 Q 사초 소리 꺼짐",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "02-1-unhyeon-summons.png"
+  },
+  {
+    "index": 3,
+    "act": 0,
+    "id": "unhyeon-procession",
+    "kind": "procession",
+    "errors": [],
+    "view": {
+      "text": "御前 철종 14년 · 1863년 음력 12월 8일 · 운현궁 운현궁 1막 · 즉위 사초함 읽은 사료 0장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일신하들이 임금을 모시고 갑니다. 지켜보세요. 멈춤 E 대화 Q 사초 소리 꺼짐 가마를 모시러 온 사람은 안동 김씨의 어른이다.",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "03-1-unhyeon-procession.png"
+  },
+  {
+    "index": 4,
+    "act": 0,
+    "id": "throne",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 즉위년 · 1863 창덕궁 1막 · 즉위 사초함 읽은 사료 0장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 1863, 창덕궁 인정전 닷새 뒤, 당신은 익종의 아들이 되어 왕위를 이었다. 열두 살이다. 그래서 이제 흥선군을 아버지라 부를 수 없다. 그 사람은 대원군이 되었다. 『고종실록』 즉위년 12월 13일 · 우리역사넷 「고종」(익종의 양자·익성군) · 『고등 한국사1』 pp.104~105 기록을 보다 크게 보기 ⤢ 창덕궁 인정전 · 2022년 촬영 관련 장소 · 창덕궁의 현재 모습입니다. 지문의 사건 현장을 촬영한 사진은 아닙니다. Bernard Gagnon 원본 출처 ↗ CC0 1 / 2 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "04-1-throne.png"
+  },
+  {
+    "index": 5,
+    "act": 0,
+    "id": "audience",
+    "kind": "audience",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 2년 · 1865 · 창덕궁 창덕궁 · 인정전(어전회의) 1막 · 즉위 사초함 읽은 사료 0장 Q 지금 할 일신하가 임금 앞으로 와서 아룁니다. 끝까지 들으세요 — E나 대화창을 누르면 넘어갑니다. 멈춤 소리 꺼짐 흥선대원군아버지 즉위한 지 두 해, 당신은 열네 살이 되었다. 어전에서 다음 대사 → 사진·초상 기반 · 배경 제거 편집 인물을 누르면 원본·출처",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "speak"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "05-1-audience.png"
+  },
+  {
+    "index": 6,
+    "act": 0,
+    "id": "funding",
+    "kind": "funding",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 2년 · 1865 · 창덕궁 창덕궁 1막 · 즉위 사초함 읽은 사료 2장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 E 대화 Q 사초 소리 꺼짐 이 막에서 당신이 쥔 것 — 돈. 고을에서 걷을지 찍어 낼지는 당신이 고르지만, 정하는 사람은 아직 당신이 아니다.",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "06-1-funding.png"
+  },
+  {
+    "index": 7,
+    "act": 1,
+    "id": "byeongin",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 3년 · 1866 · 창덕궁 창덕궁 2막 · 양요 사초함 읽은 사료 2장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 1866, 창덕궁 천주교를 금하고, 프랑스 신부와 신도들을 처형하였다. 아버지는 그것이 나라의 질서를 세우는 일이라 하신다. 『고등 한국사1』 p.108 · 『고종실록』 고종 3년(1866) 기록을 보다 크게 보기 ⤢ 1866년 강화도의 프랑스 함대를 묘사한 그림 관련 역사 자료 · 사진·그림의 제작 시점은 설명에 표시했습니다. 지문의 장면을 그대로 재현한 자료는 아닙니다. 작자 미상 원본 출처 ↗ Public domain 1 / 2 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "07-2-byeongin.png"
+  },
+  {
+    "index": 8,
+    "act": 1,
+    "id": "byeongin-audience",
+    "kind": "audience",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 3년 · 1866 · 창덕궁 창덕궁 · 인정전(어전회의) 2막 · 양요 사초함 읽은 사료 2장 Q 지금 할 일신하가 임금 앞으로 와서 아룁니다. 끝까지 들으세요 — E나 대화창을 누르면 넘어갑니다. 멈춤 소리 꺼짐 흥선대원군아버지 「천주교를 금하는 일은 끝났습니다.」 다음 대사 → 사진·초상 기반 · 배경 제거 편집 인물을 누르면 원본·출처",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "speak"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "08-2-byeongin-audience.png"
+  },
+  {
+    "index": 9,
+    "act": 1,
+    "id": "day-changdeok",
+    "kind": "explore",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 3년 · 1866 · 창덕궁 창덕궁 2막 · 양요 사초함 읽은 사료 2장 Q 오늘 할 일 0 / 4 인정전 흥선대원군에게 말을 건다 희정당 승정원 승지에게 말을 건다 규장각 규장각 검서관에게 말을 건다 희정당 훈련도감 군교에게 말을 건다 쌀 한 섬 ···· 즉위 무렵의 1.2배 · 아버지 — 곁에 서 계신다 W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 ↶ ↷ 지금 할 일왼쪽 위 「오늘 할 일」을 보고 궁을 걸어 그곳을 찾아가세요(오른쪽 아래 안내도). 표지가 선 곳에서 E 를 누릅니다. 순서는 마음대로지만, 남은 일을 다 해야 다음 사건으로 넘어갑니다. 마당과 방 안의 물건도 E 로 살펴볼 수 있습니다. 어도 — E 로 살펴본다 멈춤 E 대화 Q 사초 소리 꺼짐 ?",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "interaction-hint",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "09-2-day-changdeok.png"
+  },
+  {
+    "index": 10,
+    "act": 1,
+    "id": "janggye-arrives",
+    "kind": "audience",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 3년 · 1866 · 창덕궁 창덕궁 · 인정전(어전회의) 2막 · 양요 사초함 읽은 사료 2장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일신하가 임금 앞으로 와서 아룁니다. 끝까지 들으세요 — E나 대화창을 누르면 넘어갑니다. 멈춤 E 대화 Q 사초 소리 꺼짐",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "10-2-janggye-arrives.png"
+  },
+  {
+    "index": 11,
+    "act": 1,
+    "id": "jeongjok-battle",
+    "kind": "defend",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 3년 음력 10월 · 1866 · 장계 속의 정족산성 창덕궁 2막 · 양요 사초함 읽은 사료 2장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일프랑스군이 밝은 띠(화승총이 닿는 곳) 안으로 오르면 그 문을 누르세요 — 동문 W, 남문 S. 너무 일찍 쏘면 닿지 않습니다. 멈춤 E 대화 Q 사초 소리 꺼짐 정 족 산 성 양헌수의 장계가 전하는 밤 · 재구성 버티는 포수 올라온 무리 동문 쏴라W 화승총이 닿는 곳 산 아래 ▸ 남문 쏴라S 화승총이 닿는 곳 산 아래 ▸ 양헌수의 장계(『고종실록』 고종 3년) · 『고등 한국사1』 108쪽 · 밤에 몰래 바다를 건너 산성에 든 일과 두 군대의 총이 닿는 거리가 달랐다는 것은 한국민족문화대백과사전 「병인양요」 · 싸움의 차례와 모습은 재구성입니다 정족산성 — 장계가 전하는 밤 재구성 그림 · 1866년 병인양요의 프랑스 함대 프랑스군이 강화부를 차지했다. 관청도, 외규장각의 서고도 저들의 손에 있다. 양헌수는 총 잘 쏘는 포수들을 이끌고 밤에 몰래 바다를 건너, 정족산성에 숨었다. 저들의 총은 포수들의 화승총보다 훨씬 멀리 간다. 멀리서 맞서면 닿지 않는다. 저들이 밝은 띠",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "jeongjok"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "11-2-jeongjok-battle.png"
+  },
+  {
+    "index": 12,
+    "act": 1,
+    "id": "oegyujanggak-plunder",
+    "kind": "plunder",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 3년 음력 10월 · 1866 · 장계 속의 정족산성 창덕궁 2막 · 양요 사초함 읽은 사료 3장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일빼앗긴 기록이 무엇인지 확인하세요. E 대화 Q 사초 소리 꺼짐 외 규 장 각 재구성 그림 · 1866년 외규장각 약탈 — 실제 장면을 그린 기록이 아닙니다 프랑스 함대가 강화도에서 물러갔다. 물러가면서, 임금만 보던 의궤와 어책을 배에 실었다. 은괴 열아홉 상자도 함께였다. 싣지 못한 나머지는 서고째 불태웠다. 사초함에서 그 문서가 사라진다. 되찾을 수 없다. 가지고 있던 것이 없다 약탈됨 · 프랑스 『고등 한국사1』 p.108 · 국가유산포털 외규장각 의궤 우리가 아는 역사는, 살아남은 기록뿐이다. 사초함을 닫는다",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "loss"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "12-2-oegyujanggak-plunder.png"
+  },
+  {
+    "index": 13,
+    "act": 1,
+    "id": "move-1868-out",
+    "kind": "procession",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 5년 · 1868 · 창덕궁 창덕궁 2막 · 양요 사초함 읽은 사료 3장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일신하들이 임금을 모시고 갑니다. 지켜보세요. 멈춤 E 대화 Q 사초 소리 꺼짐 아버지가 앞서 걸으신다.",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "13-2-move-1868-out.png"
+  },
+  {
+    "index": 14,
+    "act": 1,
+    "id": "move-1868",
+    "kind": "move",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 5년 · 1868 · 경복궁 경복궁 2막 · 양요 사초함 읽은 사료 3장 Q 지금 할 일거처를 옮깁니다. 어디서 어디로, 왜 옮기는지 읽으세요. E 대화 Q 사초 소리 꺼짐 1868 고종 5년 음력 7월 2일 창덕궁 → 경복궁 경복궁 중건이 끝났다. 아버지가 지으신 집이다. 『고종실록』 5권 · \"移御于景福宮\" — 왕실이 함께 옮겼다. ※ 음력 날짜는 『고종실록』에서 확인했습니다. 그것이 오늘 쓰는 달력으로 몇 월 며칠인지는 확실하지 않아 적지 않습니다. 移 옮기다 · 御 임금 — 임금이 사는 궁을 옮기는 것을 「이어」라 한다. 이 게임은 임금이 집을 옮긴 기록으로 짜여 있다. 옮긴다",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "move"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "14-2-move-1868.png"
+  },
+  {
+    "index": 15,
+    "act": 1,
+    "id": "day-gyeongbok",
+    "kind": "explore",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 5년~8년 · 경복궁 경복궁 2막 · 양요 사초함 읽은 사료 3장 Q 오늘 할 일 0 / 1 수정전 선공감 서리에게 말을 건다 쌀 한 섬 ···· 즉위 무렵의 1.2배 · 아버지 — 곁에 서 계신다 W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 ↶ ↷ 지금 할 일왼쪽 위 「오늘 할 일」을 보고 궁을 걸어 그곳을 찾아가세요(오른쪽 아래 안내도). 표지가 선 곳에서 E 를 누릅니다. 순서는 마음대로지만, 남은 일을 다 해야 다음 사건으로 넘어갑니다. 마당과 방 안의 물건도 E 로 살펴볼 수 있습니다. 어도 — E 로 살펴본다 멈춤 E 대화 Q 사초 소리 꺼짐 ?",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "interaction-hint",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "15-2-day-gyeongbok.png"
+  },
+  {
+    "index": 16,
+    "act": 1,
+    "id": "gwangseong-stand",
+    "kind": "stand",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 8년 음력 4월 · 1871 · 강화도 광성보 경복궁 2막 · 양요 사초함 읽은 사료 3장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일[쏴라]를 누르세요 — Space 나 그림을 눌러도 됩니다. 멈춤 E 대화 Q 사초 소리 꺼짐 광 성 보 미군 장교의 글이 전하는 싸움 · 재구성 성벽 해협 너머의 포성 포 — 쏴라Space 『고등 한국사1』 109쪽(본문 · 지도 「미국 함대 침입로」 · 슐리의 글) · 수자기는 미군이 가져갔다가 2007년에 장기 대여로 돌아왔다 광성보 — 미국 함대가 왔다 재구성 그림 · 1871년 신미양요의 미국 함대 다섯 해 전 평양에서 불탄 배의 일을 묻겠다며, 미국 함대가 강화 해협을 거슬러 올라왔다. 초지진이 무너지고, 덕진진이 무너졌다. 남은 것은 어재연이 지키는 광성보다. 다섯 해 전 정족산성에서는 기다렸다가 쏘아 이겼다. 이번에도 그렇게 막아 보라. [쏴라] 하나뿐이다 — Space 를 누르거나 그림을 눌러도 된다. 처음에는 포를 쏘고, 저들이 뭍에 오르면 같은 단추가 화승총이 된다. ※ 당신은 한양을 떠날 수 없다 — 임금이기 때문이다. 이 판은 교과서에 실린 미군 장교의 글 ",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "gwangseong"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "16-2-gwangseong-stand.png"
+  },
+  {
+    "index": 17,
+    "act": 1,
+    "id": "cheokhwabi-order",
+    "kind": "audience",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 8년 · 1871 · 경복궁 경복궁 · 근정전(정전) 2막 · 양요 사초함 읽은 사료 4장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일신하가 임금 앞으로 와서 아룁니다. 끝까지 들으세요 — E나 대화창을 누르면 넘어갑니다. 멈춤 E 대화 Q 사초 소리 꺼짐",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "17-2-cheokhwabi-order.png"
+  },
+  {
+    "index": 18,
+    "act": 1,
+    "id": "cheokhwabi-place",
+    "kind": "explore",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 8년 · 1871 · 경복궁 경복궁 2막 · 양요 사초함 읽은 사료 4장 Q 오늘 할 일 0 / 1 수정전 선공감 서리에게 말을 건다 쌀 한 섬 ···· 즉위 무렵의 1.2배 · 아버지 — 곁에 서 계신다 W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 ↶ ↷ 지금 할 일왼쪽 위 「오늘 할 일」을 보고 궁을 걸어 그곳을 찾아가세요(오른쪽 아래 안내도). 표지가 선 곳에서 E 를 누릅니다. 순서는 마음대로지만, 남은 일을 다 해야 다음 사건으로 넘어갑니다. 마당과 방 안의 물건도 E 로 살펴볼 수 있습니다. 어도 — E 로 살펴본다 멈춤 E 대화 Q 사초 소리 꺼짐 ?",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "interaction-hint",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "18-2-cheokhwabi-place.png"
+  },
+  {
+    "index": 19,
+    "act": 1,
+    "id": "cheokhwabi-brush",
+    "kind": "brush",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 8년 · 1871 · 경복궁 경복궁 2막 · 양요 사초함 읽은 사료 4장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 E 대화 Q 사초 소리 꺼짐 이 막에서 당신이 쥔 것 — 붓. 돌에 새길 넉 자를 당신의 손이 쓴다.",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "19-2-cheokhwabi-brush.png"
+  },
+  {
+    "index": 20,
+    "act": 1,
+    "id": "end",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 8년 · 1871 · 경복궁 경복궁 2막 · 양요 사초함 읽은 사료 5장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 2 막 「양 요」 끝 두 번 물리쳤다. 그리고 문은 더 굳게 닫혔다. 경복궁에 살지만, 이 집을 지은 사람도 이 집의 일을 정하는 사람도 당신이 아니다. 다음",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "20-2-end.png"
+  },
+  {
+    "index": 21,
+    "act": 2,
+    "id": "gyeyu-sangso",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 10년 · 1873 · 경복궁 경복궁 3막 · 친정 사초함 읽은 사료 5장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 1873, 경복궁 최익현이 상소를 올렸다. 임금이 이미 다 자랐으니 나랏일을 임금께 돌려드려야 한다는 말이었다. 『고종실록』 고종 10년(1873) · 날짜는 확정하지 못했습니다 기록을 보다 크게 보기 ⤢ 최익현 · 채용신이 그린 초상 관련 역사 자료 · 사진·그림의 제작 시점은 설명에 표시했습니다. 지문의 장면을 그대로 재현한 자료는 아닙니다. 채용신 · 공유마당 원본 출처 ↗ Public domain 1 / 2 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "21-3-gyeyu-sangso.png"
+  },
+  {
+    "index": 22,
+    "act": 2,
+    "id": "gyeyu-audience",
+    "kind": "audience",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 10년 · 1873 · 경복궁 경복궁 · 사정전(어전회의) 3막 · 친정 사초함 읽은 사료 5장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일신하가 임금 앞으로 와서 아룁니다. 끝까지 들으세요 — E나 대화창을 누르면 넘어갑니다. 멈춤 E 대화 Q 사초 소리 꺼짐",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "22-3-gyeyu-audience.png"
+  },
+  {
+    "index": 23,
+    "act": 2,
+    "id": "doors-open",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 10년 · 1873 · 경복궁 경복궁 3막 · 친정 사초함 읽은 사료 5장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 문 이 열 린 다 열두 살부터 늘 아버지가 곁에 서 계셨다. 스물둘, 처음으로 아무도 곁에 서 있지 않다. 기록을 보다 크게 보기 ⤢ 흥선대원군 · 1898년 이전 사진 관련 인물 · 흥선대원군의 1898년 이전 사진입니다. 해당 장면을 촬영한 사진은 아닙니다. Homer Hulbert · The Passing of Korea (1906) 수록 원본 출처 ↗ Public domain 1 / 2 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "23-3-doors-open.png"
+  },
+  {
+    "index": 24,
+    "act": 2,
+    "id": "alone-in-hall",
+    "kind": "alone",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 10년 · 1873 · 경복궁 경복궁 · 사정전(어전회의) 3막 · 친정 사초함 읽은 사료 5장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 E 대화 Q 사초 소리 꺼짐 어제까지 아버지가 서 계시던 자리를 본다. 아무도 없다. 이 방에서 정하는 사람은, 오늘부터 당신뿐이다. 걸음을 옮긴다",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "alone"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "24-3-alone-in-hall.png"
+  },
+  {
+    "index": 25,
+    "act": 2,
+    "id": "seogye-audience",
+    "kind": "audience",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 10년 · 1873 · 경복궁 경복궁 3막 · 친정 사초함 읽은 사료 5장 Q 오늘 할 일 0 / 1 사정전 일본의 외교 문서 보고를 듣는다 쌀 한 섬 ···· 즉위 무렵의 1.3배 · 아버지 — 물러나셨다 W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 ↶ ↷ 지금 할 일자유롭게 걷고, 만난 사람에게 E 로 말을 걸어 보세요. 다 둘러보았으면 왼쪽 위 「오늘 할 일」에 적힌 곳으로 걸어가 E 를 누릅니다. 어도 — E 로 살펴본다 멈춤 E 대화 Q 사초 소리 꺼짐 ?",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "interaction-hint",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "25-3-seogye-audience.png"
+  },
+  {
+    "index": 26,
+    "act": 2,
+    "id": "day-1873",
+    "kind": "explore",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 10년 · 1873 · 경복궁 경복궁 3막 · 친정 사초함 읽은 사료 6장 Q 오늘 할 일 0 / 1 사정전 일본의 외교 문서 보고를 듣는다 쌀 한 섬 ···· 즉위 무렵의 1.3배 · 아버지 — 물러나셨다 W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 ↶ ↷ 지금 할 일자유롭게 걷고, 만난 사람에게 E 로 말을 걸어 보세요. 다 둘러보았으면 왼쪽 위 「오늘 할 일」에 적힌 곳으로 걸어가 E 를 누릅니다. 어도 — E 로 살펴본다 멈춤 E 대화 Q 사초 소리 꺼짐 ?",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "interaction-hint",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "26-3-day-1873.png"
+  },
+  {
+    "index": 27,
+    "act": 2,
+    "id": "seogye-choice",
+    "kind": "dilemma",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 10년 · 1873 · 경복궁 경복궁 3막 · 친정 사초함 읽은 사료 6장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일보기를 눌러 얻는 것과 내어주는 것을 읽고, 하나를 정하세요. 어느 것을 골라도 됩니다. E 대화 Q 사초 소리 꺼짐 서계를 어찌할 것인가 아버지가 물러났다. 여러 해 막혀 있던 일본과의 길을, 이제 당신이 정한다. 선택지를 그린 재구성 받는다 이 선택 살펴보기 선택지를 그린 재구성 글자와 도장을 고쳐 오라 하고 돌려보낸다 이 선택 살펴보기 선택지를 그린 재구성 받지 않는다 — 아버지 때와 같이 한다 이 선택 살펴보기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "dilemma"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "27-3-seogye-choice.png"
+  },
+  {
+    "index": 28,
+    "act": 2,
+    "id": "unyo-dispatch",
+    "kind": "dispatch",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 10년 · 1873 · 경복궁 경복궁 3막 · 친정 사초함 읽은 사료 6장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일지도에서 붉은 지명을 눌러 도착한 보고서(장계)를 읽으세요. 다 읽었으면 「결정하러 간다」를 누르세요. E 대화 Q 사초 소리 꺼짐 초 지 진 장계 2통이 닿았다. 봉한 것을 눌러 펴 보고, 그 장계가 올라온 자리를 지도에서 찾아 놓고, 장계에 적힌 일을 읽어 먼저 일어난 일이 위로 오도록 줄을 세운다. 장계 둘을 차례로 누르면 자리가 바뀌고, 옆의 ▲▼ 단추로 한 칸씩 옮길 수도 있다. 초지진 영종진 강화도는 한강 어귀에 있다 — 이 섬을 잡으면 한양으로 가는 물길이 막힌다 Natural Earth 1:10m 해안선 · 현대 지형을 바탕으로 한 위치 안내도이며 19세기 해안선 복원도는 아닙니다. 한강 물길은 위치 이해를 위한 개략선입니다. 지도 자료: Natural Earth · Public domain 장계는 일이 난 그 자리에서 띄운 것이니, 보낸 순서가 곧 일어난 순서다. 보낸 날은 아직 가려 두었다. 지금 줄은 닿은 순서 그대로다. 봉한 장계 파발이 지고 온 것이다. 눌러서 편다. ▲ ▼",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "dispatch"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "28-3-unyo-dispatch.png"
+  },
+  {
+    "index": 29,
+    "act": 2,
+    "id": "day-1875",
+    "kind": "explore",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 13년 · 1876 · 경복궁 · 협상을 앞두고 경복궁 3막 · 친정 사초함 읽은 사료 6장 Q 오늘 할 일 0 / 2 사정전 최익현의 상소를 듣는다 사정전 수군 관원에게 말을 건다 쌀 한 섬 ···· 즉위 무렵의 1.3배 · 아버지 — 물러나셨다 W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 ↶ ↷ 지금 할 일왼쪽 위 「오늘 할 일」을 보고 궁을 걸어 그곳을 찾아가세요(오른쪽 아래 안내도). 표지가 선 곳에서 E 를 누릅니다. 순서는 마음대로지만, 남은 일을 다 해야 다음 사건으로 넘어갑니다. 마당과 방 안의 물건도 E 로 살펴볼 수 있습니다. 어도 — E 로 살펴본다 멈춤 E 대화 Q 사초 소리 꺼짐 ?",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "interaction-hint",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "29-3-day-1875.png"
+  },
+  {
+    "index": 30,
+    "act": 2,
+    "id": "axe-sangso",
+    "kind": "audience",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 12~13년 · 경복궁 경복궁 3막 · 친정 사초함 읽은 사료 6장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일협상하러 가는 신하에게 보낼 지시(훈령)를 고르세요. 읽은 사료가 있어야 고를 수 있는 문구가 있습니다. E 대화 Q 사초 소리 꺼짐 훈 령 訓 가르치다 · 令 명령 — 윗사람이 아랫사람에게 「이렇게 하라」고 미리 적어 주는 문서. 신헌 — 조선이 보낸 협상 대표. 강화도로 협상하러 가는 신헌에게 무엇을 적어 보낼 것인가 쓸 수 있는 문구 4 / 6 여러 개를 골라 담을 수 있다. 하나도 담지 않고 보낼 수도 있다. 예로써 맞이하되, 경솔히 허락하지 말라 저들이 보낸 외교 문서(서계)의 글자부터 바로잡게 하라 ??? ← 『운요호 사건』을 읽지 않았습니다 항구를 여는 일은 한 곳이라도 조정에 먼저 묻게 하라 저들의 뜻이 사귐에 있는지 다른 데 있는지 살피라 ??? ← 『최익현 「왜양일체론」』을 읽지 않았습니다 봉해서 보낸다",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "orders"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "30-3-axe-sangso.png"
+  },
+  {
+    "index": 31,
+    "act": 2,
+    "id": "orders-sinheon",
+    "kind": "orders",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 13년 · 1876 · 경복궁 경복궁 3막 · 친정 사초함 읽은 사료 7장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일협상하러 가는 신하에게 보낼 지시(훈령)를 고르세요. 읽은 사료가 있어야 고를 수 있는 문구가 있습니다. E 대화 Q 사초 소리 꺼짐 훈 령 訓 가르치다 · 令 명령 — 윗사람이 아랫사람에게 「이렇게 하라」고 미리 적어 주는 문서. 신헌 — 조선이 보낸 협상 대표. 강화도로 협상하러 가는 신헌에게 무엇을 적어 보낼 것인가 쓸 수 있는 문구 5 / 6 여러 개를 골라 담을 수 있다. 하나도 담지 않고 보낼 수도 있다. 예로써 맞이하되, 경솔히 허락하지 말라 저들이 보낸 외교 문서(서계)의 글자부터 바로잡게 하라 ??? ← 『운요호 사건』을 읽지 않았습니다 항구를 여는 일은 한 곳이라도 조정에 먼저 묻게 하라 저들의 뜻이 사귐에 있는지 다른 데 있는지 살피라 저들이 왜인의 탈을 쓴 서양이라면 논할 것이 없다고 전하라 봉해서 보낸다",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "orders"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "31-3-orders-sinheon.png"
+  },
+  {
+    "index": 32,
+    "act": 2,
+    "id": "treaty-draft",
+    "kind": "audience",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 13년 · 1876년 음력 1월 · 경복궁 경복궁 · 사정전(어전회의) 3막 · 친정 사초함 읽은 사료 7장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일신하가 임금 앞으로 와서 아룁니다. 끝까지 들으세요 — E나 대화창을 누르면 넘어갑니다. 멈춤 E 대화 Q 사초 소리 꺼짐",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "32-3-treaty-draft.png"
+  },
+  {
+    "index": 33,
+    "act": 2,
+    "id": "treaty-study",
+    "kind": "study",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 13년 · 1876년 음력 1월 · 경복궁 경복궁 3막 · 친정 사초함 읽은 사료 7장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일문서를 읽고 물음에 답하세요. 답할 때마다 문서에 붉은 주석이 붙습니다. 끝까지 가야 덮을 수 있습니다. E 대화 Q 사초 소리 꺼짐 조 · 일 수호 조규 (강화도 조약, 1876) 제7관 조선국 바닷가의 섬과 암초는 매우 위험하므로, 일본국 항해자가 자유로이 해안을 측량하도록 허가한다. 문서 전체 펼치기 『고등 한국사1』 110~111쪽에 실린 조항 · 우리말 옮김. 붉은 글씨는 당신이 단 주석입니다. 조약문을 뜯어 읽는다 이 문서가 온 까닭 1 / 6 · 한 대목씩 읽는다 제7관에서 두 나라의 이름을 서로 바꿔 읽어 보라. 그 문장도 이 조약에 있는가? ↔ 두 나라를 바꿔 읽는다 선택지를 그린 재구성 있다 — 두 나라가 서로의 바다를 잰다 선택지를 그린 재구성 없다 — 재는 쪽은 일본뿐이다",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "study"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "33-3-treaty-study.png"
+  },
+  {
+    "index": 34,
+    "act": 2,
+    "id": "council-treaty",
+    "kind": "weigh",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 13년 · 1876년 음력 1월 · 경복궁 경복궁 3막 · 친정 사초함 읽은 사료 10장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 E 대화 Q 사초 소리 꺼짐 이 막에서 당신이 쥔 것 — 저울. 문을 열 것인가, 닫을 것인가. 대신 정해 줄 아버지는 이제 곁에 없다.",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "34-3-council-treaty.png"
+  },
+  {
+    "index": 35,
+    "act": 2,
+    "id": "joil-trade-note",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 13년 · 1876년 음력 1월 · 경복궁 경복궁 3막 · 친정 사초함 읽은 사료 11장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 1876 가을, 무역 규칙 조약을 맺고 여섯 달 뒤, 두 나라는 조약에 딸린 규칙을 더 정했다. 일본 배와 물건에는 세금을 매기지 않고, 조선의 쌀을 실어 가도 된다는 내용이 들어 있었다. 조일무역규칙 · 조일수호조규 부록(1876년 음력 7월) · 『고등 한국사1』 p.111 다음",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "35-3-joil-trade-note.png"
+  },
+  {
+    "index": 36,
+    "act": 2,
+    "id": "end",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 13년 · 1876년 음력 1월 · 경복궁 경복궁 3막 · 친정 사초함 읽은 사료 12장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 3 막 「친 정」 끝 아버지를 물러나게 한 상소로 시작해, 나라의 문을 여는 조약으로 끝났다. 처음으로 아버지 없이 정했다. 그 조약에 적힌 것들이 무엇을 불러올지는 아직 모른다. 이어(移御) 기록: 『고종실록』 10권·12권 · 1876년 경복궁 화재: 『고종실록』 13권 1 / 2 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "36-3-end.png"
+  },
+  {
+    "index": 37,
+    "act": 3,
+    "id": "imo-open",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 19년 · 1882 · 창덕궁 창덕궁 4막 · 임오 사초함 읽은 사료 12장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 1882, 창덕궁 즉위한 지 열아홉 해가 지났다. 열두 살에 앉았던 자리에 서른한 살로 앉아 있다. 아버지는 운현궁에 계신다. 궁에 발을 들이지 않으신 지 오래다. 『고등 한국사1』 pp.114~115 기록을 보다 크게 보기 ⤢ 임오군란 때 일본 공사관 일행의 탈출을 그린 일본 판화 관련 역사 자료 · 사진·그림의 제작 시점은 설명에 표시했습니다. 지문의 장면을 그대로 재현한 자료는 아닙니다. 우타가와 구니마쓰 · 도쿄경제대학 도서관 원본 출처 ↗ Public domain 1 / 2 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "37-4-imo-open.png"
+  },
+  {
+    "index": 38,
+    "act": 3,
+    "id": "imo-day",
+    "kind": "explore",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 19년 · 1882 · 창덕궁 창덕궁 4막 · 임오 사초함 읽은 사료 12장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 E 대화 Q 사초 소리 꺼짐 이 막에서 당신이 쥔 것 — 급료 가마 하나. 열세 달 만에 나온 쌀을 당신 손으로 골라낸다.",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "38-4-imo-day.png"
+  },
+  {
+    "index": 39,
+    "act": 3,
+    "id": "imo-report",
+    "kind": "audience",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 19년 · 1882년 음력 6월 5일 · 창덕궁 창덕궁 · 선정전(편전) 4막 · 임오 사초함 읽은 사료 12장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일신하가 임금 앞으로 와서 아룁니다. 끝까지 들으세요 — E나 대화창을 누르면 넘어갑니다. 멈춤 E 대화 Q 사초 소리 꺼짐",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "39-4-imo-report.png"
+  },
+  {
+    "index": 40,
+    "act": 3,
+    "id": "imo-report-choice",
+    "kind": "dilemma",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 19년 · 1882년 음력 6월 5일 · 창덕궁 창덕궁 4막 · 임오 사초함 읽은 사료 12장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일보기를 눌러 얻는 것과 내어주는 것을 읽고, 하나를 정하세요. 어느 것을 골라도 됩니다. E 대화 Q 사초 소리 꺼짐 이 보고를 듣고 무엇을 명할 것인가 열세 달을 밀린 급료, 차지 않은 섬. 군졸들은 고지기를 때리고 돌을 던졌다. 선택지를 그린 재구성 밀린 급료를 마저 내주라고 명한다 이 선택 살펴보기 선택지를 그린 재구성 섬이 왜 차지 않았는지, 곡식을 다룬 자들을 조사하라고 명한다 이 선택 살펴보기 선택지를 그린 재구성 소란을 일으킨 군졸들을 조사해 법대로 다스리라고 명한다 이 선택 살펴보기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "dilemma"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "40-4-imo-report-choice.png"
+  },
+  {
+    "index": 41,
+    "act": 3,
+    "id": "imo-rush",
+    "kind": "rush",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 19년 음력 6월 9일 · 1882 · 창덕궁 창덕궁 4막 · 임오 사초함 읽은 사료 12장 Q 지금 할 일글을 읽고 「다음」을 누르세요. 그다음 서둘러 달아납니다. E 대화 Q 사초 소리 꺼짐 음력 6월 9일 밤 · 양력 7월 22~23일 · 창덕궁 급료를 받지 못한 군인들이 일어섰다. 살기 어려워진 도성의 백성들이 그 뒤를 따른다. 돈화문이 열린다. 실록은 이튿날 기사에 넉 자로 적었다 ─ 「亂兵犯闕」. 난병이 범궐하였다. 『고종실록』 19권 고종 19년 음력 6월 10일 「亂兵犯闕」 · 『고등 한국사1』 115쪽 · 발발일의 양력 환산은 자료마다 7월 22~23일로 갈립니다 ※ 이 대목은 기록에 남아 있지 않습니다. 게임이 지어내 채운 장면입니다. 이런 것을 「재구성」이라고 합니다. 1 / 3 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "41-4-imo-rush.png"
+  },
+  {
+    "index": 42,
+    "act": 3,
+    "id": "imo-fault",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 19년 음력 6월 10일 · 1882 · 창덕궁 창덕궁 4막 · 임오 사초함 읽은 사료 12장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 그 날 의 전 교 난병이 궁에 든 날, 임금은 글을 내렸다. 「이것이 어찌 그들이 일부러 범하고 화(禍)를 즐겨 그런 것이겠는가? 첫째도 나의 잘못이고 둘째도 나의 잘못이다.」 『고종실록』 고종 19년(1882) 6월 10일 · 우리말 옮김 1 / 2 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "42-4-imo-fault.png"
+  },
+  {
+    "index": 43,
+    "act": 3,
+    "id": "imo-choice",
+    "kind": "dilemma",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 19년 음력 6월 9일 · 1882 · 창덕궁 창덕궁 4막 · 임오 사초함 읽은 사료 12장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일보기를 눌러 얻는 것과 내어주는 것을 읽고, 하나를 정하세요. 어느 것을 골라도 됩니다. E 대화 Q 사초 소리 꺼짐 이 난을 누구에게 맡길 것인가 문 밖에서 군사들의 소리가 들린다. 그들은 열세 달 치 급료를 받지 못했다. 선택지를 그린 재구성 아버지 흥선 대원군을 부른다 이 선택 살펴보기 선택지를 그린 재구성 군인들 앞에 나서, 밀린 급료를 주겠다고 말한다 이 선택 살펴보기 선택지를 그린 재구성 청에 사람을 보내 군대를 청한다 이 선택 살펴보기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "dilemma"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "43-4-imo-choice.png"
+  },
+  {
+    "index": 44,
+    "act": 3,
+    "id": "imo-father-returns",
+    "kind": "audience",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 19년 · 1882년 음력 6월 10일 · 창덕궁 창덕궁 · 인정전(어전회의) 4막 · 임오 사초함 읽은 사료 12장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일신하가 임금 앞으로 와서 아룁니다. 끝까지 들으세요 — E나 대화창을 누르면 넘어갑니다. 멈춤 E 대화 Q 사초 소리 꺼짐",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "44-4-imo-father-returns.png"
+  },
+  {
+    "index": 45,
+    "act": 3,
+    "id": "imo-daewongun",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 19년 · 1882년 음력 6월 10일 · 창덕궁 창덕궁 4막 · 임오 사초함 읽은 사료 12장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 대원군이 궁에 들어온다 난이 일어난 뒤, 흥선 대원군이 다시 나랏일을 맡았다. 지금부터 당신은 걸을 수 없다. 『고등 한국사1』 p.115 · 교과서 기록을 보다 크게 보기 ⤢ 흥선대원군 · 1898년 이전 사진 관련 인물 · 흥선대원군의 1898년 이전 사진입니다. 해당 장면을 촬영한 사진은 아닙니다. Homer Hulbert · The Passing of Korea (1906) 수록 원본 출처 ↗ Public domain 다음",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "45-4-imo-daewongun.png"
+  },
+  {
+    "index": 46,
+    "act": 3,
+    "id": "imo-council",
+    "kind": "council",
+    "errors": [],
+    "view": {
+      "text": "지금 할 일어전회의입니다. 하나를 고른 뒤, 그 일이 무엇을 부를지 내다보세요. 그다음에 실제로 일어난 일이 나옵니다. 소리 꺼짐 어 전 회 의 난이 끝난 뒤, 무엇을 할 것인가 고를 수 있는 것 0 / 2 일어선 군인들을 달랜다 ← 대원군이 다시 나랏일을 맡았다 쌀이 빠져나가는 까닭을 조약의 조항을 들어 짚는다 ← 대원군이 다시 나랏일을 맡았다 아무 말도 하지 못한다",
+      "canvas": true,
+      "overlays": [
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "council"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "46-4-imo-council.png"
+  },
+  {
+    "index": 47,
+    "act": 3,
+    "id": "imo-invitation",
+    "kind": "audience",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 19년 · 1882년 음력 7월 · 창덕궁 창덕궁 · 인정전(어전회의) 4막 · 임오 사초함 읽은 사료 12장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일신하가 임금 앞으로 와서 아룁니다. 끝까지 들으세요 — E나 대화창을 누르면 넘어갑니다. 멈춤 E 대화 Q 사초 소리 꺼짐",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "47-4-imo-invitation.png"
+  },
+  {
+    "index": 48,
+    "act": 3,
+    "id": "imo-abduction",
+    "kind": "trail",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 19년 · 1882년 음력 7월 · 창덕궁 창덕궁 4막 · 임오 사초함 읽은 사료 12장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일단추를 눌러 사람을 보내고, 돌아온 소식을 읽으세요. 지금은 걸을 수 없습니다. E 대화 Q 사초 소리 꺼짐 돌 아 오 지 않 는 다 아버지가 청군의 군영으로 간 지 한나절이 지났다. 돌아오지 않는다. 아직 아무 소식도 없다 아버지가 나간 문은 닫혀 있다. 사람을 보내야 무슨 일이 있었는지 알 수 있다. 한양 청군 군영 남쪽 길 남양 마산포 톈진 아버지 보낸 사람 ※ 길은 줄여 그렸습니다. 실제 거리와 다릅니다. 사람을 보내 알아본다 『고등 한국사1』 p.115 · 답례 간 자리에서 붙잡혀 밤길로 남양 마산포에, 거기서 청의 배로 톈진에 보내진 길은 한국민족문화대백과사전 「임오군란」 · 임금이 사람을 보내 알아보는 모습은 재구성 · 날짜(음력 7월 13일 / 양력 8월 26일)는 2차문헌 환산입니다",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "trail"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "48-4-imo-abduction.png"
+  },
+  {
+    "index": 49,
+    "act": 3,
+    "id": "imo-jemulpo",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 19년 · 1882년 음력 7월 · 창덕궁 창덕궁 4막 · 임오 사초함 읽은 사료 12장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 제 물 포 일본과 조약을 맺었다. 오십만 원을 다섯 해에 나누어 문다. 제물포 조약(1882) · 『고등 한국사1』 p.115 · 교과서 기록을 보다 크게 보기 ⤢ 1882년 제물포 조약 제4·5관 관련 역사 자료 · 사진·그림의 제작 시점은 설명에 표시했습니다. 지문의 장면을 그대로 재현한 자료는 아닙니다. WaffenSS · Wikimedia Commons 원본 출처 ↗ CC BY-SA 4.0 1 / 2 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "49-4-imo-jemulpo.png"
+  },
+  {
+    "index": 50,
+    "act": 3,
+    "id": "imo-sokbang",
+    "kind": "study",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 19년 · 1882년 음력 7월 · 창덕궁 창덕궁 4막 · 임오 사초함 읽은 사료 13장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일문서를 읽고 물음에 답하세요. 답할 때마다 문서에 붉은 주석이 붙습니다. 끝까지 가야 덮을 수 있습니다. E 대화 Q 사초 소리 꺼짐 같은 나라를 두고 쓴 두 문서 屬邦 1876 · 일본과 맺은 조약 제1관 조선국은 의 나라이며 일본국과 평등한 권리를 가진다. 1882 · 청과 맺은 무역 장정 이번에 정한 수륙 무역 장정은 중국이 을 우대하는 뜻에서 만든 것이다. 조 · 일 수호 조규 제1관(1876) · 조 · 청 상민 수륙 무역 장정(1882) — 『고등 한국사1』 111쪽 · 115쪽. 장정의 이 문장이 「서문」인지 「제1조 서두」인지는 자료마다 갈려 적지 않습니다. 두 글자 이 문서가 온 까닭 1 / 5 · 한 대목씩 읽는다 屬(속) — 「소속」 「부속」에 쓰는 글자다. 무슨 뜻인가? 선택지를 그린 재구성 딸리다 · 붙다 선택지를 그린 재구성 다스리다 선택지를 그린 재구성 돕다",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "study"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "50-4-imo-sokbang.png"
+  },
+  {
+    "index": 51,
+    "act": 4,
+    "id": "kimokgyun-audience",
+    "kind": "audience",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 · 1884 가을 · 창덕궁 창덕궁 · 인정전(어전회의) 5막 · 갑신 사초함 읽은 사료 14장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일신하가 임금 앞으로 와서 아룁니다. 끝까지 들으세요 — E나 대화창을 누르면 넘어갑니다. 멈춤 E 대화 Q 사초 소리 꺼짐",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "51-5-kimokgyun-audience.png"
+  },
+  {
+    "index": 52,
+    "act": 4,
+    "id": "gapsin-open",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 · 1884 가을 · 창덕궁 창덕궁 5막 · 갑신 사초함 읽은 사료 14장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 음력 10월 17일 밤 · 양력 12월 4일 우정총국의 낙성을 축하하는 잔치가 열렸다. 그 자리에서 변이 일어났다는 소식이 궁에 닿는다. 『고등 한국사1』 p.116 지도 ❶ · 『고종실록』 21권 고종 21년 10월 17일 · 등급 교과서 기록을 보다 크게 보기 ⤢ 김옥균 사진 · 1911년 출판물 수록 관련 인물 · 갑신정변의 주도자 김옥균입니다. 지문 속 다른 인물의 사진이 아닙니다. Joseph H. Longford, The Story of Korea · 서울역사박물관 원본 출처 ↗ Public domain 1 / 2 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "52-5-gapsin-open.png"
+  },
+  {
+    "index": 53,
+    "act": 4,
+    "id": "gapsin-hold",
+    "kind": "hold",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 · 1884 가을 · 창덕궁 창덕궁 · 관물헌 5막 · 갑신 사초함 읽은 사료 14장 Q ↶ ↷ 지금 할 일지금은 움직일 수 없습니다. 화면을 눌러 보고 그 까닭을 읽으세요. 멈춤 E 대화 Q 사초 소리 꺼짐 창덕궁 침전 · 음력 10월 17일 밤 김옥균·박영효·서광범이 침전에 들었다. 「청병이 변을 일으켰습니다. 경우궁으로 드시오소서.」 움직여 보라. 고장이 아니다. 화면은 살아 있고, 당신이 움직이지 못하는 것이다. W A S D ※ 이 장면은 기록이 남아있지 않아 재구성했습니다 우리역사넷 · 『갑신일록』이 전하는 장면입니다. 침전에서 오간 말의 정확한 문장은 확정할 수 없어 게임이 지어냈습니다 — 이 화면의 등급 재구성.",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "hold"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "53-5-gapsin-hold.png"
+  },
+  {
+    "index": 54,
+    "act": 4,
+    "id": "gapsin-taken",
+    "kind": "procession",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 17일 밤 · 1884 · 창덕궁 창덕궁 5막 · 갑신 사초함 읽은 사료 14장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일신하들이 임금을 모시고 갑니다. 지켜보세요. 멈춤 E 대화 Q 사초 소리 꺼짐 김옥균이 앞서 걷는다. 뒤는 개화파의 사람이 막아섰다.",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "54-5-gapsin-taken.png"
+  },
+  {
+    "index": 55,
+    "act": 4,
+    "id": "gapsin-move-gyeongu",
+    "kind": "move",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 17일 · 1884 · 경우궁 경우궁 5막 · 갑신 사초함 읽은 사료 14장 Q 지금 할 일거처를 옮깁니다. 어디서 어디로, 왜 옮기는지 읽으세요. E 대화 Q 사초 소리 꺼짐 1884 고종 21년 음력 10월 17일 밤 양력 12월 4일 밤 창덕궁 → 경우궁 개화파가 모시고 가다 『고종실록』 21권, 고종 21년 10월 17일 · 기사 제목이 「밤에 경우궁으로 이차하다」다. 이차(移次)는 임금이 거처를 옮긴다는 뜻으로, 실록이 이어(移御) 대신 쓴 말이다. ※ 경우궁 안의 방 배치는 기록이 남아있지 않아 재구성했습니다. ※ 이동 순서와 날짜는 『고등 한국사1』 p.116 지도와 『고종실록』으로 확인했습니다. 옮긴다",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "move"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "55-5-gapsin-move-gyeongu.png"
+  },
+  {
+    "index": 56,
+    "act": 4,
+    "id": "gapsin-takezoe",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 18일 · 1884 · 경우궁 경우궁 5막 · 갑신 사초함 읽은 사료 14장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 경 우 궁 다케조에가 일본 공사관의 군대를 이끌고 와 궁을 에워쌌다. 김옥균은 뒷날, 임금이 「日使來衛 — 일본 공사는 와서 지키라」 넉 자를 써 주었다고 적었다. 그렇게 전하는 기록은 그가 쓴 『갑신일록』 하나뿐이다. 『고등 한국사1』 p.116 · 우리역사넷 「신편 한국사」 38권 · 등급 교과서. 넉 자를 전하는 것은 『갑신일록』 · 등급 사료 — 김옥균이 직접 쓴 당사자 기록이라 1차 사료로 다루지만, 망명 중에 쓴 글이어서 신빙성은 지금도 논쟁 중입니다. 일본군의 수는 자료마다 갈립니다 — 백오십 명이라 적은 자료와 이백 명이라 적은 자료가 있어 게임은 숫자를 적지 않습니다 기록을 보다 크게 보기 ⤢ 창덕궁 인정전 · 2022년 촬영 관련 장소 · 창덕궁의 현재 모습입니다. 지문의 사건 현장을 촬영한 사진은 아닙니다. Bernard Gagnon 원본 출처 ↗ CC0 1 / 2 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "56-5-gapsin-takezoe.png"
+  },
+  {
+    "index": 57,
+    "act": 4,
+    "id": "gapsin-gov",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 18일 · 1884 · 경우궁 경우궁 5막 · 갑신 사초함 읽은 사료 14장 Q 오늘 할 일 0 / 2 동행각 개화당 정부의 기록을 살펴본다 정당 개화파 관원에게 말을 건다 쌀 한 섬 ···· 즉위 무렵의 1.9배 · 아버지 — 청으로 끌려가셨다 W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 ↶ ↷ 지금 할 일왼쪽 위 「오늘 할 일」을 보고 궁을 걸어 그곳을 찾아가세요(오른쪽 아래 안내도). 표지가 선 곳에서 E 를 누릅니다. 순서는 마음대로지만, 남은 일을 다 해야 다음 사건으로 넘어갑니다. 마당과 방 안의 물건도 E 로 살펴볼 수 있습니다. 멈춤 E 대화 Q 사초 소리 꺼짐 ?",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "57-5-gapsin-gov.png"
+  },
+  {
+    "index": 58,
+    "act": 4,
+    "id": "gapsin-day",
+    "kind": "explore",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 18일 · 1884 · 경우궁 경우궁 5막 · 갑신 사초함 읽은 사료 15장 Q 오늘 할 일 0 / 2 동행각 개화당 정부의 기록을 살펴본다 정당 개화파 관원에게 말을 건다 쌀 한 섬 ···· 즉위 무렵의 1.9배 · 아버지 — 청으로 끌려가셨다 W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 ↶ ↷ 지금 할 일왼쪽 위 「오늘 할 일」을 보고 궁을 걸어 그곳을 찾아가세요(오른쪽 아래 안내도). 표지가 선 곳에서 E 를 누릅니다. 순서는 마음대로지만, 남은 일을 다 해야 다음 사건으로 넘어갑니다. 마당과 방 안의 물건도 E 로 살펴볼 수 있습니다. 멈춤 E 대화 Q 사초 소리 꺼짐 ?",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "58-5-gapsin-day.png"
+  },
+  {
+    "index": 59,
+    "act": 4,
+    "id": "gapsin-move-gyedong",
+    "kind": "move",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 18일 · 1884 · 계동궁 계동궁 5막 · 갑신 사초함 읽은 사료 15장 Q 지금 할 일거처를 옮깁니다. 어디서 어디로, 왜 옮기는지 읽으세요. E 대화 Q 사초 소리 꺼짐 1884 고종 21년 음력 10월 18일 양력 12월 5일 경우궁 → 계동궁 경우궁이 좁다 하여 옮기다 『고종실록』 21권, 고종 21년 10월 18일 · \"오전에 잠시 종친 이재원(李載元)의 집으로 이어하였다가 관물헌(觀物軒)으로 환어하였다.\" — 계동궁 이어와 환어가 실록에는 같은 날 한 기사에 함께 적혀 있다. ※ 계동궁은 고종의 사촌 이재원의 집입니다 — 실록은 「종친 이재원의 집」이라 적었고, 조회한 2차문헌도 모두 이재원의 집으로 일치합니다(사료 검증 B 6항). 옮긴다",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "move"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "59-5-gapsin-move-gyedong.png"
+  },
+  {
+    "index": 60,
+    "act": 4,
+    "id": "gapsin-council",
+    "kind": "council",
+    "errors": [],
+    "view": {
+      "text": "지금 할 일어전회의입니다. 하나를 고른 뒤, 그 일이 무엇을 부를지 내다보세요. 그다음에 실제로 일어난 일이 나옵니다. 소리 꺼짐 어 전 회 의 창덕궁으로 돌아갈 것인가 고를 수 있는 것 3 / 3 여기는 좁고 답답하다. 창덕궁으로 돌아가겠다 이 좁은 곳에 그대로 머문다 청군이 오면 어찌할 것인지 개화당에게 묻는다",
+      "canvas": true,
+      "overlays": [
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "council"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "60-5-gapsin-council.png"
+  },
+  {
+    "index": 61,
+    "act": 4,
+    "id": "gapsin-move-changdeok",
+    "kind": "move",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 18일 · 1884 · 창덕궁 창덕궁 5막 · 갑신 사초함 읽은 사료 15장 Q 지금 할 일거처를 옮깁니다. 어디서 어디로, 왜 옮기는지 읽으세요. E 대화 Q 사초 소리 꺼짐 1884 고종 21년 음력 10월 18일 양력 12월 5일 계동궁 → 창덕궁 환어 — 관물헌으로 돌아가다 『고종실록』 21권, 고종 21년 10월 18일 · \"오전에 잠시 종친 이재원의 집으로 이어하였다가 관물헌으로 환어하였다.\" ※ 還 돌아가다 · 御 임금 — 임금이 원래 궁으로 돌아가는 것을 「환어」라 합니다. ※ 날짜는 실록이 음력 10월 18일로 적었습니다. 다만 그날 어느 때였는지는 자료마다 갈립니다 — 실록은 「오전에 잠시」라 적고, 여러 2차문헌은 그날 저녁이라 적습니다. 어느 쪽인지 확정하지 못해 시각은 적지 않습니다. ※ 이 이동을 「스스로 정한 것」으로 볼지는 엔딩에서 당신이 정합니다. 옮긴다",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "move"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "61-5-gapsin-move-changdeok.png"
+  },
+  {
+    "index": 62,
+    "act": 4,
+    "id": "gapsin-reform",
+    "kind": "study",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 19일 오전 · 1884 · 창덕궁 창덕궁 5막 · 갑신 사초함 읽은 사료 15장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 E 대화 Q 사초 소리 꺼짐 이 막에서 당신이 쥔 것 — 정강 열네 조. 읽고, 당신의 이름으로 내릴 것인지를 정한다.",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "62-5-gapsin-reform.png"
+  },
+  {
+    "index": 63,
+    "act": 4,
+    "id": "gapsin-reform-choice",
+    "kind": "dilemma",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 19일 오전 · 1884 · 창덕궁 창덕궁 5막 · 갑신 사초함 읽은 사료 16장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 지금 할 일보기를 눌러 얻는 것과 내어주는 것을 읽고, 하나를 정하세요. 어느 것을 골라도 됩니다. E 대화 Q 사초 소리 꺼짐 이 정강을 당신의 이름으로 내릴 것인가 개화당은 기다리고 있다. 이 글이 나가면 임금이 정변의 편에 섰다는 뜻이 된다. 선택지를 그린 재구성 내린다 이 선택 살펴보기 선택지를 그린 재구성 제13조를 빼고 내린다 이 선택 살펴보기 선택지를 그린 재구성 내리지 않고, 청군이 어찌 나오는지 본다 이 선택 살펴보기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "dilemma"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "63-5-gapsin-reform-choice.png"
+  },
+  {
+    "index": 64,
+    "act": 4,
+    "id": "gapsin-qing",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 19일 · 1884 · 창덕궁 창덕궁 5막 · 갑신 사초함 읽은 사료 16장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 그 날 오 후 창덕궁은 넓다. 갈 수 있는 곳이 열한 곳으로 늘었다. 같은 문으로 청군이 들어온다. 『고종실록』 21권, 고종 21년 10월 19일 · 『고등 한국사1』 p.116 · 등급 사료 기록을 보다 크게 보기 ⤢ 창덕궁 인정전 · 2022년 촬영 관련 장소 · 창덕궁의 현재 모습입니다. 지문의 사건 현장을 촬영한 사진은 아닙니다. Bernard Gagnon 원본 출처 ↗ CC0 1 / 2 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "64-5-gapsin-qing.png"
+  },
+  {
+    "index": 65,
+    "act": 4,
+    "id": "gapsin-rush",
+    "kind": "rush",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 19일 · 1884 · 창덕궁 창덕궁 5막 · 갑신 사초함 읽은 사료 16장 Q 지금 할 일글을 읽고 「다음」을 누르세요. 그다음 서둘러 달아납니다. E 대화 Q 사초 소리 꺼짐 음력 10월 19일 밤 · 양력 12월 6일 밤 청군이 창덕궁으로 쳐들어온다. 총알이 관물헌 처마까지 날아든다. 일본군이 물러나고 있다. 이 궁 안에 더 있을 수 없다. 『고종실록』 21권, 고종 21년 10월 19일 · 『고등 한국사1』 116쪽 · 등급 재구성. 어느 문으로 나갔는지는 기록이 없어, 문의 자리와 궁 안의 길은 게임이 지어냈습니다 ※ 이 대목은 기록에 남아 있지 않습니다. 게임이 지어내 채운 장면입니다. 이런 것을 「재구성」이라고 합니다. 1 / 3 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "65-5-gapsin-rush.png"
+  },
+  {
+    "index": 66,
+    "act": 4,
+    "id": "gapsin-flight-self",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 19일 · 1884 · 창덕궁 창덕궁 5막 · 갑신 사초함 읽은 사료 16장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 후 원 당신은 스스로 문을 빠져나왔다. 뒤를 한 번 돌아보았다. 등급 재구성 — 궁 안에서 어느 길로 나갔는지는 기록이 없습니다 ※ 이 대목은 기록에 남아 있지 않습니다. 게임이 지어내 채운 장면입니다. 이런 것을 「재구성」이라고 합니다. 기록을 보다 크게 보기 ⤢ 창덕궁 인정전 · 2022년 촬영 관련 장소 · 창덕궁의 현재 모습입니다. 지문의 사건 현장을 촬영한 사진은 아닙니다. Bernard Gagnon 원본 출처 ↗ CC0 다음",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "66-5-gapsin-flight-self.png"
+  },
+  {
+    "index": 67,
+    "act": 4,
+    "id": "gapsin-hong",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 19일 · 1884 · 창덕궁 창덕궁 5막 · 갑신 사초함 읽은 사료 16장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 남 은 사 람 홍영식과 박영교는 임금을 따라가 그 자리에 남았다. 『고종실록』 같은 기사에 이렇게 적혀 있다 ─ 「우리 병사가 홍영식과 박영교를 쳐죽이고」. 『고종실록』 21권, 고종 21년 10월 19일 · 우리말 옮김 · 등급 사료 기록을 보다 크게 보기 ⤢ 김옥균 사진 · 1911년 출판물 수록 관련 인물 · 갑신정변의 주도자 김옥균입니다. 지문 속 다른 인물의 사진이 아닙니다. Joseph H. Longford, The Story of Korea · 서울역사박물관 원본 출처 ↗ Public domain 1 / 2 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "67-5-gapsin-hong.png"
+  },
+  {
+    "index": 68,
+    "act": 4,
+    "id": "gapsin-move-bukmyo",
+    "kind": "move",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 19일 · 1884 · 북묘 북묘 5막 · 갑신 사초함 읽은 사료 16장 Q 지금 할 일거처를 옮깁니다. 어디서 어디로, 왜 옮기는지 읽으세요. E 대화 Q 사초 소리 꺼짐 1884 고종 21년 음력 10월 19일 밤 양력 12월 6일 밤 창덕궁 → 북묘 청군이 들어오다 『고종실록』 21권, 고종 21년 10월 19일 · \"밤에 상께서 북묘(北廟)로 거처를 옮겼다가 그 길로 또 선인문 밖에 있는 청나라 통령 오조유(吳兆有)의 영방(營房)으로 옮겼으며…\" ※ 북묘는 궁이 아니라 관왕묘, 곧 사당입니다. 옮긴다",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "move"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "68-5-gapsin-move-bukmyo.png"
+  },
+  {
+    "index": 69,
+    "act": 4,
+    "id": "gapsin-move-ojoyu",
+    "kind": "move",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 19일 · 1884 · 오조유의 영방 오조유의 영방 5막 · 갑신 사초함 읽은 사료 16장 Q 지금 할 일거처를 옮깁니다. 어디서 어디로, 왜 옮기는지 읽으세요. E 대화 Q 사초 소리 꺼짐 1884 고종 21년 음력 10월 19일 밤 (같은 날) 양력 12월 6일 밤 북묘 → 오조유의 영방 그 길로 또 옮기다 『고종실록』 21권, 고종 21년 10월 19일 · 실록은 북묘와 영방, 이 두 번의 이동을 한 문장에 이어 적었다 — 같은 날 밤의 일이다. ※ 여기는 궁도 사당도 아니고 청군의 군영입니다. ※ 영방(營房)은 군대가 머무는 집이라는 뜻입니다. 옮긴다",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "move"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "69-5-gapsin-move-ojoyu.png"
+  },
+  {
+    "index": 70,
+    "act": 4,
+    "id": "gapsin-after",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 19일 · 1884 · 오조유의 영방 오조유의 영방 5막 · 갑신 사초함 읽은 사료 16장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 그 뒤 정변은 사흘 만에 끝났다. 청의 간섭은 전보다 심해졌고, 개화를 말하는 것 자체가 어려워졌다. 『고등 한국사1』 p.117 수록 · 『윤치호 일기』 · 우리말 옮김 · 등급 교과서. 일기 원본에서 같은 문장을 확인하지 못했습니다 기록을 보다 크게 보기 ⤢ 김옥균 사진 · 1911년 출판물 수록 관련 인물 · 갑신정변의 주도자 김옥균입니다. 지문 속 다른 인물의 사진이 아닙니다. Joseph H. Longford, The Story of Korea · 서울역사박물관 원본 출처 ↗ Public domain 1 / 3 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "70-5-gapsin-after.png"
+  },
+  {
+    "index": 71,
+    "act": 4,
+    "id": "kimokgyun-fate",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 19일 · 1884 · 오조유의 영방 오조유의 영방 5막 · 갑신 사초함 읽은 사료 16장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 그 사람 김옥균은 일본으로 달아났다. 「때가 오면 믿어 달라」던 사람을, 임금은 사흘 동안 믿었고 사흘 뒤 역적이라 불렀다. 우리역사넷 「갑신정변을 주도한 박영효, 서광범, 서재필, 김옥균」 · 『고등 한국사1』 p.117 1 / 2 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "71-5-kimokgyun-fate.png"
+  },
+  {
+    "index": 72,
+    "act": 4,
+    "id": "three-days",
+    "kind": "note",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 19일 · 1884 · 오조유의 영방 오조유의 영방 5막 · 갑신 사초함 읽은 사료 16장 Q 지금 할 일글을 읽고 「다음」을 누르세요. E 대화 Q 사초 소리 꺼짐 사 흘 사흘 동안 당신은 궁에서 남의 집으로, 사당으로, 군영으로 옮겨졌다. 데리고 간 사람도, 문 밖을 에워싼 군대도 그때마다 달랐다. 『고종실록』 21권 · 『고등 한국사1』 pp.116~117 · 등급 사료 1 / 2 계속 읽기",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "note"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "72-5-three-days.png"
+  },
+  {
+    "index": 73,
+    "act": 4,
+    "id": "gapsin-return",
+    "kind": "move",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 23일 · 1884 · 창덕궁 창덕궁 5막 · 갑신 사초함 읽은 사료 16장 Q 지금 할 일거처를 옮깁니다. 어디서 어디로, 왜 옮기는지 읽으세요. E 대화 Q 사초 소리 꺼짐 1884 고종 21년 음력 10월 23일 양력 12월 10일 오조유의 영방 → 창덕궁 정변이 끝나다 — 궁으로 돌아오다 『고종실록』 21권, 고종 21년 10월 23일 · \"창덕궁으로 환어(還御)하였다.\" — 그 사흘 전(20일)에 청의 장수 원세개의 영방으로 한 번 더 옮겼으나 화면에서 줄였습니다. 옮긴다",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "move"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "73-5-gapsin-return.png"
+  },
+  {
+    "index": 74,
+    "act": 4,
+    "id": "last-walk",
+    "kind": "explore",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 23일 · 1884 · 창덕궁 창덕궁 · 돈화문(정문) 5막 · 갑신 사초함 읽은 사료 16장 Q 오늘 할 일 인정전으로 가 어좌에 앉는다 — 이번에는 스스로 걷는다 쌀 한 섬 ···· 즉위 무렵의 1.9배 · 아버지 — 청으로 끌려가셨다 W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 ↶ ↷ 지금 할 일돈화문에서 인정전까지 걸어가, 어좌 앞에서 E 를 누르세요. 이번에는 아무도 데려가지 않습니다. 멈춤 E 대화 Q 사초 소리 꺼짐 ?",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "guide-strip",
+        "game-controls",
+        "game-sound",
+        "game-map"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "74-5-last-walk.png"
+  },
+  {
+    "index": 75,
+    "act": 4,
+    "id": "end",
+    "kind": "alone",
+    "errors": [],
+    "view": {
+      "text": "御前 고종 21년 음력 10월 23일 · 1884 · 창덕궁 창덕궁 · 인정전(어전회의) 5막 · 갑신 사초함 읽은 사료 16장 Q W A S D 이동 Shift 달리기 우클릭 드래그 · 둘러보기 E 대화 Q 사초 소리 꺼짐 열두 살에 처음 앉았던 자리다. 그때 곁에 섰던 아버지는 청에 붙들려 있고, 사흘 전 곁에 섰던 사람들은 죽거나 바다를 건넜다. 어좌는 그대로다. 앉아 있는 사람이 달라졌다. 기록을 거둔다",
+      "canvas": true,
+      "overlays": [
+        "cinema-hud",
+        "game-controls",
+        "game-sound",
+        "game-map",
+        "alone"
+      ],
+      "widthOverflow": 0
+    },
+    "screenshot": "75-5-end.png"
+  }
+]

@@ -4,6 +4,7 @@ import { bodyOf, blockAt } from './helpers/body-of.js'
 import { PALACES, roomAt, baseOf } from '../src/data/palaces.js'
 import { ACTS } from '../src/data/acts.js'
 import { createState } from '../src/core/state.js'
+import { createGameTime } from '../src/core/game-time.js'
 import { isDusk } from '../src/core/clock.js'
 import { step, axisToward } from '../src/systems/movement.js'
 import * as audience from '../src/systems/audience.js'
@@ -29,10 +30,11 @@ function runBlock(prefix, env) {
 function environment() {
   const position = {x: 0, y: 1.9, z: 0, set(x,y,z) { Object.assign(this,{x,y,z}) }}
   return {
+    gameTime: createGameTime(),
     ...audience, PALACES, roomAt, npcById, npcCardIds, isDusk,
     flow: {state: {...createState(), palace: 'changdeok', control: 'C', blocked: null}, phase: 'audience',
       setPhase(phase) { this.phase = phase }, actIndex: 0, taken: new Set()},
-    ctx: {player: {position}, setProps() {}, setNpcs() {}, setPickupMarkers() {}, placeNpc() {},
+    ctx: {player: {position}, setProps() {}, setNpcs() {}, setPickupMarkers() {}, placeNpc() {}, setKingHidden() {},
       tickNpcLife() {}, pickGround: p => p},
     input: {tap: () => null, axis: () => ({x:0,z:1})},
     inputForStep: () => ({axis: () => ({x:0,z:1}), running: () => false}), step,

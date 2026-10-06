@@ -1,0 +1,336 @@
+[
+  {
+    "id": "policy-a",
+    "cols": 4,
+    "rows": 2,
+    "cells": [
+      [
+        "d:seogye:receive",
+        "A Joseon official accepts a sealed diplomatic letter with both hands at a low wooden desk"
+      ],
+      [
+        "d:seogye:fix",
+        "An official points a writing brush toward a letter and seal, returning the paper to a departing envoy for revision"
+      ],
+      [
+        "d:seogye:refuse",
+        "A sealed letter lies untouched outside closed Korean palace doors"
+      ],
+      [
+        "d:seogye:actual",
+        "A nineteenth century Japanese steam gunboat approaches the rocky Ganghwa coastline"
+      ],
+      [
+        "d:ration:pay",
+        "Grain workers pour rice from straw sacks into wooden soldier ration measures"
+      ],
+      [
+        "d:ration:probe",
+        "A civil official inspects partly empty straw grain sacks beside an account ledger"
+      ],
+      [
+        "d:ration:punish",
+        "Unarmed Joseon soldiers wait seated in a magistrate courtyard for an official inquiry, no violence"
+      ],
+      [
+        "d:ration:actual",
+        "A palace official presents a grain report to a seated royal figure seen only from behind, empty grain measures beside the desk"
+      ]
+    ]
+  },
+  {
+    "id": "policy-b",
+    "cols": 4,
+    "rows": 2,
+    "cells": [
+      [
+        "d:imo:father",
+        "A messenger respectfully invites an elder in dark traditional robes seen strictly from behind to enter a palace gate"
+      ],
+      [
+        "d:imo:self",
+        "Joseon king in red robe seen strictly from behind faces hungry soldiers across a palace courtyard"
+      ],
+      [
+        "d:imo:qing",
+        "A Korean envoy presents a request scroll to Qing officers in a military tent, backs and distant faces only"
+      ],
+      [
+        "d:imo:actual",
+        "Elder Korean statesman seen strictly from behind entering palace courtyard as officers respectfully wait"
+      ],
+      [
+        "d:reform:issue",
+        "A royal hand presses a red seal beside an open reform document while officials wait"
+      ],
+      [
+        "d:reform:partial",
+        "Hands remove one loose sheet from a stack of reform papers beside a royal seal"
+      ],
+      [
+        "d:reform:hold",
+        "Closed reform papers on a desk beside a window overlooking distant troops outside palace walls"
+      ],
+      [
+        "d:reform:actual",
+        "Abandoned reform papers on a low table as foreign troops withdraw beyond an open palace gate at dusk"
+      ]
+    ]
+  },
+  {
+    "id": "treaty",
+    "cols": 4,
+    "rows": 4,
+    "cells": [
+      [
+        "s:treaty1876:0:yes",
+        "Two small surveying boats, one Korean and one Japanese, measuring opposite rocky coastlines; paired surveying tools"
+      ],
+      [
+        "s:treaty1876:0:no",
+        "Only one Japanese surveying crew measures the Korean coast with a lead line and rolled nautical chart"
+      ],
+      [
+        "s:treaty1876:1:war",
+        "One iron steam warship with visible cannons at sea in the 1870s"
+      ],
+      [
+        "s:treaty1876:1:fish",
+        "A modest traditional Korean wooden fishing boat with nets at sea"
+      ],
+      [
+        "s:treaty1876:1:envoy",
+        "A Qing diplomatic sailing junk with formal envoy cabin at sea"
+      ],
+      [
+        "s:treaty1876:2:yes",
+        "Two equally sized judicial desks in opposite port offices, one Korean and one Japanese"
+      ],
+      [
+        "s:treaty1876:2:no",
+        "One Japanese judicial desk inside a Korean port consular office"
+      ],
+      [
+        "s:treaty1876:3:jp",
+        "Japanese Meiji judicial official in dark Western uniform seated at a port office desk, distant profile"
+      ],
+      [
+        "s:treaty1876:3:kr",
+        "Joseon judicial official in traditional robe and black winged hat at a port office desk"
+      ],
+      [
+        "s:treaty1876:3:both",
+        "Korean official and Japanese official seated at equal height together at one judicial desk"
+      ],
+      [
+        "s:treaty1876:4:qing",
+        "Neutral distant view of Qing Beijing imperial city tiled roofs and tall gateway"
+      ],
+      [
+        "s:treaty1876:4:russia",
+        "Neutral distant view of nineteenth century Saint Petersburg skyline with dome and river"
+      ],
+      [
+        "s:treaty1876:4:usa",
+        "Neutral distant view of nineteenth century Washington Capitol with dome and avenue"
+      ],
+      [
+        "s:treaty1876:5:jp",
+        "A Japanese envoy meets a Korean official at a table with an empty third chair pushed aside"
+      ],
+      [
+        "s:treaty1876:5:kr",
+        "A Joseon official receives a ceremonial diplomatic greeting at an equal-height table"
+      ],
+      [
+        "s:treaty1876:5:qing",
+        "A Qing envoy and Korean official exchange a ceremonial document together"
+      ]
+    ]
+  },
+  {
+    "id": "sokbang",
+    "cols": 4,
+    "rows": 4,
+    "cells": [
+      [
+        "s:sokbang1882:0:belong",
+        "A small wooden annex physically connected by a roofed passage to a large hall"
+      ],
+      [
+        "s:sokbang1882:0:rule",
+        "An official directs a courtyard meeting from a desk"
+      ],
+      [
+        "s:sokbang1882:0:help",
+        "Two ordinary workers help each other lift a heavy rice sack"
+      ],
+      [
+        "s:sokbang1882:1:nation",
+        "A walled capital with villages fields and mountains beyond, an entire country visualized"
+      ],
+      [
+        "s:sokbang1882:1:friend",
+        "Two ordinary Joseon scholars meeting warmly on a path, equal positions"
+      ],
+      [
+        "s:sokbang1882:1:land",
+        "Open blue coastal sea and distant horizon"
+      ],
+      [
+        "w:자주",
+        "One free-standing Korean hall on its own raised foundation"
+      ],
+      [
+        "w:속방",
+        "A smaller Korean hall attached beneath the extended roof of a larger hall"
+      ],
+      [
+        "w:우방",
+        "Two separate Korean halls linked by an open garden path"
+      ],
+      [
+        "w:동맹",
+        "Two guards standing side by side defending one gate"
+      ],
+      [
+        "s:sokbang1882:3:meddle",
+        "A Qing adviser reaches across a Korean official desk to rearrange administrative papers"
+      ],
+      [
+        "s:sokbang1882:3:equal",
+        "Korean and Qing merchants exchange equal baskets of goods across a market table"
+      ],
+      [
+        "s:sokbang1882:3:expel",
+        "Qing troops gesture Japanese soldiers toward a distant harbor exit without violence"
+      ],
+      [
+        "s:sokbang1882:4:jaju",
+        "One independent pavilion surrounded by open garden space"
+      ],
+      [
+        "s:sokbang1882:4:sokbang",
+        "A small pavilion connected to a larger palace hall"
+      ],
+      [
+        "s:sokbang1882:4:neither",
+        "Two folded diplomatic papers set aside while an untouched blank sheet lies before a Korean official"
+      ]
+    ]
+  },
+  {
+    "id": "chaeryak",
+    "cols": 4,
+    "rows": 4,
+    "cells": [
+      [
+        "s:chaeryak1880:0:block",
+        "Joseon guard holds a wooden shield across a narrow gate to block entry"
+      ],
+      [
+        "s:chaeryak1880:0:join",
+        "Two diplomatic envoys clasp hands respectfully across a low table"
+      ],
+      [
+        "s:chaeryak1880:0:follow",
+        "One traveler follows another along a Korean palace path"
+      ],
+      [
+        "w:러시아",
+        "Nineteenth century Russian Saint Petersburg river skyline, dome and pale palace"
+      ],
+      [
+        "w:중국",
+        "Nineteenth century Qing Beijing red imperial gateway and layered roof silhouette"
+      ],
+      [
+        "w:일본",
+        "Nineteenth century Japanese Edo stone rampart and white castle tower"
+      ],
+      [
+        "w:미국",
+        "Nineteenth century United States Capitol dome and avenue in Washington"
+      ],
+      [
+        "w:영국",
+        "Nineteenth century London Westminster clock tower and river"
+      ],
+      [
+        "w:프랑스",
+        "Nineteenth century Paris Notre Dame and Seine, no Eiffel Tower"
+      ],
+      [
+        "s:chaeryak1880:2:qing",
+        "Qing diplomat in long robe and round Qing official hat reading a book at a desk, anonymous distant profile"
+      ],
+      [
+        "s:chaeryak1880:2:joseon",
+        "Joseon official in traditional blue robe and black winged hat reading a book at a desk"
+      ],
+      [
+        "s:chaeryak1880:2:japan",
+        "Japanese scholar in traditional kimono reads a book at a low desk"
+      ],
+      [
+        "s:chaeryak1880:3:both",
+        "A diplomatic book rests between two equally lit desks occupied by Korean and Qing envoys"
+      ],
+      [
+        "s:chaeryak1880:3:pure",
+        "A book is carefully offered toward a Korean palace and its waiting officials"
+      ],
+      [
+        "s:chaeryak1880:3:lie",
+        "An unread closed book is set aside on a shelf away from the reading desk"
+      ],
+      [
+        "extra:chaeryak",
+        "A scholar quietly weighs two open diplomatic books on a reading desk"
+      ]
+    ]
+  },
+  {
+    "id": "reform",
+    "cols": 3,
+    "rows": 3,
+    "cells": [
+      [
+        "s:reform1884:0:qing",
+        "Formal Korean tribute envoys approach a Qing imperial gateway carrying ceremonial gifts"
+      ],
+      [
+        "s:reform1884:0:japan",
+        "Korean and Japanese diplomatic envoys exchange treaty documents across a low table"
+      ],
+      [
+        "s:reform1884:0:west",
+        "Western merchant sailing ship unloads bales at a Korean harbor"
+      ],
+      [
+        "s:reform1884:1:family",
+        "An elder official hands an appointment scroll to a younger relative inside an ancestral hall"
+      ],
+      [
+        "s:reform1884:1:exam",
+        "Joseon examination candidates write at orderly outdoor desks"
+      ],
+      [
+        "s:reform1884:1:army",
+        "Two separate groups of Joseon troops stand in formation on either side of a courtyard"
+      ],
+      [
+        "s:reform1884:2:council",
+        "A circle of Joseon ministers deliberates together around one low conference table"
+      ],
+      [
+        "s:reform1884:2:king",
+        "A royal figure in red robe seated alone at a desk seen strictly from behind"
+      ],
+      [
+        "s:reform1884:2:kim",
+        "A single young Korean reform official seen strictly from behind working alone at a desk"
+      ]
+    ]
+  }
+]

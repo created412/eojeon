@@ -1,4 +1,5 @@
 // One physical footprint for rendering, movement and character placement.
+import { yardWaterObstacles } from './yard-geometry.js'
 export const ROOM_SHRINK = .72
 export const WALL_THICKNESS = .45
 export const BODY_RADIUS = .55
@@ -24,6 +25,7 @@ export function hallObstacles(def){
  // The courtyard galleries also have visible side walls.
  const c=def.yard?.colonnade
  if(c){for(const s of [-1,1]){const x=s*(c.halfW+1.4);out.push({id:'gallery',x0:x-.2,x1:x+.2,z0:c.z0,z1:c.z1})}}
+ out.push(...yardWaterObstacles(def.yard))
  cache.set(def,out);return out
 }
 export function collides(def,p,radius=BODY_RADIUS){

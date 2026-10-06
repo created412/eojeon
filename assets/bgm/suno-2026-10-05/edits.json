@@ -1,0 +1,134 @@
+[
+  {
+    "key": "theme",
+    "source": "theme-source.mp3",
+    "start": 51.6,
+    "duration": 29.8,
+    "overlap": 1.2,
+    "measuredSourceLufs": -16.1,
+    "targetLufs": -20,
+    "bytes": 81583,
+    "sha256": "38ffb8f61f18a05472038bd8558594b8832c8856d7f7b6c1224234cb2a25523a"
+  },
+  {
+    "key": "act1",
+    "source": "act1-source.mp3",
+    "start": 22.8,
+    "duration": 33.8,
+    "overlap": 1.2,
+    "measuredSourceLufs": -17.71,
+    "targetLufs": -20,
+    "bytes": 107169,
+    "sha256": "53f6797f67afb6682d51be6654b659417137497013d4d1f301713306196e84ad"
+  },
+  {
+    "key": "act2",
+    "source": "act2-source.mp3",
+    "start": 24.6,
+    "duration": 31.4,
+    "overlap": 1.2,
+    "measuredSourceLufs": -17.03,
+    "targetLufs": -20,
+    "bytes": 97702,
+    "sha256": "0f98361cb3a6c1ee059fb55c0322a2ea2c9b710c2b1c8859b54b352b5290654c"
+  },
+  {
+    "key": "act3",
+    "source": "act3-source.mp3",
+    "start": 39.2,
+    "duration": 29.8,
+    "overlap": 1.2,
+    "measuredSourceLufs": -15.08,
+    "targetLufs": -20,
+    "bytes": 95623,
+    "sha256": "ee5cf85d6c76e9424d739b81926c718b573aaa2bcb8a8c482b5e10800bb014f9"
+  },
+  {
+    "key": "act4",
+    "source": "act4-source.mp3",
+    "start": 32.8,
+    "duration": 32.8,
+    "overlap": 1.2,
+    "measuredSourceLufs": -16.37,
+    "targetLufs": -20,
+    "bytes": 104721,
+    "sha256": "66b90fb5ff021546985e76d3a65361103665384a96a42e7bba1f282eab81f9b3"
+  },
+  {
+    "key": "act5",
+    "source": "act5-source.mp3",
+    "start": 17.4,
+    "duration": 34.4,
+    "overlap": 1.2,
+    "measuredSourceLufs": -17.6,
+    "targetLufs": -20,
+    "bytes": 102618,
+    "sha256": "e8142240e6cfb20b420bb5451ae12e2b26bd7823362d183c82ff628ac5d1a434"
+  },
+  {
+    "key": "march",
+    "source": "march-source.mp3",
+    "start": 27.0,
+    "duration": 28.6,
+    "overlap": 1.2,
+    "measuredSourceLufs": -16.09,
+    "targetLufs": -20,
+    "bytes": 90748,
+    "sha256": "ec98fc94cb157d0e5df9e2360d92aff8447840189e15806ee8d2683e6d92190c"
+  },
+  {
+    "key": "tension",
+    "source": "tension-source.mp3",
+    "start": 33.6,
+    "duration": 28.2,
+    "overlap": 1.2,
+    "measuredSourceLufs": -17.07,
+    "targetLufs": -20,
+    "bytes": 85077,
+    "sha256": "15c4ea978d7324d3d88e7017486de8672d831ef1aa692e2e400d1f88d23e13be"
+  },
+  {
+    "key": "council",
+    "source": "council-source.mp3",
+    "start": 41.8,
+    "duration": 33.6,
+    "overlap": 1.2,
+    "measuredSourceLufs": -17.2,
+    "targetLufs": -20,
+    "bytes": 103135,
+    "sha256": "9d787138ac0d47e765bc579ad4cfba5dadfa5bcf2786dcbec3645f1e3c9bb126"
+  },
+  {
+    "key": "ending",
+    "source": "ending-source.mp3",
+    "start": 24.4,
+    "duration": 33.8,
+    "overlap": 1.2,
+    "measuredSourceLufs": -17.78,
+    "targetLufs": -20,
+    "bytes": 107668,
+    "sha256": "28c0e4e7bee7d2a584f6fed29c7818fad6a1fd276130d2ba52812c57da46f999"
+  },
+  {
+    "key": "actend",
+    "source": "ending-source.mp3",
+    "start": 81.44,
+    "duration": 9,
+    "loop": false,
+    "targetLufs": -20,
+    "measuredSourceLufs": -20.86,
+    "bytes": 31524,
+    "sha256": "f4b042ae32e33ef5737503ba4931fef3b7520682d92ab31414ee0b3501e2e73d"
+  },
+  {
+    "key": "loss",
+    "source": "ending-source.mp3",
+    "start": 89.44,
+    "duration": 8,
+    "loop": false,
+    "targetLufs": -20,
+    "measuredSourceLufs": -19.96,
+    "bytes": 24385,
+    "sha256": "5634834b4fb98c91b2f2c6f40a1536254fc5e313e383f5a7c37e4345cd95f5e6"
+  }
+]

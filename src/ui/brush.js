@@ -5,6 +5,7 @@ import {
   inkGuideAlpha, INK_WARN, INK_CRIT,
 } from '../systems/brush-trace.js'
 import { BRUSH_GUIDES } from './brush-guides-data.js'
+import { installTypeVars } from './type-css.js'
 
 const S = 320
 const HANJA_FONT = '"Batang","BatangChe","Gungsuh","SimSun","MS Mincho","Noto Serif CJK KR",serif'
@@ -17,7 +18,7 @@ const CSS = `
 .brush .line b{color:#e0a23a;font-weight:400}
 .brush .paper{background:#efe6cf;border:1px solid #8a6a44;border-radius:2px;touch-action:none;cursor:crosshair;max-width:88vw;height:auto}
 .brush button:disabled{opacity:.45;cursor:not-allowed}
-.brush .count{font-size:12px;color:#8f8a7c;letter-spacing:2px}
+.brush .count{font-size:17px;color:#d5c9ad;letter-spacing:0}
 .brush .partial{font-size:12px;color:#8f8a7c;border:1px dashed #6a5230;border-radius:3px;
   padding:6px 12px;max-width:520px;line-height:1.6}
 .brush .rest{max-width:520px;text-align:left;font-size:14px;color:#6b6558;line-height:1.9;
@@ -25,6 +26,12 @@ const CSS = `
 .brush .rest b{color:#23201a;font-weight:400;letter-spacing:4px}
 .brush .meaning{font-size:14px;color:#b9b2a1;max-width:520px;line-height:1.8}
 .brush .origin{font-size:12px;color:#6b6558}
+.brush{font-family:var(--face-body,system-ui,sans-serif)}
+.brush .brush-task{font-size:21px;color:#f2e4c3;line-height:1.5;max-width:34em}
+.brush .brush-context{max-width:620px;color:#c6b999;font-size:15px}
+.brush .brush-context summary{cursor:pointer;padding:6px}
+.brush .brush-context .meaning{font-size:17px;margin:10px auto}
+.brush .brush-context .origin,.brush .brush-context .partial{font-size:14px;color:#c1bba9}
 .brush .row{display:flex;gap:10px}
 .brush button{padding:10px 22px;background:#23282c;border:1px solid #3a4248;color:#e8e2d4;
   border-radius:3px;font-size:14px;cursor:pointer}
@@ -85,11 +92,27 @@ const CSS = `
 .brush .inknote{font-size:13px;color:#c9a06a;letter-spacing:1px;min-height:1.3em;
   max-width:480px;margin:0 auto;line-height:1.6}
 .brush .inkreport{font-size:14px;color:#b9b2a1;max-width:560px;line-height:1.8}
+@media(max-height:560px) and (min-width:650px){
+ .brush.brush-writing{display:grid;grid-template-columns:minmax(300px,365px) minmax(240px,400px);grid-template-rows:auto auto auto auto auto auto;align-content:center;justify-content:center;gap:12px 20px;padding:12px 20px}
+ .brush.brush-writing>h2,.brush.brush-writing>.brush-task,.brush.brush-writing>.line,.brush.brush-writing>.count,.brush.brush-writing>.brush-context,.brush.brush-writing>.row{grid-column:2}
+ .brush.brush-writing>.ink,.brush.brush-writing>.paper{grid-column:1;grid-row:1 / 7;align-self:center}
+ .brush.brush-writing .paper{width:min(260px,68vh)}
+ .brush.brush-writing .desk{gap:10px}
+ .brush.brush-writing .clock{min-width:60px;width:60px}
+ .brush.brush-writing .clocknum{font-size:44px}
+ .brush.brush-writing .clocknote{font-size:12px;max-width:60px}
+ .brush.brush-writing .line{font-size:19px;letter-spacing:4px}
+ .brush.brush-writing .brush-task{font-size:19px}
+ .brush.brush-writing .count{font-size:16px}
+ .brush.brush-writing>.row{justify-content:center}
+ .brush.brush-writing .inknote{font-size:12px}
+}
 `
 
 let styled = false
 function ensureStyle() {
   if (styled) return
+  installTypeVars()
   const style = document.createElement('style')
   style.textContent = CSS
   document.head.appendChild(style)
@@ -173,13 +196,16 @@ export function writingHtml(view) {
           </div>` : paper
   return `
           <h2>${view.title ?? ''}</h2>
-          ${view.givenText ? `<div class="meaning">척화비에 새길 비문을 쓰고 있습니다. ${view.givenText} (${view.givenGloss ?? ''})은 이미 새겨져 있습니다.<br>이어지는 마지막 ${view.glyphs?.length ?? 0}글자 「${(view.glyphs ?? []).join('')}」를 안내선을 따라 써 주세요.</div>` : ''}
+          <div class="brush-task">안내선을 따라 쓰고, 글자가 완성되면 넘기세요.</div>
           <div class="line"></div>
           ${paperBlock}
           <div class="count"></div>
+          <details class="brush-context"><summary>비문 뜻과 출처</summary>
+          ${view.givenText ? `<div class="meaning">${view.givenText} (${view.givenGloss ?? ''})은 이미 새겨져 있습니다. 이어지는 마지막 ${view.glyphs?.length ?? 0}글자 「${(view.glyphs ?? []).join('')}」를 씁니다.</div>` : ''}
           ${note ? `<div class="partial">${note}</div>` : ''}
           <div class="meaning">${view.meaning ?? ''}</div>
           ${origin ? `<div class="origin">${origin}</div>` : ''}
+          </details>
           <div class="row"><button class="reset">다시 쓰기</button><button class="next" disabled>다음 글자로</button></div>`
 }
 
@@ -209,7 +235,7 @@ export function finishHtml(view, regrinds = 0) {
             <div class="row"><button class="go">붓을 놓는다</button></div>`
 }
 
-// 붓 화면(F1) — 양이침범은 제시하고 나머지 여덟 글자를 손으로 따라 쓴다.
+// 붓 화면(F1) — 앞 여덟 자는 제시하고 마지막 주화매국 넉 자를 손으로 따라 쓴다.
 // 마우스·펜·손가락 모두 포인터 이벤트로 받고 도달률 75% 이상이면 다음 단추를 켠다.
 // 자동으로 넘어가지 않아 완성한 글자를 충분히 살펴볼 수 있다.
 // 다 쓰고 나면 비문의 나머지(戒我萬年子孫·丙寅作 辛未立)를
@@ -230,14 +256,14 @@ function onTap(button, fn) {
   })
 }
 
-export function createBrush(root) {
+export function createBrush(root, { clock = null } = {}) {
   ensureStyle()
 
   return {
     open(view) {
       return new Promise(resolve => {
         const el = document.createElement('div')
-        el.className = 'brush'
+        el.className = 'brush brush-writing'
         // 두 판을 여기서 조립하지 않는다 — 위의 순수 함수가 만든다. 그래야 시험이
         // 「쓰기 전 판에 반전이 안 새는가」를 실제 마크업으로 확인할 수 있다(판정 R96).
         el.innerHTML = writingHtml(view)
@@ -277,7 +303,7 @@ export function createBrush(root) {
         let inkFrame = 0
         let shownSecond = -1
 
-        const nowMs = () => globalThis.performance?.now?.() ?? Date.now()
+        const nowMs = () => clock?.now() ?? globalThis.performance?.now?.() ?? Date.now()
 
         // 타이머를 지우는 자리는 이 함수 하나뿐이다 — 글자를 새로 열 때, 말랐을 때,
         // 통과했을 때, 붓을 놓을 때가 모두 여기로 모인다. 새는 프레임을 만들지 않는다.
@@ -325,6 +351,7 @@ export function createBrush(root) {
 
         function tickInk() {
           inkFrame = requestAnimationFrame(tickInk)
+          if (clock?.isPaused()) return
           const now = nowMs()
           // 이미 다 쓴 글자를 시간이 지웠다면 그것은 게임이 아니라 사고다.
           // 마르기 전에 먼저 도달률을 본다.
@@ -401,7 +428,7 @@ export function createBrush(root) {
             .map((ch, i) => (i === index ? `<b>${ch}</b>` : ch))
             .join('')
           countEl.textContent = `${index + 1} / ${view.glyphs.length} 자` +
-            (guides.length === 0 ? '  ·  안내선을 불러오지 못했습니다. 다시 쓰기를 눌러 주세요.' : `  ·  안내선 도달률 ${DONE_RATIO * 100}% 이상이면 통과합니다. 완료 후 직접 넘깁니다.`)
+            (guides.length === 0 ? '  ·  안내선을 불러오지 못했습니다. 다시 쓰기를 눌러 주세요.' : '  ·  옅은 안내선을 따라 쓰세요.')
           paint()
         }
 
@@ -418,6 +445,7 @@ export function createBrush(root) {
         }
 
         canvas.addEventListener('pointerdown', (ev) => {
+          if (clock?.isPaused()) return
           if(pointer!==null || (ev.pointerType==='mouse'&&ev.button!==0))return
           pointer=ev.pointerId
           drawing = true
@@ -433,6 +461,7 @@ export function createBrush(root) {
           paint()
         })
         canvas.addEventListener('pointermove', (ev) => {
+          if (clock?.isPaused()) { drawing = false; pointer = null; return }
           if (!drawing || ev.pointerId!==pointer) return
           const to=at(ev),from=marks[marks.length-1]
           const n=Math.max(1,Math.ceil(Math.hypot(to.x-from.x,to.y-from.y)/.01))
@@ -448,7 +477,7 @@ export function createBrush(root) {
           // 도달률을 넘긴 순간 먹은 더 안 마른다. 다음 글자로 넘길 때까지 화면을
           // 들여다보는 시간에 시계가 돌면, 완성한 글자를 살펴보는 일이 벌이 된다.
           if (ready) passInk()
-          countEl.textContent=`${index+1} / ${view.glyphs.length} 자 · 도달률 ${Math.floor(coverage(guides,written)*100)}% · ${ready?'완료했습니다. 다음 글자로를 눌러 주세요.':`${DONE_RATIO * 100}% 이상까지 안내선을 더 따라 써 주세요.`}`
+          countEl.textContent=`${index+1} / ${view.glyphs.length} 자 · ${ready?'완성했습니다. 다음 글자로 넘어가세요.':'비어 있는 안내선을 더 따라 써 주세요.'}`
         })
         canvas.addEventListener('pointercancel',()=>{drawing=false;pointer=null})
         canvas.addEventListener('lostpointercapture',()=>{drawing=false;pointer=null})
@@ -458,7 +487,10 @@ export function createBrush(root) {
 
         function finish() {
           stopInk()
+          el.className = 'brush'
           el.innerHTML = finishHtml(view, regrinds)
+          view.onComplete?.()
+          el.scrollTop = 0
           onTap(el.querySelector('.go'), () => { stopInk(); el.remove(); resolve() })
         }
 

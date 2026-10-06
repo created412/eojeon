@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { ACTS } from '../../src/data/acts.js'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { MIX_NOTE } from '../../src/systems/grain-tray.js'
@@ -72,6 +73,24 @@ describe('4막 무위영 — 겨와 모래를 손으로 골라낸다', () => {
 
   // 남은 것이 「쌀」이 아니라 「열세 달치 급료」라는 것 — 그 한 줄이 이 화면의 값이다
   // (문구 자체는 systems/grain-tray.js 의 wageLine, 거기서 따로 잰다).
+  // 선생님(2026-10-06): 「쌀을 고르게 하는 것과 이어서 임오군란이 일어난 이유를 직관적으로 게임을
+  // 하며 느낄 수 있어야 해.」 — 가마 앞에 열세 달이, 가마 뒤에 섬과 군졸들의 소리가 선다.
+  it('차례가 까닭 그대로다 — 열세 달 → 가마 → 골라낸다 → 섬 → 군졸들의 소리 → 교과서', () => {
+    const at = name => ration.indexOf(`function ${name}(`)
+    for (const name of ['market', 'wait', 'sack', 'handPick', 'measure', 'burst', 'reveal']) expect(at(name), name).toBeGreaterThan(-1)
+    expect(ration).toMatch(/addEventListener\('click', wait\)/)        // 종로 → 열세 달
+    expect(ration).toMatch(/addEventListener\('click', measure\)/)     // 골라낸 뒤 → 섬
+    expect(ration).toContain('burst()')                                // 섬 → 군졸들의 소리
+    const ACT4 = ACTS[3].beats.flatMap(b => b.stops ?? []).map(s => s.beat).find(b => b?.ration).ration
+    expect(ACT4.wait.months).toBe(13)
+    expect(ACT4.wait.came).toContain('한 달 치')
+    expect(ACT4.measure.quote).toContain('무위소의 군사가 받는 것은 완전하고')
+    expect(ACT4.measure.note).toContain('기록에 없습니다')
+    expect(ACT4.burst.cry).toContain('13개월 동안 급료를 주지 않다가')
+    expect(ACT4.burst.happened.join(' ')).toContain('포도청')
+    for (const text of [ACT4.wait.origin, ACT4.measure.quoteBy, ACT4.burst.cryBy]) expect(text).toContain('『고종실록』')
+  })
+
   it('다 골라낸 뒤 급료 줄이 나오고, 그 다음이 예전 reveal 이다', () => {
     expect(ration).toContain('wageLine')
     expect(ration).toContain('교과서는 이것을 한 줄로 적었다')

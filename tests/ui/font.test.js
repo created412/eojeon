@@ -17,7 +17,7 @@ import { FONTS, FONT_FAMILY } from '../../src/ui/font-data.js'
 // ③ 실어도 되는 글꼴이고, 그 사실이 학생이 볼 수 있는 자리에 적혀 있다.
 
 const TYPE_CSS = readFileSync(new URL('../../src/ui/type-css.js', import.meta.url), 'utf8')
-const TITLE_JS = readFileSync(new URL('../../src/ui/title.js', import.meta.url), 'utf8')
+const TITLE_JS = readFileSync(new URL('../../src/ui/prologue.js', import.meta.url), 'utf8')
 
 // 이 시험 묶음은 DOM 없이 돈다(vitest.config.js 의 environment 는 'node' 다).
 // 그래서 진짜 document 대신 installTypeVars() 가 만지는 만큼만 흉내 낸 종이를 준다 —
@@ -133,14 +133,12 @@ describe('실은 글꼴 — 실어도 되는 글꼴이다', () => {
     // 주석은 걷어 내고 본다 — 왜 그렇게 했는지 적은 줄에 이름이 나온다고 해서
     // 「화면에 적혀 있다」가 되면 안 된다(tests/ui/title.test.js 와 같은 판단).
     const code = TITLE_JS.replace(/\/\/[^\r\n]*/g, '')
-    const credits = [...code.matchAll(/className\s*=\s*'opening-credit'[\s\S]{0,400}?textContent\s*=\s*'([^']*)'/g)]
-      .map(m => m[1])
-    expect(credits.length, '.opening-credit 이 하나도 없다').toBeGreaterThanOrEqual(2)
-    const all = credits.join('\n')
+    const all = code.match(/info\.innerHTML\s*=\s*'([^']*)'/)?.[1] ?? ''
     expect(all).toContain('Pretendard')
     expect(all).toContain('Kil Hyung-jin')     // 저작권자 표시 — OFL 조건 2
     expect(all).toContain('SIL Open Font License 1.1')
     // 음악 고지를 밀어내지 않았다 — 한 줄을 더한 것이지 갈아 끼운 것이 아니다.
-    expect(all).toContain('Beneath the Bronze Bell')
+    expect(all).toContain('Suno')
+    expect(all).toContain('폭풍과 왕의 맹세')
   })
 })

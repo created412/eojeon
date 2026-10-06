@@ -1,0 +1,191 @@
+[
+  {
+    "key": "act1",
+    "title": "어전 BGM 01 운현궁 — 아직 명복이던 아침",
+    "style": "Instrumental score for EOJEON, a Korean historical narrative game. Acoustic cinematic palette: warm low strings, restrained haegeum, airy daegeum, sparse gayageum, wooden percussion and soft bronze bell. A recurring three-note royal motif, minor pentatonic color. No vocals, choir, speech, lyrics, pop drums, EDM or modern synth leads. 72 BPM, gentle curious small ensemble. A twelve-year-old before becoming king, winter courtyard, innocence with distant responsibility. Pizzicato cello, soft plucked gayageum, one quiet bamboo flute motif, barely audible hand drum. Warm restrained wonder, not sentimental, not comic. Steady game underscore with space for reading and dialogue. No trailer risers, sudden hits, huge climax or long silent opening. Keep instrumentation and level consistent. A repeating 8-bar middle section, clear meter, gentle transition back to the opening harmony for looping. Clean detailed recording.",
+    "instrumental": true,
+    "model": "v6",
+    "target": "1:30 to 2:00, usable continuous loop",
+    "status": "downloaded",
+    "candidates": [
+      "https://suno.com/song/f9edf128-9902-4b79-b0f5-1e5dfd25bbac",
+      "https://suno.com/song/7f0f7d19-4a52-4ee2-b392-561f67f4dd9e"
+    ],
+    "selected": "f9edf128-9902-4b79-b0f5-1e5dfd25bbac",
+    "settings": {
+      "length": "1:40",
+      "weirdness": 35,
+      "styleInfluence": 71
+    },
+    "file": "act1-source.mp3",
+    "sha256": "83154660e6511ac546bf82fb486459b76b030f0e7884b3c2a30e8e381ffc477f"
+  },
+  {
+    "key": "act2",
+    "title": "어전 BGM 02 양요 — 바다 너머의 그림자",
+    "style": "Instrumental score for EOJEON, a Korean historical narrative game. Acoustic cinematic palette: warm low strings, restrained haegeum, airy daegeum, sparse gayageum, wooden percussion and soft bronze bell. A recurring three-note royal motif, minor pentatonic color. No vocals, choir, speech, lyrics, pop drums, EDM or modern synth leads. 84 BPM, dark spacious coastal unease, distant foreign ships, measured vigilance. Low strings in slow repeating notes, breathy bamboo flute, restrained bowed haegeum, widely spaced deep buk drum. Unresolved tension without combat intensity; sorrowful dignity, no heroic victory. Steady game underscore with space for reading and dialogue. No trailer risers, sudden hits, huge climax or long silent opening. Keep instrumentation and level consistent. A repeating 8-bar middle section, clear meter, gentle transition back to the opening harmony for looping. Clean detailed recording.",
+    "instrumental": true,
+    "model": "v6",
+    "target": "1:30 to 2:00, usable continuous loop",
+    "status": "downloaded",
+    "candidates": [
+      "https://suno.com/song/82abb6b9-17e7-45c6-8f01-59ea5c1fe133",
+      "https://suno.com/song/fee2f811-df09-4be2-ba5c-86399f676ad1"
+    ],
+    "selected": "82abb6b9-17e7-45c6-8f01-59ea5c1fe133",
+    "settings": {
+      "length": "1:40",
+      "weirdness": 35,
+      "styleInfluence": 71
+    },
+    "file": "act2-source.mp3",
+    "sha256": "1b4e4aa70daa8c39332c598e2b26f506a3a840ad1af969493496e994bfa296fc"
+  },
+  {
+    "key": "act3",
+    "title": "어전 BGM 03 친정 — 스스로 정해야 하는 자리",
+    "style": "Instrumental score for EOJEON, a Korean historical narrative game. Acoustic cinematic palette: warm low strings, restrained haegeum, airy daegeum, sparse gayageum, wooden percussion and soft bronze bell. A recurring three-note royal motif, minor pentatonic color. No vocals, choir, speech, lyrics, pop drums, EDM or modern synth leads. 76 BPM, thoughtful royal chamber, cautious resolve and political uncertainty. Soft cello ostinato, sparse gayageum questions answered by daegeum, subtle bronze resonance. Harmonies alternate uncertain minor and fragile clarity; intimate and reflective, not epic. Steady game underscore with space for reading and dialogue. No trailer risers, sudden hits, huge climax or long silent opening. Keep instrumentation and level consistent. A repeating 8-bar middle section, clear meter, gentle transition back to the opening harmony for looping. Clean detailed recording.",
+    "instrumental": true,
+    "model": "v6",
+    "target": "1:30 to 2:00, usable continuous loop",
+    "status": "downloaded",
+    "candidates": [
+      "https://suno.com/song/7ef9312a-c74c-4593-8037-4c09c2f97a68",
+      "https://suno.com/song/dc93d08e-17da-409e-864e-f66b0e0e30df"
+    ],
+    "selected": "7ef9312a-c74c-4593-8037-4c09c2f97a68",
+    "settings": {
+      "length": "1:40",
+      "weirdness": 35,
+      "styleInfluence": 71
+    },
+    "file": "act3-source.mp3",
+    "sha256": "f52854bf0aa2ede3163c41b1f328ebc97f0f5ec5c61c7772c28848f4fc2ce199"
+  },
+  {
+    "key": "act4",
+    "title": "어전 BGM 04 임오 — 빈 가마와 흔들리는 궁",
+    "style": "Instrumental score for EOJEON, a Korean historical narrative game. Acoustic cinematic palette: warm low strings, restrained haegeum, airy daegeum, sparse gayageum, wooden percussion and soft bronze bell. A recurring three-note royal motif, minor pentatonic color. No vocals, choir, speech, lyrics, pop drums, EDM or modern synth leads. 80 BPM, deprivation and suppressed resentment before an uprising. Dry plucked low strings, muted buk, brittle wood taps, weary haegeum fragments. Somber humane weight, anxious subdued pulse, no battle climax, no melodramatic weeping. Keep melody sparse. Steady game underscore with space for reading and dialogue. No trailer risers, sudden hits, huge climax or long silent opening. Keep instrumentation and level consistent. A repeating 8-bar middle section, clear meter, gentle transition back to the opening harmony for looping. Clean detailed recording.",
+    "instrumental": true,
+    "model": "v6",
+    "target": "1:30 to 2:00, usable continuous loop",
+    "status": "downloaded",
+    "candidates": [
+      "https://suno.com/song/ec203ed4-30f0-4148-af3b-2e665cf3f873",
+      "https://suno.com/song/74ccd971-5bee-4a5a-9594-11d40d2cabfb"
+    ],
+    "selected": "ec203ed4-30f0-4148-af3b-2e665cf3f873",
+    "settings": {
+      "length": "1:40",
+      "weirdness": 35,
+      "styleInfluence": 71
+    },
+    "file": "act4-source.mp3",
+    "sha256": "f53d2bf7faa584d85d1eb55f256ae86c54ee45afe2d13d02511ee6aed08132e9"
+  },
+  {
+    "key": "act5",
+    "title": "어전 BGM 05 갑신 — 사흘의 꿈과 남은 자리",
+    "style": "Instrumental score for EOJEON, a Korean historical narrative game. Acoustic cinematic palette: warm low strings, restrained haegeum, airy daegeum, sparse gayageum, wooden percussion and soft bronze bell. A recurring three-note royal motif, minor pentatonic color. No vocals, choir, speech, lyrics, pop drums, EDM or modern synth leads. 88 BPM, fragile reform and approaching collapse, urgent ideas beneath solemn restraint. Interlocking quiet strings, unsettled gayageum arpeggios, distant haegeum, soft low drum heartbeat. Bittersweet dignity; hope and doubt alternate, no triumphant climax. Steady game underscore with space for reading and dialogue. No trailer risers, sudden hits, huge climax or long silent opening. Keep instrumentation and level consistent. A repeating 8-bar middle section, clear meter, gentle transition back to the opening harmony for looping. Clean detailed recording.",
+    "instrumental": true,
+    "model": "v6",
+    "target": "1:30 to 2:00, usable continuous loop",
+    "status": "downloaded",
+    "candidates": [
+      "https://suno.com/song/9f8521c5-39f1-4e89-ac54-96fec905f0bf",
+      "https://suno.com/song/7073d09d-9686-4590-9086-8ca349e8253f"
+    ],
+    "selected": "9f8521c5-39f1-4e89-ac54-96fec905f0bf",
+    "settings": {
+      "length": "1:40",
+      "weirdness": 35,
+      "styleInfluence": 71
+    },
+    "file": "act5-source.mp3",
+    "sha256": "37720a9860ba6990fb124b7577911afd0a5f2e5559f2a40db7d6e1657db5ed61"
+  },
+  {
+    "key": "march",
+    "title": "어전 BGM 06 행렬 — 내 발로 정하지 못한 길",
+    "style": "Instrumental score for EOJEON, a Korean historical narrative game. Acoustic cinematic palette: warm low strings, restrained haegeum, airy daegeum, sparse gayageum, wooden percussion and soft bronze bell. A recurring three-note royal motif, minor pentatonic color. No vocals, choir, speech, lyrics, pop drums, EDM or modern synth leads. 92 BPM, restrained processional walking tempo. Measured low drum and wood steps, broad low strings, distant bamboo flute, spare ceremonial bronze bell. A royal procession under obligation, dignified but uneasy. Balanced pulse, no martial fanfare or cheering. Steady game underscore with space for reading and dialogue. No trailer risers, sudden hits, huge climax or long silent opening. Keep instrumentation and level consistent. A repeating 8-bar middle section, clear meter, gentle transition back to the opening harmony for looping. Clean detailed recording.",
+    "instrumental": true,
+    "model": "v6",
+    "target": "1:30 to 2:00, usable continuous loop",
+    "status": "downloaded",
+    "candidates": [
+      "https://suno.com/song/a36f41c9-342e-416e-9bad-eaa58c4b33dd",
+      "https://suno.com/song/13660883-ec33-4862-a2f5-ef70490f6afe"
+    ],
+    "selected": "a36f41c9-342e-416e-9bad-eaa58c4b33dd",
+    "settings": {
+      "length": "1:40",
+      "weirdness": 35,
+      "styleInfluence": 71
+    },
+    "file": "march-source.mp3",
+    "sha256": "a0c119aa97176cdcd004d934c489f91c6f53227cdee1a88cf3769ce829cc979d"
+  },
+  {
+    "key": "tension",
+    "title": "어전 BGM 07 촉박 — 닫히는 궁문",
+    "style": "Instrumental score for EOJEON, a Korean historical narrative game. Acoustic cinematic palette: warm low strings, restrained haegeum, airy daegeum, sparse gayageum, wooden percussion and soft bronze bell. A recurring three-note royal motif, minor pentatonic color. No vocals, choir, speech, lyrics, pop drums, EDM or modern synth leads. 132 BPM, tense stealth escape gameplay. Fast short low-string ostinato over steady half-time deep buk, dry ticking wood, low haegeum tremolo. Immediate controlled danger, stable driving pulse, no long build or giant trailer hit. No sirens, gunshots or voices. Urgent but not deafening. Steady game underscore with space for reading and dialogue. No trailer risers, sudden hits, huge climax or long silent opening. Keep instrumentation and level consistent. A repeating 8-bar middle section, clear meter, gentle transition back to the opening harmony for looping. Clean detailed recording.",
+    "instrumental": true,
+    "model": "v6",
+    "target": "1:30 to 2:00, usable continuous loop",
+    "status": "downloaded",
+    "candidates": [
+      "https://suno.com/song/0be1c495-8be8-4105-841d-91c97b86a8a5",
+      "https://suno.com/song/ca030a16-066e-4cea-8613-5f4e41f7a7bc"
+    ],
+    "selected": "0be1c495-8be8-4105-841d-91c97b86a8a5",
+    "settings": {
+      "length": "1:40",
+      "weirdness": 35,
+      "styleInfluence": 71
+    },
+    "file": "tension-source.mp3",
+    "sha256": "101a48a5613ccfcd6bc25cc291b6dd4edc4eed4bc95e0abed2734c629dc703a9"
+  },
+  {
+    "key": "council",
+    "title": "어전 BGM 08 어전 — 임금의 저울",
+    "style": "Instrumental score for EOJEON, a Korean historical narrative game. Acoustic cinematic palette: warm low strings, restrained haegeum, airy daegeum, sparse gayageum, wooden percussion and soft bronze bell. A recurring three-note royal motif, minor pentatonic color. No vocals, choir, speech, lyrics, pop drums, EDM or modern synth leads. 60 BPM, almost still intimate deliberation bed for reading long historical documents. Very soft sustained cello, occasional low gayageum notes, distant breathy flute, restrained bronze resonance. Minimal melody, no drums. Suspended unresolved minor harmony, calm moral weight, no climax. Steady game underscore with space for reading and dialogue. No trailer risers, sudden hits, huge climax or long silent opening. Keep instrumentation and level consistent. A repeating 8-bar middle section, clear meter, gentle transition back to the opening harmony for looping. Clean detailed recording.",
+    "instrumental": true,
+    "model": "v6",
+    "target": "1:30 to 2:00, usable continuous loop",
+    "status": "downloaded",
+    "candidates": [
+      "https://suno.com/song/58a02c55-4a8a-4030-9685-7098b5ba64ea",
+      "https://suno.com/song/0dfad54c-2a4f-4c47-8237-8b74170f4fd3"
+    ],
+    "selected": "58a02c55-4a8a-4030-9685-7098b5ba64ea",
+    "settings": {
+      "length": "1:40",
+      "weirdness": 35,
+      "styleInfluence": 71
+    },
+    "file": "council-source.mp3",
+    "sha256": "e4f1e8de6eb595c59cf8e15215a9184cdd12e839a3dd91c739a3f35110be1408"
+  },
+  {
+    "key": "ending",
+    "title": "어전 BGM 09 환궁 — 스물한 해의 기록",
+    "style": "Instrumental score for EOJEON, a Korean historical narrative game. Acoustic cinematic palette: warm low strings, restrained haegeum, airy daegeum, sparse gayageum, wooden percussion and soft bronze bell. A recurring three-note royal motif, minor pentatonic color. No vocals, choir, speech, lyrics, pop drums, EDM or modern synth leads. 68 BPM, reflective epilogue and loss, quiet exhausted return to an empty throne. Solo cello and soft haegeum, sparse gayageum harmonics, a single distant bronze bell. Grief with dignity and a small unresolved hope. End with a clear gentle 10-second descending cadence and natural instrumental decay; no triumphant finale. Steady game underscore with space for reading and dialogue. No trailer risers, sudden hits, huge climax or long silent opening. Keep instrumentation and level consistent. A repeating 8-bar middle section, clear meter, gentle transition back to the opening harmony for looping. Clean detailed recording.",
+    "instrumental": true,
+    "model": "v6",
+    "target": "1:30 to 2:00, usable continuous loop",
+    "status": "downloaded",
+    "candidates": [
+      "https://suno.com/song/1a17ce29-f482-45c7-859e-dac9f7372b67",
+      "https://suno.com/song/43fdfe46-8a44-4e27-b684-4c02c6ec8438"
+    ],
+    "selected": "1a17ce29-f482-45c7-859e-dac9f7372b67",
+    "settings": {
+      "length": "1:40",
+      "weirdness": 35,
+      "styleInfluence": 71
+    },
+    "file": "ending-source.mp3",
+    "sha256": "d0c21e1760c1cc55c83bbf943c09e3d93a9b7b6d08be4842cd21f6fd2244723d"
+  }
+]

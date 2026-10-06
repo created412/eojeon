@@ -195,14 +195,16 @@ describe('ambientForBeat — 어느 화면에 무엇을 깔 것인가', () => {
     move: null,           // 이어(移御)
     dispatch: null,       // 장계
     plunder: null,        // 약탈
-    brush: null,          // 친필 — 붓소리 말고는 조용한 것이 맞다
+    brush: null,          // 친필 — 궁 환경음은 없고, Suno BGM과 붓소리를 따로 잇는다
     outing: null,         // 나들이(회수 화면)
     funding: null,        // 돈을 만든다 — 셈판이다, 궁 안의 소리를 깔지 않는다
     alone: 'hall',        // 혼자 서 있는 몇 초 — 궁은 그대로 살아 있고 사람만 없다
     defend: 'night',      // 정족산성 — 숨어서 기다리는 밤
+    stand: 'siege',       // 광성보 — 포격을 받는 성벽
     trail: null,          // 소식을 좇는다 — 글 화면이다
     study: null,          // 문서를 뜯어 읽는다 — 글 화면이다
     dilemma: null,        // 고민해서 정한다 — 어전회의와 같다
+    weigh: 'night',       // 임금의 저울 — 혼자 앉은 밤의 편전
   }
 
   it('게임이 재생하는 모든 비트 종류가 이 표에 적혀 있다 — 새 종류가 조용히 새지 않는다', () => {

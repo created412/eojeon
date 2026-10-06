@@ -1,0 +1,79 @@
+[
+  {
+    "id": "normal-act2",
+    "errors": [],
+    "wanted": "act2",
+    "ready": true,
+    "muted": false,
+    "phase": "day",
+    "text": "御前\n고종 5년~8년 · 경복궁\n경복궁\n2막 · 양요\n사초함\n읽은 사료 3장\nQ\n오늘 할 일\n0 / 1\n수정전\n선공감 서리에게 말을 건다\n쌀 한 섬 ···· 즉위 무렵의 1.2배 · 아버지 — 곁에 서 계신다\nW A S D\n이동\nShift\n달리기\n우클릭 드래그 · 둘러보기\n↶\n↷\n지금 할 일왼쪽 위 「오늘 할 일」을 보고 궁을 걸어 그곳을 찾아가세요(오른쪽 아래 안내도). 표지가 선 곳에서 E 를 누릅니다. 순서는 마음대로지만, 남은 일을 다 해야 다음 사건으로 넘어갑니다. 마당과 방 안의 물건도 E 로 살펴볼 수 있습니다.\n어도 — E 로 살펴본다\n멈춤\nE 대화\nQ 사초\n?",
+    "players": [
+      {
+        "track": "theme",
+        "paused": true,
+        "time": 0,
+        "volume": 0
+      },
+      {
+        "track": "act2",
+        "paused": false,
+        "time": 2.071437,
+        "volume": 0.32
+      }
+    ]
+  },
+  {
+    "id": "pending-card",
+    "errors": [],
+    "wanted": "act2",
+    "ready": true,
+    "muted": false,
+    "phase": "boot",
+    "text": "御前\n고종 3년 · 1866 · 창덕궁\n창덕궁\n2막 · 양요\n사초함\n읽은 사료 3장\nQ\n지금 할 일문서를 읽고, 물음의 답이 되는 구절을 눌러 밑줄을 그으세요. 그어야 덮을 수 있습니다.\nE 대화\nQ 사초\n프랑스 외교관 벨로네가 보낸 편지\n『고등 한국사1』 p.108 수록 · 우리말 옮김\n\n밑줄 긋기\n프랑스가 조선에 무력을 쓰겠다고 예고한 구절에 밑줄을 그어라.\n\n기록에 적힌 것\n\n수일 내 우리(프랑스) 군대가 조선을 정복하기 위해 진군할 것이다.\n이제 우리 황제 폐하만이 조선의 장래와 공석이 될 조선 왕위를 결정할 수 있는 권한을 갖게 될 것이다.\n\n우리가 붙인 해석\n프랑스는 선교사 처형을 구실로 삼아 처음부터 무력을 예고했다.\n※ 기록의 내용을 오늘날 말로 옮겼습니다\n기록을 보다\n크게 보기 ⤢\n1866년 강화도의 프랑스 함대를 묘사한 그림\n관련 사건 · 병인양요의 프랑스 함대. 벨로네의 편지 원본은 아닙니다.\n작자 미상\n원본 출처 ↗\nPublic domain\n닫기 (E)",
+    "players": [
+      {
+        "track": "theme",
+        "paused": true,
+        "time": 0,
+        "volume": 0
+      },
+      {
+        "track": "act2",
+        "paused": false,
+        "time": 2.074407,
+        "volume": 0.17
+      }
+    ]
+  },
+  {
+    "id": "pending-card-finished",
+    "wanted": "act2",
+    "phase": "day",
+    "pending": null,
+    "compared": true,
+    "saved": null
+  },
+  {
+    "id": "act-over",
+    "errors": [],
+    "wanted": "act1",
+    "ready": true,
+    "muted": false,
+    "phase": "boot",
+    "text": "御前\n고종 2년 · 1865 · 창덕궁\n창덕궁\n1막 · 즉위\n사초함\n읽은 사료 2장\nQ\nW A S D\n이동\nShift\n달리기\n우클릭 드래그 · 둘러보기\nE 대화\nQ 사초\n제1막 · 즉위 1863\n\n열두 살에 임금이 되면, 누가 나라를 다스리는가?\n\n같은 질문이 돌아왔다. 처음 읽었을 때와 생각이 같은가?\n\n이 막에서 당신이 본 것\n읽은 문서 — 원납전(願納錢) · 당백전(當百錢)\n다음 막으로\n※ 재구성 그림",
+    "players": [
+      {
+        "track": "theme",
+        "paused": true,
+        "time": 0,
+        "volume": 0
+      },
+      {
+        "track": "act1",
+        "paused": false,
+        "time": 3.083208,
+        "volume": 0.17
+      }
+    ]
+  }
+]

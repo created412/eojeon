@@ -28,6 +28,9 @@ export function createPalaceStaff(THREE, scene) {
   const bodies = new Map()          // id -> { anchor, pivot, mesh, bowShown }
   const walkers = createWalkers()
   const bowQuat = new THREE.Quaternion()
+  // 지난 프레임에 실제로 서 있던 자리 — main.js 가 「말을 걸 사람」을 여기서 잰다
+  // (선생님 2026-10-06: 「다른 모든 캐릭터들도 말을 걸 시 한 문장 정도는 대답하게」).
+  let shown = []
 
   function clear() {
     for (const { anchor, pivot } of bodies.values()) {
@@ -47,6 +50,7 @@ export function createPalaceStaff(THREE, scene) {
       const spec = RANK_SPECS[w.rank] ?? RANK_SPECS.mid
       const built = buildPerson(THREE, { ...spec, ageStage: 'adult', idleKey: w.id })
       const anchor = new THREE.Group()
+      anchor.name = `palace-staff:${w.id}`
       anchor.position.set(0, 1.9, 0)
       anchor.add(built.pivot)
       group.add(anchor)
@@ -80,8 +84,10 @@ export function createPalaceStaff(THREE, scene) {
    */
   function tick(now, dt, king, { reducedMotion = false, hidden = false, frozen = false } = {}) {
     group.visible = !hidden
-    if (hidden || bodies.size === 0) return
-    for (const w of walkers.tick({ now, king, reducedMotion, frozen })) {
+    if (hidden || bodies.size === 0) { shown = []; return }
+    const ticked = walkers.tick({ now, king, reducedMotion, frozen })
+    shown = ticked.map(w => ({ id: w.id, x: w.x, z: w.z }))
+    for (const w of ticked) {
       const body = bodies.get(w.id)
       if (!body) continue
       body.anchor.position.x = w.x
@@ -98,5 +104,5 @@ export function createPalaceStaff(THREE, scene) {
   }
 
   function dispose() { clear(); scene.remove(group) }
-  return { setPalace, tick, dispose, ids: () => walkers.ids() }
+  return { setPalace, tick, dispose, ids: () => walkers.ids(), positions: () => shown }
 }

@@ -1,0 +1,74 @@
+[
+  {
+    "key": "act1",
+    "title": "어전 BGM 01 운현궁 — 아직 명복이던 아침",
+    "urls": [
+      "https://suno.com/song/f9edf128-9902-4b79-b0f5-1e5dfd25bbac",
+      "https://suno.com/song/7f0f7d19-4a52-4ee2-b392-561f67f4dd9e"
+    ]
+  },
+  {
+    "key": "act2",
+    "title": "어전 BGM 02 양요 — 바다 너머의 그림자",
+    "urls": [
+      "https://suno.com/song/82abb6b9-17e7-45c6-8f01-59ea5c1fe133",
+      "https://suno.com/song/fee2f811-df09-4be2-ba5c-86399f676ad1"
+    ]
+  },
+  {
+    "key": "act3",
+    "title": "어전 BGM 03 친정 — 스스로 정해야 하는 자리",
+    "urls": [
+      "https://suno.com/song/7ef9312a-c74c-4593-8037-4c09c2f97a68",
+      "https://suno.com/song/dc93d08e-17da-409e-864e-f66b0e0e30df"
+    ]
+  },
+  {
+    "key": "act4",
+    "title": "어전 BGM 04 임오 — 빈 가마와 흔들리는 궁",
+    "urls": [
+      "https://suno.com/song/ec203ed4-30f0-4148-af3b-2e665cf3f873",
+      "https://suno.com/song/74ccd971-5bee-4a5a-9594-11d40d2cabfb"
+    ]
+  },
+  {
+    "key": "act5",
+    "title": "어전 BGM 05 갑신 — 사흘의 꿈과 남은 자리",
+    "urls": [
+      "https://suno.com/song/9f8521c5-39f1-4e89-ac54-96fec905f0bf",
+      "https://suno.com/song/7073d09d-9686-4590-9086-8ca349e8253f"
+    ]
+  },
+  {
+    "key": "march",
+    "title": "어전 BGM 06 행렬 — 내 발로 정하지 못한 길",
+    "urls": [
+      "https://suno.com/song/a36f41c9-342e-416e-9bad-eaa58c4b33dd",
+      "https://suno.com/song/13660883-ec33-4862-a2f5-ef70490f6afe"
+    ]
+  },
+  {
+    "key": "tension",
+    "title": "어전 BGM 07 촉박 — 닫히는 궁문",
+    "urls": [
+      "https://suno.com/song/0be1c495-8be8-4105-841d-91c97b86a8a5",
+      "https://suno.com/song/ca030a16-066e-4cea-8613-5f4e41f7a7bc"
+    ]
+  },
+  {
+    "key": "council",
+    "title": "어전 BGM 08 어전 — 임금의 저울",
+    "urls": [
+      "https://suno.com/song/58a02c55-4a8a-4030-9685-7098b5ba64ea",
+      "https://suno.com/song/0dfad54c-2a4f-4c47-8237-8b74170f4fd3"
+    ]
+  },
+  {
+    "key": "ending",
+    "title": "어전 BGM 09 환궁 — 스물한 해의 기록",
+    "urls": [
+      "https://suno.com/song/1a17ce29-f482-45c7-859e-dac9f7372b67",
+      "https://suno.com/song/43fdfe46-8a44-4e27-b684-4c02c6ec8438"
+    ]
+  }
+]

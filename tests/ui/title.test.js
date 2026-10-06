@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { TITLE } from '../../src/ui/title.js'
 import { actSpan, nativeCount, finalLead } from '../../src/ui/act-end.js'
+import { bodyOf } from '../helpers/body-of.js'
 
 // 주석을 걷어 낸 소스 — 왜 이렇게 되어 있는지 적은 줄에서 숫자를 못 쓰게 되면
 // 검사가 글을 깎는다(tests/systems/grant.test.js 와 같은 판단).
@@ -73,17 +74,18 @@ describe('TITLE — 타이틀 화면의 문구', () => {
   })
 })
 
-// 브라우저는 사용자가 누르기 전에는 소리를 못 내게 막는다. 타이틀의 두 단추가
-// 이 게임에서 소리를 열 수 있는 첫 기회다 — 다른 데서 열면 콘솔에 경고만 쌓인다.
-describe('소리는 타이틀의 단추에서 연다', () => {
-  const src = readFileSync(join(process.cwd(), 'src', 'ui', 'title.js'), 'utf8')
+// 재생 차단 해제는 첫 영상 단추와 게임 안 소리 단추의 사용자 조작에서 한다.
+describe('소리는 사용자 조작에서 연다', () => {
+  const src = readFileSync(join(process.cwd(), 'src', 'ui', 'prologue.js'), 'utf8')
 
-  it('title.js 가 audio.unlock() 을 부른다', () => {
+  it('영상의 소리·시작 버튼이 audio.unlock() 을 부른다', () => {
     expect(src).toContain('unlock()')
   })
 
-  it('src 안에서 unlock() 을 부르는 자리는 타이틀 하나뿐이다', () => {
+  it('게임 안에서는 소리 단추를 누를 때만 다시 열고 프레임마다 열지 않는다', () => {
     const main = readFileSync(join(process.cwd(), 'src', 'main.js'), 'utf8')
-    expect(main).not.toContain('.unlock(')
+    expect(bodyOf(main, 'frame')).not.toContain('.unlock(')
+    expect(main.match(/audio\.unlock\(/g)).toHaveLength(1)
+    expect(bodyOf(main, 'attachControls')).toMatch(/soundButton\.addEventListener\('click',[\s\S]*?audio\.unlock\(/)
   })
 })

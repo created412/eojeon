@@ -137,6 +137,18 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
   let cameraShot = { x: 0, y: CAM_HEIGHT, z: CAM_DIST, lookY: CAM_LOOK_Y }
   let orbit = 0, zoom = 1, dragging = false, lastPointerX = 0, snapCamera = true
   let viewOverride = null   // 한 장면 동안만 고정하는 보는 각(setViewAngle)
+  // 지금 실제로 보고 있는 각. 목표 각(orbit · 알현의 0 · setViewAngle)이 바뀌면 **돌아간다**, 뛰지 않는다.
+  // 선생님(2026-10-06, 녹화): 「모시고 가는 와중에 갑자기 순간적으로 이동한다」 — 행렬·가마에서
+  // 각이 한 프레임에 바뀌던 것이 그렇게 보였다. 학생이 직접 끄는 동안(dragging)과 snapCamera 만 즉시다.
+  let shownAngle = 0
+  const ANGLE_RATE = 2.4   // 초당 라디안 — 반 바퀴를 1.3초쯤에 돈다
+  function approachAngle(current, want, dt) {
+    let diff = want - current
+    while (diff > Math.PI) diff -= Math.PI * 2
+    while (diff < -Math.PI) diff += Math.PI * 2
+    const step = ANGLE_RATE * (dt / 1000)
+    return Math.abs(diff) <= step ? want : current + Math.sign(diff) * step
+  }
   let openingView = false
   function setOpeningView(enabled) { openingView = enabled; snapCamera = true }
   function rotateView(direction) { orbit += Math.sign(direction)*Math.PI/4 }
@@ -147,7 +159,8 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
   // +z 에 있으므로, 가마는 카메라 쪽으로 왔다가 **뒤로** 빠져나간다 — 학생은 떠나는
   // 가마를 못 보고 빈 마당을 본다(실제로 그렇게 찍혔다). 그 장면에서만 각을 돌려
   // 뒤에서 보게 한다. null 로 되돌리면 학생이 돌려 둔 각이 그대로 살아난다.
-  function setViewAngle(angle) { viewOverride = angle; snapCamera = true }
+  // snap:false 면 지금 각에서 새 각으로 미끄러진다(가마 장면 — 한 번에 돌리면 「순간이동」으로 보인다).
+  function setViewAngle(angle, { snap = true } = {}) { viewOverride = angle; if (snap) snapCamera = true }
   // 마우스는 오른쪽 끌기, 손가락은 한 손가락 끌기로 시점을 돌린다(2026-09-14 태블릿). 손가락은 조금 움직인 뒤에야
   // 돌리기 시작한다 — 탭(걷기)과 섞이지 않게(input/input.js isTap 과 같은 14px).
   let touchStart = null
@@ -516,6 +529,9 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
   }
 
   function setPickupMarkers(list) {
+    // 2026-10-06 선생님: 「모든 캐릭터의 저 위에 화살표 없애줘」.
+    // 인물 이름·목적·화살표는 같은 스프라이트다. 직접 설정과 근접 갱신 모두 여기서 제외한다.
+    list = list.filter(m => !['person', 'voice', 'report'].includes(m.kind))
     markerCount = Math.min(list.length, MAX_MARKERS)
     for (let i = 0; i < MAX_MARKERS; i++) {
       const sp = markers[i]
@@ -656,7 +672,9 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     // ⚠ 고정한 각(setViewAngle)이 알현 각보다 먼저다. 예전에는 audience 갈래가
     //   먼저 0 을 못 박아, 가마 장면에서 각을 돌려도 아무 일이 없었다 — 행렬·가마는
     //   phase 가 'audience' 라 늘 이 갈래에 걸린다.
-    const viewAngle = viewOverride ?? (audience ? 0 : orbit)
+    const wantAngle = viewOverride ?? (audience ? 0 : orbit)
+    shownAngle = (snapCamera || dragging || reducedMotion) ? wantAngle : approachAngle(shownAngle, wantAngle, dt)
+    const viewAngle = shownAngle
     // 궁이 정한 배율(data/palaces.js camZoom) — 5막의 작은 궁은 카메라를 당겨 담 안에 세운다.
     // 학생이 바퀴로 정한 배율(zoom)에 곱한다: 궁을 옮겨도 학생의 손맛은 그대로 남는다.
     const scale = zoom * (activePalace?.camZoom ?? 1)
@@ -741,6 +759,8 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     setMood, setCinematic, setReducedMotion, setYear,
     worldAxis, setOpeningView, rotateView, resetView, setViewAngle,
     setInteractionCues,
+    // 궁을 오가는 사람들이 지금 서 있는 자리(보이는 몸). 말을 걸 사람을 재는 데 쓴다.
+    staffPositions: () => palaceStaff.positions(),
     setCrisis(stage) { crisisStage = stage },
     dispose() {
       removeEventListener('resize', resize)

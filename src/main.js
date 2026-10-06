@@ -1,3 +1,5 @@
+import { createGameTime } from './core/game-time.js'
+import { rememberActStart, ensureActStart, restartActState } from './systems/act-restart.js'
 import { createScene } from './render/scene.js'
 import { cinematicDirective } from './render/cinematic.js'
 import { createCinematicHud } from './ui/cinematic-hud.js'
@@ -14,7 +16,7 @@ import {
   escortOffsets, escortSpot, APPROACH_MS, DEPART_MS, REBUKE_MS, PROCESSION_MS, visitorSpotFor, audienceLeft,
   sceneNotice,
 } from './systems/audience.js'
-import { boardAt, kingVisibleAt, carryLiftAt, BOARD_MS, CARRY_BEYOND, CAMERA_TRAIL } from './systems/boarding.js'
+import { boardAt, kingVisibleAt, carryLiftAt, carryPathFor, cameraAnchorAt, BOARD_MS } from './systems/boarding.js'
 import { createState, serialize, deserialize, SAVE_KEY } from './core/state.js'
 import { spend } from './core/clock.js'
 import { easeAxis, restAxis, createStepBlend } from './systems/gait.js'
@@ -26,13 +28,15 @@ import { ACTS } from './data/acts.js'
 import { createFlow } from './core/flow.js'
 import { remainingMs } from './core/countdown.js'
 import { step, axisToward } from './systems/movement.js'
-import { beatAt, beatsOf, isActOver, enterAct, applyBeat, advance, isBeatActive, applyGrant, visitorCardIds, yearAtBeat } from './systems/scenario.js'
+import { beatAt, beatsOf, isActOver, enterAct, applyBeat, advance, isBeatActive, applyGrant, visitorCardIds, yearAtBeat, grantedIdsOf } from './systems/scenario.js'
 import { kingLookAt, kingAttireAt } from './systems/king-age.js'
 import { advancePrices, riceSeriesUpTo, riceLabel } from './systems/prices.js'
 import { fatherLine } from './systems/father.js'
 import { createMinimap } from './ui/minimap.js'
 import { createDialog } from './ui/dialog.js'
 import { createSpeak } from './ui/speak.js'
+import { createMissNotice } from './ui/miss-notice.js'
+import { chatterFor, chatNear } from './data/chatter.js'
 import { createVoicePlayer } from './systems/voice.js'
 import { BGM } from './data/bgm-data.js'
 import { createBgm, bgmForBeat } from './systems/bgm.js'
@@ -41,7 +45,12 @@ import { SEOGYE_DOC } from './data/source-games.js'
 import { createDocSeek } from './ui/doc-seek.js'
 import { createDocStudy } from './ui/doc-study.js'
 import { createDilemma } from './ui/dilemma.js'
-import { studyById, dilemmaById } from './data/studies.js'
+import { createWeigh } from './ui/weigh.js'
+import { createGwangseong } from './ui/gwangseong.js'
+import { createEpilogue } from './ui/epilogue.js'
+import { EPILOGUE } from './data/epilogue.js'
+import { weighById } from './data/weigh.js'
+import { studyById, studyForCard, dilemmaById } from './data/studies.js'
 import { createJeongjok } from './ui/jeongjok.js'
 import { createTrail } from './ui/trail.js'
 import { AGAIN_COPY } from './systems/jeongjok.js'
@@ -72,17 +81,18 @@ import { createControlsHint, isCoarse } from './ui/controls-hint.js'
 import { installOrientGate } from './ui/orient.js'
 import { createHold } from './ui/hold-screen.js'
 import { CHEOKHWABI_GLYPHS } from './systems/brush-trace.js'
-import { banner } from './ui/banner.js'
+import { banner as renderBanner } from './ui/banner.js'
 import { startRush } from './systems/rush-scene.js'
 import { rushDurationMs, fireSourcesAt, isTouchDevice } from './systems/fire-rush.js'
 import { relocate } from './systems/relocate.js'
 import { createAudio } from './systems/audio.js'
 import { createWebAudioEngine } from './systems/web-audio-engine.js'
 import { createRation } from './ui/ration.js'
-import { hubAt, hubOptions, hubDate, shouldDeferReport, pendingReport, performReport, completeActivity, closeHub, freedomRecord, dayReport, exitBlock, objectiveLine, towardParticle, taskList } from './systems/freedom.js'
+import { hubAt, hubOptions, reportAt, hubDate, shouldDeferReport, pendingReport, performReport, completeActivity, closeHub, freedomRecord, dayReport, exitBlock, objectiveLine, towardParticle, taskList } from './systems/freedom.js'
 // 궁 안의 물건 — 걸어가 E 를 누르면 뜨는 해설(data/artifacts.js). 사료가 아니라서
 // 사초함에 쌓이지 않고, 값(해 칸)도 치르지 않는다(systems/artifacts.js 머리말).
 import { artifactNear, hasSeen, markArtifactSeen, artifactRecord, artifactCount } from './systems/artifacts.js'
+import { unlockPalaceLifeCollection } from './systems/palace-discoveries.js'
 import { artifactById, artifactLines } from './data/artifacts.js'
 import { createDayEnd } from './ui/day-end.js'
 
@@ -153,7 +163,7 @@ export function readSaveText() {
 // 2차시로 운영하는 수업에서 그것은 그 시간의 첫 3분을 통째로 잡아먹는 오해다.
 // 그래서 한 줄로 알린다. 무슨 일이 있었는지 말하고, 무엇을 하면 되는지 말한다.
 export const STALE_SAVE_NOTICE =
-  '지난번에 저장한 기록이 있지만 게임이 새 판으로 바뀌어 이어 할 수 없습니다. 「처음부터」를 누르세요.'
+  '지난번에 저장한 기록이 있지만 게임이 새 판으로 바뀌어 이어 할 수 없습니다. 「게임 시작」을 누르세요.'
 
 // 순수 판정 — 저장된 글자를 받아 「있기는 한데 못 읽는가」만 답한다.
 export function staleSaveNotice(raw) {
@@ -219,11 +229,21 @@ function isFutureCard(cardId, act) {
 // 없다(하루 낮의 3칸을 그 자리에서 치른다) — 신하 근접 판정(npc)과 자리가 겹칠 일은
 // 없지만, 겹치면 나가는 쪽이 이겨야 한다. 기본값 []이므로 stops 를 안 넘기는 기존
 // 호출(문서 줍기 시험들)은 이 분기를 타지 않는다.
-export function pressE({ dialogOpen, exit, stops = [], room, palaceDef, playerX, playerZ, taken, state, npc = null, act = Infinity }) {
+//
+// ⚠ undone(id) — 「오늘 할 일」 가운데 아직 안 한 것인가('npc:<id>' · 'card:<id>').
+//   **아직 안 한 일이 나가는 방의 E 보다 먼저다**(2026-10-06 선생님: 「인정전으로 가 흥선대원군에게
+//   말을 건다 이벤트는 진행이 막힌 오류가 있어」). 2막 창덕궁의 낮은 인정전이 나가는 방인데 그
+//   안에 대원군이 서 있다. 남은 일이 있으면 못 나가고, 나가는 방 안이라 말도 안 걸렸다 —
+//   둘이 서로를 막았다. 예전에는 여정 판을 눌러 그 일을 「고른」 채로 걸어가 이 판정을
+//   비켜 갔는데, 그 길(자동으로 걸어가기)을 걷어 내면서 구멍이 드러났다.
+export function pressE({ dialogOpen, exit, stops = [], room, palaceDef, playerX, playerZ, taken, state, npc = null, act = Infinity, undone = () => false }) {
   if (dialogOpen) return { type: 'close-dialog' }
-  if (exit && room === exit.room) return { type: 'exit-explore' }
+  if (npc && undone(`npc:${npc.id}`)) return { type: 'talk', npc }
+  const owedCard = pickupNear(palaceDef, playerX, playerZ)
+  const cardFirst = !!owedCard && undone(`card:${owedCard.cardId}`)
+  if (exit && room === exit.room && !cardFirst) return { type: 'exit-explore' }
 
-  const stop = stopAt(stops, room, state)
+  const stop = cardFirst ? null : stopAt(stops, room, state)
   if (stop) {
     const r = spend(state)
     if (!r.ok) return { type: 'no-time' }
@@ -233,9 +253,9 @@ export function pressE({ dialogOpen, exit, stops = [], room, palaceDef, playerX,
     return { type: 'stop', stopId: stop.id, beat: stop.beat, state: markStopPaid(r.state, stop.id) }
   }
 
-  if (npc) return { type: 'talk', npc }
+  if (npc && !cardFirst) return { type: 'talk', npc }
 
-  const near = pickupNear(palaceDef, playerX, playerZ)
+  const near = owedCard
   if (!near) return { type: 'none' }
   if (NPC_HANDLED.has(near.cardId)) return { type: 'none' }
   if (isFutureCard(near.cardId, act)) return { type: 'none' }
@@ -302,11 +322,22 @@ export function describeDecision(act, decision) {
     const beat = beatsOf(act).find(b => b.kind === 'defend')
     return { question: `${(beat?.introTitle ?? '정족산성')} — 기다렸다가 쏜다`, text: decision.reason || '(셈을 남기지 않음)' }
   }
+  // 광성보(kind:'stand') — 이길 수 없는 판이다. 어떻게 버텼는지가 남는다(reason).
+  if (decision.choiceId.startsWith('stand:')) {
+    const beat = beatsOf(act).find(b => b.kind === 'stand')
+    return { question: `${(beat?.introTitle ?? '광성보')} — 닿지 않는 포`, text: decision.reason || '(셈을 남기지 않음)' }
+  }
   // 고민해서 정하는 자리(kind:'dilemma') — choiceId 는 'dilemma:<자리>:<보기>' 꼴이다.
   if (decision.choiceId.startsWith('dilemma:')) {
     const [, id, optionId] = decision.choiceId.split(':')
     const d = dilemmaById(id)
     return { question: d?.title ?? '', text: d?.options.find(o => o.id === optionId)?.text ?? optionId }
+  }
+  // 임금의 저울(kind:'weigh') — choiceId 는 'weigh:<판>:<open|shut>' 꼴이다. 저울에 올린 것 전부는 reason 에 있다.
+  if (decision.choiceId.startsWith('weigh:')) {
+    const [, id, side] = decision.choiceId.split(':')
+    const data = weighById(id)
+    return { question: data?.question ?? '', text: data?.pans?.[side]?.label ?? side }
   }
   if (decision.choiceId.startsWith('orders:')) {
     const beat = beatsOf(act).find(b => b.kind === 'orders')
@@ -377,12 +408,13 @@ export function buildRecordText(state, acts) {
       // 밑줄 긋기(systems/source-read.js) — 해석을 쓰는 칸이 없다. 그은 구절만 적는다.
       '', `[사료 읽기] ${sourceById(id)?.title ?? id}`,
       `밑줄 그은 구절 — ${(record.selected ?? []).join(' / ') || '(없음)'}`,
+      ...(record.probe ? [`따져 읽기(${record.probe.type}) — ${record.probe.answer}`] : []),
     ] : record.kind === 'seek' ? [
       '', `[사료 읽기] ${sourceById(id)?.title ?? id}`,
       `문제 삼은 곳 — ${(record.selected ?? []).join(' / ') || '(없음)'}`,
     ] : record.kind === 'study' ? [
       // 문서를 뜯어 읽는 판(systems/doc-study.js) — 학생이 문서에 단 주석들이다.
-      '', `[문서 뜯어 읽기] ${studyById(id)?.paper ?? id}`,
+      '', `[문서 뜯어 읽기] ${studyById(id)?.paper ?? studyForCard(id)?.paper ?? sourceById(id)?.title ?? id}`,
       `단 주석 — ${(record.selected ?? []).join(' / ') || '(없음)'}`,
     ] : [
       '', `[사료 탐구] ${sourceById(id)?.title ?? id}`,
@@ -448,6 +480,8 @@ export function ambientForBeat(beat) {
   if (beat.kind === 'explore') return 'hall'
   if (beat.kind === 'rush') return beat.fire === true ? 'fire' : 'siege'
   if (beat.kind === 'defend') return 'night'    // 숨어서 기다리는 밤의 산성
+  if (beat.kind === 'weigh') return 'night'     // 혼자 저울 앞에 앉은 밤의 편전
+  if (beat.kind === 'stand') return 'siege'     // 포격을 받는 성벽
   // 조작권 D 장면(kind:'hold')은 무음이면 안 된다. 이 장면은 「안 움직인다 · 아무것도
   // 안 변한다」가 내용인데 거기에 무음까지 겹치면 학생이 받는 신호가 정확히
   // 「얼어붙었다 · 고장났다」가 된다 — 화면은 글로 「고장이 아니다」라고 말하는데
@@ -512,14 +546,12 @@ export function touchButtonAction({ hold = false, phase, pauseOpen = false }) {
   return (phase === 'day' || phase === 'audience') ? 'act' : 'none'
 }
 
-// 멈춤 화면을 열 수 있는가. 탐색 중에는 언제나 열린다. 그 밖의 국면에서는 열지 않는데
-// (촉박 중에 열면 돌아가는 초시계가 가려진다), 조작권 D 장면만은 예외다 — 그 구간이
-// 길고, 태블릿 학생이 수업 도중에 소리를 끌 길이 여기밖에 없다(판정 R91).
-// 시계는 이 판 뒤에서도 계속 돈다(holdSession 블록이 국면 관문 밖이다) — 갇히지 않는다.
-export function canPause(phase, hold = false) {
+// 탐색·알현·촉박과 정지 시계가 연결된 시간제 미니게임에서 멈춤을 연다.
+// 게임 시계가 함께 서므로 대기·제한 시간·결과 화면도 뒤에서 진행하지 않는다.
+export function canPause(phase, hold = false, timedActivity = false) {
   // 알현도 연다. 1863년 막에는 'day' 국면이 아예 없어졌으므로(탐색 → 알현),
   // 여기를 'day' 로만 두면 그 막 내내 소리를 끌 길이 사라진다(판정 R91 과 같은 이유).
-  return phase === 'day' || phase === 'audience' || hold === true
+  return phase === 'day' || phase === 'audience' || phase === 'rush' || hold === true || timedActivity
 }
 
 // 조작권 D 장면(설계서 §7 5막 비트 2·3)과 친필 F2(§5.F2)를 가리키던 두 상수가
@@ -529,11 +561,15 @@ export function canPause(phase, hold = false) {
 // 곳도 함께 사라졌다 — 그래서 지웠다. 두 비트를 시험에서 볼 일이 있으면
 // src/data/acts.js 의 5막 배열에서 id 로 꺼낸다(베껴 두면 두 벌이 되어 갈린다).
 
-export function boot(root) {
+export function boot(root, { restartState = null, sharedAudio = null, restartNotice = '' } = {}) {
   installCinematicStyle(root)
   // 세로로 들고 들어온 학생에게 가로로 돌려 달라고 말한다. 가로면 아무 일도 하지
   // 않는다 — PC 에서는 아예 뜨지 않는다(판정은 ui/orient.js 의 shouldAskRotate).
-  installOrientGate(root)
+  const gameTime = createGameTime()
+  const banner = (target, text, holdMs) => renderBanner(target, text, holdMs, { clock: gameTime })
+  const disposeOrient = installOrientGate(root, { onChange: open => gameTime.setPaused(open, 'orientation') })
+  const visibilityChanged = () => gameTime.setPaused(document.hidden, 'hidden')
+  document.addEventListener('visibilitychange', visibilityChanged); visibilityChanged()
   const canvas = document.createElement('canvas')
   // 손가락 끌기를 브라우저가 화면 이동·확대로 가로채지 않게 한다 — 끌기는 시점 돌리기, 탭은 걷기다.
   canvas.style.touchAction = 'none'
@@ -544,7 +580,7 @@ export function boot(root) {
   // 타이틀의 단추가 unlock() 을 부르는 그 순간에 처음 생긴다(브라우저는 사용자
   // 조작 밖에서 소리를 못 내게 막는다). 씬보다 먼저 만드는 이유는 하나다:
   // 발소리를 내는 곳이 씬의 updateKingMotion() 이라 씬이 이것을 받아 가야 한다.
-  const audio = createAudio({ engine: createWebAudioEngine() })
+  const audio = sharedAudio ?? createAudio({ engine: createWebAudioEngine() })
 
   // running 은 함수로 넘긴다 — input 은 아직 만들어지지 않았고, 이 함수가 실제로
   // 불리는 것은 첫 render() 때다(그때는 이미 있다). 씬은 「달리는가」를 스스로
@@ -566,6 +602,7 @@ export function boot(root) {
     // 밑줄 긋기(systems/source-read.js) — 그은 구절을 사초함 기록에 남긴다.
     onRead: (id, record) => saveInquiry(id, record),
     onReadTap: ok => audio.play(ok ? 'decide' : 'deny'),
+    onReadMiss: restartAfterSourceMiss,
     onInquirySave: (id, record) => {
       const inquiries={...(flow.state.inquiries??{}),[id]:record}
       flow.state={...flow.state,inquiries}
@@ -577,27 +614,30 @@ export function boot(root) {
   const docSeek = createDocSeek(root)
   const docStudy = createDocStudy(root)
   const dilemma = createDilemma(root)
-  const jeongjok = createJeongjok(root)
+  const weigh = createWeigh(root)
+  const gwangseong = createGwangseong(root, { clock: gameTime })
+  const epilogue = createEpilogue(root)
+  const jeongjok = createJeongjok(root, { clock: gameTime })
   const trail = createTrail(root)
   const council = createCouncil(root)
   const actEnd = createActEnd(root)
-  const pause = createPause(root)
+  const pause = createPause(root, { onChange: open => { gameTime.setPaused(open, 'menu'); guide.suspend(open) } })
   // 배경 음악(systems/bgm.js) — 대사·독백이 나오는 동안에는 줄인다.
   const bgm = createBgm({ tracks: BGM, isMuted: () => audio.isMuted(), isReady: () => audio.isReady() })
   bgm.set('theme')
   // 음성은 하나도 넣지 않는다(2026-09-26 선생님: 「목소리 나레이션은 하나도 안 빠졌고」).
   // 대사는 자막으로만 나간다 — 글자가 한 자씩 드러나는 속도는 읽는 시간으로 잰다(systems/voice.js).
-  const voice = createVoicePlayer({ clips: {}, isMuted: () => audio.isMuted() || !audio.isReady(),
+  const voice = createVoicePlayer({ clips: {}, clock: gameTime, isMuted: () => audio.isMuted() || !audio.isReady(),
     onStart: () => bgm.duck(true), onEnd: () => bgm.duck(false) })
   const noteScreen = createNoteScreen(root, { voice })
   const moveScreen = createMoveScreen(root)
   const dispatchMap = createDispatchMap(root)
   const lossScreen = createLossScreen(root)
   const orders = createOrders(root)
-  const brush = createBrush(root)
+  const brush = createBrush(root, { clock: gameTime })
   // 「경복궁을 짓는다」 — 선생님(2026-09-30)이 세 번째로 퇴짜를 놓아 새로 지은 판.
   // 예전 판(ui/funding.js)은 지레 둘을 끝까지 밀면 무조건 이겨서, 고를 것이 없었다.
-  const rebuild = createRebuild(root)
+  const rebuild = createRebuild(root, { clock: gameTime })
   // 손으로 하는 장면을 못 해냈을 때 사이에 서는 화면(선생님 2026-09-30 「조여」).
   const again = createAgain(root)
   const actQuestion = createActQuestion(root)
@@ -611,6 +651,7 @@ export function boot(root) {
   // 대사 음성 — 게임의 음소거를 그대로 따른다. 소리는 사용자 조작 뒤에만 틀 수 있으므로(자동 재생 규칙)
   // 첫 대사가 뜰 때는 이미 「시작」 단추를 누른 뒤다.
   const speak = createSpeak(root, { voice })
+  const missNotice = createMissNotice(root)
   const guide = createGuideStrip(root)
   let selectedActivity = null
   let hubBusy = false
@@ -687,6 +728,30 @@ export function boot(root) {
   let session = null
   let activeBeat = null
   let running = true
+  let successor = null
+
+  // 선생님(2026-10-06): 「사료를 잘못짚으면 틀렸다는 문구가 뜨면서 막의 처음으로 돌아가야해.」
+  // 저장은 **지금** 막의 처음으로 되돌린다(새로고침으로 빠져나가지 못한다). 화면은 학생이
+  // 「N막의 처음으로」를 누른 뒤에 갈린다 — 그 사이 게임 시계는 서 있고 키는 안내 화면이 가진다.
+  let restarting = false
+  function restartAfterSourceMiss(reason = '') {
+    if (!running || restarting) return true
+    restarting = true
+    const start = restartActState(flow.state)
+    saveGame(start)
+    audio.play('deny')
+    gameTime.setPaused(true, 'miss')
+    guide.suspend(true)
+    missNotice.open({ act: start.actIndex + 1, reason }).then(() => {
+      if (!running) return
+      dispose()
+      ctx.renderer.forceContextLoss?.()
+      root.replaceChildren()
+      successor = boot(root, { restartState: start, sharedAudio: audio,
+        restartNotice: `${start.actIndex + 1}막의 처음으로 돌아왔습니다.` })
+    })
+    return true
+  }
   // 지금 떠 있는 조작권 D 장면(Task 12). 진행 중이 아니면 null.
   // 이 값이 null 이 아닌 동안에는 프레임 루프가 국면과 무관하게 tick() 을 돌린다 —
   // 그것이 「아무도 갇히지 않는다」를 좌표의 우연이 아니라 구조로 만드는 자리다.
@@ -754,7 +819,7 @@ export function boot(root) {
       .filter(Boolean)
       .map(r => ({ x: r.x, z: r.z, label: '나들이' }))
     const reports = hubOptions(flow.state, flow.act()).filter(o => o.kind === 'report' && !o.done && !o.blocked)
-      .map(o => ({ ...o.point, label: o.label }))
+      .map(o => ({ ...o.point, label: o.label, kind: 'report' }))
     return [...pickupsRemaining(), ...peopleRemaining(), ...stops, ...reports]
   }
 
@@ -799,10 +864,27 @@ export function boot(root) {
     return beatAt(flow.act(), flow.state.beatIndex)?.stops ?? []
   }
 
+  // 지금 선 자리에서 시작할 수 있는 보고 듣기(systems/freedom.js reportAt). E 판정과 안내 줄이 같은 답을 본다.
+  function readyReport() {
+    return reportAt(hubOptions(flow.state, flow.act()), flow.state.room, ctx.player.position)
+  }
+
+  // 「오늘 할 일」 가운데 아직 안 한 것인가 — E 판정(pressE)과 안내 줄(updateHint)이 같은 답을 본다.
+  function undoneActivity(id) {
+    return hubOptions(flow.state, flow.act()).some(o => o.id === id && !o.done && !o.blocked)
+  }
+
   function updateHint() {
     const selected = selectedOption()
     if (selected) {
       hint.textContent = activityReady(selected) ? `E — ${selected.label}` : `걷는 곳 — ${selected.place}`
+      hint.hidden = false
+      return
+    }
+    // 그 방의 보고 — 표지 곁에 서면 E 로 듣는다(E 판정과 같은 차례: 물건보다, 나가는 방보다 먼저).
+    const report = readyReport()
+    if (report) {
+      hint.textContent = `E — ${report.label}`
       hint.hidden = false
       return
     }
@@ -816,6 +898,14 @@ export function boot(root) {
     const art = nearbyArtifact()
     if (art) {
       hint.textContent = `${artifactById(art.id)?.name ?? '물건'} — E 로 살펴본다`
+      hint.hidden = false
+      return
+    }
+    // 아직 말을 걸지 않은 사람이 곁에 있으면 그 사람이 먼저다 — 나가는 방 안이어도(E 판정과 같은 차례).
+    const owed = npcNear(livingNpcs(), ctx.player.position.x, ctx.player.position.z)
+    if (owed && undoneActivity(`npc:${owed.npc.id}`)) {
+      const title = owed.npc.title ? ` ${owed.npc.title}` : ''
+      hint.textContent = `${owed.npc.name}${title} · ${Math.round(owed.dist)}m — E 로 말을 건다`
       hint.hidden = false
       return
     }
@@ -872,6 +962,9 @@ export function boot(root) {
   // 지금 선 자리에서 아직 안 본 물건 하나(없으면 null). 궁·해·방을 다 넘긴다 —
   // 척화비는 1871년부터 서 있고, 방 안 물건은 그 방에 들어와 있어야 잡힌다.
   function nearbyArtifact() {
+    // 물건이 가로채지 않는 걸음이 있다(beat.plain) — 5막의 마지막 걸음이다. 어좌 앞에서 누른 E 가
+    // 곁의 일월오봉도 풀이를 여는 바람에 「앉는다」가 한 번 헛돌았다(2026-10-06 화면에서 확인).
+    if (activeBeat?.plain) return null
     const found = artifactNear(PALACES[flow.state.palace],
       ctx.player.position.x, ctx.player.position.z,
       { year: yearAtBeat(flow.act(), flow.state.beatIndex), room: flow.state.room })
@@ -888,6 +981,8 @@ export function boot(root) {
     const first = artifactCount(flow.state) === 0
     audio.play('open')
     flow.state = markArtifactSeen(flow.state, id)
+    const collection = unlockPalaceLifeCollection(flow.state)
+    flow.state = collection.state
     saveGame(flow.state)
     // 첫 물건을 만난 자리에서 이 갈래 자체를 한 번 알린다 — 그런데 **카드를 닫은 뒤에**
     // 알린다. 배너는 화면 한가운데에 뜨고(z-index 60) 카드도 한가운데에 뜬다(40):
@@ -899,10 +994,13 @@ export function boot(root) {
     loreBanner?.dispose()
     loreBanner = null
     dialog.showArtifact(artifact, artifactLines(artifact, flow.actIndex),
-      first ? () => { loreBanner = banner(root, '궁 안의 물건도 살펴볼 수 있다. 본 것은 사초함(Q) 아래쪽에 쌓인다.', 4200) } : undefined)
+      collection.reward ? () => dialog.showArtifact(collection.reward, collection.reward.lines)
+        : first ? () => { loreBanner = banner(root, '궁 안의 물건도 살펴볼 수 있다. 본 것은 사초함(Q) 아래쪽에 쌓인다.', 4200) } : undefined)
   }
 
   function pressEAction() {
+    // 열린 문서가 입력을 먼저 받는다. 곁의 물건이 읽기 화면을 덮어쓰지 않는다.
+    if (dialog.isOpen()) return { type: 'close-dialog' }
     const selected = selectedOption()
     if (!dialog.isOpen() && selected && !activityReady(selected)) return { type: 'approaching' }
     if (!dialog.isOpen() && selected && activityReady(selected)) {
@@ -921,12 +1019,18 @@ export function boot(root) {
       }
     }
     const found = npcNear(livingNpcs(), ctx.player.position.x, ctx.player.position.z)
+    // 그 방에서 들을 보고가 남아 있으면 그것이 먼저다 — 물건도 나가는 방도 가로채지 않는다.
+    // 다만 아직 말을 걸지 않은 사람이 표지보다 가까이 서 있으면 그 사람이 먼저다.
+    const report = dialog.isOpen() ? null : readyReport()
+    if (report && !(found && found.dist < report.dist && undoneActivity(`npc:${found.npc.id}`))) {
+      return { type: 'hub-report', id: report.id }
+    }
     // 아직 안 본 물건이 가장 가까이 있으면 그것을 본다. **안 본 것만** 가로챈다 —
     // 한 번 본 뒤에는 조용해져야 한다: 일월오봉도는 인정전에 있고 인정전은 대개
     // 이 비트의 나가는 방이다. 늘 가로채면 학생이 그 방에서 나갈 수 없다.
     const art = nearbyArtifact()
     if (art && !(found && found.dist < art.dist)) return { type: 'artifact', id: art.id }
-    return pressE({
+    const action = pressE({
       dialogOpen: dialog.isOpen(),
       exit: currentExit(),
       stops: currentStops(),
@@ -938,7 +1042,16 @@ export function boot(root) {
       state: flow.state,
       npc: found?.npc ?? null,
       act: flow.actIndex + 1,
+      undone: undoneActivity,
     })
+    // 아무것도 없는 자리라면 — 곁에 궁인·수문장이 있으면 그 사람이 한마디 한다(data/chatter.js).
+    // 신하·문서·보고·나가는 방이 전부 앞선다: 이 말은 「한 일」이 아니라 궁에 사는 사람의 인사다.
+    if (action.type === 'none') {
+      const who = chatNear({ walkers: ctx.staffPositions?.() ?? [], guards: PALACES[flow.state.palace]?.yard?.gateGuards ?? [],
+        x: ctx.player.position.x, z: ctx.player.position.z })
+      if (who) return { type: 'chat', who }
+    }
+    return action
   }
 
   // pressE() 가 돌려준 'pickup' 액션을 실제로 적용한다 — 바닥에서 곧장 줍든,
@@ -956,7 +1069,7 @@ export function boot(root) {
     if (firstEver) {
       banner(root, '史草 — 사관이 적어 두는 기록. 당신이 읽은 문서가 여기 쌓인다. Q를 누르면 열린다.', 4200)
     }
-    dialog.showCard(sourceById(action.cardId))
+    showPacketCards([sourceById(action.cardId)], null, true)
   }
 
   // pickUpPacket() (위, 순수) 이 돌려준 판정을 실제로 적용한다 — applyPickup() 과
@@ -977,15 +1090,23 @@ export function boot(root) {
     if (firstEver) {
       banner(root, '史草 — 사관이 적어 두는 기록. 당신이 읽은 문서가 여기 쌓인다. Q를 누르면 열린다.', 4200)
     }
-    showPacketCards(result.cardIds.map(sourceById))
+    showPacketCards(result.cardIds.map(sourceById), null, true)
   }
 
   // 뭉치 속 카드를 한 장씩 순서대로 보여준다 — 신하 하나가 넉 장을 한꺼번에
   // 내밀어도 학생은 한 번에 한 장씩 닫아 가며 읽는다(dialog.showCard 의 onClose 를 잇는다).
-  function showPacketCards(cards, done = null) {
+  function showPacketCards(cards, done = null, persist = false) {
+    // 자유롭게 걷는 낮에서 받은 사료는 읽기 화면을 닫아야 묶음이 끝난다.
+    // 보유 여부와 별도로 남겨, 새로고침해도 이미 낸 해 칸을 다시 쓰지 않고 읽는다.
+    if (persist) {
+      flow.state = { ...flow.state, pendingCards: cards.length ? {
+        actIndex: flow.state.actIndex, beatIndex: flow.state.beatIndex, ids: cards.map(card => card.id),
+      } : null }
+      saveGame(flow.state)
+    }
     const [first, ...rest] = cards
     if (!first) { done?.(); return }
-    const next = () => { guide.set(guideForBeat(activeBeat)); showPacketCards(rest, done) }
+    const next = () => { guide.set(guideForBeat(activeBeat)); showPacketCards(rest, done, persist) }
     // 문서마다 손에 쥘 때 하는 일이 다르다(data/source-games.js).
     //   · 제 판이 있는 문서(서계)는 그 판을 치르면 끝이다 — 같은 글을 카드로 또 펴지 않는다.
     //     문서는 사초함에 들어가 있으니 다시 보고 싶으면 거기서 연다.
@@ -1005,16 +1126,31 @@ export function boot(root) {
   const CARD_GUIDE = '문서를 읽고, 물음의 답이 되는 구절을 눌러 밑줄을 그으세요. 그어야 덮을 수 있습니다.'
   const SOURCE_GAME_GUIDE = {
     [SEOGYE_DOC.id]: '문서의 낱말을 눌러 뜻을 보고, 조선이 문제 삼은 두 곳을 찾으세요. 둘 다 찾아야 덮을 수 있습니다.',
+    'joseon-chaeryak': '문서를 읽고 물음에 답하세요. 답할 때마다 문서에 붉은 주석이 붙습니다. 끝까지 가야 덮을 수 있습니다.',
   }
 
   // 사료를 처음 손에 쥘 때 여는 판. 없으면 null.
   function sourceGameFor(id) {
+    // 『조선책략』 — 책을 받으면 뜯어 읽는 판이 열린다(data/studies.js chaeryak1880).
+    const study = studyForCard(id)
+    if (study) {
+      return async () => {
+        audio.play('open')
+        const record = await docStudy.open(study, {
+          onRight: () => audio.play('decide'),
+          onMiss: restartAfterSourceMiss,
+          onFlip: () => audio.play('pick'),
+        })
+        audio.play('close')
+        saveInquiry(id, record)
+      }
+    }
     if (id === SEOGYE_DOC.id) {
       return async () => {
         const record = await docSeek.open(SEOGYE_DOC, {
           onPick: () => audio.play('pick'),
           onFound: () => audio.play('decide'),
-          onMiss: () => audio.play('deny'),
+          onMiss: restartAfterSourceMiss,
         })
         saveInquiry(id, record)
       }
@@ -1080,6 +1216,16 @@ export function boot(root) {
         return
       }
       case 'artifact': applyArtifact(action.id); return
+      // 선생님(2026-10-06): 「다른 모든 캐릭터들도 말을 걸 시 한 문장 정도는 대답하게 만들어야해.」
+      // 궁인·수문장의 한마디. 문서도 기록도 없다 — 저장하지 않고, 「한 일」에도 세지 않는다.
+      case 'chat': {
+        // 수문장은 「어느 궁의 문」인지로 말한다 — 자리 번호가 아니라 궁 id 를 넘긴다.
+        const { name, line } = chatterFor(action.who.kind, action.who.kind === 'guard' ? flow.state.palace : action.who.id, flow.actIndex)
+        hubBusy = true
+        audio.play('open')
+        speak.show({ name, title: '재구성', lines: [line] }).finally(() => { hubBusy = false })
+        return
+      }
       case 'already-taken': audio.play('deny'); return   // 이미 손에 든 문서다 — 화면은 그대로 둔다
       case 'pickup': applyPickup(action); return
       default: return
@@ -1092,14 +1238,23 @@ export function boot(root) {
   // saveGame() 이 이미 조용히 불린다. 이 화면은 그 사실을 학생에게 보여주는 확인창이다.
   // audio 를 넘기는 이유(판정 R91): 수업 도중에 소리를 끄는 길이 여기밖에 없다.
   // 타이틀의 토글과 같은 audio 다 — 두 곳이 서로 다른 상태를 들고 있으면 안 된다.
+  const timedActivityOpen = () => !!root.querySelector('.jeongjok, .gwangseong, .rebuild, .brush')
+  let pauseButton = null
+  let soundButton = null, soundMuted = null
+  function syncSoundButton() {
+    if (!soundButton || soundMuted === audio.isMuted()) return
+    soundMuted = audio.isMuted()
+    soundButton.textContent = soundMuted ? '소리 꺼짐' : '소리 켜짐'
+    soundButton.setAttribute('aria-pressed', String(!soundMuted))
+  }
   function togglePause() {
     // 조작권 D 장면에서도 연다 — 그 구간에 소리를 끌 길이 여기밖에 없다(canPause 참고).
-    if (!canPause(flow.phase, holdSession !== null)) return
+    if (!pause.isOpen() && !canPause(flow.phase, holdSession !== null, timedActivityOpen())) return
     // 알현 도중에는 열려 있는 대화를 닫지 않는다. 이 화면의 닫힘이 **다음 장면을
     // 잇는 방아쇠**라서(dialog 의 onClose → 문서를 건네고 다음 사람으로 넘어간다),
     // 멈춤을 여는 것만으로 장면이 저 혼자 진행돼 버린다. 멈춤 판은 z-index 70 이라
     // 대화(40) 위에 그대로 덮인다 — 닫지 않아도 가려진다.
-    if (flow.phase !== 'audience') dialog.close()
+    // 사료는 닫지 않는다. 닫힘 콜백이 다음 장면으로 이어질 수 있다.
     pause.toggle({
       audio,
       onSave: () => saveGame(flow.state),
@@ -1116,6 +1271,8 @@ export function boot(root) {
     if (controlsHint.isOpen()) return
     if (e.code === 'Escape') { togglePause(); return }
     if (pause.isOpen()) return
+    // 복원 중·미니게임 뒤에 열린 사료도 화면에 적힌 E로 닫는다. 읽기 잠금은 dialog가 지킨다.
+    if (e.code === 'KeyE' && dialog.isOpen()) { e.preventDefault(); dialog.close(); return }
     // 알현 — 걷지는 못해도 화면은 넘겨야 하고, 사초함은 열려야 한다.
     if (flow.phase === 'audience') {
       if (e.code === 'KeyQ') { pressQ(); return }
@@ -1186,6 +1343,7 @@ export function boot(root) {
   // quiet — 궁을 갈아 끼우되 문소리는 아직 내지 않는다. 이어(移御) 비트가 쓴다(palaceDoor 참고).
   function bindPalaceAndSpawn(quiet = false) {
     flow.syncPalace(flow.state.palace)
+    ctx.setKingHidden(false)   // 가마 안에 든 채 궁을 떠났어도(playBoarding) 새 궁에서는 서 있다
     // 살아 있는 자리를 비운다. 궁이 바뀌었는데 옛 궁의 자리가 남아 있으면,
     // 첫 프레임에 표지가 엉뚱한 데를 가리키고 말이 안 걸린다.
     npcSpots.clear()
@@ -1213,6 +1371,16 @@ export function boot(root) {
   }
 
   async function playExplore(beat) {
+    // 걷기 시작하는 자리를 장면이 정할 수 있다(beat.spawnRoom). 5막의 마지막 걸음은 궁의 문에서 시작한다 —
+    // 돌아오는 길을 제 발로 걷는다(2026-10-06).
+    if (beat.spawnRoom) {
+      const room = PALACES[flow.state.palace].rooms.find(r => r.id === beat.spawnRoom)
+      if (room) {
+        const spot = kingSpot(room)
+        ctx.player.position.set(spot.x, ctx.player.position.y, spot.z)
+        flow.state = { ...flow.state, room: room.id }
+      }
+    }
     const finished = new Promise(resolve => {
       flow.setPhase('day')
       hint.hidden = true
@@ -1284,6 +1452,8 @@ export function boot(root) {
   function exitObjective() {
     const exit = currentExit()
     const room = exit && PALACES[flow.state.palace].rooms.find(r => r.id === exit.room)
+    // 나가는 자리가 제 말을 갖고 있으면 그 말을 쓴다(5막의 마지막 걸음 — 「할 일은 다 했다」가 아니라 「어좌로 간다」다).
+    if (exit?.objective) return exit.objective
     return room ? `할 일은 다 했다 — ${room.name}${towardParticle(room.name)} 간다` : '할 일은 다 했다'
   }
 
@@ -1302,9 +1472,9 @@ export function boot(root) {
     if (!hub) return
     activeBeat = hub
     dateLabel = hubDate(flow.act(), hub)
-    guide.set('궁을 걸어 다니며 표지가 선 곳에서 E 를 누르세요. 순서는 마음대로지만, 남은 일을 다 해야 다음 사건으로 넘어갑니다. 마당과 방 안의 물건도 E 로 살펴볼 수 있습니다.')
+    guide.set(guideForBeat(hub))
     audio.setAmbient('hall')
-    bgm.set(bgmForBeat(hub))
+    bgm.set(bgmForBeat(hub, flow.actIndex))
     ctx.setNpcs(currentNpcs())
     ctx.setPickupMarkers(markerPoints())
     flow.setPhase('day')
@@ -1350,7 +1520,7 @@ export function boot(root) {
   // 임금이 지금 선 자리 앞으로 고쳐 잡는다(알현 중 전각 안 걷기 — 2026-09-13).
   function walkNpc(id, from, to, ms, lookAt = null, followRoom = null) {
     return new Promise(resolve => {
-      audienceWalk = { id, from, to, t0: performance.now(), ms, lookAt, followRoom, resolve }
+      audienceWalk = { id, from, to, t0: gameTime.now(), ms, lookAt, followRoom, resolve }
     })
   }
 
@@ -1453,7 +1623,7 @@ export function boot(root) {
 
     audio.play('door', { gain: ROOM_DOOR_GAIN })
     await new Promise(resolve => {
-      procession = { t0: performance.now(), ms: processionMs, path, from: start, to: end, escort, resolve }
+      procession = { t0: gameTime.now(), ms: processionMs, path, from: start, to: end, escort, resolve }
     })
 
     flow.state = { ...flow.state, room: to.id }
@@ -1491,7 +1661,9 @@ export function boot(root) {
     const king0 = { x: ctx.player.position.x, z: ctx.player.position.z }
     // 가마 옆 — 안이 아니라 옆에 선다. 그 자리에서 발을 걷고 든다.
     const beside = { x: spec.x - 1.5, z: spec.z - 0.4 }
-    const carryTo = { x: spec.x, z: (gate?.z ?? spec.z) + CARRY_BEYOND }
+    // 가마는 문간 한가운데로 돌아 나간다(systems/boarding.js carryPathFor) — 기둥을 뚫지 않는다.
+    const carryPath = carryPathFor({ x: spec.x, z: spec.z }, gate)
+    const carryTo = carryPath[carryPath.length - 1]
     const lines = beat.board.lines ?? []
     let caption = null
     const ms = Math.max(BOARD_MS, lines.length * 2600)
@@ -1501,18 +1673,20 @@ export function boot(root) {
     const timers = []
     audio.play('door', { gain: ROOM_DOOR_GAIN })
     // 떠나는 가마를 보려면 대문 **반대편**에서 봐야 한다(render/scene.js setViewAngle).
-    ctx.setViewAngle(yawToward(carryTo, { x: spec.x, z: spec.z }))
+    // 한 번에 돌리지 않는다 — 선생님(2026-10-06): 「갑자기 순간적으로 이동한다」. 미끄러져 돈다.
+    ctx.setViewAngle(yawToward(carryTo, { x: spec.x, z: spec.z }), { snap: false })
     for (const [i, text] of lines.entries()) {
-      timers.push(setTimeout(() => { caption?.dispose(); caption = banner(root, text, 2600) }, i * 2600 + 300))
+      timers.push(gameTime.delay(() => { caption?.dispose(); caption = banner(root, text, 2600) }, i * 2600 + 300))
     }
     await new Promise(resolve => {
-      boarding = { t0: performance.now(), ms, king0, beside, spec, carryTo, escort: escortOffsets(beat), resolve }
+      boarding = { t0: gameTime.now(), ms, king0, beside, spec, carryPath, carryTo, escort: escortOffsets(beat), resolve }
     })
-    for (const t of timers) clearTimeout(t)
+    for (const cancel of timers) cancel()
     caption?.dispose()
     boarding = null
     ctx.setViewAngle(null)      // 학생이 돌려 둔 각을 도로 살린다
-    ctx.setKingHidden(false)
+    // 임금은 가마 안에 있다 — 여기서 도로 보이게 하면 떠난 가마 뒤 문간에 임금이 한 번 **나타난다**
+    // (2026-10-06 녹화에서 그렇게 찍혔다). 다음 궁에 들어설 때(bindPalaceAndSpawn) 다시 보인다.
     // 가마를 제자리로 돌려 둔다 — 다음에 이 궁에 들어올 때 대문 밖에 나가 있으면 안 된다.
     ctx.moveProp(spec.id, { x: spec.x, z: spec.z, y: 0, yaw: spec.yaw ?? 0 })
   }
@@ -1557,7 +1731,7 @@ export function boot(root) {
     const props = []
     ctx.setProps(props)
     // 문이 열리기 전 한숨 — 임금이 전각 안을 둘러볼 틈이다. 곁에 선 사람만 말하는 알현이면 기다리지 않는다.
-    if (visitorsOf(beat).some(entersOf)) await new Promise(r => setTimeout(r, 1400))
+    if (visitorsOf(beat).some(entersOf)) await new Promise(r => gameTime.delay(r, 1400))
     for (const v of visitorsOf(beat)) {
       const npc = npcById(v.npc)
       if (!npc) continue
@@ -1789,7 +1963,7 @@ export function boot(root) {
     return flow.state
   }
 
-  // 친필 비트(F1) — 양이침범은 제시하고 나머지 여덟 글자를 직접 따라 쓴다. 실패할 수 없는 장면이라
+  // 친필 비트(F1) — 앞 여덟 자는 제시하고 주화매국 넉 자를 직접 따라 쓴다. 재시도 횟수 제한이 없으며
   // 다 쓰면 그 카드를 자기 손으로 읽은 것으로 친다 — 지급 자체는 여기서 하지 않는다.
   // playBeat() 이 비트 종류와 무관하게 한 자리에서 한다(applyGrant).
   async function playBrush(beat) {
@@ -1798,7 +1972,9 @@ export function boot(root) {
     // 붓을 들기 전에 지금 무엇을 쓰는 상황인지 먼저 읽는다(beat.intro — 척화비 비문).
     if (beat.intro) {
       guide.set('글을 읽고 「다음」을 누르세요. 그다음 붓을 듭니다.')
-      await noteScreen.show(beat.intro)
+      await noteScreen.show({ ...beat.intro, briefing: {
+        objective: '주화매국 네 글자를 완성한다', action: '안내선을 따라 붓을 움직이세요.', buttonLabel: '붓을 든다',
+      } })
       guide.set(guideForBeat(beat))
     }
     await brush.open({
@@ -1808,6 +1984,7 @@ export function boot(root) {
       onStroke: () => audio.play('brush'),
       // 먹이 말랐을 때 한 번. 「안 된다」를 귀로도 알린다 — 화면은 소리를 모른다.
       onDry: () => audio.play('deny'),
+      onComplete: () => guide.hide(),
     })
     return flow.state
   }
@@ -1872,7 +2049,7 @@ export function boot(root) {
     audio.play('open')
     const record = await docStudy.open(study, {
       onRight: () => audio.play('decide'),
-      onMiss: () => audio.play('deny'),
+      onMiss: restartAfterSourceMiss,
       onFlip: () => audio.play('pick'),
     })
     audio.play('close')
@@ -1898,6 +2075,64 @@ export function boot(root) {
         actIndex: flow.actIndex,
         choiceId: `dilemma:${d.id}:${result.choiceId}`,
         reason: dilemmaReason(d, option),
+      }],
+    }
+    return flow.state
+  }
+
+  // 광성보 — 닿지 않는 포(2026-10-06). **이길 수 없는 판이다** — 그래서 「아직 — 다시」가 없다
+  // (untilCleared 를 쓰지 않는다). 판을 덮으면 미군 장교의 글을 곧바로 편다: 방금 겪은 것을 글에서 찾는다.
+  async function playStand(beat) {
+    flow.setPhase('beat')
+    hint.hidden = true
+    audio.play('open')
+    const result = await gwangseong.open({
+      ...beat,
+      onShot: kind => audio.play(kind === 'hit' ? 'decide' : kind === 'notready' ? 'deny' : kind === 'ready' ? 'pick' : kind === 'shell' || kind === 'breach' ? 'door' : 'drum'),
+      onFall: () => audio.play('close'),
+    })
+    const cards = grantedIdsOf(beat).map(sourceById).filter(Boolean)
+    if (cards.length) await new Promise(done => showPacketCards(cards, done))
+    flow.state = {
+      ...flow.state,
+      decisions: [...flow.state.decisions, { actIndex: flow.actIndex, choiceId: 'stand:fallen', reason: result.summary }],
+    }
+    return flow.state
+  }
+
+  // 임금의 저울(2026-10-06) — 3막의 한가운데. 여섯 대신에게 묻고, 들은 말을 추로 올리고, 정한다.
+  // 선생님: 「이 고민이 정말 게임의 백미가 되었으면 좋겠어.」 무엇을 고르든 조약은 맺어진다.
+  // 기록에는 고른 쪽과 함께 **저울에 올린 것 전부**가 남는다(systems/weigh.js 의 weighSummary).
+  // 문서(beat.grantCard)는 여기서 주지 않는다 — playBeat() 이 한 자리에서 준다.
+  async function playWeigh(beat) {
+    flow.setPhase('beat')
+    hint.hidden = true
+    const data = weighById(beat.weigh)
+    if (!data) throw new Error(`없는 저울 판: ${beat.weigh} (${beat.id})`)
+    audio.play('open')
+    const result = await weigh.open(data, {
+      onHear: () => audio.play('pick'),
+      onPick: () => audio.play('pick'),
+      onLand: () => audio.play('decide'),
+      onAside: () => audio.play('close'),
+      onRight: () => audio.play('decide'),
+      onMiss: restartAfterSourceMiss,
+      onDecide: () => audio.play('door'),
+      onLift: () => audio.play('close'),
+      onSeal: () => audio.play('drum'),
+    })
+    audio.play('close')
+    // 저울을 덮으면 그 전교를 문서로 받는다 — 교과서 110쪽이 「찬성」으로 실은 글이다. 곧바로 펴서 읽는다:
+    // 「이 말을 한 사람은 누구인가」가 이 판의 마지막 물음이다(data/source-games.js 의 따져 읽기).
+    // 무엇을 주는지는 여기서 정하지 않는다 — 규칙은 scenario.js 의 grantedIdsOf 한 곳에 있다(주는 것도 playBeat 이 한다).
+    const cards = grantedIdsOf(beat).map(sourceById).filter(Boolean)
+    if (cards.length) await new Promise(done => showPacketCards(cards, done))
+    flow.state = {
+      ...flow.state,
+      decisions: [...flow.state.decisions, {
+        actIndex: flow.actIndex,
+        choiceId: `weigh:${data.id}:${result.choice}`,
+        reason: result.summary,
       }],
     }
     return flow.state
@@ -1938,7 +2173,7 @@ export function boot(root) {
   }
 
   // 촉박 비트 — 제한 시간 안에 목적지에 닿아야 한다. 판정은 프레임 루프 안에서
-  // performance.now() 로만 한다(rush-scene.js 가 시간만 본다) — setInterval 을 쓰지 않는다.
+  // gameTime.now() 로만 한다(rush-scene.js 가 시간만 본다) — setInterval 을 쓰지 않는다.
   //
   // ⚠ 2026-10-06 — **닿을 때까지 되풀이한다.** 예전에는 늦어도 깃발 한 줄만 남기고 다음
   //   장면으로 넘어갔다. 선생님: 「이 도망 이벤트는 제한시간 내 못 할 시 다시 도망 이벤트를
@@ -1969,7 +2204,7 @@ export function boot(root) {
           totalMs: rushDurationMs(beat.totalMs, isTouchDevice()),
           goalRoom: beat.goalRoom ?? null,
           goalPoint: beat.goalPoint ?? null,
-          now: performance.now(),
+          now: gameTime.now(),
         })
         resolveRush = (outcome) => {
           flow.setPhase('beat')
@@ -1984,7 +2219,7 @@ export function boot(root) {
           const hints = beat.retryHints ?? []
           const tip = hints.length ? hints[Math.min(attempt, hints.length) - 1] : ''
           banner(root, [beat.onCaught, tip].filter(Boolean).join('  '), 3400)
-          setTimeout(begin, 3600)
+          gameTime.delay(begin, 3600)
         }
       }
       noteScreen.show(intro).then(begin)
@@ -2118,7 +2353,7 @@ export function boot(root) {
       //   훈령의 선택지 위에, 척화비를 쓰는 종이 위에. 먹이 마르는 시계가 도는 동안
       //   글씨 쓸 자리를 배너가 가리고 있었던 셈이다.
       banner(root, handle.line.replace(/\*\*/g, ''), HANDLE_HOLD_MS)
-      await new Promise(done => setTimeout(done, HANDLE_HOLD_MS + 750))
+      await new Promise(done => gameTime.delay(done, HANDLE_HOLD_MS + 750))
     }
     const after = await playBeatScreen(beat)
     // 「이 비트가 무엇을 주는가」를 여기서 되묻지 않는다. 한때 이 자리에
@@ -2175,6 +2410,8 @@ export function boot(root) {
       case 'trail':   return await playTrail(beat)
       case 'study':   return await playStudy(beat)
       case 'dilemma': return await playDilemma(beat)
+      case 'weigh':   return await playWeigh(beat)
+      case 'stand':   return await playStand(beat)
       default:
         throw new Error(`아직 구현하지 않은 비트 종류: ${beat.kind} (${beat.id})`)
     }
@@ -2191,21 +2428,22 @@ export function boot(root) {
     const out = []
     const read = everRead(flow.state).map(id => sourceById(id)).filter(Boolean)
       .filter(c => (c.act ?? 0) === flow.actIndex + 1)
-    if (read.length) out.push(`읽은 문서 — ${read.map(c => c.title).join(' · ')}`)
+    out.push(...read.map(c => ({ title: c.title, sourceId: c.id, kind: '읽은 문서' })))
     const mine = flow.state.decisions.filter(d => d.actIndex === flow.actIndex && d.reason)
-    for (const d of mine) out.push(`당신이 한 것 — ${d.reason}`)
+    for (const d of mine) out.push({ title: describeDecision(act, d).question || '남긴 결정', text: d.reason, kind: '당신이 한 것' })
     const hub = Object.entries(flow.state.freedom?.hubs ?? {})
       .filter(([key, log]) => key.startsWith(`${act.id}/`) && log.done?.length)
       .flatMap(([, log]) => log.done.map(x => x.label))
-    if (hub.length) out.push(`찾아간 곳 — ${hub.join(' · ')}`)
+    out.push(...hub.map(title => ({ title, kind: '찾아간 곳' })))
     const seen = artifactCount(flow.state)
-    if (seen) out.push(`살펴본 물건 — ${seen}가지`)
+    if (seen) out.push({ title: `${seen}가지 물건 발견`, kind: '살펴본 물건' })
     return out
   }
 
   async function finishAct() {
     // 막이 끝난 화면은 글 화면이다 — 바닥 소리를 끈다.
     audio.setAmbient(null)
+    bgm.set(bgmForBeat({ kind: 'note' }, flow.actIndex))
     guide.hide()
     // 이 막에서 남긴 여러 결정(어전회의·훈령) 중 가장 나중 것의 「적어 둔 것」을 보여준다
     const decision = [...flow.state.decisions].reverse().find(d => d.actIndex === flow.actIndex)
@@ -2240,6 +2478,12 @@ export function boot(root) {
       // clearSave() 를 여기서 부르지 않는다(2단계 Important 2) — 저장을 남겨 두면
       // 학생이 이 화면을 닫아 버렸어도 되돌아올 수 있다. 저장은 학생이
       // 「처음부터」를 직접 고를 때(pause.onRestart)만 지운다.
+      //
+      // 맺음(2026-10-06) — 선생님: 「마무리가 게임이 끝난 거 같은 느낌을 주게끔.」 목록 화면 앞에
+      // 세 장이 선다: 당신이 지나온 스물한 해 → 그 뒤 → 御前 · 끝.
+      // 새 Suno 엔딩 곡으로 닫고, 마지막 장에서 그 곡의 종지가 한 번 울린다.
+      bgm.set('ending', 'bed')
+      await epilogue.open(EPILOGUE, flow.state, { onPage: page => { if (page === 'close') bgm.sting('actend') } })
       await actEnd.showFinal(flow.state)   // 마지막 화면이다. 이 Promise 는 풀리지 않는다
       return
     }
@@ -2316,8 +2560,12 @@ export function boot(root) {
 
   async function playAct(actIndex) {
     flow.state = enterAct(flow.state, ACTS[actIndex], actIndex)
+    // 영상의 끝·막의 질문부터 해당 막의 새 Suno 곡을 낮게 연다.
+    bgm.set(bgmForBeat({ kind: 'note' }, actIndex))
     // G 물가 — 막이 바뀔 때 조용히 오른다. 절대 수치는 화면에 내지 않는다(prices.js)
     flow.state = advancePrices(flow.state, actIndex + 1)
+    flow.state = rememberActStart(flow.state)
+    saveGame(flow.state)
     dateLabel = flow.act().dateLabel
     bindPalaceAndSpawn()
     guide.hide()
@@ -2326,7 +2574,9 @@ export function boot(root) {
     const q = ACTS[actIndex].question
     if (q) {
       await actQuestion.open({ mode: 'open', act: actIndex + 1, actLabel: q.label,
+        notice: restartNotice || '사료 물음에서 근거에 맞지 않는 답을 고르면 이 막의 처음으로 돌아갑니다.',
         year: q.year, question: q.text, image: q.image })
+      restartNotice = ''
     }
     // 막마다 「이 막의 여정」 한 장. 예전에는 여덟 문단짜리 글이었다 —
     // 선생님(2026-09-27): 「이렇게 글로만 있으니까 1막이 어떤 구성이고 어떻게
@@ -2353,6 +2603,8 @@ export function boot(root) {
         todo: ACT_GUIDE[ACTS[actIndex].id]?.[0] ?? '',
       }))
     }
+    flow.state = { ...flow.state, actOpening: false }
+    saveGame(flow.state)
     await runBeats()
   }
 
@@ -2386,9 +2638,22 @@ export function boot(root) {
   // 이어하기의 나머지 절반 — 화면 쪽이다. 순수한 절반(상태·막 번호·taken)은
   // flow.restoreSession() 이 진다(판정 R60). 새 이어하기 지식은 둘 중 하나에 들어가야 하고,
   // 어느 쪽도 아닌 자리에 적으면 아무 시험도 울지 않는다 — 알려진 빈틈이다(판정 R64).
+  async function resumePendingCards() {
+    const pending = flow.state.pendingCards
+    if (!pending) return
+    const cards = pending.actIndex === flow.state.actIndex && pending.beatIndex === flow.state.beatIndex && Array.isArray(pending.ids)
+      ? pending.ids.filter(id => flow.state.sources.held.includes(id)).map(sourceById).filter(Boolean) : []
+    await new Promise(done => showPacketCards(cards, done, true))
+  }
+
   async function resumeAct() {
+    if (flow.state.actOpening) { await playAct(flow.actIndex); return }
+    flow.state = ensureActStart(flow.state)
     bindPalaceAndSpawn()
     dateLabel = dateLabelAtBeat(flow.act(), flow.state.beatIndex)
+    // 복원된 사료를 다 읽을 때까지 기다리는 동안에도 현재 막의 음악을 낮게 잇는다.
+    bgm.set(bgmForBeat({ kind: 'note' }, flow.actIndex))
+    await resumePendingCards()
     // 이 막이 이미 끝난 상태로 저장되었으면(beatIndex 가 비트 배열 끝을 넘었으면)
     // 다시 묻지 않고 막 끝 화면부터 잇는다. 예전엔 「이 막에 결정이 하나라도
     // 있으면」으로 판정했는데, 3막부터는 한 막 안에 결정이 둘(훈령·어전회의)이라
@@ -2452,17 +2717,21 @@ export function boot(root) {
     return { axis: () => gaitAxis, running: () => raw.running() }
   }
   let lastBlockedBannerAt = -Infinity
-  let last = performance.now()
+  let last = gameTime.now()
 
-  function frame(now) {
+  function frame(realNow) {
     if (!running) return
+    const now = gameTime.now()
     const dt = now - last
     last = now
+    bgm.tick(realNow)
+    syncSoundButton()
+    if (pauseButton) pauseButton.hidden = !canPause(flow.phase, holdSession !== null, timedActivityOpen())
+    if (gameTime.isPaused()) { acc = 0; input.tap(); requestAnimationFrame(frame); return }
     // 지난 프레임에 화면용으로 섞어 둔 자리를 진짜 자리로 되돌린다. 그 사이 장면이 임금을
     // 직접 옮겼으면(알현·궁 이동) 그 자리를 그대로 받는다.
     stepBlend.begin(ctx.player.position)
     walkedThisFrame = false
-    bgm.tick(now)
     // 말하는 도중에 소리를 끄면 그 말도 그 자리에서 멈춘다(대화판은 글자를 마저 찍는다).
     if (voice.isPlaying() && audio.isMuted()) voice.silence()
     // 도착 Promise는 이 프레임이 끝난 뒤 이어진다. 아래에서 audienceWalk를 비워도
@@ -2552,8 +2821,8 @@ export function boot(root) {
       }
       ctx.setKingHidden(!kingVisibleAt(u))
       if (phase === 'carry') {
-        // 가마가 대문을 나선다. 교군(곁을 걷던 사람들)이 가마를 따라간다.
-        const p = walkAt({ x: bd.spec.x, z: bd.spec.z }, bd.carryTo, k)
+        // 가마가 대문을 나선다 — 문간 한가운데로 돌아서(carryPathFor). 교군(곁을 걷던 사람들)이 따라간다.
+        const p = pathAt(bd.carryPath, k) ?? walkAt({ x: bd.spec.x, z: bd.spec.z }, bd.carryTo, k)
         ctx.moveProp(bd.spec.id, { x: p.x, z: p.z, y: carryLiftAt(u) })
         // ⚠ 카메라는 임금을 따라다닌다(render/scene.js). 임금을 감춘 채 세워 두면
         //   가마만 화면 밖으로 나가고 학생은 **빈 마당**을 본다 — 실제로 그렇게 찍혔다.
@@ -2561,13 +2830,12 @@ export function boot(root) {
         //   카메라가 바라보는 점이 이 자리이므로(camera.lookAt), 가마보다 한 발 **뒤**를
         //   보게 두면 떠나는 가마가 화면 위쪽에 남는다. 꼭 같은 자리에 두면 가마가
         //   바라보는 점에 겹쳐 화면에서 사라진다.
-        const dx = bd.carryTo.x - bd.spec.x, dz = bd.carryTo.z - bd.spec.z
-        const len = Math.max(0.001, Math.hypot(dx, dz))
-        ctx.player.position.x = p.x - (dx / len) * CAMERA_TRAIL
-        ctx.player.position.z = p.z - (dz / len) * CAMERA_TRAIL
+        //   메기 시작할 때 가마 옆에서 가마 뒤로 **미끄러진다**(cameraAnchorAt) — 한 번에 뛰지 않는다.
+        const anchor = cameraAnchorAt(bd.beside, p, { x: 0, z: bd.carryTo.z - bd.spec.z }, k)
+        ctx.player.position.x = anchor.x
+        ctx.player.position.z = anchor.z
         // 가마 곁을 걷는 사람들 — 행렬과 같은 대열 셈을 쓴다(가마가 가는 길을 따른다).
-        const carryPath = [{ x: bd.spec.x, z: bd.spec.z }, bd.carryTo]
-        for (const f of formationAll(carryPath, k, bd.escort ?? [], PALACES[flow.state.palace])) {
+        for (const f of formationAll(bd.carryPath, k, bd.escort ?? [], PALACES[flow.state.palace])) {
           ctx.placeNpc(f.npc, { x: f.x, z: f.z, yaw: f.yaw, walking: f.walking, smooth: true })
         }
       }
@@ -2680,7 +2948,7 @@ export function boot(root) {
         input.tap()
       }
     }
-    // 촉박 판정 — session.tick() 은 performance.now() 로 받은 now 하나만 보고 판정한다.
+    // 촉박 판정 — session.tick() 은 gameTime.now() 로 받은 now 하나만 보고 판정한다.
     // 불은 비트가 청할 때만 붙는다. 1873 자경전은 불이지만 1882 난군은 불이 아니고
     // 1884 청군도 불이 아니다 — 여기를 무조건으로 두면 창덕궁 마당에 불길이 솟는다
     // (3단계 Task 7).
@@ -2688,7 +2956,7 @@ export function boot(root) {
       if (rushFire) {
         ctx.fire.setSources(fireSourcesAt(PALACES[flow.state.palace], session.rush, now))
       }
-      // 초침. 남은 시간을 잰 그 시계(now)를 그대로 넘긴다 — 여기서 performance.now()
+      // 초침. 남은 시간을 잰 그 시계(now)를 그대로 넘긴다 — 여기서 gameTime.now()
       // 를 다시 부르면 두 값이 서로 다른 순간을 가리켜 초가 하나씩 빠진다.
       // 1초마다 한 번 울지, 마지막 5초에 경보로 바뀔지는 엔진이 정한다.
       const remain = remainingMs(session.rush, now)
@@ -2717,7 +2985,8 @@ export function boot(root) {
     // 그리기 직전 — 두 스텝 사이를 누적기에 남은 몫만큼 섞는다. 걷는 국면이 아니었으면
     // (판이 떠 있다·행렬이 직접 옮긴다) 진짜 자리 그대로 그린다.
     stepBlend.end(ctx.player.position, walkedThisFrame ? acc / FIXED_MS : 1)
-    ctx.render()
+    // 불투명 전면 판 뒤의 궁궐은 다시 그릴 필요가 없다. 반투명 대화·독백은 계속 그린다.
+    if (!root.querySelector('.jeongjok, .gwangseong, .rebuild, .weigh, .trail, .ration, .dilemma, .epilogue, .brush')) ctx.render()
     if (!session) hud.hideRush()
     hud.update({
       hidden: flow.phase === 'council' || flow.phase === 'done',
@@ -2783,6 +3052,7 @@ export function boot(root) {
           onTap()
         })
         touchWrap.appendChild(b)
+        return b
       }
       // 멈춤 화면이 떠 있으면 E·Q 는 먹지 않는다 — 키보드 쪽(handleKey)이 이미
       // 그렇게 한다. 태블릿만 규칙이 다르면, 멈춤 화면 뒤에서 문서가 주워진다.
@@ -2801,9 +3071,30 @@ export function boot(root) {
       mkTouchBtn('Q 사초', onTouchBtn(pressQ))
       // 태블릿에는 Esc 가 없다(판정 R91). 이 단추가 없으면 학생은 수업 도중에
       // 저장할 길도, 소리를 끌 길도 없다 — 새로고침해서 타이틀로 나가는 수밖에.
-      mkTouchBtn('멈춤', () => togglePause())
+      pauseButton = mkTouchBtn('멈춤', () => togglePause())
+      pauseButton.style.cssText += ';position:fixed;right:12px;top:12px;z-index:66;font-size:13px'
+      pauseButton.setAttribute('aria-label', '잠시 멈춤')
+      root.appendChild(pauseButton)
       root.appendChild(touchWrap)
     }
+
+    // 2026-10-05: 사료·저울·회의·막 마무리에서도 판을 닫지 않고 소리를 끈다.
+    soundButton = document.createElement('button')
+    soundButton.className = 'game-sound'
+    soundButton.setAttribute('aria-label', '게임 소리')
+    soundButton.style.cssText =
+      'position:fixed;left:60px;bottom:10px;z-index:66;min-width:86px;min-height:44px;padding:8px 12px;' +
+      'border:1px solid #3a4248;border-radius:22px;background:#0f1113e8;color:#d5c8a7;font:inherit;font-size:12px;' +
+      'cursor:pointer;touch-action:manipulation'
+    soundButton.addEventListener('click', e => {
+      e.stopPropagation()
+      audio.unlock().catch(() => {})
+      audio.toggleMuted()
+      bgm.tick(performance.now())
+      syncSoundButton()
+    })
+    root.appendChild(soundButton)
+    syncSoundButton()
 
     // 한 번 보고 지나간 학생이 5분 뒤에 다시 볼 길이 있어야 한다. 미니맵(우하단)·
     // HUD(상단)·쌀값 줄(하단 가운데)·태블릿 단추(우측 210px 위)를 피해 좌하단에 둔다.
@@ -2825,23 +3116,27 @@ export function boot(root) {
   // 탭밖에 없었다. 두 갈래의 내용은 그때 것을 그대로 옮긴 것이다.
   const savedText = readSaveText()
   const saved = loadGame()
+  if (restartState) {
+    flow.restoreSession(restartState)
+    attachControls()
+    requestAnimationFrame(frame)
+    playAct(restartState.actIndex)
+    return { flow, audio, dispose }
+  }
   ctx.setPalace(PALACES[act0.palace])
   ctx.setYear?.(act0.year)
   ctx.setKingAge({ ...kingLookAt(act0.year), attire: kingAttireAt(act0, 0) })
   ctx.setNpcs(npcsAt(baseOf, act0.palace, 0))
   ctx.setCinematic(cinematicDirective({ actId: act0.id, phase: 'day' }))
   ctx.setOpeningView(true)
-  function renderOpening() {
-    if (!running || !title.isOpen()) return
-    ctx.render()
-    requestAnimationFrame(renderOpening)
-  }
   title.show({
     hasSave: !!saved,
     // 못 읽는 저장을 만났을 때만 한 줄이 뜬다. 저장이 아예 없으면 빈 문자열이라
     // 처음 하는 학생의 첫 화면은 지금까지와 한 글자도 다르지 않다.
     notice: staleSaveNotice(savedText),
     audio,
+    onHelp: () => controlsHint.show(),
+    onPrologueStart: () => { bgm.stop(); audio.setAmbient(null) },
     onResume: () => {
       ctx.setOpeningView(false)
       // 이어하기 지식은 flow.restoreSession() 한 곳에 있다 (판정 R60).
@@ -2856,28 +3151,34 @@ export function boot(root) {
     onFresh: () => {
       ctx.setOpeningView(false)
       clearSave()
-      // 처음 하는 학생이다 — 걷는 법을 한 번 보여 주고 1막을 연다. 이어서 하는
-      // 학생에게는 띄우지 않는다(이미 해 본 학생이다. 「?」로 언제든 다시 본다).
-      controlsHint.show().then(() => {
-        attachControls()
-        requestAnimationFrame(frame)
-        playAct(0)
-      })
+      // 선생님(2026-10-05): 「영상 끝과 게임 시작이 이어지게 해줘」.
+      // 영상 끝의 게임 시작을 눌렀을 때 마지막 프레임 아래에서 1막을 연다. 시작 화면의
+      // 「조작 안내」와 게임 안 「?」에서 보므로 영상 뒤에 설명창이 끼지 않는다.
+      attachControls()
+      requestAnimationFrame(frame)
+      playAct(0)
     },
   })
 
-  requestAnimationFrame(renderOpening)
+  // 영상 뒤의 첫 3D 프레임을 준비한다. 영상 동안 별도 렌더 루프를 돌리지 않는다.
+  ctx.render()
   return {
     flow,
     audio,   // 타이틀·멈춤의 소리 토글이 보는 바로 그 하나다
     // 바닥 소리는 이미 울리고 있다 — 끄지 않으면 화면이 다 사라진 뒤에도 계속 난다.
-    dispose() {
+    dispose,
+  }
+
+  function dispose() {
+      if (successor) { successor.dispose(); return }
+      if (!running) return
       running = false; session = null; rushFire = false
+      gameTime.dispose(); disposeOrient(); document.removeEventListener('visibilitychange', visibilityChanged)
+      pauseButton?.remove(); soundButton?.remove(); pause.close(); guide.dispose()
       holdSession?.dispose(); holdSession = null   // 막 전환·종료에 이 판이 남으면 다음 화면을 덮는다
-      speak.dispose()
+      speak.dispose(); missNotice.dispose()
       audio.setAmbient(null); bgm.stop(); flow.dispose()
       ctx.dispose()
-    },
   }
 }
 

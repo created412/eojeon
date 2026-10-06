@@ -5,14 +5,19 @@ const STYLE =
 
 // <style> 태그를 만들지 않는다. 배너는 막마다 떴다 사라지므로
 // head 에 스타일을 쌓아 두면 그것이 그대로 누수가 된다.
-export function banner(root, text, holdMs = 1400) {
+export function banner(root, text, holdMs = 1400, { clock = null } = {}) {
   const el = document.createElement('div')
   el.style.cssText = STYLE
   el.textContent = text
   root.appendChild(el)
-  const fade = setTimeout(() => { el.style.opacity = '0' }, holdMs)
-  const gone = setTimeout(() => el.remove(), holdMs + 700)
+  const schedule = (callback, ms) => {
+    if (clock) return clock.delay(callback, ms)
+    const timer = setTimeout(callback, ms)
+    return () => clearTimeout(timer)
+  }
+  const fade = schedule(() => { el.style.opacity = '0' }, holdMs)
+  const gone = schedule(() => el.remove(), holdMs + 700)
   return {
-    dispose() { clearTimeout(fade); clearTimeout(gone); el.remove() },
+    dispose() { fade(); gone(); el.remove() },
   }
 }

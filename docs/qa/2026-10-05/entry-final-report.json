@@ -1,0 +1,22 @@
+{
+  "errors": [],
+  "checks": [
+    "V23 final 6s repeat; opening soundtrack continues past 55s without resetting; no loading text; no game before click",
+    "Game button enters act1 with only act1 bed music",
+    "844x390 touch: skip to tail, then explicit start",
+    "Pending bellonet reading restores and only clears after underline/probe and close"
+  ],
+  "loop": {
+    "duration": 55,
+    "time": 51.791778,
+    "paused": false,
+    "muted": true
+  },
+  "music": {
+    "time": 58.045891,
+    "paused": false,
+    "muted": false,
+    "volume": 1
+  },
+  "mode": "full natural playback"
+}

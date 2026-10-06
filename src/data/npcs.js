@@ -26,7 +26,11 @@ export const NPCS = [
     name: '흥선대원군',
     title: '아버지',
     palace: 'changdeok',
-    x: -8, z: 9,
+    // ⚠ 2026-10-06 — (-8, 9) 였다. 방의 셈으로는 인정전 안이지만 **눈에 보이는 건물**은 방의
+    //   0.72배(data/hall-geometry.js ROOM_SHRINK)라, 그 자리는 서쪽 벽선 위였다. 벽에 걸려
+    //   담 밖으로 밀려나 「인정전의 대원군」이 인정전 밖에 서 있었다(선생님이 화면에서 봄).
+    //   tests/data/npcs.test.js 가 방 안에 선 사람은 건물 안에 서 있는지를 잰다.
+    x: -5.2, z: 12.5,
     rank: 'regent',
     hatStyle: 'samo',
     actsVisible: [0, 1],
@@ -50,21 +54,6 @@ export const NPCS = [
     rank: 'mid',
     hatStyle: 'samo',
     lines: ['「돈을 마련하는 길을 적어 왔습니다.」'],
-  },
-  {
-    id: 'gaehwa',
-    // 개항 논의가 조정 안에서 오가던 때 — 1875년 경복궁의 하루에 운요호 소식과 나란히 선다
-    // (2026-09-13 역사 순서 정리: 예전에는 1874년 창덕궁에 혼자 서 있어 고를 것이 없었다).
-    actsVisible: [2],
-    fromYear: 1875,
-    name: '젊은 신하',
-    title: '',
-    palace: 'gyeongbok',
-    x: -40, z: -12,
-    rank: 'mid',
-    hatStyle: 'samo',
-    cardId: 'gaehang-chanseong',
-    lines: ['「조정 안에도 문을 열자는 말이 있습니다. 들어 보시겠습니까.」'],
   },
   {
     id: 'seungji',
@@ -174,10 +163,12 @@ export const NPCS = [
     x: 0, z: -2.2,
     rank: 'mid',
     hatStyle: 'samo',
-    cardId: 'reform14',
+    // ⚠ 2026-10-06 — 여기서 정강의 문서(reform14)를 건네지 않는다. 선생님: 「정강 14조가 두 번 겹쳐서
+    //   나와. 하나로 합쳐 보자.」 경우궁에서 한 번 받아 밑줄을 긋고, 창덕궁에서 같은 세 조항을 또 뜯어
+    //   읽었다. 정강은 발표되는 그날 아침(gapsin-reform) 한 번만 읽고, 그 판을 마치면 손에 들어온다.
     lines: [
-      '「새 정부의 정강입니다. 열네 조목입니다.」',
-      '먹이 아직 마르지 않았다.',
+      '「새 정부의 정강을 짓고 있습니다. 열네 조목입니다.」',
+      '먹이 아직 마르지 않았다. 다 되면 전하께 올리겠다고 한다.',
     ],
   },
   {
@@ -205,18 +196,6 @@ export const NPCS = [
     rank: 'messenger',
     hatStyle: 'samo',
     lines: ['숨이 채 가라앉지 않았다.', '「정족산성에서 온 장계입니다.」'],
-  },
-  {
-    id: 'sujeong',
-    actsVisible: [1],   // 1871 신미양요 — 2막 경복궁 국면(1868~71)
-    name: '수정전 관원',
-    title: '',
-    palace: 'gyeongbok',
-    x: -30, z: -12,
-    rank: 'mid',
-    hatStyle: 'samo',
-    cardId: 'sinmi-officer',
-    lines: ['「신미년, 광성보에서 있었던 일이 저들 쪽 기록에도 남았습니다.」'],
   },
   {
     id: 'yeokgwan',
@@ -259,30 +238,9 @@ export const NPCS = [
     cardId: 'unyo',
     lines: ['「초지진에서 포성이 있었다 합니다.」'],
   },
-  {
-    id: 'sinheon',
-    // 1876 강화도 조약 — 협상을 마치고 돌아와 알현(sinheon-returns)에서 조약문을 건넨다.
-    // 훈령(협상 전 지시문)보다 뒤다: 맺기 전의 조약 조항을 근거로 지시를 쓰지 않는다.
-    actsVisible: [],
-    name: '신헌',
-    title: '접견대관 · 협상 대표',
-    palace: 'gyeongbok',
-    x: 0, z: -16,
-    // 신헌은 종1품 판중추부사로 강화도 협상의 전권대신이었다 — 당상관보다도 위다.
-    // 이 게임엔 그보다 높은 등급이 king·regent 뿐이라 senior 를 쓴다(흉배를 단다).
-    rank: 'senior',
-    hatStyle: 'samo',
-    // 사정전 바닥에 따로 놓여 있던 조약 조항 네 장(palaces.js pickups) — 강화도에서
-    // 협상하고 그 조약문을 직접 궁으로 가져온 사람이 신헌이다. 「누가 쓰거나 날랐는가」
-    // 원칙(재제작 지시)을 따르면 이 넉 장은 바닥이 아니라 신헌이 건네야 맞다.
-    // cardIds(복수)는 npcs.js 의 다른 신하들과 다른 자리다 — 한 사람이 한 장이 아니라
-    // 한 뭉치를 들고 온다. main.js 의 applyPickupPacket() 이 이 배열을 보고 한 번의
-    // 대화로 넉 장을 모두 건넨다(자리를 옮겨 다니며 하나씩 줍지 않는다).
-    lines: [
-      '강화도에서 돌아온 신헌이 조약문 묶음을 건넨다.',
-      '「전하, 강화도에서 맺은 조약의 조항들입니다. 하나하나 살펴보셔야 합니다.」',
-    ],
-  },
+  // 신헌은 여기 없다(2026-10-06) — 그는 강화도에 내려가 있고, 조약 책자의 등본은 승지가 올린다
+  // (data/acts.js 의 treaty-draft). 예전에는 「돌아와 맺은 조약문을 건넨다」였는데, 그러면 그 뒤에
+  // 받아들일지 묻는 자리가 이미 끝난 일을 묻게 된다.
 
   // ── 운현궁 · 1863 겨울 (2026-09-13 앞부분 보강) ─────────────────────────────
   // 즉위 전의 집. 이 게임의 3D 몸은 남자 관복뿐이라, 여성 인물은 voice:true 로
@@ -333,6 +291,9 @@ export const NPCS = [
   },
   // 『철종실록』 14년 12월 8일 — 대왕대비가 영의정 김좌근과 도승지 민치상을 보내 사저에서 모셔 오게 했다.
   // 알현·행렬에만 나온다(actsVisible 비어 있음).
+  // 『고종실록』 고종 19년(1882) 6월 5일 — 영의정 홍순목이 도봉소의 일을 임금 앞에서 아뢴다.
+  // 알현(imo-report)에만 나온다(actsVisible 비어 있음).
+  { id: 'hongsunmok', name: '홍순목', title: '영의정', palace: 'changdeok', x: 0, z: 46, rank: 'senior', hatStyle: 'samo', actsVisible: [], lines: ['「전하, 아뢸 일이 있습니다.」'] },
   { id: 'kimjwageun', name: '김좌근', title: '영의정', palace: 'unhyeon', x: 0, z: 13, rank: 'senior', hatStyle: 'samo', actsVisible: [], lines: ['「대왕대비전의 명을 받들어 모시러 왔습니다.」'] },
   // 김옥균 — 5막 정변 전 알현에만 나온다(2026-09-13 5막 보강).
   {

@@ -136,6 +136,9 @@ const CSS = `
   color:#e8b45c;font-weight:400;letter-spacing:.1em}
 .rebuild .sheet p{margin:0;font-size:clamp(14.5px,2.3vh,17px);line-height:1.75;
   color:#e8e2d4;word-break:keep-all}
+.rebuild .sheet .done-art{margin:0}
+.rebuild .sheet .done-art img{display:block;width:100%;height:clamp(110px,30vh,300px);object-fit:cover;object-position:50% 40%;border-radius:4px;border:1px solid #6a5230}
+.rebuild .sheet .done-art figcaption{margin-top:5px;font-size:clamp(11px,1.6vh,12.5px);color:#9aa3ad}
 .rebuild .sheet .rules{display:flex;flex-direction:column;gap:clamp(5px,1.1vh,9px);text-align:left}
 .rebuild .sheet .rules p{padding-left:13px;border-left:3px solid #e0a23a}
 .rebuild .sheet .rules b{color:#f2d79b;font-weight:400}
@@ -266,8 +269,12 @@ export function introHtml(view, tries = 1) {
 
 export function doneHtml(view, board) {
   const q = view.quote
+  // 선생님(2026-10-06): 「실제 완성된 경복궁 그림같은거 힉스필드로 만들어 넣어야 이게 완성된건지
+  // 아닌건지 보이지 않을까?」 — 다 지어진 경복궁이 제목 아래 선다(재구성 그림, 캡션에 밝힌다).
+  const done = art('palace-done')
   return `<div class="sheet">
     <h3>${esc(view.doneTitle ?? '경 복 궁 이  섰 다')}</h3>
+    ${done ? `<figure class="done-art"><img src="${done.src}" alt="${esc(SCENE_ART['palace-done']?.alt ?? '')}"><figcaption>${esc(done.caption)}</figcaption></figure>` : ''}
     <p>${esc(summaryLine(board))}</p>
     ${q ? `<blockquote>${esc(q.text)}<cite>${esc(q.origin ?? '')}</cite></blockquote>` : ''}
     ${view.actual ? `<p class="actual">${esc(view.actual)}</p>` : ''}
@@ -280,7 +287,7 @@ export function doneHtml(view, board) {
   </div>`
 }
 
-export function createRebuild(root) {
+export function createRebuild(root, { clock = null } = {}) {
   ensureStyle()
   return {
     /** 한 판을 연다. 돌려주는 것: systems/rebuild.js 의 boardResult() — { cleared, … } */
@@ -374,6 +381,8 @@ export function createRebuild(root) {
 
         function frameStep(now) {
           if (!running) return
+          if (clock?.isPaused()) { raf = requestAnimationFrame(frameStep); return }
+          now = clock?.now() ?? now
           const dt = Math.min(100, now - last)    // 탭을 떠났다 돌아와도 한꺼번에 흐르지 않는다
           last = now
           stalledFor = isWorking(board) ? 0 : stalledFor + dt
@@ -391,7 +400,7 @@ export function createRebuild(root) {
 
         for (const [i, btn] of villageBtns.entries()) {
           btn.addEventListener('click', () => {
-            if (!running || !canLevy(board, i)) return
+            if (clock?.isPaused() || !running || !canLevy(board, i)) return
             const got = levyYield(board, i)
             apply(levy(board, i))
             fly(btn, `+${got}`)
@@ -400,7 +409,7 @@ export function createRebuild(root) {
           })
         }
         mintBtn.addEventListener('click', () => {
-          if (!running) return
+          if (clock?.isPaused() || !running) return
           apply(mint(board))
           fly(mintBtn, `+${board.ease.mintCoin}`)
           view.onTap?.('mint')
@@ -424,7 +433,7 @@ export function createRebuild(root) {
           const result = boardResult(board)
           if (!result.cleared) {
             // 못 올린 판은 잠깐 멈춰 보여 준 뒤 닫는다 — 「아직」 화면은 부른 쪽이 띄운다.
-            setTimeout(() => close(result), 1000)
+            (clock?.delay ?? setTimeout)(() => close(result), 1000)
             return
           }
           // 끝 — 무엇을 치렀는지 같은 판 위에 덮어 보여 준다.
@@ -447,7 +456,7 @@ export function createRebuild(root) {
         start.addEventListener('click', () => {
           intro.remove()
           running = true
-          last = performance.now()
+          last = clock?.now() ?? performance.now()
           paint(START_LINE)
           raf = requestAnimationFrame(frameStep)
         })

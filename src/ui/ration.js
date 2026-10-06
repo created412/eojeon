@@ -9,6 +9,7 @@ import { SCENE_ART } from './scene-art-data.js'
 const CSS = `
 .ration{position:fixed;inset:0;z-index:56;background:#12100d;display:flex;flex-direction:column;
   align-items:center;justify-content:safe center;gap:14px;padding:26px;text-align:center;overflow:auto}
+.ration>*{flex-shrink:0}
 .ration h2{margin:0;font-size:15px;color:#8f8a7c;letter-spacing:5px;font-weight:400}
 .ration p{margin:0;font-size:18px;color:#e8e2d4;line-height:1.8;max-width:620px}
 .ration .chart{width:100%;max-width:460px;display:flex;flex-direction:column;gap:7px;margin-top:4px}
@@ -52,6 +53,39 @@ const CSS = `
    visibility 로 감추면 자리는 남고, 탭 차례와 누르기에서는 빠진다. */
 .ration button.skip[hidden]{display:inline-block;visibility:hidden;pointer-events:none}
 @media(max-width:600px){.ration .tray-wrap{width:96vw}.ration .hand-help{font-size:13px}}
+/* 짧은 가로 화면에서도 판 전체가 보여야 아래쪽 낟알을 집을 수 있다. */
+@media(max-height:500px) and (min-width:601px){
+ .ration{padding:14px;gap:8px}.ration p{font-size:15px;line-height:1.5}
+ .ration .tray-wrap{width:min(620px,52vw,80vh)}
+}
+/* ── 열세 달 · 섬 · 군졸들의 소리(2026-10-06) ── */
+.ration .months{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:5px;width:min(620px,92vw)}
+.ration .months i{position:relative;display:flex;align-items:center;justify-content:center;aspect-ratio:1/1.25;border:1px solid #4a3a2a;border-radius:2px;
+  background:#1b1510;font-style:normal;color:#6b6558;font-size:13px;transition:background .25s,border-color .25s,color .25s}
+.ration .months i.none{background:#241b12;border-color:#5a4632;color:#57504a}
+.ration .months i.none::after{content:'';position:absolute;left:18%;right:18%;top:50%;height:2px;background:#8a3a2c;transform:rotate(-38deg)}
+.ration .months i.came{background:#e0a23a;border-color:#f3d089;color:#241b12;font-weight:700}
+.ration .month-say{min-height:1.8em;color:#e8e2d4}
+.ration .aside-say{min-height:1.7em;font-size:15px;color:#b9b2a1}
+.ration .seoms{display:flex;justify-content:center;align-items:flex-end;gap:clamp(18px,6vw,60px);width:min(620px,92vw)}
+.ration .seom{margin:0;display:flex;flex-direction:column;align-items:center;gap:8px;width:min(190px,38vw)}
+.ration .seom[hidden]{display:none}
+.ration .seom .vessel{position:relative;width:100%;height:min(26vh,190px);border:2px solid #a08258;border-top:0;border-radius:0 0 12px 12px;background:#1b1510;overflow:hidden}
+.ration .seom .vessel::before{content:'';position:absolute;left:0;right:0;top:0;height:2px;border-top:2px dashed #f3d08999}
+.ration .seom .fill{position:absolute;left:0;right:0;bottom:0;height:0;background:repeating-linear-gradient(120deg,#efe7d2 0 7px,#e3d9bf 7px 12px);transition:height 1.1s ease-out}
+.ration .seom.poured .fill{height:calc(var(--to,1) * 100%)}
+.ration .seom figcaption{font-size:14px;color:#e8e2d4;line-height:1.5}
+.ration .seom figcaption small{display:block;font-size:12px;color:#8f8a7c}
+.ration blockquote{margin:0;max-width:620px;padding:10px 16px;border-left:3px solid #e0a23a;background:#ffffff0a;text-align:left;font-size:17px;line-height:1.75;color:#f3ede0}
+.ration blockquote[hidden]{display:none}
+.ration blockquote small{display:block;margin-top:5px;font-size:12px;color:#8f8a7c}
+.ration blockquote.cry{border-left-color:#d2503a;font-size:19px}
+.ration .burst-opts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.ration .burst-after{display:flex;flex-direction:column;align-items:center;gap:12px}
+.ration .happened{display:flex;flex-direction:column;gap:6px;max-width:620px}
+.ration .happened p{font-size:16.5px}
+@media(max-width:600px){.ration .months{gap:3px}.ration .months i{font-size:11px}.ration blockquote{font-size:15.5px}.ration blockquote.cry{font-size:17px}}
+@media(prefers-reduced-motion:reduce){.ration .seom .fill,.ration .months i{transition:none}}
 `
 
 let styled = false
@@ -154,9 +188,54 @@ export function createRation(root) {
             <div class="price-note">${RICE_NOTE}</div>
             <div class="staged">${m.stagedNote}</div>
             <div class="origin">${m.origin}</div>
-            <button>무위영으로 간다</button>`
+            <button>급료를 내주는 곳으로 간다</button>`
           el.querySelector('.market-art img')?.addEventListener('error', e => { e.target.closest('figure').remove() })
-          el.querySelector('button').addEventListener('click', sack)
+          el.querySelector('button').addEventListener('click', wait)
+        }
+
+        // ── 열세 달(2026-10-06) ─────────────────────────────────────────────
+        // 선생님: 「군병들이 왜 봉기했는지 잘 스토리에 안 드러나 있어. 쌀을 고르게 하는 것과 이어서
+        // 임오군란이 일어난 이유를 직관적으로 게임을 하며 느낄 수 있어야 해.」
+        //
+        // 그전에는 「열세 달 동안 급료를 받지 못했다」가 글 한 줄이었다. 이제 그 열세 번을 손으로
+        // 누른다 — 열두 번은 빈손이고, 열세 번째에야 가마가 나온다. 그 가마를 열면 겨와 모래다
+        // (handPick). 골라내고 섬에 되어 보면 차지 않는다(measure). 곁의 섬은 가득하다. 그러고 나서
+        // 군졸들의 소리를 듣는다(burst). 「왜 일어났는가」가 이 차례 그대로다:
+        // **기다림 → 한 달 치 → 겨와 모래 → 차지 않는 섬 → 저쪽은 가득 → 따졌더니 가두었다.**
+        //
+        // ⚠ 여기에도 시계는 없다. 누르는 만큼만 달이 간다.
+        function wait() {
+          const w = view.ration.wait
+          if (!w) { sack(); return }
+          let month = 0
+          el.innerHTML = `
+            <h2>${view.ration.title}</h2>
+            ${w.lines.map(l => `<p>${l}</p>`).join('')}
+            <div class="months" role="img" aria-label="급료를 기다린 열세 달">${Array.from({ length: w.months }, (_, i) => `<i><b>${i + 1}</b></i>`).join('')}</div>
+            <p class="month-say" aria-live="polite">${w.before}</p>
+            <div class="aside-say" aria-live="polite"></div>
+            <div class="origin">${w.origin}</div>
+            <button class="month-go">${w.button}</button>`
+          const cells = [...el.querySelectorAll('.months i')]
+          const say = el.querySelector('.month-say'), aside = el.querySelector('.aside-say'), go = el.querySelector('.month-go')
+          go.addEventListener('click', () => {
+            if (month >= w.months) { sack(); return }
+            month++
+            view.onPick?.()
+            if (month < w.months) {
+              cells[month - 1].classList.add('none')
+              say.textContent = w.none
+              if (w.asides?.[month]) aside.textContent = w.asides[month]
+              return
+            }
+            // 열세 번째 — 가마가 나왔다.
+            cells[month - 1].classList.add('came')
+            say.textContent = w.came
+            aside.textContent = ''
+            go.textContent = w.next
+            go.classList.add('to-sack')
+          })
+          go.focus?.()
         }
 
         function sack() {
@@ -260,15 +339,82 @@ export function createRation(root) {
               <div class="tray-wrap"><canvas class="tray" width="${TRAY_W * 8}" height="${TRAY_H * 8}"
                 role="img" aria-label="겨와 모래를 골라내고 쌀만 남아 처음보다 비어 보이는 낟알판"></canvas></div>
               <div class="wage-line">${wageLine(tray, byHand)}</div>
-              <p>교과서는 이것을 한 줄로 적었다.</p>
               <div class="art-note">${MIX_NOTE}</div>
               <div class="origin">${s.origin}</div>
-              <button class="to-reveal">교과서가 적은 것을 본다</button>`
+              <button class="to-measure">${s.measure?.enter ?? '교과서가 적은 것을 본다'}</button>`
             paintTray(el.querySelector('.tray'), tray)
-            const next = el.querySelector('.to-reveal')
-            next.addEventListener('click', reveal)
+            const next = el.querySelector('.to-measure')
+            next.addEventListener('click', measure)
             next.focus?.()
           }
+        }
+
+        // 섬에 되어 본다 — 차지 않는다. 곁의 섬은 가득하다. (실록 6월 5일, 영의정 홍순목의 말)
+        // ⚠ 얼마나 비었는지는 기록에 없다 — 그림의 높이는 이 화면이 정했고, 그렇게 적는다.
+        function measure() {
+          const m = view.ration.measure
+          if (!m) { burst(); return }
+          let step = 0
+          el.innerHTML = `
+            <h2>${view.ration.title}</h2>
+            <p>${m.lead}</p>
+            <div class="seoms">
+              <figure class="seom mine" style="--to:${m.level ?? .58}"><div class="vessel"><div class="fill"></div></div><figcaption>${m.mine}</figcaption></figure>
+              <figure class="seom theirs" hidden style="--to:1"><div class="vessel"><div class="fill"></div></div><figcaption>${m.theirs}</figcaption></figure>
+            </div>
+            <p class="month-say" aria-live="polite"></p>
+            <blockquote hidden>${m.quote}<small>${m.quoteBy}</small></blockquote>
+            <div class="art-note">${m.note}</div>
+            <button class="seom-go">${m.button}</button>`
+          const mine = el.querySelector('.seom.mine'), theirs = el.querySelector('.seom.theirs')
+          const say = el.querySelector('.month-say'), quote = el.querySelector('blockquote'), go = el.querySelector('.seom-go')
+          go.addEventListener('click', () => {
+            step++
+            view.onPick?.()
+            if (step === 1) { mine.classList.add('poured'); say.textContent = m.short; go.textContent = m.otherButton; return }
+            if (step === 2) {
+              theirs.hidden = false
+              void theirs.offsetWidth   // 나타난 뒤에 차오르게 한다
+              theirs.classList.add('poured')
+              say.textContent = m.full
+              quote.hidden = false
+              go.textContent = m.next
+              return
+            }
+            burst()
+          })
+          go.focus?.()
+        }
+
+        // 군졸들의 소리 — 그리고 「당신이라면」. 무엇을 고르든 그날의 일은 그대로 적힌다.
+        function burst() {
+          const b = view.ration.burst
+          if (!b) { reveal(); return }
+          el.innerHTML = `
+            <h2>${view.ration.title}</h2>
+            <p>${b.lead}</p>
+            <blockquote class="cry">${b.cry}<small>${b.cryBy}</small></blockquote>
+            <p class="burst-ask">${b.ask}</p>
+            <div class="burst-opts">${b.options.map(o => `<button data-b="${o.id}">${o.text}</button>`).join('')}</div>
+            <div class="burst-after"></div>`
+          const after = el.querySelector('.burst-after'), opts = el.querySelector('.burst-opts')
+          for (const btn of opts.querySelectorAll('button')) {
+            btn.addEventListener('click', () => {
+              view.onPick?.()
+              el.querySelector('.burst-ask').remove()
+              opts.remove()
+              after.innerHTML = `
+                <p>${b.chose[btn.dataset.b]}</p>
+                <div class="happened">${b.happened.map(l => `<p>${l}</p>`).join('')}</div>
+                <div class="origin">${b.happenedBy}</div>
+                <p>교과서는 이것을 한 줄로 적었다.</p>
+                <button class="to-reveal">${b.next}</button>`
+              const next = after.querySelector('.to-reveal')
+              next.addEventListener('click', reveal)
+              next.focus?.()
+            })
+          }
+          opts.querySelector('button')?.focus?.()
         }
 
         function reveal() {

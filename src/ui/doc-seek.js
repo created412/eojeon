@@ -31,10 +31,19 @@ const CSS = `
 .seekdoc .col{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
   gap:clamp(8px,2.2vh,22px);padding:clamp(10px,3vh,30px) 2px;border-left:1px solid #c98a7855;min-width:0}
 .seekdoc .col:last-child{border-left:0}
-.seekdoc .unit{writing-mode:vertical-rl;text-orientation:upright;padding:6px 4px;margin:0;
-  background:transparent;border:3px solid transparent;border-radius:6px;cursor:pointer;
+.seekdoc .unit{display:flex;flex-direction:row;align-items:center;gap:3px;padding:6px 4px;margin:0;
+  background:transparent;border:3px solid transparent;border-radius:6px;cursor:pointer;color:#221c14}
+.seekdoc .unit .h{writing-mode:vertical-rl;text-orientation:upright;
   font-family:var(--face-display,"Batang","Noto Serif CJK KR",serif);
-  font-size:clamp(26px,5.4vh,46px);line-height:1.08;letter-spacing:.06em;color:#221c14;font-weight:500}
+  font-size:clamp(24px,5vh,44px);line-height:1.08;letter-spacing:.06em;font-weight:500}
+/* 읽는 소리 — 한자 오른쪽에 작게 세로로 적는다(선생님: 「해석이 빠져서 뭐가 뭔지 구분 못 할 거 같아」). */
+.seekdoc .unit .r{writing-mode:vertical-rl;text-orientation:upright;font-family:var(--face-body,system-ui,sans-serif);
+  font-size:clamp(11px,1.9vh,15px);line-height:1;letter-spacing:.12em;color:#8a3b22;white-space:nowrap}
+/* 줄 아래의 풀이 — 그 줄이 무슨 말인지. */
+.seekdoc .col .gl{margin-top:auto;padding:6px 5px 0;border-top:1px dashed #c98a7888;width:100%;text-align:center;
+  font-size:clamp(11.5px,1.85vh,14.5px);line-height:1.45;color:#4f3d21;word-break:keep-all}
+.seekdoc .trans{display:none;margin:0;font-size:clamp(12.5px,2vh,15px);line-height:1.6;color:#f2d79b;word-break:keep-all}
+.seekdoc .readnote{margin:0;font-size:clamp(11.5px,1.75vh,13.5px);line-height:1.5;color:#a9b4b8;word-break:keep-all}
 .seekdoc .unit:hover{background:#00000010}
 .seekdoc .unit.on{border-color:#3c5a66;background:#3c5a6618}
 .seekdoc .unit.found{border-color:#a3302a;background:#a3302a26;cursor:default}
@@ -43,8 +52,10 @@ const CSS = `
 /* 한 낱말로 이어 읽는 두 글자(皇祚)는 틈 없이 붙인다. */
 .seekdoc .unit.join{margin-bottom:calc(-1 * clamp(8px,2.2vh,22px))}
 /* 도장 — 글자가 아니라 찍힌 것이다. */
-.seekdoc .unit.seal{writing-mode:vertical-rl;color:#b03a30;border:4px solid #a3302a;border-radius:8px;
-  font-size:clamp(17px,3.2vh,26px);padding:8px 6px;background:#e9c9b8;box-shadow:inset 0 0 0 2px #f1e6cb}
+.seekdoc .unit.seal{color:#b03a30;border:4px solid #a3302a;border-radius:8px;
+  padding:8px 6px;background:#e9c9b8;box-shadow:inset 0 0 0 2px #f1e6cb}
+.seekdoc .unit.seal .h{font-size:clamp(17px,3.2vh,26px)}
+.seekdoc .unit.seal .r{color:#b03a30}
 .seekdoc .unit.seal.on{outline:3px solid #3c5a66;outline-offset:3px}
 .seekdoc .unit.seal.found{outline:4px solid #a3302a;outline-offset:3px;background:#e2b5a2}
 .seekdoc .unit:focus-visible{outline:3px solid #e0a23a;outline-offset:2px}
@@ -86,6 +97,11 @@ const CSS = `
   .seekdoc .col{padding:10px 2px;gap:8px}
   .seekdoc .unit.join{margin-bottom:-8px}
 }
+/* 낮은 화면에서는 줄 아래의 풀이가 들어갈 자리가 없다 — 곁의 판에 한 문장으로 적는다. */
+@media(max-height:560px){
+  .seekdoc .col .gl{display:none}
+  .seekdoc .trans{display:block}
+}
 @media(prefers-reduced-motion:reduce){.seekdoc .unit.no{animation:none}}
 `
 
@@ -102,15 +118,16 @@ function ensureStyle() {
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
 
 function unitHtml(u, { seal = false, join = false } = {}) {
-  return `<button type="button" class="unit${seal ? ' seal' : ''}${join ? ' join' : ''}" data-unit="${esc(u.id)}" aria-label="${esc(u.read)}">${esc(u.han)}</button>`
+  return `<button type="button" class="unit${seal ? ' seal' : ''}${join ? ' join' : ''}" data-unit="${esc(u.id)}" aria-label="${esc(u.read)}"><span class="h">${esc(u.han)}</span><span class="r" aria-hidden="true">${esc(u.read)}</span></button>`
 }
 
 export function seekHtml(doc) {
   const targets = targetsOf(doc).length
   // 「皇」처럼 한 글자만 따로 짚게 가른 낱말은, 바로 아래 글자와 틈 없이 붙여 한 낱말로 보이게 한다.
-  const cols = (doc.columns ?? []).map(col =>
-    `<div class="col">${col.map((u, i) => unitHtml(u, { join: [...u.han].length === 1 && [...(col[i + 1]?.han ?? '')].length === 1 })).join('')}</div>`).join('')
-  const sealCol = doc.seal ? `<div class="col">${unitHtml(doc.seal, { seal: true })}</div>` : ''
+  const gloss = text => (text ? `<p class="gl">${esc(text)}</p>` : '')
+  const cols = (doc.columns ?? []).map((col, c) =>
+    `<div class="col">${col.map((u, i) => unitHtml(u, { join: [...u.han].length === 1 && [...(col[i + 1]?.han ?? '')].length === 1 })).join('')}${gloss(doc.glosses?.[c])}</div>`).join('')
+  const sealCol = doc.seal ? `<div class="col">${unitHtml(doc.seal, { seal: true })}${gloss(doc.sealGloss)}</div>` : ''
   return `<div class="wrap">
     <div class="sheet">
       <div class="paper"><div class="frame">${cols}${sealCol}</div></div>
@@ -120,6 +137,8 @@ export function seekHtml(doc) {
       <h2>${esc(doc.title)}</h2>
       <p class="lead">${esc(doc.lead ?? '')}</p>
       <p class="q">${esc(doc.question)}</p>
+      ${doc.readNote ? `<p class="readnote">${esc(doc.readNote)}</p>` : ''}
+      ${doc.whole ? `<p class="trans">풀이 — ${esc(doc.whole)}</p>` : ''}
       <div class="pips" aria-label="찾은 곳">${Array.from({ length: targets }, () => '<i></i>').join('')}<span data-left></span></div>
       <div class="look" data-look><div class="empty">${esc(doc.how ?? '')}</div></div>
       <button type="button" class="name" disabled>이곳을 문제 삼는다</button>
@@ -187,12 +206,13 @@ export function createDocSeek(root) {
         nameBtn.addEventListener('click', () => {
           const picked = state.picked
           const r = nominate(doc, state)
+          const missed = r.state.misses > state.misses
           state = r.state
           say.textContent = r.ok && !seekDone(doc, state) ? `${r.line} ${doc.lines?.left1 ?? ''}` : r.line
           say.classList.toggle('ok', r.ok)
           if (r.ok) onFound?.()
           else {
-            onMiss?.()
+            if (missed && onMiss?.(r.line) === true) return
             const b = btns.get(picked)
             b?.classList.remove('no'); void b?.offsetWidth; b?.classList.add('no')
           }

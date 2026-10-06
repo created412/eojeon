@@ -30,6 +30,26 @@
 //   kind    — 'yard'(마당에 서 있어 눈에 보인다) | 'room'(방 안에 있어 찾아야 한다)
 //   note    — 이것이 무엇의 해설인지 밝히는 한 줄(고지). 반드시 있다
 export const ARTIFACTS = [
+  // 2026-10-06 선생님: 「궁생활디테일/히든피스」.
+  // 필수 사료가 아닌 선택 발견. 특정 인물의 유품이나 실물 출토 기록을 주장하지 않는다.
+  {
+    id: 'life-towel', name: '접어 둔 무명 수건', kind: 'room', discovery: 'palace-life',
+    lines: ['마루 한쪽에 수건이 반듯하게 접혀 있다. 끝자락에는 닦고 남은 물기가 배어 있다.',
+      '누군가 다녀간 자리다. 사람이 없는 방에도 손길은 남는다.'],
+    note: '궁의 살림을 상상해 놓은 물건과 짧은 장면입니다. 특정 인물이나 사건의 사료가 아닌 재구성입니다.',
+  },
+  {
+    id: 'life-brush', name: '다 쓴 붓', kind: 'room', discovery: 'palace-life',
+    lines: ['종이 옆에 붓 한 자루가 놓여 있다. 손잡이 끝이 닳았고 벼루 가장자리에는 먹이 말라 있다.',
+      '당신에게 올라온 한 장의 글 뒤에도, 쓰고 고쳐 쓴 시간이 있다.'],
+    note: '궁의 살림을 상상해 놓은 물건과 짧은 장면입니다. 실제 문서의 집필 도구나 사료로 확인된 유물이 아닌 재구성입니다.',
+  },
+  {
+    id: 'life-cloth', name: '남은 천 조각', kind: 'room', discovery: 'palace-life',
+    lines: ['작은 함 옆에 천 조각과 감긴 실이 남아 있다. 끊어진 자락에는 새 실이 이어져 있다.',
+      '아침에 보았던 단정한 옷은, 보이지 않는 곳에서 누군가 손을 대어 둔 옷이다.'],
+    note: '궁의 살림을 상상해 놓은 물건과 짧은 장면입니다. 특정 인물의 옷이나 바느질 기록을 옮긴 것이 아닌 재구성입니다.',
+  },
   // ── 마당 ─────────────────────────────────────────────────────────
   {
     id: 'deumu', name: '드무', kind: 'yard',
@@ -297,6 +317,9 @@ export function artifactLines(artifact, actIndex = 0) {
 // 병풍 앞에 서서 E 를 누르는 것으로 보인다.
 export const ARTIFACT_SPOTS = {
   changdeok: [
+    { id: 'life-towel', room: 'huijeongdang', dx: 0, dz: 1 },
+    { id: 'life-brush', room: 'gyujanggak', dx: -4, dz: -2 },
+    { id: 'life-cloth', room: 'daejojeon', dx: -3, dz: 1 },
     { id: 'uigwe', room: 'gyujanggak', dx: 0, dz: -4 },
     { id: 'chaekpan', room: 'gyujanggak', dx: 6, dz: 3 },
     { id: 'ilwolobongdo', room: 'injeongjeon', dx: 0, dz: -6 },
@@ -312,9 +335,12 @@ export const ARTIFACT_SPOTS = {
     // 마당의 짜임새 — 다리·길·못은 방이 아니라 자리다(x·z 를 그대로 적는다).
     { id: 'geumcheon', x: 0, z: 29 },          // 금천교 (palaces.js yard.bridge)
     { id: 'eodo', x: 0, z: 20 },               // 삼도의 첫 마디 (yard.royalRoad)
-    { id: 'buyongji', x: 26, z: -33 },         // 부용지와 부용정 사이
+    { id: 'buyongji', x: 26, z: -31.5 },       // 물 밖의 부용정 마루 중심
   ],
   gyeongbok: [
+    { id: 'life-towel', room: 'jagyeongjeon', dx: 0, dz: 1 },
+    { id: 'life-brush', room: 'sujeongjeon', dx: 0, dz: 1 },
+    { id: 'life-cloth', room: 'jagyeongjeon', dx: -3, dz: -1 },
     { id: 'ilwolobongdo', room: 'geunjeongjeon', dx: 0, dz: -7 },
     { id: 'sillokgwe', room: 'sujeongjeon', dx: -7, dz: -5 },
     { id: 'chaekpan', room: 'sujeongjeon', dx: 7, dz: 4 },

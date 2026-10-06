@@ -37,6 +37,6 @@ it('배 그림은 그 해의 자리에 붙는다 — 1866 프랑스(정족산성
   const dispatches = ACTS.flatMap(a => a.beats).filter(b => b.kind === 'dispatch').flatMap(b => b.dispatches)
   const art = id => dispatches.find(d => d.id === id)?.art
   expect(ACTS[1].beats.find(b => b.id === 'jeongjok-battle').art).toBe('fleet-1866')
-  expect(art('sn1')).toBe('fleet-1871')
+  expect(ACTS[1].beats.find(b => b.id === 'gwangseong-stand').art).toBe('fleet-1871')
   expect(art('un1')).toBe('unyo-1875')
 })

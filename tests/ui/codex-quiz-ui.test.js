@@ -76,7 +76,7 @@ describe('답이 선 판 — 문서의 말로 답이 보인다', () => {
     expect(html).toContain(withRight.question)                      // 질문이 옆에 남는다
     expect(html).toContain(sourceById('bellonet').title)
     expect(html).toContain(sourceById('bellonet').origin)           // 출처까지 함께
-    expect(html).toContain('조선 왕국 최후의 날이 될 것이다')          // 원문 그대로
+    expect(html).toContain('조선을 정복하기 위해 진군할 것이다')       // 교과서의 실제 발췌
     expect(html).toContain('그 배를 불살랐다')
   })
 

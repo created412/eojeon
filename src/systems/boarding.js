@@ -67,6 +67,38 @@ export function kingVisibleAt(u) {
 
 // 메고 갈 때 가마가 살짝 들린다. 사람이 드는 물건이라 완전히 고르지 않게 —
 // 들리고(0→1) 실려 가는 동안 조금 흔들린다.
+// 가마가 나가는 길 — **문간 한가운데**를 지난다.
+//
+// 선생님(2026-10-06, 녹화를 보고): 「가마가 기둥을 뚫고 간다든지, 모시고 가는 와중에 갑자기
+// 순간적으로 이동한다든지 … 자연스럽지 않은 움직임과 가마 행렬이 있어.」
+// 예전에는 가마가 선 자리(대문 **옆**, 문간 정통을 막지 않으려고 비껴 대 둔 자리)에서
+// 곧장 남쪽으로 직진했다 — 그 선은 대문의 오른쪽 기둥 위를 지난다(render/palace.js 의
+// 기둥은 칸의 경계에 서고, 가운데 칸만 비어 있다). 그래서 기둥을 뚫고 나갔다.
+// 이제 먼저 문간 앞 한가운데로 옮겨 서고, 거기서 문을 지나 나간다.
+//   spec   가마가 선 자리 { x, z }
+//   gate   대문 방 { x, z, d }  — x 가 문간의 가운데다
+//   beyond 문을 지나 더 나아가는 거리(CARRY_BEYOND)
+export function carryPathFor(spec, gate, beyond = CARRY_BEYOND) {
+  if (!gate) return [{ x: spec.x, z: spec.z }, { x: spec.x, z: spec.z + beyond }]
+  const dir = Math.sign(gate.z - spec.z) || 1            // 문이 가마의 어느 쪽인가(운현궁은 +z)
+  const approach = { x: gate.x, z: gate.z - dir * ((gate.d ?? 4) / 2 + 1.0) }   // 문간 바로 앞, 가운데
+  const through = { x: gate.x, z: gate.z }
+  const out = { x: gate.x, z: gate.z + dir * beyond }
+  return [{ x: spec.x, z: spec.z }, approach, through, out]
+}
+
+// 카메라가 보는 자리 — 가마 뒤로 한 발 처져서 따라간다. 메기 시작하는 순간 **튀지 않는다**:
+// 가마 옆에 서 있던 자리(beside)에서 가마 뒤(gama - trail)로 처음 한 토막(BLEND) 동안 미끄러진다.
+// 예전에는 carry 의 첫 프레임에 곧바로 가마 뒤로 옮겨 화면이 한 번에 4m 를 뛰었다.
+export const CAMERA_BLEND = 0.3
+export function cameraAnchorAt(beside, gama, dir, k, trail = CAMERA_TRAIL) {
+  const len = Math.max(0.001, Math.hypot(dir.x, dir.z))
+  const behind = { x: gama.x - (dir.x / len) * trail, z: gama.z - (dir.z / len) * trail }
+  const t = Math.max(0, Math.min(1, k / CAMERA_BLEND))
+  const e = t * t * (3 - 2 * t)
+  return { x: beside.x + (behind.x - beside.x) * e, z: beside.z + (behind.z - beside.z) * e }
+}
+
 export function carryLiftAt(u) {
   const { phase, k } = boardAt(u)
   if (phase !== 'carry') return 0

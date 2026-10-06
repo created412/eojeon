@@ -20,9 +20,11 @@ describe('역사 경계 안의 거점 선택', () => {
   // 정강의 선택이 들어가고 친필 넉 자가 빠졌다.
   // 70 → 69 (2026-10-06): 2막의 장계 차례 맞추기와 어전회의 둘이 정족산성 판 하나가 되었다.
   // 69 → 70 (2026-10-06): 4막에 아버지가 군영으로 떠나는 알현(imo-invitation)이 들어갔다.
-  it('70비트를 보존하고 8개의 탐색 거점만 연다', () => {
-    expect(ACTS.flatMap(a => a.beats)).toHaveLength(70)
-    expect(ACTS.flatMap(a => a.beats.map((_, i) => hubAt(a, i))).filter(Boolean)).toHaveLength(8)
+  // 70 → 73 (2026-10-06): 4막에 도봉소의 보고(imo-report) · 그 보고를 두고 정하는 자리 · 그날의 전교(imo-fault).
+  // 73 → 76 (2026-10-06): 5막 끝에 환어 · 마지막 걸음(거점 하나) · 어좌가 붙고, 닫는 글은 그 앞에 남았다.
+  it('76비트를 보존하고 9개의 탐색 거점만 연다', () => {
+    expect(ACTS.flatMap(a => a.beats)).toHaveLength(76)
+    expect(ACTS.flatMap(a => a.beats.map((_, i) => hubAt(a, i))).filter(Boolean)).toHaveLength(9)
   })
   it('다른 막과 다음 시기의 보고를 현재 거점에서 열지 못한다', () => {
     // 예전에는 2막 창덕궁의 「가례 뒤 하례」로 쟀다 — 그 보고는 왕비의 줄과 함께 걷어 냈다.
@@ -92,7 +94,7 @@ describe('역사 경계 안의 거점 선택', () => {
     delete legacy.freedom
     const loaded = deserialize(serialize(legacy))
     expect(SAVE_KEY).toBe('eojeon.save.v1')
-    expect(loaded.version).toBe(6)   // 4 → 5 (2026-10-06, core/state.js 머리말)
+    expect(loaded.version).toBe(7)   // 6 → 7 (2026-10-06, core/state.js 머리말)
     expect(loaded.beatIndex).toBe(legacy.beatIndex)
     expect(hubOptions(loaded, ACTS[2]).find(o => o.id === 'beat:seogye-audience').done).toBe(true)
   })

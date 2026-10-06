@@ -107,7 +107,7 @@ const byeongin = {
       { id: 'no-peace', who: '흥선대원군', portrait: 'regent',
         text: '「저들과 화친할 일은 없다. 저들은 처음부터 무력을 예고하였다.」',
         wants: ['bellonet'],
-        notes: { bellonet: '저들이 보낸 글에 그대로 적혀 있다 — 「조선 왕국 최후의 날이 될 것이다.」' } },
+        notes: { bellonet: '저들이 보낸 글에 그대로 적혀 있다 — 「조선을 정복하기 위해 진군할 것이다.」' } },
       { id: 'wait', who: '승정원 승지', portrait: 'senior',
         text: '「강화도의 형세가 아직 다 올라오지 않았습니다. 손에 있는 것은 장계 한 장뿐입니다.」',
         wants: ['yangheonsu'] },
@@ -194,7 +194,7 @@ describe('놓은 것을 적는다', () => {
 
   it('데이터에 적어 둔 줄이 있으면 그것을, 없으면 판정 없는 줄을 붙인다', () => {
     const rows = attachmentRows(byeongin, attached)
-    expect(rows[0].note).toContain('최후의 날')
+    expect(rows[0].note).toContain('정복하기 위해')
     expect(rows[1].note).toBe(NEUTRAL_ATTACH_NOTE)
     expect(NEUTRAL_ATTACH_NOTE).toContain('읽는 사람이 정한다')
   })

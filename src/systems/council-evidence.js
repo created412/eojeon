@@ -188,10 +188,12 @@ export function eulReul(word) {
 // 학생이 한 것으로 지어지는 한 문장. **화면도 기록도 이 함수 하나만 부른다** —
 // 두 곳에서 따로 지으면 언젠가 어긋나고, 어긋나면 학생이 활동지에 옮겨 적는 문장이
 // 화면과 다른 말을 한다(그 산출물이 이 수업의 결과물이다).
-export function recordSentence({ choiceText = '', chose = true, titles = [], forecastText = '' } = {}) {
+// asked — 그 회의에 근거를 대는 판이 있었는가. 없었던 회의(2026-10-06 부터 모든 회의)의 기록에
+//   「근거를 꺼내지 않고」라고 적으면, 꺼낼 자리가 없었던 학생을 나무라는 말이 된다.
+export function recordSentence({ choiceText = '', chose = true, titles = [], forecastText = '', asked = true } = {}) {
   const evidence = titles.length
     ? `『${titles.join('』·『')}』${eulReul(titles[titles.length - 1])} 근거로 삼아 `
-    : '사초함에서 근거를 꺼내지 않고 '
+    : asked ? '사초함에서 근거를 꺼내지 않고 ' : ''
   const decided = chose
     ? `「${String(choiceText).trim()}」 쪽으로 정했`
     : '아무것도 고르지 못했'
@@ -223,7 +225,7 @@ export function councilRecord(beat, { choiceId = null, attached = {}, forecastId
     forecast,
     forecastText: forecast?.text ?? '',
     note: FORECAST_NOTE,
-    sentence: recordSentence({ choiceText, chose, titles, forecastText: forecast?.text ?? '' }),
+    sentence: recordSentence({ choiceText, chose, titles, forecastText: forecast?.text ?? '', asked: claimsOf(beat).length > 0 }),
   }
 }
 
