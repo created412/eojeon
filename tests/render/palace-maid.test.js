@@ -22,7 +22,8 @@ describe('궁녀 — 다른 인물과 같은 GLB 인물이다', () => {
   })
 
   it('실린 궁녀 GLB 는 다른 인물과 같은 뼈 이름(리깅)을 가진다 — 걸음·읍이 같은 셈으로 돈다', () => {
-    const glb = readFileSync(join(process.cwd(), 'assets', 'models', 'opt', 'maid.glb'))
+    // 원본·최적화 GLB 는 저장소에 없다(.gitignore) — 실리는 것은 models-data.js 의 base64 다. 그것을 푼다.
+    const glb = Buffer.from(MODELS.maid.slice(MODELS.maid.indexOf(',') + 1), 'base64')
     // GLB 의 JSON 청크는 12바이트 머리 뒤에 온다: [길이][형식 'JSON'][본문]
     const len = glb.readUInt32LE(12)
     const json = JSON.parse(glb.subarray(20, 20 + len).toString('utf8'))
