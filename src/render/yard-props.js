@@ -12,7 +12,7 @@
 // 놓는 자리는 data/palaces.js 의 yard.props 다. fromYear 를 적으면 그 해부터 보인다
 // (척화비는 1871년에 세워졌다 — 그전 장면에 서 있으면 안 된다).
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
-import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'
+// meshopt 디코더(WASM)는 2026-10-08 에 걷었다 — 도름스 CSP 마크(tools/pack-props.mjs 머리말). GLB 는 quantize 만 쓴다.
 import { PROP_MODELS } from './props-data.js'
 
 // 물건마다 세계에서의 키(m)와 바닥에서 띄울 높이. 생성기가 낸 GLB 는 크기가 제각각이라
@@ -38,7 +38,6 @@ let loading = null
 export function propsReady(THREE) {
   if (!loading) {
     const loader = new GLTFLoader()
-    loader.setMeshoptDecoder(MeshoptDecoder)
     loading = Promise.all(Object.entries(PROP_MODELS).map(([id, uri]) =>
       loader.loadAsync(uri).then(g => {
         // 생성기가 낸 재질은 금속처럼 번들거린다. 마당의 돌·나무·놋으로 낮춘다.

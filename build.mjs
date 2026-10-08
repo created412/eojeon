@@ -1,5 +1,6 @@
 import { build, context } from 'esbuild'
-import { readFile, writeFile, mkdir, rename, unlink, rm } from 'node:fs/promises'
+import { readFile, writeFile, mkdir, rename, unlink, rm, copyFile, readdir } from 'node:fs/promises'
+import { makeHeaders } from './tools/make-headers.mjs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
@@ -53,6 +54,11 @@ async function emit() {
   // 선생님(2026-10-06): 「오프닝 영상을 html에 넣고」. 예전에 곁에 복사해 두던 폴더는 걷는다 —
   // 남아 있으면 「HTML 하나면 된다」가 거짓이 된다.
   await rm(join(here, 'dist', 'assets'), { recursive: true, force: true })
+  // 2026-10-08 선생님: 「마크도 받게 헤더 설정 해줘」 — Cloudflare Pages 응답 헤더(CSP 해시는 빌드마다 다시 센다)와
+  // 곁의 안내 페이지(개인정보·이용 안내)·OG 그림. 배포 폴더에는 이것들을 index.html 과 함께 올린다.
+  const { hashes } = makeHeaders(OUT, join(here, 'dist', '_headers'))
+  for (const f of await readdir(join(here, 'site'))) await copyFile(join(here, 'site', f), join(here, 'dist', f))
+  console.log(`dist/_headers  script-src ${hashes.join(' ')} · site/ ${(await readdir(join(here, 'site'))).join(' ')}`)
   const kb = (Buffer.byteLength(html, 'utf8') / 1024).toFixed(0)
   console.log(`어전.html + dist/어전.html  ${kb} KB`)
 }

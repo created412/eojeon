@@ -18,20 +18,25 @@ const SRC = join(ROOT, 'assets', 'props')
 const OUT = join(SRC, 'opt')
 const JS = join(ROOT, 'src', 'render', 'props-data.js')
 
+// 2026-10-08 선생님: 「마크도 받게 헤더 설정 해줘」 — 도름스 보안 마크의 CSP 검사는 script-src 에
+// 'self'·해시·호스트만 허용한다. meshopt 디코더는 WebAssembly 라 'wasm-unsafe-eval' 이 필요한데 그 토큰은
+// 검사기가 「검증할 수 없는 출처」로 떨어뜨린다(dorms-check checks/external/header-policy.js). 그래서
+// **meshopt 를 걷고 quantize 만 쓴다** — WASM 없이 three 의 GLTFLoader 가 그대로 읽는다. 지오메트리는 1.7~2배
+// 커지지만 텍스처를 한 단계 줄여 메운다.
 const ARGS = [
-  '--texture-size', '256',
+  '--texture-size', '192',
   '--texture-compress', 'webp',
-  '--compress', 'meshopt',
-  '--simplify-error', '0.015',
+  '--compress', 'quantize',
+  '--simplify-error', '0.025',
 ]
 
 // 사람(난병·청군)은 물건보다 가까이, 얼굴이 보이게 선다 — 텍스처를 한 단계 크게, 덜 깎는다.
 // 2026-10-06 선생님: 「임오군란 군병들의 디자인이 거지같아. 힉스필드로 군병들을 제대로 만들어.」
 const FIGURE_ARGS = [
-  '--texture-size', '512',
+  '--texture-size', '384',
   '--texture-compress', 'webp',
-  '--compress', 'meshopt',
-  '--simplify-error', '0.004',
+  '--compress', 'quantize',
+  '--simplify-error', '0.008',
 ]
 
 mkdirSync(OUT, { recursive: true })

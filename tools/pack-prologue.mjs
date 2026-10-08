@@ -2,8 +2,8 @@
 //
 //   node tools/pack-prologue.mjs
 //
-// 입력 : assets/video/eojeon-prologue-v23-web.mp4          (원본 V23 을 H.264 CRF 28 · 720p · 무음으로 다시 담은 것, 4.9MB)
-//        assets/video/eojeon-prologue-continuous-web.m4a   (연속 사운드트랙 AAC 80kbps, 1.3MB)
+// 입력 : assets/video/eojeon-prologue-v23-web.mp4          (원본 V23 을 H.264 CRF 31 · 720p · 무음으로 다시 담은 것, 3.4MB — 2026-10-08 CSP 때문에 GLB 가 커져 CRF 28 → 31)
+//        assets/video/eojeon-prologue-continuous-web.m4a   (연속 사운드트랙 AAC 64kbps, 1.0MB)
 // 출력 : src/ui/prologue-media-data.js                      (base64 — 실행 때 Blob URL 로 푼다, ui/prologue.js)
 //
 // 선생님(2026-10-06): 「오프닝 영상을 html에 넣고」. 그동안 영상은 HTML 곁의 파일이었다 — HTML 만
@@ -13,8 +13,8 @@
 // (한 프레임을 나란히 놓고 봤다). 원본은 assets/video/ 에 그대로 둔다 — 다시 담을 때 그것에서 담는다.
 //
 // 다시 담기(imageio-ffmpeg 의 ffmpeg):
-//   ffmpeg -i assets/video/eojeon-prologue-v23.mp4 -an -c:v libx264 -preset slow -crf 28 -pix_fmt yuv420p -movflags +faststart assets/video/eojeon-prologue-v23-web.mp4
-//   ffmpeg -i assets/video/eojeon-prologue-continuous.m4a -c:a aac -b:a 80k -movflags +faststart assets/video/eojeon-prologue-continuous-web.m4a
+//   ffmpeg -i assets/video/eojeon-prologue-v23.mp4 -an -c:v libx264 -preset slow -crf 31 -pix_fmt yuv420p -movflags +faststart assets/video/eojeon-prologue-v23-web.mp4
+//   ffmpeg -i assets/video/eojeon-prologue-continuous.m4a -c:a aac -b:a 64k -movflags +faststart assets/video/eojeon-prologue-continuous-web.m4a
 import { readFileSync, writeFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { join, dirname } from 'node:path'

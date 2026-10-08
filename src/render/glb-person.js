@@ -18,7 +18,7 @@
 // 계약은 앞의 두 판과 같다: buildPerson / disposePerson / updateSway / RANK_SPECS.
 // 그래서 scene.js 는 import 줄 하나만 바뀐다.
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
-import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'
+// meshopt 디코더(WASM)는 2026-10-08 에 걷었다 — 도름스 CSP 마크(tools/pack-glb.mjs 머리말). GLB 는 quantize 만 쓴다.
 // 뼈대가 붙은 메시는 Object3D.clone() 으로 복제하면 안 된다 — 복제본이 **원본의
 // 뼈대**를 가리켜 정점이 한 점으로 무너진다. 화면에는 아무것도 안 보이는데
 // renderer.info 의 삼각형 수는 늘어 있어 오래 헤맸다. SkeletonUtils 가 뼈대까지
@@ -127,7 +127,6 @@ export function modelsReady(THREE) {
   if (!loading) {
     loading = true
     const loader = new GLTFLoader()
-    loader.setMeshoptDecoder(MeshoptDecoder)
     const jobs = Object.entries(MODELS).map(([key, uri]) =>
       loader.loadAsync(uri).then(g => {
         // Exported robes default to metallic, fully emissive surfaces. Let cloth

@@ -68,7 +68,7 @@ for key, (alt, caption) in ART.items():
     im = Image.open(f'assets/scene-art/{key}.png').convert('RGB')
     im.thumbnail((800, 800))
     buf = io.BytesIO()
-    im.save(buf, 'WEBP', quality=72, method=6)
+    im.save(buf, 'WEBP', quality=62, method=6)   # 2026-10-08 72 → 62: 용량(25MiB 상한) 때문. 화면에서 차이가 안 보인다
     data = buf.getvalue()
     out[key] = {'src': 'data:image/webp;base64,' + base64.b64encode(data).decode(), 'alt': alt, 'caption': caption}
     print(key, len(data) // 1024, 'KB')

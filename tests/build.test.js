@@ -40,12 +40,15 @@ describe('단일 HTML 빌드', () => {
   //  - w3.org 네임스페이스: XML 네임스페이스 식별자일 뿐 가져오지 않는다
   //  - jcgt.org: GLSL 셰이더 문자열 안의 인용 주석
   // Original-source / image-license links are navigation only. Images stay data URLs.
-  const ALLOWED = /https?:\/\/(?:www\.w3\.org|jcgt\.org|commons\.wikimedia\.org|creativecommons\.org|www\.kogl\.or\.kr|contents\.history\.go\.kr|www\.naturalearthdata\.com)\/[^\s"'`)\\]*/gi
+  // eojeon.pages.dev · github.com/created412 — 2026-10-08 도름스 마크용 canonical·OG·문의 링크(가져오지 않는다, 누르면 가는 길이다)
+const ALLOWED = /https?:\/\/(?:www\.w3\.org|jcgt\.org|commons\.wikimedia\.org|creativecommons\.org|www\.kogl\.or\.kr|contents\.history\.go\.kr|www\.naturalearthdata\.com|eojeon\.pages\.dev|github\.com\/created412)\/[^\s"'`)\\]*/gi
 
   it('외부 리소스를 참조하지 않는다', async () => {
     const html = await readFile(OUT, 'utf8')
     expect(html).not.toMatch(/<script[^>]+src=/i)
-    expect(html).not.toMatch(/<link[^>]+href=/i)
+    // 2026-10-08: canonical 링크는 가져오는 것이 아니다 — 스타일시트·프리로드·아이콘 같은 **요청하는** link 만 막는다
+    expect(html).not.toMatch(/<link[^>]+rel="(?:stylesheet|preload|modulepreload|prefetch|icon|manifest)"/i)
+    expect(html).not.toMatch(/<link(?![^>]+rel="canonical")[^>]+href=/i)
     const leftovers = html.replace(ALLOWED, '').match(/https?:\/\/[^\s"'`)\\]*/gi) ?? []
     expect(leftovers).toEqual([])
   })
@@ -82,6 +85,31 @@ describe('단일 HTML 빌드', () => {
   // 2026-09-14 BGM 두 곡(Lyria · 모노 Opus 32kbps, 약 670KB)을 더하며 13MB 로 올렸다.
   // 2026-10-06 사용자 요청: 선택지마다 Higgsfield 그림, 전장·투명 초상·궁녀 3D 추가.
   // WebP/메시 압축을 거친 새 자산을 포함한 명시적 한도.
+  // 2026-10-08 선생님: 「마크도 받게 헤더 설정 해줘」 — _headers 의 CSP 해시는 **이 빌드의** 인라인 스크립트 해시다.
+  it('dist/_headers 의 CSP 해시가 HTML 의 유일한 인라인 스크립트와 맞는다', async () => {
+    const [html, headers] = await Promise.all([readFile(OUT, 'utf8'), readFile('dist/_headers', 'utf8')])
+    const { inlineScriptHashes } = await import('../tools/make-headers.mjs')
+    const hashes = inlineScriptHashes(html)
+    expect(hashes).toHaveLength(1)
+    expect(headers).toContain(`script-src 'self' '${hashes[0]}'`)
+    // 'self'·해시뿐 — unsafe-inline·unsafe-eval·wasm-unsafe-eval 없음(도름스 검사기는 그 밖의 토큰을 전부 떨어뜨린다)
+    expect(headers).toMatch(/script-src 'self' 'sha256-[^']+'; style-src/)
+    expect(html).not.toContain('WebAssembly.instantiate')   // meshopt 디코더(WASM)가 번들에 없다 — CSP 가 막는다
+    for (const h of ['Strict-Transport-Security', 'X-Frame-Options: DENY', 'X-Content-Type-Options: nosniff', 'Referrer-Policy', 'Permissions-Policy', '! Access-Control-Allow-Origin']) expect(headers).toContain(h)
+    expect(headers).toMatch(/media-src [^;]*blob:/)    // 오프닝 영상·음악은 Blob URL 이다
+    expect(headers).toMatch(/connect-src [^;]*data:/)  // GLTFLoader 가 data: 를 fetch 로 읽는다
+  })
+
+  it('설명·OG·canonical 과 안내 페이지 링크가 있다 — 도름스가 보는 것', async () => {
+    const html = await readFile(OUT, 'utf8')
+    expect(html).toMatch(/<meta name="description" content="[^"]{20,}"/)
+    expect(html).toContain('<link rel="canonical" href="https://eojeon.pages.dev/">')
+    expect(html).toContain('property="og:image" content="https://eojeon.pages.dev/cover.jpg"')
+    expect(html).toContain('href="privacy.html"')
+    expect(html).toContain('href="terms.html"')
+    for (const f of ['privacy.html', 'terms.html', 'cover.jpg']) await expect(stat(`dist/${f}`)).resolves.toBeTruthy()
+  })
+
   // 2026-10-06 선생님: 「오프닝 영상을 html에 넣고」 — 영상(CRF 28, 4.9MB)·음악(80kbps, 1.3MB)이 base64 로 붙는다.
   // 상한은 Cloudflare Pages 의 파일 하나 한도(25MiB)다 — 이보다 크면 공개본으로 올릴 수 없다.
   it('25MiB(Cloudflare Pages 파일 하나 한도) 이하다', async () => {
