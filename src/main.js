@@ -9,6 +9,7 @@ import { createInput, isTyping } from './input/input.js'
 import { PALACES, pickupNear, roomLabel, roomAt, baseOf } from './data/palaces.js'
 import { guideForBeat, GAME_INTRO, ACT_GUIDE } from './data/guide.js'
 import { createGuideStrip } from './ui/guide-strip.js'
+import { installPhoneLandscape } from './ui/phone-landscape.js'
 import { npcsAt, npcNear, npcHandledCardIds, npcCardIds, npcById, portraitKeyOf } from './data/npcs.js'
 import {
   roomOf, kingSpot, besideSpot, visitorSpot, doorSpot, walkAt, yawToward, pathAt, pathLength, processionPath, formationAll,
@@ -653,6 +654,7 @@ export function boot(root, { restartState = null, sharedAudio = null, restartNot
   const speak = createSpeak(root, { voice })
   const missNotice = createMissNotice(root)
   const guide = createGuideStrip(root)
+  installPhoneLandscape()     // 가로 휴대전화(높이 480 이하)에서 전체 화면 판을 한 화면에 — ui/phone-landscape.js
   let selectedActivity = null
   let hubBusy = false
   const title = createTitle(root)
@@ -1398,8 +1400,12 @@ export function boot(root, { restartState = null, sharedAudio = null, restartNot
           // 해가 진다는 것을 눈으로 알게 한다.
           audio.play('deny')
           hubBusy = true
+          // 판이 서 있는 동안 「지금 할 일」 띠는 접는다 — 선생님(2026-10-09, 휴대전화 가로 화면)의 「해가 진다」
+          // 그림에서 띠가 판 한가운데 떠 「임금의 하루가 끝났다」를 덮고 있었다. 걷는 낮의 안내는 판이 닫히면 돌아온다.
+          guide.suspend(true)
           await dayEnd.showHeld({ left: left.labels.map(label => ({ label })),
             lead: dayObjective() ?? left.first.label })
+          guide.suspend(false)
           hubBusy = false
           return
         }
@@ -1415,7 +1421,7 @@ export function boot(root, { restartState = null, sharedAudio = null, restartNot
         // 선생님(2026-09-25): 「선택에 무게가 생깁니다.」 할 일이 애초에 없던 탐색
         // 비트에서는 dayReport() 가 null 을 내므로 판이 뜨지 않는다.
         const report = dayReport(flow.state, flow.act())
-        if (report) await dayEnd.show({ ...report, buttonLabel: '해가 지고, 다음 일로' })
+        if (report) { guide.suspend(true); await dayEnd.show({ ...report, buttonLabel: '해가 지고, 다음 일로' }); guide.suspend(false) }
         resolve(flow.state)
       }
     })

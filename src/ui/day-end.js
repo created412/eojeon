@@ -114,6 +114,25 @@ const CSS = `
   color:#e0a23a;border-radius:3px;font-size:var(--read-label,15px);cursor:pointer}
 @media(max-width:760px){.dayend{padding:20px 14px;gap:12px}.dayend h2{letter-spacing:.34em}
   .dayend .col{flex:1 1 100%;padding:13px 14px}.dayend .tail{text-align:left}}
+/* 가로로 눕힌 휴대전화(높이 480 이하) — 선생님(2026-10-09): 「pc버전에서 만든걸 모바일로 할 때 창이 감당이 안되게
+   커져버려 … 모바일의 원칙은 한판에 들어와야하는거야」. 표제·해줄·이끄는 줄·두 칸·꼬리말·단추가 390px 안에 서게
+   간격과 글자를 줄이고 얼굴 타일을 작게 한다. 두 칸은 나란히 둔다(가로니까). */
+@media(max-height:480px){
+  .dayend{padding:10px 14px;gap:7px;justify-content:safe center}
+  .dayend h2{font-size:13px;letter-spacing:.3em}
+  .dayend .date{font-size:10px}
+  .dayend .sun{height:1px}
+  .dayend p{font-size:13px;line-height:1.5}
+  .dayend .cols{gap:8px}
+  .dayend .col{flex:1 1 300px;padding:7px 10px}
+  .dayend .col b{margin-bottom:4px;font-size:11px}
+  .dayend .col .it{font-size:12px;line-height:1.4;padding:2px 0}
+  .dayend .tiles{gap:6px;grid-template-columns:repeat(auto-fill,minmax(58px,1fr))}
+  .dayend .tile{gap:3px}
+  .dayend .tile figcaption{font-size:10px;line-height:1.3}
+  .dayend .tail{font-size:11px;line-height:1.4}
+  .dayend button{margin-top:0;padding:8px 22px;font-size:13px}
+}
 `
 
 let styled = false

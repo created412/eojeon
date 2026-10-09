@@ -41,6 +41,8 @@ export function createGuideStrip(root) {
   .guide-strip[hidden]{display:none}
   .guide-strip.guide-scrolled,.guide-strip.guide-suspended{visibility:hidden}
   @media(max-width:760px){.guide-strip{top:auto;bottom:8px;font-size:13px}}
+  /* 가로로 눕힌 휴대전화(높이 480 이하)도 아래쪽 — 위에 두면 390px 화면의 1/4 을 띠가 먹는다(2026-10-09). */
+  @media(max-height:480px){.guide-strip{top:auto;bottom:6px;font-size:12px;padding:5px 12px;max-width:min(720px,calc(100vw - 24px))}}
   /* 손가락 기기의 낮(html.hud-day — ui/cinematic-hud.js 가 켠다)에는 띠를 접는다. 선생님(2026-10-09): 「지금 할 일과
      오늘 할 일이 겹쳐서 진행이 어려움. 오늘 할 일만 남겨두고」. 판(사료·문서·저울)에서는 그대로 뜬다. */
   @media(pointer:coarse){html.hud-day .guide-strip{display:none}}
