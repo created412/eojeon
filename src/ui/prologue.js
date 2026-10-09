@@ -39,7 +39,8 @@ const CSS = `
 .prologue .prologue-start:hover,.prologue .prologue-start:focus-visible{background:#efdaa6}
 .prologue .prologue-notice{margin:0;font-size:13px;line-height:1.65;background:#0b121be8;padding:12px 16px;border-radius:4px}
 .prologue .prologue-status{position:absolute;left:20px;right:20px;top:46%;text-align:center;font-size:14px;text-shadow:0 2px 5px #000}
-.prologue .prologue-retry{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%)}
+.prologue .prologue-wait{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:10px}
+.prologue .prologue-wait-resume{font-size:14px;padding:10px 18px}
 .prologue .prologue-info{position:absolute;left:20px;bottom:24px;max-width:min(520px,calc(100% - 260px));font-size:11px}
 .prologue .prologue-info summary{cursor:pointer;min-height:44px;display:flex;align-items:center;text-shadow:0 1px 4px #000}
 .prologue .prologue-info p{margin:0;padding:10px;background:#081116eb;line-height:1.6}
@@ -50,6 +51,21 @@ const CSS = `
  .prologue .prologue-start{min-width:170px;font-size:18px;padding:13px 23px}
  .prologue .prologue-info{left:12px;bottom:18px;max-width:calc(100% - 210px)}
  .prologue .prologue-info[open]{bottom:95px;max-width:calc(100% - 24px)}}
+/* 선생님(2026-10-09, 휴대전화 화면): 「모바일이나 패드사용시 일시정지를 눌러야 재생이 됌. 소리와 함께 재생을 눌러야
+   재생되도록 해야하며, 저 선택지들이 너저분하게 널려있어서 영상시청에 방해가 됌」.
+   · 자동 재생이 막힌 동안(prologue-waiting)에는 단추 띠·안내를 모두 숨기고 **「소리와 함께 재생」 하나만** 크게 둔다.
+     영상을 짚어도 같은 일이 난다(재생 중에 짚으면 멈추고, 다시 짚으면 잇는다).
+   · 손가락 기기(pointer:coarse)·좁은 화면에서는 「일시 정지」「조작 안내」를 띠에서 뺀다 — 멈춤은 영상을 짚는 것으로
+     되고, 조작 안내는 게임 안의 「?」 단추에 있다. 남는 것은 소리·건너뛰기·(저장이 있으면) 이어서 하기 한 줄뿐이다. */
+.prologue.prologue-waiting .prologue-bar,.prologue.prologue-waiting .prologue-info{display:none}
+.prologue .prologue-retry{font-size:18px;font-weight:700;letter-spacing:.06em;padding:16px 30px;min-width:220px;
+ color:#17282b;background:#d4bb83;border:1px solid #f1dcaa;box-shadow:0 3px 28px #0008}
+.prologue .prologue-retry:hover,.prologue .prologue-retry:focus-visible{background:#efdaa6}
+@media(pointer:coarse),(max-width:600px){
+ .prologue .prologue-pause,.prologue .prologue-help{display:none}
+ .prologue .prologue-bar{flex-direction:column;align-items:stretch;gap:6px;padding:10px 12px}
+ .prologue .prologue-actions{flex-wrap:nowrap;justify-content:flex-end;gap:6px}
+ .prologue .prologue-actions button{font-size:12px;padding:8px 10px;min-height:40px;white-space:nowrap}}
 @media(prefers-reduced-motion:reduce){.prologue{transition:none}}
 `
 let styled = false
@@ -80,8 +96,10 @@ export function createPrologue(root) {
       const actions = document.createElement('div'); actions.className = 'prologue-actions'
       function button(text, parent = actions) { const b = document.createElement('button'); b.textContent = text; parent.appendChild(b); return b }
       const sound = button(''), pause = button('일시 정지'), skip = button('영상 건너뛰기')
+      pause.className = 'prologue-pause'
       const resume = hasSave ? button('이어서 하기') : null
       const help = onHelp ? button('조작 안내') : null
+      if (help) help.className = 'prologue-help'
       const entry = document.createElement('div'); entry.className = 'prologue-entry'; entry.hidden = true
       if (notice) { const p = document.createElement('p'); p.className = 'prologue-notice'; p.textContent = notice; entry.appendChild(p) }
       const start = button('게임 시작  →', entry); start.className = 'prologue-start'; start.setAttribute('aria-label', '게임 시작')
@@ -95,12 +113,17 @@ export function createPrologue(root) {
       restartCheck.appendChild(restartNote)
       const keepSave = button('기록을 유지하고 이어서 하기', restartCheck), restart = button('기록을 지우고 새로 시작', restartCheck)
       entry.appendChild(restartCheck)
-      const retry = button('소리와 함께 재생', el); retry.className = 'prologue-retry'; retry.hidden = true
+      // 막힌 동안 보이는 상자 — 「소리와 함께 재생」 하나, 저장이 있으면 그 아래 「이어서 하기」(영상을 틀지 않고도
+      // 들어갈 수 있어야 한다 — 지난 차시 학생은 영상을 다시 볼 까닭이 없다).
+      const waitBox = document.createElement('div'); waitBox.className = 'prologue-wait'; waitBox.hidden = true
+      const retry = button('소리와 함께 재생', waitBox); retry.className = 'prologue-retry'
+      const resumeWait = hasSave ? button('이어서 하기', waitBox) : null
+      if (resumeWait) resumeWait.className = 'prologue-wait-resume'
       const status = document.createElement('div'); status.className = 'prologue-status'; status.setAttribute('role', 'status')
       status.hidden = true
       const info = document.createElement('details'); info.className = 'prologue-info'
       info.innerHTML = '<summary>안내 · 출처</summary><p>이어폰이 없으면 소리를 끄고 하세요.<br>음악: Suno · 「폭풍과 왕의 맹세」와 어전을 위해 만든 장면별 연주곡.<br>본문 글꼴: Pretendard(Kil Hyung-jin), 게임에 쓰이는 글자만 포함 · SIL Open Font License 1.1.</p>'
-      bar.append(note, actions); el.append(video, soundtrack, bar, status, entry, info); root.appendChild(el)
+      bar.append(note, actions); el.append(video, soundtrack, bar, status, waitBox, entry, info); root.appendChild(el)
       let finished = false, removed = false, ready = false, tailRequested = false, failed = false, fadeTimer = null, fadeFrame = null
       let pictureLoop = false, wantsPlayback = false
       const tailStart = () => Math.max(0, video.duration - PROLOGUE_TAIL_SECONDS)
@@ -116,7 +139,7 @@ export function createPrologue(root) {
         if (finished) return
         finished = true; video.pause()
         try { audio?.unlock()?.catch?.(() => {}) } catch { /* 영상 소리 없이도 시작한다 */ }
-        bar.hidden = true; entry.hidden = true; retry.hidden = true; status.hidden = true; info.hidden = true
+        bar.hidden = true; entry.hidden = true; waitBox.hidden = true; status.hidden = true; info.hidden = true
         el.classList.add('prologue-leaving')
         // 1막 음악이 올라오는 동안 오프닝 음악을 천천히 내린다.
         const began = performance.now(), volume = soundtrack.volume
@@ -133,20 +156,22 @@ export function createPrologue(root) {
       function showEntry() { if (finished) return; ready = true; entry.hidden = false; skip.hidden = true }
       function mediaError() {
         if (finished) return
-        failed = true; wantsPlayback = false; video.pause(); soundtrack.pause(); video.hidden = true; pause.hidden = true; retry.hidden = true
+        failed = true; wantsPlayback = false; video.pause(); soundtrack.pause(); video.hidden = true; pause.hidden = true; waitBox.hidden = true
         status.hidden = false; status.textContent = '영상을 불러오지 못했습니다. 게임 시작을 누르면 진행할 수 있습니다.'
         showEntry()
       }
       function paintSound() { sound.textContent = soundtrack.muted ? '소리 켜기' : '소리 끄기'; sound.setAttribute('aria-pressed', String(!soundtrack.muted)) }
       function play() {
         if (finished || failed) return
-        wantsPlayback = true; retry.hidden = true
+        wantsPlayback = true; waitBox.hidden = true; el.classList.remove('prologue-waiting')
         const denied = error => {
           if (finished || error.name === 'AbortError') return
           if (error.name !== 'NotAllowedError') { mediaError(); return }
           wantsPlayback = false; video.pause(); soundtrack.pause()
           retry.textContent = soundtrack.muted ? '영상 재생' : '소리와 함께 재생'
-          retry.hidden = false; status.hidden = true
+          waitBox.hidden = false; status.hidden = true
+          // 막힌 동안에는 이 단추 하나만 보인다 — 띠와 안내는 CSS 가 숨긴다(prologue-waiting).
+          el.classList.add('prologue-waiting')
         }
         try {
           // 소리가 허용되기 전에는 화면만 무음으로 흘려보내지 않는다.
@@ -161,10 +186,12 @@ export function createPrologue(root) {
         if (audio && audio.isMuted() !== muted) audio.toggleMuted()
         soundtrack.muted = muted; paintSound()
         if (!muted) { try { audio?.unlock()?.catch?.(() => {}) } catch { /* 사용자 조작 때 재시도 */ } }
-        if (!retry.hidden) play()
+        if (!waitBox.hidden) play()
       })
       retry.addEventListener('click', () => play())
       function pauseBoth() { wantsPlayback = false; video.pause(); soundtrack.pause(); pause.textContent = '계속 재생' }
+      // 영상을 짚으면 재생/멈춤 — 손가락 기기에서는 「일시 정지」 단추가 없다(위 CSS 주석).
+      video.addEventListener('click', () => { if (finished || failed) return; if (!wantsPlayback) play(); else pauseBoth() })
       pause.addEventListener('click', () => { if (!wantsPlayback) play(); else pauseBoth() })
       function seekTail(skipAhead = false) {
         if (finished || failed) return
@@ -184,6 +211,7 @@ export function createPrologue(root) {
       keepSave.addEventListener('click', () => finish(onResume))
       restart.addEventListener('click', () => finish(onDone))
       resume?.addEventListener('click', () => finish(onResume))
+      resumeWait?.addEventListener('click', () => finish(onResume))
       help?.addEventListener('click', async () => {
         const wasPlaying = wantsPlayback
         pauseBoth(); el.hidden = true
@@ -191,7 +219,7 @@ export function createPrologue(root) {
       })
       video.addEventListener('loadedmetadata', () => { if (tailRequested) seekTail(true) })
       video.addEventListener('timeupdate', () => { if (Number.isFinite(video.duration) && video.currentTime >= tailStart()) showEntry() })
-      video.addEventListener('playing', () => { if (finished) return; status.hidden = true; retry.hidden = true; pause.textContent = '일시 정지' })
+      video.addEventListener('playing', () => { if (finished) return; status.hidden = true; waitBox.hidden = true; el.classList.remove('prologue-waiting'); pause.textContent = '일시 정지' })
       video.addEventListener('ended', () => seekTail())
       // 최초 55초의 입 모양·대사는 같은 시각을 따른다. 끝 장면 반복에서는 음악을 되감지 않는다.
       soundtrack.addEventListener('timeupdate', () => {

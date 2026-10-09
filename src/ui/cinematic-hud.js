@@ -1,6 +1,7 @@
 import { riceLabel, RICE_NOTE } from '../systems/prices.js'
 import { royalIcon } from './royal-icons.js'
 import { installRoyalInterface } from './royal-interface.js'
+import { isCoarse } from './controls-hint.js'
 
 // ⚠ 2026-10-06 — 「지금의 여정」 판과 촉박의 붉은 판은 **누를 수 없다.** 예전에는 누르면
 //   목적지까지 걸어가(달아나) 주었다. 선생님: 「일정은 할 일을 보여 주는 거지 … 자동으로
@@ -68,6 +69,22 @@ export function createCinematicHud(root, { onCodex = () => {}, onRotate = () => 
   @media(max-height:480px){
     .cinema-tasks li.done{display:none}
     .cinema-tasks li b{display:inline;margin-right:4px}
+  }
+  /* 손가락 기기(2026-10-09 선생님, 휴대전화 가로·세로 화면): 「엄청나게 많은 선택지와 창들로 게임 진행이 안됨. 지금 할 일과
+     오늘 할 일이 겹쳐서 진행이 어려움. 오늘 할 일만 남겨두고 그것도 모바일이나 패드에서는 하나씩 달성할때마다 다음것이 뜨도록」.
+     · 할 일은 **지금 할 하나만**(one-task — update() 가 목록을 하나로 줄인다), 세는 수는 그대로 「1 / 3」.
+     · 위쪽 「사초함」 단추는 뺀다 — 오른쪽 아래 「Q 사초」 손가락 단추가 같은 일을 한다(멈춤 단추와 겹쳐 있었다).
+     · 쌀값·아버지 줄도 뺀다. 「지금 할 일」 띠는 guide-strip.js 가 낮 동안(html.hud-day) 숨긴다. */
+  @media(pointer:coarse){
+    .eojeon .cinema-codex{display:none}
+    .cinema-hud.one-task .cinema-resource{display:none}
+    .cinema-hud.one-task .cinema-tasks li b{display:inline;margin-right:5px}
+  }
+  /* 가로로 눕힌 휴대전화(높이 480 이하): E·Q 손가락 단추(main.js attachControls, bottom:210px)가 위쪽 「멈춤」·시점
+     단추와 겹쳤다. 아래로 내려 한 줄로 놓고, 접힌 안내도는 그 왼쪽에 둔다. */
+  @media(pointer:coarse) and (max-height:480px){
+    .eojeon .game-controls{right:12px!important;bottom:12px!important;flex-direction:row!important}
+    .eojeon .game-map{right:12px!important;bottom:70px!important;width:150px!important}
   }`
   document.head.appendChild(taskStyle)
   let last = ''
@@ -87,7 +104,11 @@ export function createCinematicHud(root, { onCodex = () => {}, onRotate = () => 
       const tasks = view.phase === 'day' ? (view.tasks ?? []) : []
       const list = find('.cinema-tasks')
       list.textContent = ''
-      for (const t of tasks) {
+      // 손가락 기기에서는 하나씩 — 아직 안 한 것 가운데 첫째(막힌 것은 뒤로). 하나를 마치면 다음 것이 그 자리에 선다.
+      const oneTask = isCoarse()
+      el.classList.toggle('one-task', oneTask)
+      const shown = oneTask ? [tasks.find(t => !t.done && !t.blocked) ?? tasks.find(t => !t.done)].filter(Boolean) : tasks
+      for (const t of shown) {
         const li = document.createElement('li')
         li.className = t.done ? 'done' : t.blocked ? 'blocked' : ''
         const mark = document.createElement('i'); mark.textContent = t.done ? '✓' : ''
@@ -105,6 +126,8 @@ export function createCinematicHud(root, { onCodex = () => {}, onRotate = () => 
       line.textContent = tasks.length && open > 0 ? '' : (view.objective ?? '궁궐을 둘러보고 신하의 보고를 들으십시오.')
       line.classList.toggle('exit', tasks.length > 0 && open === 0)
       find('.cinema-objective').hidden = view.phase !== 'day'
+      // 「지금 할 일」 띠(guide-strip)가 낮에 손가락 기기에서 비키도록 알린다.
+      document.documentElement.classList.toggle('hud-day', !el.hidden && view.phase === 'day')
       find('.cinema-budget').textContent = [
         view.riceIndex == null ? '' : riceLabel(view.riceIndex),
         view.fatherLine ?? '',
@@ -119,6 +142,6 @@ export function createCinematicHud(root, { onCodex = () => {}, onRotate = () => 
       find('.cinema-danger progress').value = totalMs > 0 ? Math.max(0,Math.min(1,remainMs / totalMs)) : 0
     },
     hideRush() { find('.cinema-danger').hidden = true },
-    dispose() { el.remove() },
+    dispose() { document.documentElement.classList.remove('hud-day'); el.remove() },
   }
 }

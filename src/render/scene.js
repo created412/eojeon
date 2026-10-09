@@ -134,6 +134,12 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
 
   let cinematic = { mood: 'day', camera: { mode: 'follow' } }
   let reducedMotion = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true
+  // 인물의 걸음·숨·서성임은 **장식이 아니라 내용**이다 — 정지 선호(prefers-reduced-motion)에서도 멈추지 않는다.
+  // 선생님(2026-10-08): 「게임 속 캐릭터 움직임이 하나도 반영안되고 걷는 느낌이 안나게 올라갔어 … 갤럭시북5에서는
+  // 구현되어보이는데 다른 컴퓨터에서는 안되어보이네?」 — 그 PC 는 Windows 의 「애니메이션 효과」가 꺼져 있어 Chrome 이
+  // 정지 선호를 켰고, 예전에는 그 값이 임금·신하·수문장·궁인의 걸음까지 지워 사람이 미끄러져 다녔다(다리는 뻣뻣하게).
+  // 정지 선호는 카메라의 미끄러짐·먼지·불꽃·떠다니는 표식 같은 **장식 움직임**에만 남긴다. 아래 값은 그래서 상수다.
+  const figuresStill = false
   let cameraShot = { x: 0, y: CAM_HEIGHT, z: CAM_DIST, lookY: CAM_LOOK_Y }
   let orbit = 0, zoom = 1, dragging = false, lastPointerX = 0, snapCamera = true
   let viewOverride = null   // 한 장면 동안만 고정하는 보는 각(setViewAngle)
@@ -315,7 +321,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
       palaceLife.forget(id)
     }
     const king = { x: player.position.x, z: player.position.z }
-    const states = palaceLife.tick({ npcs: list, now, king, palace: activePalace, reducedMotion })
+    const states = palaceLife.tick({ npcs: list, now, king, palace: activePalace, reducedMotion: figuresStill })
     applyingLife = true
     for (const s of states) {
       placeNpc(s.id, { x: s.x, z: s.z, yaw: s.yaw, walking: s.walking })
@@ -648,7 +654,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     // 임금도 서 있는 동안 숨을 쉰다. 예전에는 걷지 않는 순간의 임금이 어좌 앞의
     // 밀랍 인형이었다 — 학생이 가장 오래 보는 몸이 그것이었다(선생님 2026-09-26).
     // pace — 나아가는 빠르기에 맞춰 발을 구른다. 막 떼는 걸음과 멈추는 걸음은 느리게.
-    updateSway(king.pivot, dt, { walking, running: running?.() === true, reducedMotion,
+    updateSway(king.pivot, dt, { walking, running: running?.() === true, reducedMotion: figuresStill,
       pace: paceFor(kingSpeed, WALK) })
     lastPX = player.position.x
     lastPZ = player.position.z
@@ -660,7 +666,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     lastFrameT = t
     fire.update(t, reducedMotion)
     atmosphere.update(t, player.position, reducedMotion)
-    crisis.update(crisisStage,t,reducedMotion)
+    crisis.update(crisisStage, t, figuresStill)
     for (let i = 0; i < markerCount; i++) {
       markers[i].position.y = (markers[i].userData.baseY ?? MARKER_Y) + (reducedMotion ? 0 : Math.sin(t * 0.0026 + i) * 0.08)
     }
@@ -712,13 +718,13 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
       e.anchor.rotation.y = turnToward(e.anchor.rotation.y, want, dt)
       // 이 순회는 국면을 가리지 않는다 — 알현·행렬·대화 중에도 돈다. 그래서 서 있는
       // 자세(숨·무게 옮김·고개)를 updateSway 안에 둔 것이 그대로 모든 장면에 흐른다.
-      updateSway(e.pivot, dt, { walking: e.walking, reducedMotion, pace: e.pace ?? 1 })
+      updateSway(e.pivot, dt, { walking: e.walking, reducedMotion: figuresStill, pace: e.pace ?? 1 })
       // 읍은 걸음 자세 **뒤에** 얹는다 — updateSway 가 허리를 쉬는 자세로 되돌리므로.
       applyBow(e)
     }
     // 문 앞의 수문장(render/gate-guards.js). 자리를 떠나지 않으니 어느 국면에서든
     // 자세만 얹는다 — 장면이 이들의 자리를 몰지 않으므로 싸울 일이 없다.
-    gateGuards.tick(dt, { reducedMotion })
+    gateGuards.tick(dt, { reducedMotion: figuresStill })
     // 궁을 오가는 사람들(render/palace-staff.js).
     // 지우는 자리가 둘이다 —
     //   · danger    불·난군의 장면. 거기에 내관이 서류를 들고 지나가면 그림이 거짓말을 한다.
@@ -728,7 +734,7 @@ export function createScene(canvas, { audio = null, running = null } = {}) {
     // 궁이 텅 비어, 선생님이 보신 「움직이지 않는 궁」이 아예 「아무도 없는 궁」이
     // 되었다. 걸음만 멈추면 겹칠 일도 없고 궁은 여전히 사람이 사는 곳이다.
     palaceStaff.tick(t, dt, player.position,
-      { reducedMotion, hidden: danger || openingView, frozen: audience })
+      { reducedMotion: figuresStill, hidden: danger || openingView, frozen: audience })
 
     // 가림도 이 프레임의 카메라 위치로 잰다 — 위에서 이미 세워 두었다. player 는 지붕 밑을 걸어 다닐 수 있으니 방을 옮길 때만이
     // 아니라 매 프레임 다시 잰다.
