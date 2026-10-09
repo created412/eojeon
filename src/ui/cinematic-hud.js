@@ -74,17 +74,32 @@ export function createCinematicHud(root, { onCodex = () => {}, onRotate = () => 
      오늘 할 일이 겹쳐서 진행이 어려움. 오늘 할 일만 남겨두고 그것도 모바일이나 패드에서는 하나씩 달성할때마다 다음것이 뜨도록」.
      · 할 일은 **지금 할 하나만**(one-task — update() 가 목록을 하나로 줄인다), 세는 수는 그대로 「1 / 3」.
      · 위쪽 「사초함」 단추는 뺀다 — 오른쪽 아래 「Q 사초」 손가락 단추가 같은 일을 한다(멈춤 단추와 겹쳐 있었다).
-     · 쌀값·아버지 줄도 뺀다. 「지금 할 일」 띠는 guide-strip.js 가 낮 동안(html.hud-day) 숨긴다. */
+     · 쌀값·아버지 줄도 뺀다. 「지금 할 일」 띠는 guide-strip.js 가 낮 동안(html.hud-day) 숨긴다.
+     · 궁궐 안내도는 손가락 기기에서 아예 없다(ui/minimap.js, 같은 날 둘째 지시). */
   @media(pointer:coarse){
     .eojeon .cinema-codex{display:none}
     .cinema-hud.one-task .cinema-resource{display:none}
     .cinema-hud.one-task .cinema-tasks li b{display:inline;margin-right:5px}
+    /* 선생님(2026-10-09 둘째): 「모바일 버전에서 오늘 할 일이 너무 커서 게임 진행이 어려워」 — 한 줄짜리 작은 판으로.
+       제목 줄은 「오늘 할 일 1 / 3」 한 줄, 할 일은 12px 한 줄. 너비는 내용만큼(화면의 반을 넘지 않게). */
+    .eojeon .cinema-hud.one-task .cinema-objective{width:auto;max-width:min(300px,52vw);padding:6px 10px 7px;top:72px;left:12px;
+      border-left-width:3px;border-radius:5px;backdrop-filter:none}
+    .eojeon .cinema-hud.one-task .objective-title{gap:5px}
+    .eojeon .cinema-hud.one-task .objective-title svg{width:12px;height:12px}
+    .eojeon .cinema-hud.one-task .cinema-objective .objective-title small{font-size:10px;letter-spacing:.04em}
+    .cinema-hud.one-task .task-count{font-size:10px}
+    .cinema-hud.one-task .cinema-tasks{margin-top:3px;gap:0}
+    .cinema-hud.one-task .cinema-tasks li{font-size:12px;line-height:1.4;grid-template-columns:14px 1fr;gap:5px}
+    .cinema-hud.one-task .cinema-tasks li i{width:12px;height:12px;font-size:9px;border-width:1.5px;margin-top:2px}
+    .cinema-hud.one-task .cinema-tasks li b{font-size:10px}
+    .eojeon .cinema-hud.one-task .cinema-objective .cinema-task{font-size:12px;margin:4px 0 2px}
+    .eojeon .cinema-hud.one-task .cinema-objective .cinema-task.exit{padding:5px 7px}
+    .eojeon .game-map{display:none!important}
   }
   /* 가로로 눕힌 휴대전화(높이 480 이하): E·Q 손가락 단추(main.js attachControls, bottom:210px)가 위쪽 「멈춤」·시점
-     단추와 겹쳤다. 아래로 내려 한 줄로 놓고, 접힌 안내도는 그 왼쪽에 둔다. */
+     단추와 겹쳤다. 아래로 내려 한 줄로 놓는다. */
   @media(pointer:coarse) and (max-height:480px){
     .eojeon .game-controls{right:12px!important;bottom:12px!important;flex-direction:row!important}
-    .eojeon .game-map{right:12px!important;bottom:70px!important;width:150px!important}
   }`
   document.head.appendChild(taskStyle)
   let last = ''

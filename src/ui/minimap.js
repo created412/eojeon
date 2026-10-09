@@ -14,23 +14,13 @@ export function createMinimap(root, def) {
   canvas.style.cssText = 'width:100%;background:#0f1113cc;border:1px solid #3a3f45;border-radius:3px'
   const clock = document.createElement('div')
   clock.style.cssText = 'text-align:center;font:13px monospace;color:#d2503a;padding-top:4px;min-height:18px'
-  // 손가락 기기에서는 접어 둔다 — 선생님(2026-10-09, 휴대전화 세로 화면): 「엄청나게 많은 선택지와 창들로 게임 진행이 안됨」.
-  // 「안내도」 단추를 짚으면 펼치고, 다시 짚으면 접는다. 촉박의 남은 초는 접혀 있어도 보인다.
-  const toggle = document.createElement('button')
-  toggle.type = 'button'
-  toggle.style.cssText = 'pointer-events:auto;touch-action:manipulation;display:block;margin:0 0 0 auto;font:12px system-ui,sans-serif;' +
-    'color:#e0a23a;background:#0f1113cc;border:1px solid #3a3f45;border-radius:14px;padding:7px 12px;min-height:34px'
-  let collapsed = isCoarse()
-  function paint() {
-    canvas.hidden = collapsed
-    toggle.textContent = collapsed ? '안내도 보기' : '안내도 닫기'
-    toggle.setAttribute('aria-expanded', String(!collapsed))
-  }
-  toggle.addEventListener('click', () => { collapsed = !collapsed; paint() })
-  if (collapsed) wrap.append(toggle, canvas, clock)
-  else wrap.append(canvas, toggle, clock)
-  if (!isCoarse()) toggle.hidden = true          // 마우스 기기에서는 전처럼 늘 펼쳐 둔다
-  paint()
+  // 손가락 기기에서는 세우지 않는다 — 선생님(2026-10-09, 휴대전화 화면): 「궁궐 안내도도 모바일에서는 없애도 될거 같아」.
+  // 처음에는 접어 두고 「안내도 보기」 단추를 달았는데(같은 날 오전) 그것도 「창」이었다. 촉박의 남은 초는
+  // 아래쪽 붉은 판(cinema-danger)이 따로 세므로 여기 시계가 없어도 된다.
+  const hidden = isCoarse()
+  wrap.hidden = hidden
+  if (hidden) wrap.style.display = 'none'       // 스타일시트의 .eojeon .game-map 규칙이 [hidden] 을 이기지 못하게
+  wrap.append(canvas, clock)
   root.appendChild(wrap)
 
   const g = canvas.getContext('2d')
@@ -41,8 +31,7 @@ export function createMinimap(root, def) {
 
   return {
     update(view) {
-      if (view.rush) { clock.textContent = `${Math.ceil(remainingMs(view.rush, view.now) / 1000)}초` } else clock.textContent = ''
-      if (collapsed) return
+      if (hidden) return
       g.clearRect(0, 0, SIZE, SIZE)
       g.strokeStyle='#9eaf8850';g.lineWidth=.7
       g.strokeRect(3,3,SIZE-6,SIZE-6)
