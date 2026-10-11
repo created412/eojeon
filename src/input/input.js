@@ -23,10 +23,19 @@ export const TAP_MOVE_PX = 14
 export const TAP_MS = 600
 export function isTap(movedPx, heldMs) { return movedPx <= TAP_MOVE_PX && heldMs <= TAP_MS }
 
+// 자판과 조이스틱을 한 방향으로 — 자판이 눌려 있으면 자판, 아니면 조이스틱(input/joystick.js). 순수 함수.
+// 선생님(2026-10-11): 「모바일버전에서는 왼쪽에 작게 움직일수 있는 조이스틱 같은 형태가 있었으면 좋겠어.」
+export function mergeAxis(keys, stick) {
+  if (keys.x !== 0 || keys.z !== 0) return keys
+  if (stick && (stick.x !== 0 || stick.z !== 0)) return { x: stick.x, z: stick.z }
+  return { x: 0, z: 0 }
+}
+
 export function createInput(target) {
   const down = new Set()
   let shift = false
   let pending = null
+  let stick = { x: 0, z: 0 }     // 조이스틱이 넘기는 방향(길이 0~1). 자판이 없을 때만 쓴다.
 
   const onKeyDown = (e) => {
     if (isTyping(e)) return          // 글 쓰는 중에는 임금을 움직이지 않는다
@@ -71,8 +80,9 @@ export function createInput(target) {
       let x = 0, z = 0
       for (const code of down) { x += KEYS[code][0]; z += KEYS[code][1] }
       const len = Math.hypot(x, z)
-      return len === 0 ? { x: 0, z: 0 } : { x: x / len, z: z / len }
+      return mergeAxis(len === 0 ? { x: 0, z: 0 } : { x: x / len, z: z / len }, stick)
     },
+    setStick(v) { stick = v && Number.isFinite(v.x) && Number.isFinite(v.z) ? { x: v.x, z: v.z } : { x: 0, z: 0 } },
     running() { return shift },
     tap() { const t = pending; pending = null; return t },
     dispose() {

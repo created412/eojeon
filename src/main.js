@@ -6,6 +6,7 @@ import { createCinematicHud } from './ui/cinematic-hud.js'
 import { installCinematicStyle } from './ui/cinematic-style.js'
 import { stageEvent } from './systems/event-staging.js'
 import { createInput, isTyping } from './input/input.js'
+import { createJoystick } from './input/joystick.js'
 import { PALACES, pickupNear, roomLabel, roomAt, baseOf } from './data/palaces.js'
 import { guideForBeat, GAME_INTRO, ACT_GUIDE } from './data/guide.js'
 import { createGuideStrip } from './ui/guide-strip.js'
@@ -588,6 +589,9 @@ export function boot(root, { restartState = null, sharedAudio = null, restartNot
   // 짐작하지 않고 조작을 받는 이 자리에 묻는다.
   const ctx = createScene(canvas, { audio, running: () => input.running() })
   const input = createInput(canvas)
+  // 손가락 기기의 조이스틱(왼쪽 아래) — 선생님(2026-10-11) 「왼쪽에 작게 움직일수 있는 조이스틱」. 방향은 input.axis() 로 흘러
+  // 자판 W·A·S·D 와 같은 길을 탄다. 걷는 국면(낮·촉박)에만 보인다(아래 frame 의 setVisible).
+  const joystick = isCoarse() ? createJoystick(root, { onChange: v => input.setStick(v) }) : null
   const hud = createCinematicHud(root, { onCodex: () => {
     if (flow.phase === 'day' && !pause.isOpen()) pressQ()
   }, onRotate: direction => ctx.rotateView(direction), onResetView: () => ctx.resetView(),
@@ -720,6 +724,7 @@ export function boot(root, { restartState = null, sharedAudio = null, restartNot
         input, hud, dialog,
         { dispose: () => removeEventListener('keydown', onKey) },
         { dispose: () => touchWrap?.remove() },
+        { dispose: () => joystick?.dispose() },
         { dispose: () => helpBtn?.remove() },
         { dispose: () => { title.close(); controlsHint.close() } },
         { dispose: () => { hint.remove(); canvas.remove() } },
@@ -2994,6 +2999,7 @@ export function boot(root, { restartState = null, sharedAudio = null, restartNot
     // 불투명 전면 판 뒤의 궁궐은 다시 그릴 필요가 없다. 반투명 대화·독백은 계속 그린다.
     if (!root.querySelector('.jeongjok, .gwangseong, .rebuild, .weigh, .trail, .ration, .dilemma, .epilogue, .brush')) ctx.render()
     if (!session) hud.hideRush()
+    joystick?.setVisible((flow.phase === 'day' || flow.phase === 'rush') && !pause.isOpen())
     hud.update({
       hidden: flow.phase === 'council' || flow.phase === 'done',
       phase: flow.phase,
