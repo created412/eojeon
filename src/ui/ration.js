@@ -407,7 +407,7 @@ export function createRation(root) {
                 <p>${b.chose[btn.dataset.b]}</p>
                 <div class="happened">${b.happened.map(l => `<p>${l}</p>`).join('')}</div>
                 <div class="origin">${b.happenedBy}</div>
-                <p>교과서는 이것을 한 줄로 적었다.</p>
+                <p class="bridge">교과서는 이것을 한 줄로 적었다.</p>
                 <button class="to-reveal">${b.next}</button>`
               const next = after.querySelector('.to-reveal')
               next.addEventListener('click', reveal)

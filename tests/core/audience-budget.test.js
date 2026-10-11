@@ -155,7 +155,7 @@ describe('어느 사료든 제 막 안에서 손에 들어온다', () => {
   // 모두가 받는다. 서계는 그보다 먼저(1873) 역관의 알현에서 받는다.
   // 2026-10-06 — 조약문 세 장은 신헌이 건네는 것이 아니라, 알현 바로 뒤 「조약문을 뜯어 읽는」
   // 판(treaty-study)을 마치면 손에 들어온다. 읽지 않고는 어전회의에 들지 못한다.
-  it('서계를 먼저, 조약문 세 장은 훈령 뒤 신헌이 올린 조약문을 뜯어 읽고 받는다', () => {
+  it('서계를 먼저, 조약문 세 장은 신헌이 올린 조약문을 뜯어 읽고 받는다', () => {
     const beats = beatsOf(ACTS[2])
     const at = id => beats.findIndex(b => b.id === id)
     const grants = id => beats[at(id)].visitors.flatMap(v => v.grantCards ?? [])
@@ -163,7 +163,6 @@ describe('어느 사료든 제 막 안에서 손에 들어온다', () => {
     expect(grants('treaty-draft')).toEqual([])
     expect([...beats[at('treaty-study')].grantCards].sort()).toEqual(['ganghwa1', 'ganghwa10', 'ganghwa7'])
     expect(at('seogye-audience')).toBeLessThan(at('unyo-dispatch'))
-    expect(at('orders-sinheon')).toBeLessThan(at('treaty-draft'))
     expect(at('treaty-draft')).toBe(at('treaty-study') - 1)
     expect(at('treaty-study')).toBe(at('council-treaty') - 1)
     expect(at('council-treaty')).toBeLessThan(at('joil-trade-note'))

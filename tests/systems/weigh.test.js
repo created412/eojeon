@@ -308,8 +308,10 @@ describe('3막의 차례 — 맺기 전에 고민한다', () => {
   const beats = beatsOf(ACTS[2])
   const at = id => beats.findIndex(b => b.id === id)
 
-  it('훈령 → 등본이 올라온다 → 조약문을 뜯어 읽는다 → 임금의 저울 → 무역 규칙', () => {
-    expect(at('orders-sinheon')).toBeLessThan(at('treaty-draft'))
+  // 2026-10-11 — 훈령(orders-sinheon)은 뺐다(선생님: 「굳이 뒤에 강화도 조약 내용 해석하는게 있는데 이걸 넣어야할까? 빼자」).
+  it('도끼 상소 → 등본이 올라온다 → 조약문을 뜯어 읽는다 → 임금의 저울 → 무역 규칙', () => {
+    expect(beats.some(b => b.kind === 'orders')).toBe(false)
+    expect(at('axe-sangso')).toBe(at('treaty-draft') - 1)
     expect(at('treaty-draft')).toBe(at('treaty-study') - 1)
     expect(at('treaty-study')).toBe(at('council-treaty') - 1)
     expect(at('council-treaty')).toBe(at('joil-trade-note') - 1)

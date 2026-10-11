@@ -32,17 +32,14 @@ describe('describeDecision — 결정 하나를 질문·고른 문구로 되짚�
     expect(text).toBe(choice.text)
   })
 
-  it('훈령 결정은 orders: 접두어를 벗기고 고른 조항들을 이어붙인다', () => {
-    const ordersAct = ACTS[2]   // '친정' — orders-sinheon
-    const { text } = describeDecision(ordersAct, { actIndex: 2, choiceId: 'orders:greet+unyo', reason: '' })
-    expect(text).toContain('예로써 맞이하되')
-    expect(text).toContain('경고 사격을 구실로')
-  })
-
-  it('아무 훈령도 안 적었으면 그렇게 말한다', () => {
-    const ordersAct = ACTS[2]
-    const { text } = describeDecision(ordersAct, { actIndex: 2, choiceId: 'orders:none', reason: '' })
-    expect(text).toBe('(아무 훈령도 적지 않음)')
+  // 2026-10-11 — 훈령 장면(orders-sinheon)을 뺐다(선생님: 「굳이 뒤에 강화도 조약 내용 해석하는게 있는데 이걸 넣어야할까? 빼자」).
+  // describeDecision 의 orders: 갈래는 남아 있으나 데이터에 훈령 비트가 없으니, 어떤 옛 기록도 「적지 않음」으로만 읽힌다.
+  it('훈령 비트는 더 이상 없다 — 옛 orders: 기록은 조용히 「적지 않음」이 된다', () => {
+    expect(ACTS[2].beats.some(b => b.kind === 'orders')).toBe(false)
+    for (const choiceId of ['orders:greet+unyo', 'orders:none']) {
+      const { text } = describeDecision(ACTS[2], { actIndex: 2, choiceId, reason: '' })
+      expect(text).toBe('(아무 훈령도 적지 않음)')
+    }
   })
 })
 

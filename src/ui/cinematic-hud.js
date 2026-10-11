@@ -99,7 +99,14 @@ export function createCinematicHud(root, { onCodex = () => {}, onRotate = () => 
   /* 가로로 눕힌 휴대전화(높이 480 이하): E·Q 손가락 단추(main.js attachControls, bottom:210px)가 위쪽 「멈춤」·시점
      단추와 겹쳤다. 아래로 내려 한 줄로 놓는다. */
   @media(pointer:coarse) and (max-height:480px){
-    .eojeon .game-controls{right:12px!important;bottom:12px!important;flex-direction:row!important}
+    /* id 선택자다 — 선생님 휴대전화(2026-10-11)에서는 royal-interface 의 bottom:252px 이 이겨 「멈춤」이 위쪽에 떠 있었다. */
+    #root .game-controls{right:12px!important;bottom:12px!important;flex-direction:row!important}
+    /* 2026-10-11 선생님 휴대전화 그림: 「멈춤」이 서계의 물음을, 「소리」가 글의 끝 줄을 덮고 있었다. 읽는 판(글·사료 카드·서계·
+       문서·그림 선택지·저울·어전회의·장계·이어·급료·납치 길·연표·빼앗긴 것)이 떠 있는 동안은 E·Q·멈춤과 소리 단추를 접는다 —
+       판마다 제 단추(닫기·다음)가 있다. 손으로 하는 판(경복궁·척화비·정족산성·광성보)과 걷는 낮·대화에는 그대로 둔다. */
+    #root:has(> .note, > .veil, > .seekdoc, > .study, > .dilemma, > .weigh, > .council, > .dispatch, > .move, > .ration, > .trail, > .actbg, > .loss, > .cquiz) .game-controls,
+    #root:has(> .note, > .veil, > .seekdoc, > .study, > .dilemma, > .weigh, > .council, > .dispatch, > .move, > .ration, > .trail, > .actbg, > .loss, > .cquiz) .game-sound,
+    #root:has(> .note, > .veil, > .seekdoc, > .study, > .dilemma, > .weigh, > .council, > .dispatch, > .move, > .ration, > .trail, > .actbg, > .loss, > .cquiz) button[aria-label='잠시 멈춤']{display:none!important}
   }`
   document.head.appendChild(taskStyle)
   let last = ''

@@ -22,8 +22,9 @@ describe('역사 경계 안의 거점 선택', () => {
   // 69 → 70 (2026-10-06): 4막에 아버지가 군영으로 떠나는 알현(imo-invitation)이 들어갔다.
   // 70 → 73 (2026-10-06): 4막에 도봉소의 보고(imo-report) · 그 보고를 두고 정하는 자리 · 그날의 전교(imo-fault).
   // 73 → 76 (2026-10-06): 5막 끝에 환어 · 마지막 걸음(거점 하나) · 어좌가 붙고, 닫는 글은 그 앞에 남았다.
-  it('76비트를 보존하고 9개의 탐색 거점만 연다', () => {
-    expect(ACTS.flatMap(a => a.beats)).toHaveLength(76)
+  // 76 → 75 (2026-10-11): 3막 훈령(orders-sinheon)을 뺐다 — 선생님 「굳이 뒤에 강화도 조약 내용 해석하는게 있는데 이걸 넣어야할까? 빼자」.
+  it('75비트를 보존하고 9개의 탐색 거점만 연다', () => {
+    expect(ACTS.flatMap(a => a.beats)).toHaveLength(75)
     expect(ACTS.flatMap(a => a.beats.map((_, i) => hubAt(a, i))).filter(Boolean)).toHaveLength(9)
   })
   it('다른 막과 다음 시기의 보고를 현재 거점에서 열지 못한다', () => {
@@ -94,7 +95,7 @@ describe('역사 경계 안의 거점 선택', () => {
     delete legacy.freedom
     const loaded = deserialize(serialize(legacy))
     expect(SAVE_KEY).toBe('eojeon.save.v1')
-    expect(loaded.version).toBe(7)   // 6 → 7 (2026-10-06, core/state.js 머리말)
+    expect(loaded.version).toBe(8)   // 7 → 8 (2026-10-11, core/state.js 머리말)
     expect(loaded.beatIndex).toBe(legacy.beatIndex)
     expect(hubOptions(loaded, ACTS[2]).find(o => o.id === 'beat:seogye-audience').done).toBe(true)
   })

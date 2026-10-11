@@ -324,6 +324,9 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
       const excerptHtml = readSpec
         ? readParts.map(p => `<button type="button" class="part${priorHit === p.i ? ' hit' : ''}" data-part="${p.i}">${p.text}</button>${'<br>'.repeat(p.breaks)}`).join('')
         : card.excerpt
+      // 2026-10-11 — 기록이 150자를 넘으면 long-record. 가로 휴대전화(ui/phone-landscape.js)에서만 줄 바꿈을 접어 한 문단으로
+      // 흘린다(선생님: 「이런 모든 사료내용이 한판에 안들어와 … 꼭 필요하지 않은건 빼는 식으로」). PC 에서는 아무 변화가 없다.
+      const longRecord = (readSpec ? readParts.map(p => p.text).join('') : String(card.excerpt ?? '')).replace(/<[^>]+>/g, '').length > 150
       const askHtml = readSpec && !solvedBefore
         ? `<p class="ask"><b>밑줄 긋기</b>${readSpec.q}</p>` : ''
       // 따져 읽기 — 처음에는 숨어 있다가 밑줄을 그으면 열린다. 이미 읽은 문서는 고른 답과 풀이를 보여 준다.
@@ -334,7 +337,7 @@ export function createDialog(root, { onClose: onAnyClose, getInquiry=()=>({}), o
           <div class="opts">${probe.options.map(o => `<button type="button" class="popt${solvedBefore && o.id === probe.answer ? ' picked' : ''}" data-opt="${o.id}"${solvedBefore ? ' disabled' : ''}>${o.text}</button>`).join('')}</div>
           <p class="psay" role="status" aria-live="polite">${solvedBefore ? (probe.ok ?? '') : ''}</p>
         </div>`
-      open(`<div class="card${media ? ' has-media' : ''}${INQUIRIES[card.id]?' has-inquiry':''}${readSpec && !solvedBefore ? ' reading-locked' : ''}">
+      open(`<div class="card${media ? ' has-media' : ''}${INQUIRIES[card.id]?' has-inquiry':''}${readSpec && !solvedBefore ? ' reading-locked' : ''}${longRecord ? ' long-record' : ''}">
         <div class="source-layout"><div class="source-copy">
         <h3>${card.title}</h3>
         <div class="origin">${card.origin}</div>

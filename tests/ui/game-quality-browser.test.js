@@ -174,8 +174,9 @@ it('따져 읽기도 한 번 잘못 답하면 막 처음으로 돌아간다',asy
   }finally{await page.close()}
 },20000)
 
-it('짧은 가로 화면에서 글을 스크롤하면 안내 띠만 가리고 여백은 유지한다',async()=>{
-  const {page,errors}=await open('cheokhwabi-brush',{viewport:{width:844,height:390},hasTouch:true,isMobile:true})
+// 2026-10-11 — 손가락 기기의 가로 휴대전화에서는 판이 떠 있는 동안 띠가 아예 접힌다(아래 시험). 띠가 뜨는 짧은 가로 화면은 마우스 쪽이다.
+it('짧은 가로 화면(마우스)에서 글을 스크롤하면 안내 띠만 가리고 여백은 유지한다',async()=>{
+  const {page,errors}=await open('cheokhwabi-brush',{viewport:{width:844,height:390}})
   try{
     await page.locator('.note-next').click();await page.locator('.brush').waitFor()
     const before=await page.locator('.brush').evaluate(el=>getComputedStyle(el).paddingTop)
@@ -188,6 +189,26 @@ it('짧은 가로 화면에서 글을 스크롤하면 안내 띠만 가리고 �
     expect(await page.locator('.guide-strip').evaluate(el=>getComputedStyle(el).visibility)).toBe('hidden')
     await page.keyboard.press('Escape')
     expect(await page.locator('.guide-strip').evaluate(el=>getComputedStyle(el).visibility)).toBe('visible')
+    expect(errors).toEqual([])
+  }finally{await page.close()}
+},20000)
+
+// 선생님(2026-10-11, 휴대전화 그림): 「지금 할일이 지금 가운데 클릭하는걸 가리고 있는 문제가 있어. 해결해」 — 가로 휴대전화에서는 글·사료·저울 같은
+// 읽는 판이 떠 있는 동안 「지금 할 일」 띠와 E·Q·멈춤·소리 단추가 접히고(판마다 제 단추가 있다), 손으로 하는 판(척화비)에서는 단추가 돌아온다.
+it('가로 휴대전화에서 읽는 판이 떠 있으면 띠와 단추가 접히고, 손으로 하는 판에서는 단추가 돌아온다',async()=>{
+  const {page,errors}=await open('cheokhwabi-brush',{viewport:{width:800,height:330},hasTouch:true,isMobile:true})
+  try{
+    await page.locator('.note').waitFor()
+    const disp=sel=>page.evaluate(s=>{const e=document.querySelector(s);return e?getComputedStyle(e).display:'none'},sel)
+    expect(await disp('.guide-strip')).toBe('none')
+    expect(await disp("button[aria-label='잠시 멈춤']")).toBe('none')
+    expect(await disp('.game-sound')).toBe('none')
+    expect(await disp('.game-controls')).toBe('none')
+    // 접힌 띠는 자리를 차지하지 않는다 — 판이 띠를 비켜 설 까닭도 없다.
+    expect(await page.evaluate(()=>document.documentElement.style.getPropertyValue('--guide-clear'))).toBe('')
+    await page.locator('.note-next').tap();await page.locator('.brush').waitFor()
+    expect(await disp("button[aria-label='잠시 멈춤']")).not.toBe('none')
+    expect(await disp('.game-sound')).not.toBe('none')
     expect(errors).toEqual([])
   }finally{await page.close()}
 },20000)

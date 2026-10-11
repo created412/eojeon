@@ -32,6 +32,8 @@ export function createGuideStrip(root) {
   // 0 으로 덮여 판 밑의 단추가 화면 끝에 붙는다.
   const selTop = PANELS.map(p => `html.guide-top #root > .${p}`).join(',')
   const selBottom = PANELS.map(p => `html.guide-bottom #root > .${p}`).join(',')
+  // 'speak'(대화·알현)도 — 아래쪽 「다음」 단추가 띠 밑에 깔렸다(800×330 흉내, 2026-10-11).
+  const selFold = [...PANELS, 'speak'].map(p => `#root:has(> .${p}) .guide-strip`).join(',')
   const style = document.createElement('style')
   style.textContent = `.guide-strip{position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:75;pointer-events:none;
   max-width:min(720px,calc(100vw - 32px));box-sizing:border-box;padding:7px 16px;border-radius:18px;
@@ -46,6 +48,10 @@ export function createGuideStrip(root) {
   /* 손가락 기기의 낮(html.hud-day — ui/cinematic-hud.js 가 켠다)에는 띠를 접는다. 선생님(2026-10-09): 「지금 할 일과
      오늘 할 일이 겹쳐서 진행이 어려움. 오늘 할 일만 남겨두고」. 판(사료·문서·저울)에서는 그대로 뜬다. */
   @media(pointer:coarse){html.hud-day .guide-strip{display:none}}
+  /* 가로 휴대전화(손가락 기기, 높이 480 이하)에서는 전체 화면 판이 떠 있는 동안 띠를 접는다 — 판마다 제 안내 줄이 있고,
+     아래쪽에 뜬 띠가 판의 단추를 덮었다. 선생님(2026-10-11, 그림 선택지의 「실제로는」): 「지금 할일이 지금 가운데 클릭하는걸
+     가리고 있는 문제가 있어. 해결해」. 접힌 띠는 아래 publish() 가 0×0 으로 재어 비켜 설 자리도 돌려준다. */
+  @media(pointer:coarse) and (max-height:480px){${selFold}{display:none}}
   ${selTop}{padding-top:var(--guide-clear,0px) !important;box-sizing:border-box}
   ${selBottom}{padding-bottom:var(--guide-clear,0px) !important;box-sizing:border-box}`
   document.head.appendChild(style)
@@ -68,14 +74,16 @@ export function createGuideStrip(root) {
   }
   root.addEventListener?.('scroll', onScroll, true)
   // Q로 사초함만 닫으면 새 guide.set 없이 궁으로 돌아온다. 떼어 낸 판의 가림도 해제한다.
-  const panelsChanged = globalThis.MutationObserver ? new MutationObserver(refreshScrolled) : null
+  // 판이 붙고 떨어질 때 띠의 자리도 다시 잰다 — 가로 휴대전화에서는 판이 뜨면 띠가 접히므로(위 CSS) 비워 둔 자리를 돌려줘야 한다.
+  const panelsChanged = globalThis.MutationObserver ? new MutationObserver(() => { refreshScrolled(); publish() }) : null
   panelsChanged?.observe(root, { childList: true })
 
   const html = document.documentElement
   function publish() {
     html.classList.remove('guide-top', 'guide-bottom')
-    if (el.hidden) { html.style.removeProperty('--guide-clear'); return }
-    const r = el.getBoundingClientRect()
+    const r = el.hidden ? null : el.getBoundingClientRect()
+    // 접힌 띠(display:none — 손가락 기기의 낮, 가로 휴대전화의 판)는 0×0 이다 — 비워 둘 것도 없다.
+    if (!r || (r.width === 0 && r.height === 0)) { html.style.removeProperty('--guide-clear'); return }
     const vh = window.innerHeight || 0
     // 화면 위쪽 절반에 떴으면 위를, 아래쪽이면 아래를 비운다(좁은 화면에서는 아래에 뜬다).
     const top = r.top < vh / 2
