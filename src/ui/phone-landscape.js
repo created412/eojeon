@@ -204,6 +204,110 @@ const CSS = `
   #root .orders .paper{padding:10px 12px;font-size:12px;line-height:1.5}
   #root .orders .origin{font-size:11px;margin-top:4px}
   #root .orders button.go{padding:7px 20px;font-size:13px}
+
+  /* ── 2026-10-11 선생님 휴대전화 그림 다섯: 「한판에 거슬리는 중요하지 않은것들은 모바일에서 없애서 어떻게든 한판에
+     들어올 수 있게 해줘」. 정족산성(잘림)·서계(오른쪽 글이 길어 굴러가고 누르면 위가 잘림)·저울(오른쪽 글이 길다). ── */
+
+  /* 정족산성 (ui/jeongjok.js): 두 산길이 화면에 다 서야 한다. 출처 줄은 모바일에서 뺀다(안내 판에 이미 있다). */
+  #root .jeongjok .wrap{padding:4px 10px;gap:4px}
+  #root .jeongjok .head{gap:10px}
+  #root .jeongjok h2{font-size:16px;letter-spacing:.2em}
+  #root .jeongjok .sub{display:none}
+  #root .jeongjok .meters{font-size:11px;gap:12px}
+  #root .jeongjok .pips i{width:9px;height:9px}
+  #root .jeongjok .field{gap:5px}
+  #root .jeongjok .lane{grid-template-columns:84px minmax(0,1fr)}
+  #root .jeongjok .gate{gap:2px}
+  #root .jeongjok .gate b{font-size:15px;letter-spacing:.08em}
+  #root .jeongjok .embers i{width:4px;height:4px}
+  #root .jeongjok .firebtn{padding:3px 2px;font-size:11px;width:92%}
+  #root .jeongjok .reach small,#root .jeongjok .far{font-size:10px;top:3px}
+  #root .jeongjok .cue{font-size:16px}
+  #root .jeongjok .foot .src{display:none}
+  #root .jeongjok .foot .say{font-size:12px;line-height:1.35;min-height:1.3em;margin:0}
+  #root .jeongjok .panel{padding:6px 10px}
+  #root .jeongjok .sheet{padding:8px 12px;gap:4px}
+  #root .jeongjok .sheet h3{font-size:14px;margin:0}
+  #root .jeongjok .sheet p,#root .jeongjok .sheet .rule,#root .jeongjok .sheet .quiet,#root .jeongjok .sheet .turn{font-size:12.5px;line-height:1.45;margin:0}
+  #root .jeongjok .sheet blockquote{font-size:12.5px;line-height:1.45;margin:0;padding:4px 10px}
+  #root .jeongjok .sheet button{padding:6px 16px;font-size:13px;min-height:0}
+
+  /* 서계 (ui/doc-seek.js): 오른쪽은 물음·찾은 수·고른 낱말·단추만. 들머리 글·읽는 법·풀이는 모바일에서 뺀다. */
+  #root .seekdoc .wrap{padding:6px 10px;gap:10px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
+  #root .seekdoc .sheet{gap:4px}
+  #root .seekdoc .paper{padding:5px}
+  #root .seekdoc .col{padding:6px 2px;gap:6px}
+  #root .seekdoc .unit{padding:3px 3px;border-width:2px}
+  #root .seekdoc .unit .h{font-size:21px;line-height:1.05}
+  #root .seekdoc .unit .r{font-size:9.5px}
+  #root .seekdoc .unit.seal{padding:5px 4px;border-width:3px}
+  #root .seekdoc .unit.seal .h{font-size:15px}
+  #root .seekdoc .unit.join{margin-bottom:-6px}
+  #root .seekdoc .src{font-size:9.5px;line-height:1.35}
+  #root .seekdoc .side{gap:6px;overflow:hidden}
+  #root .seekdoc h2{font-size:14px;letter-spacing:.04em}
+  #root .seekdoc .lead,#root .seekdoc .readnote,#root .seekdoc .trans{display:none}
+  #root .seekdoc .q{font-size:15px;line-height:1.4}
+  #root .seekdoc .pips{font-size:12px;gap:7px}
+  #root .seekdoc .pips i{width:16px;height:16px}
+  #root .seekdoc .look{min-height:54px;padding:7px 10px;gap:2px 10px}
+  #root .seekdoc .look .han{font-size:26px}
+  #root .seekdoc .look .read{font-size:13px}
+  #root .seekdoc .look .mean{font-size:12.5px;line-height:1.4}
+  #root .seekdoc .look .empty{font-size:12px;line-height:1.4}
+  #root .seekdoc button.name{padding:7px 14px;font-size:13px}
+  #root .seekdoc .say{min-height:0;font-size:12px;line-height:1.4}
+  #root .seekdoc .say:empty{display:none}
+  #root .seekdoc .hint{font-size:11px;line-height:1.4}
+  #root .seekdoc .hint:empty{display:none}
+  #root .seekdoc .after{padding-top:5px;gap:3px}
+  #root .seekdoc .after p{font-size:12px;line-height:1.45}
+  #root .seekdoc button.close{padding:6px 16px;font-size:13px;margin-top:auto}
+
+  /* 임금의 저울 (ui/weigh.js): 저울은 작게 왼쪽에, 오른쪽 판은 글자를 줄이고 출처 줄은 뺀다(낱말 풀이는 남긴다). */
+  #root .weigh .wrap{padding:6px 10px;gap:4px}
+  #root .weigh header{gap:10px}
+  #root .weigh h2{font-size:15px;letter-spacing:.12em}
+  #root .weigh header .q{font-size:12px}
+  #root .weigh header small{font-size:10px}
+  #root .weigh .board{grid-template-columns:minmax(0,.75fr) minmax(0,1.25fr);gap:12px}
+  #root .weigh .scale{max-height:230px}
+  #root .weigh .aside{font-size:10.5px}
+  #root .weigh .panel{padding:8px 10px;gap:5px}
+  #root .weigh .when{font-size:10px}
+  #root .weigh .lead{font-size:13px;line-height:1.5}
+  #root .weigh .small{font-size:11.5px;line-height:1.45}
+  #root .weigh .origin{font-size:10px;line-height:1.35}
+  #root .weigh .panel .origin+.origin{display:none}
+  #root .weigh blockquote{padding:5px 10px;font-size:13px;line-height:1.5}
+  #root .weigh .tagrow h3{font-size:15px}
+  #root .weigh .grade{font-size:10px}
+  #root .weigh .progress{font-size:10.5px}
+  #root .weigh .label{font-size:10.5px}
+  #root .weigh .go{padding:6px 18px;font-size:13px}
+  #root .weigh .kingline{padding:4px 9px}
+  #root .weigh .kingline b{font-size:10px}
+  #root .weigh .kingline p{font-size:12px;line-height:1.45}
+  #root .weigh .seats{gap:4px}
+  #root .weigh .seat{padding:3px 2px;gap:0}
+  #root .weigh .seat .post{font-size:9px}
+  #root .weigh .seat .name{font-size:12.5px}
+  #root .weigh .speech{min-height:48px;padding:5px 9px}
+  #root .weigh .speech b{font-size:10.5px;margin-bottom:1px}
+  #root .weigh .speech p{font-size:13px;line-height:1.5}
+  #root .weigh .speech.empty p{font-size:12px}
+  #root .weigh .ask{gap:5px;padding-top:5px}
+  #root .weigh .ask .q{font-size:13px;line-height:1.45}
+  #root .weigh .aopt{padding:5px 10px;font-size:12.5px}
+  #root .weigh .ask .say{font-size:12px;line-height:1.4}
+  #root .weigh .reads{gap:5px}
+  #root .weigh .read{padding:5px 9px;font-size:12.5px;line-height:1.4;gap:8px}
+  #root .weigh .read .side{font-size:10px;padding:2px 6px}
+  #root .weigh .hefts{gap:5px}
+  #root .weigh .heft{padding:5px 10px 5px 8px;font-size:12.5px;gap:6px}
+  #root .weigh .choices{gap:6px}
+  #root .weigh .choice{padding:8px 12px;font-size:14px}
+  #root .weigh .remark{font-size:12px}
 }
 `
 

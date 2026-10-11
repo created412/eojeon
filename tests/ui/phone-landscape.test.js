@@ -9,7 +9,7 @@ import { PHONE_LANDSCAPE_CSS, installPhoneLandscape } from '../../src/ui/phone-l
 // 1.3~2.2배였다. ui/phone-landscape.js 가 높이 480 이하에서만 그 여섯 판을 줄인다. 이 시험은 그 한 장이
 // 여섯 판을 빠짐없이 다루고, 높이 조건 밖으로 새지 않으며, 다른 모듈의 규칙보다 앞서는 선택자(#root …)를
 // 쓰는지 본다 — 모듈 쪽 CSS 가 바뀌어도 이 판들이 다시 커지지 않게.
-const PANELS = ['note', 'study', 'dilemma', 'move', 'council', 'trail', 'loss', 'dispatch', 'orders']
+const PANELS = ['note', 'study', 'dilemma', 'move', 'council', 'trail', 'loss', 'dispatch', 'orders', 'jeongjok', 'seekdoc', 'weigh']
 
 describe('가로 휴대전화 한 화면 스타일(ui/phone-landscape.js)', () => {
   it('높이 480 이하에서만 산다 — 규칙 전부가 한 @media 안에 있다', () => {
@@ -20,7 +20,7 @@ describe('가로 휴대전화 한 화면 스타일(ui/phone-landscape.js)', () =
     expect(body.slice(1).includes('@media')).toBe(false)
   })
 
-  it('아홉 판을 모두 다루고, 선택자는 #root 로 시작해 모듈의 .eojeon 규칙을 이긴다', () => {
+  it('열두 판을 모두 다루고, 선택자는 #root 로 시작해 모듈의 .eojeon 규칙을 이긴다', () => {
     for (const p of PANELS) expect(PHONE_LANDSCAPE_CSS).toMatch(new RegExp(`#root \\.${p}[ .{]`))
     const selectors = PHONE_LANDSCAPE_CSS.match(/^\s*([^{}\n]+)\{/gm).map(s => s.trim().replace(/\{$/, '').trim())
       .filter(s => !s.startsWith('@media'))
@@ -29,7 +29,7 @@ describe('가로 휴대전화 한 화면 스타일(ui/phone-landscape.js)', () =
 
   it('다루는 판 이름이 실제 뿌리 클래스다', () => {
     const src = (f) => readFileSync(new URL(`../../src/ui/${f}`, import.meta.url), 'utf8')
-    const files = { note: 'note-screen.js', study: 'doc-study.js', dilemma: 'dilemma.js', move: 'move-screen.js', council: 'council-ui.js', trail: 'trail.js', loss: 'loss-screen.js', dispatch: 'dispatch-map.js', orders: 'orders-ui.js' }
+    const files = { note: 'note-screen.js', study: 'doc-study.js', dilemma: 'dilemma.js', move: 'move-screen.js', council: 'council-ui.js', trail: 'trail.js', loss: 'loss-screen.js', dispatch: 'dispatch-map.js', orders: 'orders-ui.js', jeongjok: 'jeongjok.js', seekdoc: 'doc-seek.js', weigh: 'weigh.js' }
     for (const [p, f] of Object.entries(files)) expect(src(f), `${f} 에 「${p}」 판이 없다`).toContain(`'${p}'`)
   })
 
@@ -38,6 +38,15 @@ describe('가로 휴대전화 한 화면 스타일(ui/phone-landscape.js)', () =
     expect(main).toMatch(/installPhoneLandscape\(\)/)
     // DOM 이 없는 자리에서는 조용히 아무것도 안 한다(시험·서버).
     expect(() => installPhoneLandscape()).not.toThrow()
+  })
+
+  it('모바일에서 빼는 것은 중요하지 않은 줄뿐이다 — 물음·단추·대신·말은 남는다', () => {
+    // 선생님(2026-10-11): 「한판에 거슬리는 중요하지 않은것들은 모바일에서 없애서」. 뺀 것은 서계의 들머리·읽는 법·풀이,
+    // 정족산성의 출처 줄, 저울의 출처 줄이다. 물음(.q)·단추·대신(.seat)·말(.speech)은 어디서도 display:none 이 아니다.
+    const hidden = PHONE_LANDSCAPE_CSS.split('\n').filter(l => /display:none/.test(l))
+    for (const l of hidden) expect(l).not.toMatch(/\.q\b|button|\.seat|\.speech|\.name|\.look|\.gate|\.lane/)
+    expect(PHONE_LANDSCAPE_CSS).toMatch(/#root \.seekdoc \.lead,#root \.seekdoc \.readnote,#root \.seekdoc \.trans\{display:none\}/)
+    expect(PHONE_LANDSCAPE_CSS).toMatch(/#root \.jeongjok \.foot \.src\{display:none\}/)
   })
 
   it('글 화면의 사진 칸은 글보다 좁다 — 글이 먼저다', () => {
